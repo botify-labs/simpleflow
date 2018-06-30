@@ -18,6 +18,7 @@ class TransitionError(Exception):
 
 class Stateful(object):
     """Base stateful object implementation"""
+
     states = ()
     transitions = {}
 
@@ -65,13 +66,16 @@ class CompiledEvent(Event, Stateful):
         :type   event: swf.models.event.Event
         """
         if event.state != self.initial_state:
-            raise InconsistentStateError("Provided event is in {0} state "
-                                         "when attended intial state is {1}"
-                                         .format(event.state, self.initial_state))
+            raise InconsistentStateError(
+                "Provided event is in {0} state "
+                "when attended intial state is {1}".format(
+                    event.state, self.initial_state
+                )
+            )
         self.__dict__ = event.__dict__.copy()
 
     def __repr__(self):
-        return '<CompiledEvent %s %s>' % (self.type, self.state)
+        return "<CompiledEvent %s %s>" % (self.type, self.state)
 
     @property
     def next_states(self):

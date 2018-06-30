@@ -8,7 +8,7 @@ if False:
     from typing import Type  # NOQA
     from simpleflow import Workflow  # NOQA
 
-__all__ = ['Executor']
+__all__ = ["Executor"]
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ class Executor(object):
     - asynchronous with full replay
 
     """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, workflow_class):
@@ -89,12 +90,10 @@ class Executor(object):
         All items in ``*iterable`` must be serializable in JSON.
 
         """
-        return [self.submit(callable, argument) for
-                argument in iterable]
+        return [self.submit(callable, argument) for argument in iterable]
 
     def starmap(self, callable, iterable):
-        return [self.submit(callable, *arguments) for
-                arguments in iterable]
+        return [self.submit(callable, *arguments) for arguments in iterable]
 
     @abc.abstractmethod
     def run(self, *args, **kwargs):

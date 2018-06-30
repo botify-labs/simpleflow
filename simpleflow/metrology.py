@@ -4,6 +4,7 @@ import os
 import re
 import time
 from collections import OrderedDict
+
 try:
     from urllib.parse import quote_plus  # py 3.x
 except ImportError:
@@ -13,7 +14,7 @@ from . import storage, settings
 from .swf.stats.pretty import dump_history_to_json
 from .workflow import Workflow
 
-ACTIVITY_KEY_RE = re.compile(r'activity\.(.+)\.json')
+ACTIVITY_KEY_RE = re.compile(r"activity\.(.+)\.json")
 
 
 class StepIO(object):
@@ -29,13 +30,15 @@ class StepIO(object):
             mb_s = round(float(self.bytes) / (1024 * 1024) / time_total, 2)
         if self.records:
             rec_s = int(self.records / time_total)
-        return OrderedDict([
-            ('bytes', self.bytes),
-            ('records', self.records),
-            ('mb_s', mb_s),
-            ('rec_s', rec_s),
-            ('sampled', self.sampled)
-        ])
+        return OrderedDict(
+            [
+                ("bytes", self.bytes),
+                ("records", self.records),
+                ("mb_s", mb_s),
+                ("rec_s", rec_s),
+                ("sampled", self.sampled),
+            ]
+        )
 
 
 class Step(object):
@@ -54,15 +57,17 @@ class Step(object):
         self.time_total = self.time_finished - self.time_started
 
     def get_stats(self):
-        stats = OrderedDict([
-            ('name', self.name),
-            ('metadata', self.metadata),
-            ('time_started', self.time_started),
-            ('time_finished', self.time_finished),
-            ('time_total', self.time_total),
-            ('read', self.read.get_stats(self.time_total)),
-            ('write', self.write.get_stats(self.time_total)),
-        ])
+        stats = OrderedDict(
+            [
+                ("name", self.name),
+                ("metadata", self.metadata),
+                ("time_started", self.time_started),
+                ("time_finished", self.time_finished),
+                ("time_total", self.time_total),
+                ("read", self.read.get_stats(self.time_total)),
+                ("write", self.write.get_stats(self.time_total)),
+            ]
+        )
         return stats
 
     def mset_metadata(self, kvs):
@@ -82,9 +87,8 @@ class StepExecution(object):
 
 
 class MetrologyTask(object):
-
     def can_upload(self):
-        return all(c in self.context for c in ('workflow_id', 'run_id', 'activity_id'))
+        return all(c in self.context for c in ("workflow_id", "run_id", "activity_id"))
 
     @property
     def metrology_path(self):
@@ -105,7 +109,7 @@ class MetrologyTask(object):
         """
         step = Step(name, self)
         step_exec = StepExecution(step)
-        if not hasattr(self, 'steps'):
+        if not hasattr(self, "steps"):
             self.steps = []
         self.steps.append(step)
         return step_exec
@@ -114,16 +118,17 @@ class MetrologyTask(object):
         if not self.can_upload():
             return
 
-        content = {"steps": [], "meta": getattr(self, 'meta', None)}
+        content = {"steps": [], "meta": getattr(self, "meta", None)}
 
-        for step in getattr(self, 'steps', []):
+        for step in getattr(self, "steps", []):
             content["steps"].append(step.get_stats())
 
         storage.push_content(
             settings.METROLOGY_BUCKET,
             self.metrology_path,
             json.dumps(content, indent=2),
-            content_type="application/json")
+            content_type="application/json",
+        )
 
     @abc.abstractmethod
     def execute(self):
@@ -134,7 +139,6 @@ class MetrologyTask(object):
 
 
 class MetrologyWorkflow(Workflow):
-
     def after_closed(self, history):
         super(MetrologyWorkflow, self).after_closed(history)
         return self.push_metrology(history)
@@ -154,16 +158,17 @@ class MetrologyWorkflow(Workflow):
         """
         Fetch workflow history and merge it with metrology
         """
-        activity_keys = [obj for obj in storage.list_keys(
-            settings.METROLOGY_BUCKET,
-            self.metrology_path)]
+        activity_keys = [
+            obj
+            for obj in storage.list_keys(settings.METROLOGY_BUCKET, self.metrology_path)
+        ]
         history_dumped = dump_history_to_json(history)
         history = json.loads(history_dumped)
 
         for key in activity_keys:
-            if not key.key.startswith(os.path.join(self.metrology_path, 'activity.')):
+            if not key.key.startswith(os.path.join(self.metrology_path, "activity.")):
                 continue
-            contents = key.get_contents_as_string(encoding='utf-8')
+            contents = key.get_contents_as_string(encoding="utf-8")
             result = json.loads(contents)
             search = ACTIVITY_KEY_RE.search(key.name)
             name = search.group(1)
@@ -173,7 +178,7 @@ class MetrologyWorkflow(Workflow):
 
         storage.push_content(
             settings.METROLOGY_BUCKET,
-            os.path.join(self.metrology_path, 'metrology.json'),
+            os.path.join(self.metrology_path, "metrology.json"),
             json.dumps(history, indent=2),
-            content_type="application/json"
+            content_type="application/json",
         )

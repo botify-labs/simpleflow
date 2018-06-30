@@ -13,12 +13,7 @@ from swf.models import BaseModel
 from swf.models.base import ModelDiff
 from swf.utils import immutable
 from swf import exceptions
-from swf.exceptions import (
-    AlreadyExistsError,
-    DoesNotExistError,
-    ResponseError,
-    raises,
-)
+from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
 
 
 class DomainDoesNotExist(DoesNotExistError):
@@ -45,17 +40,17 @@ class Domain(BaseModel):
     :type       description: string
     """
 
-    __slots__ = [
-        'name',
-        'status',
-        'description',
-        'retention_period',
-    ]
+    __slots__ = ["name", "status", "description", "retention_period"]
 
-    def __init__(self, name,
-                 status=REGISTERED,
-                 description=None,
-                 retention_period=30, *args, **kwargs):
+    def __init__(
+        self,
+        name,
+        status=REGISTERED,
+        description=None,
+        retention_period=30,
+        *args,
+        **kwargs
+    ):
         self.name = name
         self.status = status
         self.description = description
@@ -72,10 +67,12 @@ class Domain(BaseModel):
         as a string.
 
         """
-        if (not isinstance(domain, cls) or
-                not hasattr(domain, 'name') or
-                not isinstance(domain.name, compat.basestring)):
-            raise TypeError('invalid type {} for domain'.format(type(domain)))
+        if (
+            not isinstance(domain, cls)
+            or not hasattr(domain, "name")
+            or not isinstance(domain.name, compat.basestring)
+        ):
+            raise TypeError("invalid type {} for domain".format(type(domain)))
 
     def _diff(self):
         """Checks for differences between Domain instance
@@ -88,28 +85,36 @@ class Domain(BaseModel):
         try:
             description = self.connection.describe_domain(self.name)
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
-        domain_info = description['domainInfo']
-        domain_config = description['configuration']
+        domain_info = description["domainInfo"]
+        domain_config = description["configuration"]
 
         return ModelDiff(
-            ('name', self.name, domain_info['name']),
-            ('status', self.status, domain_info['status']),
-            ('description', self.description, domain_info.get('description')),
-            ('retention_period', self.retention_period, domain_config['workflowExecutionRetentionPeriodInDays']),
+            ("name", self.name, domain_info["name"]),
+            ("status", self.status, domain_info["status"]),
+            ("description", self.description, domain_info.get("description")),
+            (
+                "retention_period",
+                self.retention_period,
+                domain_config["workflowExecutionRetentionPeriodInDays"],
+            ),
         )
 
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(DomainDoesNotExist)
-    @exceptions.catch(SWFResponseError,
-                      raises(DomainDoesNotExist,
-                             when=exceptions.is_unknown('domain'),
-                             extract=exceptions.extract_resource))
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            DomainDoesNotExist,
+            when=exceptions.is_unknown("domain"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def exists(self):
         """Checks if the Domain exists amazon-side
 
@@ -121,24 +126,28 @@ class Domain(BaseModel):
     def save(self):
         """Creates the domain amazon side"""
         try:
-            self.connection.register_domain(self.name,
-                                            str(self.retention_period),
-                                            self.description)
+            self.connection.register_domain(
+                self.name, str(self.retention_period), self.description
+            )
         except SWFDomainAlreadyExistsError:
             raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
 
-    @exceptions.translate(SWFResponseError,
-                          to=ResponseError)
-    @exceptions.catch(SWFResponseError,
-                      raises(DomainDoesNotExist,
-                             when=exceptions.is_unknown('domain'),
-                             extract=exceptions.extract_resource))
+    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            DomainDoesNotExist,
+            when=exceptions.is_unknown("domain"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def delete(self):
         """Deprecates the domain amazon side"""
         self.connection.deprecate_domain(self.name)
 
     def upstream(self):
         from swf.querysets.domain import DomainQuerySet
+
         qs = DomainQuerySet()
         return qs.get(self.name)
 
@@ -152,6 +161,7 @@ class Domain(BaseModel):
         :type       status: string
         """
         from swf.querysets.workflow import WorkflowTypeQuerySet
+
         qs = WorkflowTypeQuerySet(self)
         return qs.all(registration_status=status)
 
@@ -165,6 +175,7 @@ class Domain(BaseModel):
         :type       status: string
         """
         from swf.querysets.activity import ActivityTypeQuerySet
+
         qs = ActivityTypeQuerySet(self)
         return qs.all(registration_status=status)
 
@@ -173,5 +184,6 @@ class Domain(BaseModel):
         return None
 
     def __repr__(self):
-        return '<{} name={} status={}>'.format(
-               self.__class__.__name__, self.name, self.status)
+        return "<{} name={} status={}>".format(
+            self.__class__.__name__, self.name, self.status
+        )

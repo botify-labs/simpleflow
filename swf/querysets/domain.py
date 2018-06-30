@@ -10,8 +10,7 @@ from boto.swf.exceptions import SWFResponseError
 from swf.constants import REGISTERED
 from swf.querysets.base import BaseQuerySet
 from swf.models.domain import Domain
-from swf.exceptions import (ResponseError, DoesNotExistError,
-                            InvalidCredentialsError)
+from swf.exceptions import ResponseError, DoesNotExistError, InvalidCredentialsError
 
 
 class DomainQuerySet(BaseQuerySet):
@@ -46,28 +45,32 @@ class DomainQuerySet(BaseQuerySet):
         except SWFResponseError as e:
             # If resource does not exist, amazon throws 400 with
             # UnknownResourceFault exception
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("No such domain: %s" % name)
-            elif e.error_code == 'UnrecognizedClientException':
+            elif e.error_code == "UnrecognizedClientException":
                 raise InvalidCredentialsError("Invalid aws credentials supplied")
             # Any other errors should raise
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
-        domain_info = response['domainInfo']
-        domain_config = response['configuration']
+        domain_info = response["domainInfo"]
+        domain_config = response["configuration"]
 
         return Domain(
-            domain_info['name'],
-            status=domain_info['status'],
-            retention_period=domain_config['workflowExecutionRetentionPeriodInDays'],
-            connection=self.connection
+            domain_info["name"],
+            status=domain_info["status"],
+            retention_period=domain_config["workflowExecutionRetentionPeriodInDays"],
+            connection=self.connection,
         )
 
-    def get_or_create(self, name,
-                      status=REGISTERED,
-                      description=None,
-                      retention_period=30,
-                      *args, **kwargs):
+    def get_or_create(
+        self,
+        name,
+        status=REGISTERED,
+        description=None,
+        retention_period=30,
+        *args,
+        **kwargs
+    ):
         """Fetches, or creates the Domain with `name`
 
         When fetching trying to fetch a matching domain, only
@@ -99,8 +102,7 @@ class DomainQuerySet(BaseQuerySet):
         except DoesNotExistError:
             return self.create(name, status, description, retention_period)
 
-    def all(self, registration_status=REGISTERED,
-            *args, **kwargs):
+    def all(self, registration_status=REGISTERED, *args, **kwargs):
         """Retrieves every domains
 
         :param      registration_status: domain registration status to match,
@@ -126,24 +128,28 @@ class DomainQuerySet(BaseQuerySet):
         """
 
         def get_domains():
-            response = {'nextPageToken': None}
-            while 'nextPageToken' in response:
+            response = {"nextPageToken": None}
+            while "nextPageToken" in response:
                 response = self.connection.list_domains(
-                    registration_status,
-                    next_page_token=response['nextPageToken']
+                    registration_status, next_page_token=response["nextPageToken"]
                 )
 
-                for domain_info in response['domainInfos']:
+                for domain_info in response["domainInfos"]:
                     yield domain_info
 
-        return [Domain(d['name'], d['status'], d.get('description')) for d
-                in get_domains()]
+        return [
+            Domain(d["name"], d["status"], d.get("description")) for d in get_domains()
+        ]
 
-    def create(self, name,
-               status=REGISTERED,
-               description=None,
-               retention_period=30,
-               *args, **kwargs):
+    def create(
+        self,
+        name,
+        status=REGISTERED,
+        description=None,
+        retention_period=30,
+        *args,
+        **kwargs
+    ):
         """Creates a new remote domain and returns the Domain model instance
 
         :param      name: Name of the domain to register (unique)
@@ -166,7 +172,7 @@ class DomainQuerySet(BaseQuerySet):
             name,
             status=status,
             description=description,
-            retention_period=retention_period
+            retention_period=retention_period,
         )
         domain.save()
 

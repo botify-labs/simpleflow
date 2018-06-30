@@ -7,6 +7,7 @@ class Registry(object):
 
     :type _tasks: collections.defaultdict[Any, dict[str, simpleflow.activity.Activity]]
     """
+
     def __init__(self):
         self._tasks = collections.defaultdict(dict)
 

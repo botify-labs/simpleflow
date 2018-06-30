@@ -12,25 +12,19 @@ from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 from simpleflow import compat, format
 from swf import exceptions
 from swf.constants import REGISTERED
-from swf.exceptions import (
-    DoesNotExistError,
-    AlreadyExistsError,
-    ResponseError,
-    raises,
-)
+from swf.exceptions import DoesNotExistError, AlreadyExistsError, ResponseError, raises
 from swf.models import BaseModel, Domain
 from swf.models.base import ModelDiff
 from swf.models.history import History
 from swf.utils import immutable
 
 _POLICIES = (
-    'TERMINATE',  # child executions will be terminated
-    'REQUEST_CANCEL',  # a request to cancel will be attempted for each child execution
-    'ABANDON',  # no action will be taken
+    "TERMINATE",  # child executions will be terminated
+    "REQUEST_CANCEL",  # a request to cancel will be attempted for each child execution
+    "ABANDON",  # no action will be taken
 )
 
-CHILD_POLICIES = collections.namedtuple('CHILD_POLICY',
-                                        ' '.join(_POLICIES))(*_POLICIES)
+CHILD_POLICIES = collections.namedtuple("CHILD_POLICY", " ".join(_POLICIES))(*_POLICIES)
 
 
 class WorkflowTypeDoesNotExist(DoesNotExistError):
@@ -82,29 +76,37 @@ class WorkflowType(BaseModel):
     :param  description: Textual description of the workflow type
     :type   description: str
     """
+
     __slots__ = [
-        'domain',
-        'name',
-        'version',
-        'status',
-        'creation_date',
-        'deprecation_date',
-        'task_list',
-        'child_policy',
-        'execution_timeout',
-        'decision_tasks_timeout',
-        'description',
+        "domain",
+        "name",
+        "version",
+        "status",
+        "creation_date",
+        "deprecation_date",
+        "task_list",
+        "child_policy",
+        "execution_timeout",
+        "decision_tasks_timeout",
+        "description",
     ]
 
-    def __init__(self, domain, name, version,
-                 status=REGISTERED,
-                 creation_date=0.0,
-                 deprecation_date=0.0,
-                 task_list=None,
-                 child_policy=CHILD_POLICIES.TERMINATE,
-                 execution_timeout='300',
-                 decision_tasks_timeout='300',
-                 description=None, *args, **kwargs):
+    def __init__(
+        self,
+        domain,
+        name,
+        version,
+        status=REGISTERED,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        child_policy=CHILD_POLICIES.TERMINATE,
+        execution_timeout="300",
+        decision_tasks_timeout="300",
+        description=None,
+        *args,
+        **kwargs
+    ):
         self.domain = domain
         self.name = name
         self.version = version
@@ -141,48 +143,60 @@ class WorkflowType(BaseModel):
         """
         try:
             description = self.connection.describe_workflow_type(
-                self.domain.name,
-                self.name,
-                self.version
+                self.domain.name, self.name, self.version
             )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
-        workflow_info = description['typeInfo']
-        workflow_config = description['configuration']
+        workflow_info = description["typeInfo"]
+        workflow_config = description["configuration"]
 
         return ModelDiff(
-            ('name', self.name, workflow_info['workflowType']['name']),
-            ('version', self.version, workflow_info['workflowType']['version']),
-            ('status', self.status, workflow_info['status']),
-            ('creation_date', self.creation_date, workflow_info['creationDate']),
-            ('deprecation_date', self.deprecation_date, workflow_info['deprecationDate']),
-            ('task_list', self.task_list, workflow_config['defaultTaskList']['name']),
-            ('child_policy', self.child_policy, workflow_config['defaultChildPolicy']),
-            ('execution_timeout', self.execution_timeout, workflow_config['defaultExecutionStartToCloseTimeout']),
-            ('decision_tasks_timout', self.decision_tasks_timeout, workflow_config['defaultTaskStartToCloseTimeout']),
-            ('description', self.description, workflow_info['description']),
+            ("name", self.name, workflow_info["workflowType"]["name"]),
+            ("version", self.version, workflow_info["workflowType"]["version"]),
+            ("status", self.status, workflow_info["status"]),
+            ("creation_date", self.creation_date, workflow_info["creationDate"]),
+            (
+                "deprecation_date",
+                self.deprecation_date,
+                workflow_info["deprecationDate"],
+            ),
+            ("task_list", self.task_list, workflow_config["defaultTaskList"]["name"]),
+            ("child_policy", self.child_policy, workflow_config["defaultChildPolicy"]),
+            (
+                "execution_timeout",
+                self.execution_timeout,
+                workflow_config["defaultExecutionStartToCloseTimeout"],
+            ),
+            (
+                "decision_tasks_timout",
+                self.decision_tasks_timeout,
+                workflow_config["defaultTaskStartToCloseTimeout"],
+            ),
+            ("description", self.description, workflow_info["description"]),
         )
 
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(WorkflowTypeDoesNotExist)
-    @exceptions.catch(SWFResponseError,
-                      raises(WorkflowTypeDoesNotExist,
-                             when=exceptions.is_unknown('WorkflowType'),
-                             extract=exceptions.extract_resource))
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            WorkflowTypeDoesNotExist,
+            when=exceptions.is_unknown("WorkflowType"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def exists(self):
         """Checks if the WorkflowType exists amazon-side
 
         :rtype: bool
         """
         self.connection.describe_workflow_type(
-            self.domain.name,
-            self.name,
-            self.version
+            self.domain.name, self.name, self.version
         )
         return True
 
@@ -197,30 +211,42 @@ class WorkflowType(BaseModel):
                 default_child_policy=str(self.child_policy),
                 default_execution_start_to_close_timeout=str(self.execution_timeout),
                 default_task_start_to_close_timeout=str(self.decision_tasks_timeout),
-                description=self.description
+                description=self.description,
             )
         except SWFTypeAlreadyExistsError:
-            raise AlreadyExistsError("Workflow type %s already exists amazon-side" % self.name)
+            raise AlreadyExistsError(
+                "Workflow type %s already exists amazon-side" % self.name
+            )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
-                raise DoesNotExistError(e.body['message'])
+            if e.error_code == "UnknownResourceFault":
+                raise DoesNotExistError(e.body["message"])
 
     def delete(self):
         """Deprecates the workflow type amazon-side"""
         try:
-            self.connection.deprecate_workflow_type(self.domain.name, self.name, self.version)
+            self.connection.deprecate_workflow_type(
+                self.domain.name, self.name, self.version
+            )
         except SWFResponseError as e:
-            if e.error_code in ['UnknownResourceFault', 'TypeDeprecatedFault']:
-                raise DoesNotExistError(e.body['message'])
+            if e.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
+                raise DoesNotExistError(e.body["message"])
 
     def upstream(self):
         from swf.querysets.workflow import WorkflowTypeQuerySet
+
         qs = WorkflowTypeQuerySet(self.domain)
         return qs.get(self.name, self.version)
 
-    def start_execution(self, workflow_id=None, task_list=None,
-                        child_policy=None, execution_timeout=None,
-                        input=None, tag_list=None, decision_tasks_timeout=None):
+    def start_execution(
+        self,
+        workflow_id=None,
+        task_list=None,
+        child_policy=None,
+        execution_timeout=None,
+        input=None,
+        tag_list=None,
+        decision_tasks_timeout=None,
+    ):
         """Starts a Workflow execution of current workflow type
 
         :param  workflow_id: The user defined identifier associated with the workflow execution
@@ -249,7 +275,7 @@ class WorkflowType(BaseModel):
                                         for this workflow execution
         :type   decision_tasks_timeout: String
         """
-        workflow_id = workflow_id or '%s-%s-%i' % (self.name, self.version, time.time())
+        workflow_id = workflow_id or "%s-%s-%i" % (self.name, self.version, time.time())
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
         if child_policy not in CHILD_POLICIES:
@@ -261,7 +287,9 @@ class WorkflowType(BaseModel):
 
         # checks
         if tag_list and len(tag_list) > 5:
-            raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
+            raise ValueError(
+                "You cannot have more than 5 tags in StartWorkflowExecution."
+            )
 
         run_id = self.connection.start_workflow_execution(
             self.domain.name,
@@ -274,17 +302,18 @@ class WorkflowType(BaseModel):
             input=format.input(input),
             tag_list=tag_list,
             task_start_to_close_timeout=decision_tasks_timeout,
-        )['runId']
+        )["runId"]
 
         return WorkflowExecution(self.domain, workflow_id, run_id=run_id)
 
     def __repr__(self):
-        return '<{} domain={} name={} version={} status={}>'.format(
+        return "<{} domain={} name={} version={} status={}>".format(
             self.__class__.__name__,
             self.domain.name,
             self.name,
             self.version,
-            self.status)
+            self.status,
+        )
 
 
 @immutable
@@ -316,6 +345,7 @@ class WorkflowExecution(BaseModel):
                    serialized json
     :type   input: dict
     """
+
     STATUS_OPEN = "OPEN"
     STATUS_CLOSED = "CLOSED"
 
@@ -326,44 +356,54 @@ class WorkflowExecution(BaseModel):
     CLOSE_STATUS_CONTINUED_AS_NEW = "CLOSE_STATUS_CONTINUED_AS_NEW"
     CLOSE_TIMED_OUT = "TIMED_OUT"
 
-    kind = 'execution'
+    kind = "execution"
 
     __slots__ = [
-        'domain',
-        'workflow_id',
-        'run_id',
-        'status',
-        'workflow_type',
-        'task_list',
-        'child_policy',
-        'close_status',
-        'execution_timeout',
-        'input',
-        'tag_list',
-        'decision_tasks_timeout',
-        'close_timestamp',
-        'start_timestamp',
-        'cancel_requested',
-        'latest_execution_context',
-        'latest_activity_task_timestamp',
-        'open_counts',
-        'parent',
+        "domain",
+        "workflow_id",
+        "run_id",
+        "status",
+        "workflow_type",
+        "task_list",
+        "child_policy",
+        "close_status",
+        "execution_timeout",
+        "input",
+        "tag_list",
+        "decision_tasks_timeout",
+        "close_timestamp",
+        "start_timestamp",
+        "cancel_requested",
+        "latest_execution_context",
+        "latest_activity_task_timestamp",
+        "open_counts",
+        "parent",
     ]
 
-    def __init__(self, domain, workflow_id, run_id=None,
-                 status=STATUS_OPEN, workflow_type=None,
-                 task_list=None, child_policy=None,
-                 close_status=None, execution_timeout=None,
-                 input=None, tag_list=None,
-                 decision_tasks_timeout=None,
-                 close_timestamp=None,
-                 start_timestamp=None,
-                 cancel_requested=None,
-                 latest_execution_context=None,
-                 latest_activity_task_timestamp=None,
-                 open_counts=None,
-                 parent=None,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        domain,
+        workflow_id,
+        run_id=None,
+        status=STATUS_OPEN,
+        workflow_type=None,
+        task_list=None,
+        child_policy=None,
+        close_status=None,
+        execution_timeout=None,
+        input=None,
+        tag_list=None,
+        decision_tasks_timeout=None,
+        close_timestamp=None,
+        start_timestamp=None,
+        cancel_requested=None,
+        latest_execution_context=None,
+        latest_activity_task_timestamp=None,
+        open_counts=None,
+        parent=None,
+        *args,
+        **kwargs
+    ):
         Domain.check(domain)
         self.domain = domain
         self.workflow_id = workflow_id
@@ -399,51 +439,64 @@ class WorkflowExecution(BaseModel):
         """
         try:
             description = self.connection.describe_workflow_execution(
-                self.domain.name,
-                self.run_id,
-                self.workflow_id
+                self.domain.name, self.run_id, self.workflow_id
             )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
-        execution_info = description['executionInfo']
-        execution_config = description['executionConfiguration']
+        execution_info = description["executionInfo"]
+        execution_config = description["executionConfiguration"]
 
         return ModelDiff(
-            ('workflow_id', self.workflow_id, execution_info['execution']['workflowId']),
-            ('run_id', self.run_id, execution_info['execution']['runId']),
-            ('status', self.status, execution_info['executionStatus']),
-            ('task_list', self.task_list, execution_config['taskList']['name']),
-            ('child_policy', self.child_policy, execution_config['childPolicy']),
-            ('execution_timeout', self.execution_timeout, execution_config['executionStartToCloseTimeout']),
-            ('tag_list', self.tag_list, execution_info.get('tagList')),
-            ('decision_tasks_timeout', self.decision_tasks_timeout, execution_config['taskStartToCloseTimeout']),
+            (
+                "workflow_id",
+                self.workflow_id,
+                execution_info["execution"]["workflowId"],
+            ),
+            ("run_id", self.run_id, execution_info["execution"]["runId"]),
+            ("status", self.status, execution_info["executionStatus"]),
+            ("task_list", self.task_list, execution_config["taskList"]["name"]),
+            ("child_policy", self.child_policy, execution_config["childPolicy"]),
+            (
+                "execution_timeout",
+                self.execution_timeout,
+                execution_config["executionStartToCloseTimeout"],
+            ),
+            ("tag_list", self.tag_list, execution_info.get("tagList")),
+            (
+                "decision_tasks_timeout",
+                self.decision_tasks_timeout,
+                execution_config["taskStartToCloseTimeout"],
+            ),
         )
 
     @property
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.is_not(WorkflowExecutionDoesNotExist)
-    @exceptions.catch(SWFResponseError,
-                      raises(WorkflowExecutionDoesNotExist,
-                             when=exceptions.is_unknown('WorkflowExecution'),
-                             extract=exceptions.extract_resource))
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            WorkflowExecutionDoesNotExist,
+            when=exceptions.is_unknown("WorkflowExecution"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def exists(self):
         """Checks if the WorkflowExecution exists amazon-side
 
         :rtype: bool
         """
         self.connection.describe_workflow_execution(
-            self.domain.name,
-            self.run_id,
-            self.workflow_id
+            self.domain.name, self.run_id, self.workflow_id
         )
         return True
 
     def upstream(self):
         from swf.querysets.workflow import WorkflowExecutionQuerySet
+
         qs = WorkflowExecutionQuerySet(self.domain)
         return qs.get(self.workflow_id, self.run_id)
 
@@ -453,19 +506,16 @@ class WorkflowExecution(BaseModel):
         :returns: The workflow execution complete events history
         :rtype: swf.models.event.History
         """
-        domain = kwargs.pop('domain', self.domain)
+        domain = kwargs.pop("domain", self.domain)
         if not isinstance(domain, compat.basestring):
             domain = domain.name
 
         response = self.connection.get_workflow_execution_history(
-            domain,
-            self.run_id,
-            self.workflow_id,
-            **kwargs
+            domain, self.run_id, self.workflow_id, **kwargs
         )
 
-        events = response['events']
-        next_page = response.get('nextPageToken')
+        events = response["events"]
+        next_page = response.get("nextPageToken")
         while next_page is not None:
             response = self.connection.get_workflow_execution_history(
                 domain,
@@ -475,18 +525,23 @@ class WorkflowExecution(BaseModel):
                 **kwargs
             )
 
-            events.extend(response['events'])
-            next_page = response.get('nextPageToken')
+            events.extend(response["events"])
+            next_page = response.get("nextPageToken")
 
         return History.from_event_list(events)
 
-    @exceptions.translate(SWFResponseError,
-                          to=ResponseError)
-    @exceptions.catch(SWFResponseError,
-                      raises(WorkflowExecutionDoesNotExist,
-                             when=exceptions.is_unknown('WorkflowExecution'),
-                             extract=exceptions.extract_resource))
-    def signal(self, signal_name, input=None, workflow_id=None, run_id=None, *args, **kwargs):
+    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            WorkflowExecutionDoesNotExist,
+            when=exceptions.is_unknown("WorkflowExecution"),
+            extract=exceptions.extract_resource,
+        ),
+    )
+    def signal(
+        self, signal_name, input=None, workflow_id=None, run_id=None, *args, **kwargs
+    ):
         """Records a signal event in the workflow execution history and
         creates a decision task.
 
@@ -517,25 +572,30 @@ class WorkflowExecution(BaseModel):
             run_id=run_id if workflow_id else self.run_id,
         )
 
-    @exceptions.translate(SWFResponseError,
-                          to=ResponseError)
-    @exceptions.catch(SWFResponseError,
-                      raises(WorkflowExecutionDoesNotExist,
-                             when=exceptions.is_unknown('domain'),
-                             extract=exceptions.extract_resource))
+    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            WorkflowExecutionDoesNotExist,
+            when=exceptions.is_unknown("domain"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def request_cancel(self, *args, **kwargs):
         """Requests the workflow execution cancel"""
         self.connection.request_cancel_workflow_execution(
-            self.domain.name,
-            self.workflow_id,
-            run_id=self.run_id)
+            self.domain.name, self.workflow_id, run_id=self.run_id
+        )
 
-    @exceptions.translate(SWFResponseError,
-                          to=ResponseError)
-    @exceptions.catch(SWFResponseError,
-                      raises(WorkflowExecutionDoesNotExist,
-                             when=exceptions.is_unknown('domain'),
-                             extract=exceptions.extract_resource))
+    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            WorkflowExecutionDoesNotExist,
+            when=exceptions.is_unknown("domain"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def terminate(self, child_policy=None, details=None, reason=None):
         """Terminates the workflow execution"""
         self.connection.terminate_workflow_execution(

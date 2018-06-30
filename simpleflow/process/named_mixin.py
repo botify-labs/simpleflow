@@ -13,16 +13,21 @@ def with_state(state):
     :param state: new state
     :type  state: str
     """
+
     def wrapper(method):
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
-            logger.debug("entering state {}: {}(args={}, kwargs={})".format(
-                state, method.__name__, args, kwargs))
+            logger.debug(
+                "entering state {}: {}(args={}, kwargs={})".format(
+                    state, method.__name__, args, kwargs
+                )
+            )
             self.state = state
             return method(self, *args, **kwargs)
 
         wrapped.__wrapped__ = method
         return wrapped
+
     return wrapper
 
 
@@ -47,6 +52,7 @@ class NamedMixin(object):
         simpleflow YourClass(task_list=<value>)[running]
 
     """
+
     def __init__(self, *args, **kwargs):
         self.state = kwargs.get("state", "initializing")
 

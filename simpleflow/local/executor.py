@@ -3,11 +3,7 @@ import logging
 import sys
 import traceback
 
-from simpleflow import (
-    exceptions,
-    executor,
-    futures,
-)
+from simpleflow import exceptions, executor, futures
 from simpleflow.base import Submittable
 from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
@@ -43,19 +39,16 @@ class Executor(executor.Executor):
         the metrology feature works correctly.
         """
         cls = self._workflow_class
-        for attr in ("decision_tasks_timeout", "execution_timeout", ):
+        for attr in ("decision_tasks_timeout", "execution_timeout"):
             if not hasattr(cls, attr):
                 setattr(cls, attr, None)
         return cls
 
     def initialize_history(self, input):
-        self._history = builder.History(
-            self._workflow_class,
-            input=input)
+        self._history = builder.History(self._workflow_class, input=input)
 
     def submit(self, func, *args, **kwargs):
-        logger.info('executing task {}(args={}, kwargs={})'.format(
-            func, args, kwargs))
+        logger.info("executing task {}(args={}, kwargs={})".format(func, args, kwargs))
 
         future = futures.Future()
 
@@ -70,49 +63,50 @@ class Executor(executor.Executor):
             signal_name = func.signal_name
             if signal_name not in self.signals_sent:
                 raise NotImplementedError(
-                    'wait_signal({}) before signal was sent: unsupported by the local executor'.format(signal_name)
+                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(
+                        signal_name
+                    )
                 )
         elif isinstance(func, MarkerTask):
-            self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))
+            self._markers.setdefault(func.name, []).append(
+                Marker(func.name, func.details)
+            )
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
             task.context = context
-            func = getattr(task, 'activity', None)
+            func = getattr(task, "activity", None)
         elif isinstance(func, Activity):
             task = ActivityTask(func, context=context, *args, **kwargs)
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)
         else:
-            raise TypeError('invalid type {} for {}'.format(
-                type(func), func))
+            raise TypeError("invalid type {} for {}".format(type(func), func))
 
         try:
             future._result = task.execute()
-            if hasattr(task, 'post_execute'):
+            if hasattr(task, "post_execute"):
                 task.post_execute()
-            state = 'completed'
+            state = "completed"
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             future._exception = exc_value
-            logger.exception('rescuing exception: {}'.format(exc_value))
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
+            logger.exception("rescuing exception: {}".format(exc_value))
+            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(
+                func, "raises_on_failure", None
+            ):
                 tb = traceback.format_tb(exc_traceback)
                 message = format_exc(exc_value)
                 details = json_dumps(
                     {
-                        'error': exc_type.__name__,
-                        'message': str(exc_value),
-                        'traceback': tb,
+                        "error": exc_type.__name__,
+                        "message": str(exc_value),
+                        "traceback": tb,
                     },
-                    default=repr
+                    default=repr,
                 )
-                raise exceptions.TaskFailed(
-                    func.name,
-                    message,
-                    details,
-                )
-            state = 'failed'
+                raise exceptions.TaskFailed(func.name, message, details)
+            state = "failed"
         finally:
             future._state = futures.FINISHED
 
@@ -122,15 +116,16 @@ class Executor(executor.Executor):
                 decision_id=None,
                 last_state=state,
                 activity_id=context["activity_id"],
-                input={'args': args, 'kwargs': kwargs},
-                result=future.result)
+                input={"args": args, "kwargs": kwargs},
+                result=future.result,
+            )
         return future
 
     def run(self, input=None):
         if input is None:
             input = {}
-        args = input.get('args', ())
-        kwargs = input.get('kwargs', {})
+        args = input.get("args", ())
+        kwargs = input.get("kwargs", {})
         self.create_workflow()
 
         self.initialize_history(input)
@@ -156,7 +151,7 @@ class Executor(executor.Executor):
             "version": "1.0",
             "run_id": "local",
             "workflow_id": "local",
-            "tag_list": []
+            "tag_list": [],
         }
 
     def signal(self, name, *args, **kwargs):

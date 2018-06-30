@@ -98,7 +98,7 @@ class Supervisor(NamedMixin):
         Used to start the Supervisor process once it's configured. Has to be called
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
         """
-        logger.info('starting {}'.format(self._payload))
+        logger.info("starting {}".format(self._payload))
         if self._background:
             p = multiprocessing.Process(target=self.target)
             p.start()
@@ -113,7 +113,9 @@ class Supervisor(NamedMixin):
                 name, status = child.name(), child.status()
             except psutil.NoSuchProcess:  # May be untimely deceased
                 name, status = "unknown", "unknown"
-            logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
+            logger.debug(
+                "  child: name=%s pid=%d status=%s" % (name, child.pid, status)
+            )
             if status in (psutil.STATUS_ZOMBIE, "unknown"):
                 logger.debug("  process {} is zombie, will cleanup".format(child.pid))
                 # join process to clean it up
@@ -134,8 +136,7 @@ class Supervisor(NamedMixin):
             return
         for _ in range(len(self._processes), self._nb_children):
             child = multiprocessing.Process(
-                target=reset_signal_handlers(self._payload),
-                args=self._args
+                target=reset_signal_handlers(self._payload), args=self._args
             )
             child.start()
 
@@ -158,7 +159,9 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception("Child processes map is not empty, already called .start() ?")
+            raise Exception(
+                "Child processes map is not empty, already called .start() ?"
+            )
 
         # wait for all processes to finish
         while True:
@@ -166,7 +169,9 @@ class Supervisor(NamedMixin):
             # the supervisor process
             if self._terminating:
                 for proc in self._processes.values():
-                    logger.info("process: waiting for proces={} to finish.".format(proc))
+                    logger.info(
+                        "process: waiting for proces={} to finish.".format(proc)
+                    )
                     proc.wait()
                 break
 
@@ -195,8 +200,11 @@ class Supervisor(NamedMixin):
         def _handle_graceful_shutdown(signum, frame):
             signals_map = {2: "SIGINT", 15: "SIGTERM"}
             signal_name = signals_map.get(signum, signum)
-            logger.info("process: caught signal signal={} pid={}".format(
-                signal_name, os.getpid()))
+            logger.info(
+                "process: caught signal signal={} pid={}".format(
+                    signal_name, os.getpid()
+                )
+            )
             self.terminate()
 
         # bind SIGTERM and SIGINT
@@ -233,4 +241,4 @@ class Supervisor(NamedMixin):
             return "{}.{}".format(instance.__class__.__name__, payload.__name__)
         elif isinstance(payload, types.FunctionType):
             return payload.__name__
-        raise TypeError('invalid payload type {}'.format(type(payload)))
+        raise TypeError("invalid payload type {}".format(type(payload)))

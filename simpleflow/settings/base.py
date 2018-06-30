@@ -10,16 +10,13 @@ class Setting(object):
 
 
 def is_definition(var):
-    if var.startswith('_'):
+    if var.startswith("_"):
         return False
     return all(c.isupper() for c in var if c.isalpha())
 
 
 def get_settings(module):
-    return {
-        var: getattr(module, var) for var in dir(module) if
-        is_definition(var)
-    }
+    return {var: getattr(module, var) for var in dir(module) if is_definition(var)}
 
 
 def load_settings(module, env, conf, defaults):
@@ -41,18 +38,13 @@ def load(conf_module_name=None):
     import os
 
     env = os.environ
-    conf_module_name = conf_module_name or env.get('SIMPLEFLOW_SETTINGS_MODULE')
+    conf_module_name = conf_module_name or env.get("SIMPLEFLOW_SETTINGS_MODULE")
     if conf_module_name:
-        conf = __import__(conf_module_name, fromlist=['*'])
+        conf = __import__(conf_module_name, fromlist=["*"])
     else:
         conf = None
 
-    return load_settings(
-        sys.modules[__name__],
-        env,
-        conf,
-        default,
-    )
+    return load_settings(sys.modules[__name__], env, conf, default)
 
 
 def str_or_none(val):

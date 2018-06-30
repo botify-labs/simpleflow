@@ -10,7 +10,7 @@ from swf.models.decision.base import Decision, decision_action
 
 
 class ActivityTaskDecision(Decision):
-    _base_type = 'ActivityTask'
+    _base_type = "ActivityTask"
 
     @decision_action
     def request_cancel(self, activity_id):
@@ -19,16 +19,22 @@ class ActivityTaskDecision(Decision):
         :param  activity_id: activity task to be canceled id
         :type   activity_id: str
         """
-        self.update_attributes({
-            'activityId': activity_id,
-        })
+        self.update_attributes({"activityId": activity_id})
 
     @decision_action
-    def schedule(self, activity_id, activity_type,
-                 control=None, heartbeat_timeout=None,
-                 input=None, duration_timeout=None,
-                 schedule_timeout=None, task_timeout=None,
-                 task_list=None, task_priority=None):
+    def schedule(
+        self,
+        activity_id,
+        activity_type,
+        control=None,
+        heartbeat_timeout=None,
+        input=None,
+        duration_timeout=None,
+        schedule_timeout=None,
+        task_timeout=None,
+        task_list=None,
+        task_priority=None,
+    ):
         """Schedule activity task decision builder
 
         :param  activity_id: activity id of the activity task
@@ -72,18 +78,20 @@ class ActivityTaskDecision(Decision):
             # is passed to this function.
             task_priority = str(int(task_priority))
 
-        self.update_attributes({
-            'activityId': activity_id,
-            'activityType': {
-                'name': activity_type.name,
-                'version': activity_type.version,
-            },
-            'control': control,
-            'heartbeatTimeout': heartbeat_timeout,
-            'input': input,
-            'scheduleToCloseTimeout': duration_timeout,
-            'scheduleToStartTimeout': schedule_timeout,
-            'startToCloseTimeout': task_timeout,
-            'taskList': {'name': task_list},
-            'taskPriority': task_priority,
-        })
+        self.update_attributes(
+            {
+                "activityId": activity_id,
+                "activityType": {
+                    "name": activity_type.name,
+                    "version": activity_type.version,
+                },
+                "control": control,
+                "heartbeatTimeout": heartbeat_timeout,
+                "input": input,
+                "scheduleToCloseTimeout": duration_timeout,
+                "scheduleToStartTimeout": schedule_timeout,
+                "startToCloseTimeout": task_timeout,
+                "taskList": {"name": task_list},
+                "taskPriority": task_priority,
+            }
+        )

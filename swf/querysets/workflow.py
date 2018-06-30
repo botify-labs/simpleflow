@@ -10,11 +10,14 @@ from boto.swf.exceptions import SWFResponseError
 from swf.constants import REGISTERED, MAX_WORKFLOW_AGE
 from swf.querysets.base import BaseQuerySet
 from swf.models import Domain
-from swf.models.workflow import (WorkflowType, WorkflowExecution,
-                                 CHILD_POLICIES)
+from swf.models.workflow import WorkflowType, WorkflowExecution, CHILD_POLICIES
 from swf.utils import datetime_timestamp, past_day, get_subkey
-from swf.exceptions import (ResponseError, DoesNotExistError,
-                            InvalidKeywordArgumentError, AlreadyExistsError)
+from swf.exceptions import (
+    ResponseError,
+    DoesNotExistError,
+    InvalidKeywordArgumentError,
+    AlreadyExistsError,
+)
 
 # noinspection PyUnreachableCode
 if False:
@@ -31,10 +34,11 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     :param      domain: domain the inheriting queryset belongs to
     :type       domain: swf.model.domain.Domain
     """
+
     # Amazon response section corresponding
     # to current queryset informations
-    _infos = 'typeInfo'
-    _infos_plural = 'typeInfos'
+    _infos = "typeInfo"
+    _infos_plural = "typeInfos"
 
     def __init__(self, domain, *args, **kwargs):
         super(BaseWorkflowQuerySet, self).__init__(*args, **kwargs)
@@ -50,10 +54,13 @@ class BaseWorkflowQuerySet(BaseQuerySet):
 
     @domain.setter
     def domain(self, value):
-        if not isinstance(value, Domain):  # FIXME: justify why not using Domain.check(value)
-            err = "domain property has to be of" \
-                  "swf.model.domain.Domain type, not %r" \
-                  % type(value)
+        if not isinstance(
+            value, Domain
+        ):  # FIXME: justify why not using Domain.check(value)
+            err = (
+                "domain property has to be of"
+                "swf.model.domain.Domain type, not %r" % type(value)
+            )
             raise TypeError(err)
         self._domain = value
 
@@ -61,12 +68,10 @@ class BaseWorkflowQuerySet(BaseQuerySet):
         raise NotImplementedError
 
     def _list_items(self, *args, **kwargs):
-        response = {'nextPageToken': None}
-        while 'nextPageToken' in response:
+        response = {"nextPageToken": None}
+        while "nextPageToken" in response:
             response = self._list(
-                *args,
-                next_page_token=response['nextPageToken'],
-                **kwargs
+                *args, next_page_token=response["nextPageToken"], **kwargs
             )
 
             for item in response[self._infos_plural]:
@@ -75,17 +80,17 @@ class BaseWorkflowQuerySet(BaseQuerySet):
 
 class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     # Explicit is better than implicit, keep zen
-    _infos = 'typeInfo'
-    _infos_plural = 'typeInfos'
+    _infos = "typeInfo"
+    _infos_plural = "typeInfos"
 
     def to_WorkflowType(self, domain, workflow_info, **kwargs):
         # Not using get_subkey in order for it to explictly
         # raise when workflowType name doesn't exist for example
         return WorkflowType(
             domain,
-            workflow_info['workflowType']['name'],
-            workflow_info['workflowType']['version'],
-            status=workflow_info['status'],
+            workflow_info["workflowType"]["name"],
+            workflow_info["workflowType"]["version"],
+            status=workflow_info["status"],
             **kwargs
         )
 
@@ -125,38 +130,37 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             }
         """
         try:
-            response = self.connection.describe_workflow_type(self.domain.name, name, version)
+            response = self.connection.describe_workflow_type(
+                self.domain.name, name, version
+            )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
-                raise DoesNotExistError(e.body['message'])
+            if e.error_code == "UnknownResourceFault":
+                raise DoesNotExistError(e.body["message"])
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
         wt_info = response[self._infos]
-        wt_config = response['configuration']
+        wt_config = response["configuration"]
 
-        task_list = kwargs.get('task_list')
+        task_list = kwargs.get("task_list")
         if task_list is None:
-            task_list = get_subkey(wt_config, ['defaultTaskList', 'name'])
+            task_list = get_subkey(wt_config, ["defaultTaskList", "name"])
 
-        child_policy = kwargs.get('child_policy')
+        child_policy = kwargs.get("child_policy")
         if child_policy is None:
-            child_policy = wt_config.get('defaultChildPolicy')
+            child_policy = wt_config.get("defaultChildPolicy")
 
-        decision_task_timeout = kwargs.get('decision_task_timeout')
+        decision_task_timeout = kwargs.get("decision_task_timeout")
         if decision_task_timeout is None:
-            decision_task_timeout = wt_config.get(
-                'defaultTaskStartToCloseTimeout')
+            decision_task_timeout = wt_config.get("defaultTaskStartToCloseTimeout")
 
-        execution_timeout = kwargs.get('execution_timeout')
+        execution_timeout = kwargs.get("execution_timeout")
         if execution_timeout is None:
-            execution_timeout = wt_config.get(
-                'defaultExecutionStartToCloseTimeout')
+            execution_timeout = wt_config.get("defaultExecutionStartToCloseTimeout")
 
-        decision_tasks_timeout = kwargs.get('decision_tasks_timeout')
+        decision_tasks_timeout = kwargs.get("decision_tasks_timeout")
         if decision_tasks_timeout is None:
-            decision_tasks_timeout = wt_config.get(
-                'defaultTaskStartToCloseTimeout')
+            decision_tasks_timeout = wt_config.get("defaultTaskStartToCloseTimeout")
 
         return self.to_WorkflowType(
             self.domain,
@@ -167,16 +171,21 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             decision_tasks_timeout=decision_tasks_timeout,
         )
 
-    def get_or_create(self, name, version,
-                      status=REGISTERED,
-                      creation_date=0.0,
-                      deprecation_date=0.0,
-                      task_list=None,
-                      child_policy=CHILD_POLICIES.TERMINATE,
-                      execution_timeout='300',
-                      decision_tasks_timeout='300',
-                      description=None,
-                      *args, **kwargs):
+    def get_or_create(
+        self,
+        name,
+        version,
+        status=REGISTERED,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        child_policy=CHILD_POLICIES.TERMINATE,
+        execution_timeout="300",
+        decision_tasks_timeout="300",
+        description=None,
+        *args,
+        **kwargs
+    ):
         """Fetches, or creates the WorkflowType with ``name`` and ``version``
 
         When fetching trying to fetch a matching workflow type, only
@@ -222,12 +231,14 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         :rtype: WorkflowType
         """
         try:
-            return self.get(name,
-                            version,
-                            task_list=task_list,
-                            child_policy=child_policy,
-                            execution_timeout=execution_timeout,
-                            decision_tasks_timeout=decision_tasks_timeout)
+            return self.get(
+                name,
+                version,
+                task_list=task_list,
+                child_policy=child_policy,
+                execution_timeout=execution_timeout,
+                decision_tasks_timeout=decision_tasks_timeout,
+            )
 
         except DoesNotExistError:
             try:
@@ -245,20 +256,21 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                 )
             # race condition could happen if two workflows trying to register the same type
             except AlreadyExistsError:
-                return self.get(name,
-                                version,
-                                task_list=task_list,
-                                child_policy=child_policy,
-                                execution_timeout=execution_timeout,
-                                decision_tasks_timeout=decision_tasks_timeout)
+                return self.get(
+                    name,
+                    version,
+                    task_list=task_list,
+                    child_policy=child_policy,
+                    execution_timeout=execution_timeout,
+                    decision_tasks_timeout=decision_tasks_timeout,
+                )
 
     def _list(self, *args, **kwargs):
         return self.connection.list_workflow_types(*args, **kwargs)
 
-    def filter(self, domain=None,
-               registration_status=REGISTERED,
-               name=None,
-               *args, **kwargs):
+    def filter(
+        self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs
+    ):
         """Filters workflows based on the ``domain`` they belong to,
         their ``status``, and/or their ``name``
 
@@ -281,8 +293,10 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         # As WorkflowTypeQuery has to be built against a specific domain
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
-        return [self.to_WorkflowType(domain, wf) for wf in
-                self._list_items(domain.name, registration_status, name=name)]
+        return [
+            self.to_WorkflowType(domain, wf)
+            for wf in self._list_items(domain.name, registration_status, name=name)
+        ]
 
     def all(self, registration_status=REGISTERED, *args, **kwargs):
         """Retrieves every Workflow types
@@ -322,16 +336,21 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         """
         return self.filter(registration_status=registration_status)
 
-    def create(self, name, version,
-               status=REGISTERED,
-               creation_date=0.0,
-               deprecation_date=0.0,
-               task_list=None,
-               child_policy=CHILD_POLICIES.TERMINATE,
-               execution_timeout='300',
-               decision_tasks_timeout='300',
-               description=None,
-               *args, **kwargs):
+    def create(
+        self,
+        name,
+        version,
+        status=REGISTERED,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        child_policy=CHILD_POLICIES.TERMINATE,
+        execution_timeout="300",
+        decision_tasks_timeout="300",
+        description=None,
+        *args,
+        **kwargs
+    ):
         """Creates a new remote workflow type and returns the
         created WorkflowType model instance.
 
@@ -380,7 +399,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             child_policy=child_policy,
             execution_timeout=execution_timeout,
             decision_tasks_timeout=decision_tasks_timeout,
-            description=description
+            description=description,
         )
         workflow_type.save()
 
@@ -390,75 +409,70 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
 class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
     """Fetches Workflow executions"""
 
-    _infos = 'executionInfo'
-    _infos_plural = 'executionInfos'
+    _infos = "executionInfo"
+    _infos_plural = "executionInfos"
 
     def _is_valid_status_param(self, status, param):
         statuses = {
-            WorkflowExecution.STATUS_OPEN: {
-                'oldest_date',
-                'latest_date'
-            },
+            WorkflowExecution.STATUS_OPEN: {"oldest_date", "latest_date"},
             WorkflowExecution.STATUS_CLOSED: {
-                'start_latest_date',
-                'start_oldest_date',
-                'close_latest_date',
-                'close_oldest_date',
-                'close_status'
+                "start_latest_date",
+                "start_oldest_date",
+                "close_latest_date",
+                "close_oldest_date",
+                "close_status",
             },
         }
         return param in statuses.get(status, set())
 
     def _validate_status_parameters(self, status, params):
-        return [param for param in params if
-                not self._is_valid_status_param(status, param)]
+        return [
+            param for param in params if not self._is_valid_status_param(status, param)
+        ]
 
     def list_workflow_executions(self, status, *args, **kwargs):
         statuses = {
-            WorkflowExecution.STATUS_OPEN: 'open',
-            WorkflowExecution.STATUS_CLOSED: 'closed',
+            WorkflowExecution.STATUS_OPEN: "open",
+            WorkflowExecution.STATUS_CLOSED: "closed",
         }
 
         # boto.swf.list_closed_workflow_executions awaits a `start_oldest_date`
         # MANDATORY kwarg, when boto.swf.list_open_workflow_executions awaits a
         # `oldest_date` mandatory arg.
         if status == WorkflowExecution.STATUS_OPEN:
-            kwargs['oldest_date'] = kwargs.pop('start_oldest_date')
+            kwargs["oldest_date"] = kwargs.pop("start_oldest_date")
 
         try:
-            method = 'list_{}_workflow_executions'.format(statuses[status])
+            method = "list_{}_workflow_executions".format(statuses[status])
             return getattr(self.connection, method)(*args, **kwargs)
         except KeyError:
             raise ValueError("Unknown status provided: %s" % status)
 
     def get_workflow_type(self, execution_info):
-        workflow_type = execution_info['workflowType']
+        workflow_type = execution_info["workflowType"]
         workflow_type_qs = WorkflowTypeQuerySet(self.domain)
 
-        return workflow_type_qs.get(
-            workflow_type['name'],
-            workflow_type['version'],
-        )
+        return workflow_type_qs.get(workflow_type["name"], workflow_type["version"])
 
     def to_workflow_execution(self, domain, execution_info, **kwargs):
         workflow_type = WorkflowType(
             self.domain,
-            execution_info['workflowType']['name'],
-            execution_info['workflowType']['version']
+            execution_info["workflowType"]["name"],
+            execution_info["workflowType"]["version"],
         )
 
         return WorkflowExecution(
             domain,
-            get_subkey(execution_info, ['execution', 'workflowId']),  # workflow_id
-            run_id=get_subkey(execution_info, ['execution', 'runId']),
+            get_subkey(execution_info, ["execution", "workflowId"]),  # workflow_id
+            run_id=get_subkey(execution_info, ["execution", "runId"]),
             workflow_type=workflow_type,
-            status=execution_info.get('executionStatus'),
-            close_status=execution_info.get('closeStatus'),
-            tag_list=execution_info.get('tagList'),
-            start_timestamp=execution_info.get('startTimestamp'),
-            close_timestamp=execution_info.get('closeTimestamp'),
-            cancel_requested=execution_info.get('cancelRequested'),
-            parent=execution_info.get('parent'),
+            status=execution_info.get("executionStatus"),
+            close_status=execution_info.get("closeStatus"),
+            tag_list=execution_info.get("tagList"),
+            start_timestamp=execution_info.get("startTimestamp"),
+            close_timestamp=execution_info.get("closeTimestamp"),
+            cancel_requested=execution_info.get("cancelRequested"),
+            parent=execution_info.get("parent"),
             **kwargs
         )
 
@@ -466,35 +480,39 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         """ """
         try:
             response = self.connection.describe_workflow_execution(
-                self.domain.name,
-                run_id,
-                workflow_id)
+                self.domain.name, run_id, workflow_id
+            )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
-                raise DoesNotExistError(e.body['message'])
+            if e.error_code == "UnknownResourceFault":
+                raise DoesNotExistError(e.body["message"])
 
-            raise ResponseError(e.body['message'])
+            raise ResponseError(e.body["message"])
 
         execution_info = response[self._infos]
-        execution_config = response['executionConfiguration']
+        execution_config = response["executionConfiguration"]
 
         return self.to_workflow_execution(
             self.domain,
             execution_info,
-            task_list=get_subkey(execution_config, ['taskList', 'name']),
-            child_policy=execution_config.get('childPolicy'),
-            execution_timeout=execution_config.get('executionStartToCloseTimeout'),
-            decision_tasks_timeout=execution_config.get('taskStartToCloseTimeout'),
-            latest_activity_task_timestamp=response.get('latestActivityTaskTimestamp'),
-            latest_execution_context=response.get('latestExecutionContext'),
-            open_counts=response['openCounts'],
+            task_list=get_subkey(execution_config, ["taskList", "name"]),
+            child_policy=execution_config.get("childPolicy"),
+            execution_timeout=execution_config.get("executionStartToCloseTimeout"),
+            decision_tasks_timeout=execution_config.get("taskStartToCloseTimeout"),
+            latest_activity_task_timestamp=response.get("latestActivityTaskTimestamp"),
+            latest_execution_context=response.get("latestExecutionContext"),
+            open_counts=response["openCounts"],
         )
 
-    def filter(self,
-               status=WorkflowExecution.STATUS_OPEN, tag=None,
-               workflow_id=None, workflow_type_name=None,
-               workflow_type_version=None,
-               *args, **kwargs):
+    def filter(
+        self,
+        status=WorkflowExecution.STATUS_OPEN,
+        tag=None,
+        workflow_id=None,
+        workflow_type_name=None,
+        workflow_type_version=None,
+        *args,
+        **kwargs
+    ):
         """Filters workflow executions based on kwargs provided criteras
 
         :param  status: workflow executions with provided status will be kept.
@@ -562,12 +580,13 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         invalid_kwargs = self._validate_status_parameters(status, kwargs)
 
         if invalid_kwargs:
-            err_msg = 'Invalid keyword arguments supplied: {}'.format(
-                ', '.join(invalid_kwargs))
+            err_msg = "Invalid keyword arguments supplied: {}".format(
+                ", ".join(invalid_kwargs)
+            )
             raise InvalidKeywordArgumentError(err_msg)
 
         if status == WorkflowExecution.STATUS_OPEN:
-            oldest_date = kwargs.pop('oldest_date', MAX_WORKFLOW_AGE)
+            oldest_date = kwargs.pop("oldest_date", MAX_WORKFLOW_AGE)
         else:
             # The SWF docs on ListClosedWorkflowExecutions state that:
             #
@@ -579,7 +598,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
                 default_oldest_date = None
             else:
                 default_oldest_date = MAX_WORKFLOW_AGE
-            oldest_date = kwargs.pop('start_oldest_date', default_oldest_date)
+            oldest_date = kwargs.pop("start_oldest_date", default_oldest_date)
 
         # Compute a timestamp from the delta in days we got from params
         # If oldest_date is blank at this point, it's because we didn't want
@@ -590,25 +609,31 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         else:
             start_oldest_date = None
 
-        return [self.to_workflow_execution(self.domain, wfe) for wfe in
-                self._list_items(
-                    *args,
-                    domain=self.domain.name,
-                    status=status,
-                    workflow_id=workflow_id,
-                    workflow_name=workflow_type_name,
-                    workflow_version=workflow_type_version,
-                    start_oldest_date=start_oldest_date,
-                    tag=tag,
-                    **kwargs
-                )]
+        return [
+            self.to_workflow_execution(self.domain, wfe)
+            for wfe in self._list_items(
+                *args,
+                domain=self.domain.name,
+                status=status,
+                workflow_id=workflow_id,
+                workflow_name=workflow_type_name,
+                workflow_version=workflow_type_version,
+                start_oldest_date=start_oldest_date,
+                tag=tag,
+                **kwargs
+            )
+        ]
 
     def _list(self, *args, **kwargs):
         return self.list_workflow_executions(*args, **kwargs)
 
-    def all(self, status=WorkflowExecution.STATUS_OPEN,
-            start_oldest_date=MAX_WORKFLOW_AGE,
-            *args, **kwargs):
+    def all(
+        self,
+        status=WorkflowExecution.STATUS_OPEN,
+        start_oldest_date=MAX_WORKFLOW_AGE,
+        *args,
+        **kwargs
+    ):
         """Fetch every workflow executions during the last `start_oldest_date`
         days, with `status`
 
@@ -655,8 +680,9 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         """
         start_oldest_date = datetime_timestamp(past_day(start_oldest_date))
 
-        return [self.to_workflow_execution(self.domain, wfe) for wfe
-                in self._list_items(
-                status,
-                self.domain.name,
-                start_oldest_date=int(start_oldest_date))]
+        return [
+            self.to_workflow_execution(self.domain, wfe)
+            for wfe in self._list_items(
+                status, self.domain.name, start_oldest_date=int(start_oldest_date)
+            )
+        ]

@@ -7,6 +7,7 @@ class TaskException(Exception):
     Wrap an exception raised by a task.
 
     """
+
     def __init__(self, task, exception):
         """
         :param exception: raised by a task.
@@ -21,10 +22,8 @@ class TaskException(Exception):
         return self.task
 
     def __repr__(self):
-        return '{}(task={}, exception={})'.format(
-            self.__class__.__name__,
-            self.task,
-            self.exception,
+        return "{}(task={}, exception={})".format(
+            self.__class__.__name__, self.task, self.exception
         )
 
 
@@ -33,6 +32,7 @@ class WorkflowException(Exception):
     Wrap an exception raised by a workflow.
 
     """
+
     def __init__(self, workflow, exception):
         """
         :param exception: raised by a workflow.
@@ -47,10 +47,8 @@ class WorkflowException(Exception):
         return self.workflow
 
     def __repr__(self):
-        return '{}(workflow={}, exception={})'.format(
-            self.__class__.__name__,
-            self.workflow,
-            self.exception,
+        return "{}(workflow={}, exception={})".format(
+            self.__class__.__name__, self.workflow, self.exception
         )
 
 
@@ -66,6 +64,7 @@ class TaskFailed(Exception):
     :type  details: str.
 
     """
+
     def __init__(self, name, reason, details=None):
         # NB: this is late imported else we have a circular dependency that's hard to fix
         from simpleflow.format import decode
@@ -77,22 +76,16 @@ class TaskFailed(Exception):
         super(TaskFailed, self).__init__(name, self.reason, self.details)
 
     def __repr__(self):
-        return '{} ({}, "{}")'.format(
-            self.__class__.__name__,
-            self.name,
-            self.reason,
-        )
+        return '{} ({}, "{}")'.format(self.__class__.__name__, self.name, self.reason)
 
 
 class TimeoutError(Exception):
-    def __init__(self, timeout_type='unknown timeout', timeout_value=None):
+    def __init__(self, timeout_type="unknown timeout", timeout_value=None):
         self.timeout_type = timeout_type
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__,
-            self.timeout_type)
+        return "{}({})".format(self.__class__.__name__, self.timeout_type)
 
 
 class TaskCanceled(Exception):
@@ -100,9 +93,11 @@ class TaskCanceled(Exception):
         self.details = details
 
     def __repr__(self):
-        if self.details is None:  # same repr in python 2 and 3, because test :roll_eyes:
-            return '{}()'.format(self.__class__.__name__)
-        return '{}({})'.format(self.__class__.__name__, self.details)
+        if (
+            self.details is None
+        ):  # same repr in python 2 and 3, because test :roll_eyes:
+            return "{}()".format(self.__class__.__name__)
+        return "{}({})".format(self.__class__.__name__, self.details)
 
 
 class TaskTerminated(Exception):
@@ -115,6 +110,7 @@ class AggregateException(Exception):
 
     :type exceptions: list[Exception]
     """
+
     def __init__(self, exceptions):
         self.exceptions = exceptions
 
@@ -157,10 +153,14 @@ class AggregateException(Exception):
             exceptions.append(exception)
 
     def __repr__(self):
-        return '<{} {}>'.format(self.__class__.__name__, repr([repr(ex) for ex in self.exceptions]))
+        return "<{} {}>".format(
+            self.__class__.__name__, repr([repr(ex) for ex in self.exceptions])
+        )
 
     def __str__(self):
-        return '{}({})'.format(self.__class__.__name__, str([str(ex) for ex in self.exceptions]))
+        return "{}({})".format(
+            self.__class__.__name__, str([str(ex) for ex in self.exceptions])
+        )
 
     def __eq__(self, other):
         return self.exceptions == other.exceptions
@@ -176,10 +176,9 @@ class ExecutionTimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return '{} after {} seconds ({})'.format(
-            self.__class__.__name__,
-            self.timeout_value,
-            self.timeout_command)
+        return "{} after {} seconds ({})".format(
+            self.__class__.__name__, self.timeout_value, self.timeout_command
+        )
 
     def __str__(self):
         return self.__repr__()

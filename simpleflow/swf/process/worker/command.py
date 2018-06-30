@@ -2,10 +2,7 @@ from __future__ import absolute_import
 
 import swf.models
 
-from .base import (
-    Worker,
-    ActivityPoller,
-)
+from .base import Worker, ActivityPoller
 
 
 def make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data):
@@ -28,8 +25,15 @@ def make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data):
     return ActivityPoller(domain, task_list, heartbeat, process_mode, poll_data)
 
 
-def start(domain, task_list, nb_processes=None, heartbeat=60, one_task=False,
-          process_mode=None, poll_data=None):
+def start(
+    domain,
+    task_list,
+    nb_processes=None,
+    heartbeat=60,
+    one_task=False,
+    process_mode=None,
+    poll_data=None,
+):
     """
     Start a worker for the given domain and task_list.
     :param domain:

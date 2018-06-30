@@ -10,23 +10,25 @@ from simpleflow.utils import retry
 logger = logging.getLogger(__name__)
 
 
-__all__ = ['Heartbeater', 'HeartbeatProcess']
+__all__ = ["Heartbeater", "HeartbeatProcess"]
 
 
 @deprecated
 class HeartbeatProcess(object):  # Are people using it?
     def __init__(self, heartbeat_callable, interval):
         if not isinstance(interval, int) and not isinstance(interval, float):
-            raise ValueError('heartbeat interval must be an integer or a float')
+            raise ValueError("heartbeat interval must be an integer or a float")
         if interval <= 0:
-            raise ValueError('heartbeat interval must be > 0')
+            raise ValueError("heartbeat interval must be > 0")
         self._interval = interval
         self._heartbeat = heartbeat_callable
 
-    @retry.with_delay(nb_times=10,
-                      delay=retry.exponential,
-                      on_exceptions=swf.exceptions.ResponseError,
-                      except_on=swf.exceptions.DoesNotExistError)
+    @retry.with_delay(
+        nb_times=10,
+        delay=retry.exponential,
+        on_exceptions=swf.exceptions.ResponseError,
+        except_on=swf.exceptions.DoesNotExistError,
+    )
     def send_heartbeat(self, token):
         return self._heartbeat(token)
 
@@ -40,9 +42,11 @@ class HeartbeatProcess(object):  # Are people using it?
                 os._exit(1)
 
             try:
-                logger.info('heartbeat {} for task {}'.format(
-                    time.time(),
-                    task.activity_type.name))
+                logger.info(
+                    "heartbeat {} for task {}".format(
+                        time.time(), task.activity_type.name
+                    )
+                )
             except Exception:
                 # Do not crash for debug
                 pass
@@ -52,17 +56,21 @@ class HeartbeatProcess(object):  # Are people using it?
             except swf.exceptions.DoesNotExistError:
                 # Either the task or the workflow execution no longer exists.
                 logger.warning(
-                    'task {} no longer exists. Stopping heartbeat'.format(
-                        task.activity_type.name))
+                    "task {} no longer exists. Stopping heartbeat".format(
+                        task.activity_type.name
+                    )
+                )
                 return
             except Exception as error:
                 # Let's crash if it cannot notify the heartbeat failed.
-                logger.error('cannot send heartbeat for task {}: {}'.format(
-                    task.activity_type.name,
-                    error))
+                logger.error(
+                    "cannot send heartbeat for task {}: {}".format(
+                        task.activity_type.name, error
+                    )
+                )
                 raise
 
-            if response and response.get('cancelRequested'):
+            if response and response.get("cancelRequested"):
                 return
 
 
@@ -71,6 +79,7 @@ class Heartbeater(object):  # Are people using it?
     """Manages the heartbeat in a subprocess.
 
     """
+
     def __init__(self, heartbeat, interval, on_exit=None):
         """
 
@@ -105,7 +114,7 @@ class Heartbeater(object):  # Are people using it?
         """
         self._heartbeater = multiprocessing.Process(
             target=HeartbeatProcess(self._heartbeat, self._interval).run,
-            args=(token, task)
+            args=(token, task),
         )
         self._heartbeater.start()
         return self

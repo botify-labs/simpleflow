@@ -12,7 +12,7 @@ from swf.core import ConnectedSWFObject
 from swf.exceptions import DoesNotExistError
 
 
-Difference = namedtuple('Difference', ('attr', 'local', 'upstream'))
+Difference = namedtuple("Difference", ("attr", "local", "upstream"))
 
 
 class ModelDiff(object):
@@ -22,6 +22,7 @@ class ModelDiff(object):
                    local model attribute value, upstream model attribute value.
     :type   input: *args
     """
+
     def __init__(self, *input):
         self.container = self._process_input(input)
 
@@ -36,9 +37,11 @@ class ModelDiff(object):
         return Difference(attr, local, upstream)
 
     def _process_input(self, input):
-        return OrderedDict((attr, (local, upstream)) for
-                           attr, local, upstream in input if
-                           local != upstream)
+        return OrderedDict(
+            (attr, (local, upstream))
+            for attr, local, upstream in input
+            if local != upstream
+        )
 
     def add_input(self, *input):
         """Adds input differing data into ModelDiff instance"""
@@ -56,10 +59,7 @@ class ModelDiff(object):
         """Outputs models differences as a list of
         swf.models.base.Difference namedtuple
         """
-        return [
-            Difference(k, v[0], v[1]) for k, v
-            in iteritems(self.container)
-        ]
+        return [Difference(k, v[0], v[1]) for k, v in iteritems(self.container)]
 
 
 class BaseModel(ConnectedSWFObject):

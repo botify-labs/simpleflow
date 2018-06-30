@@ -10,26 +10,25 @@ from swf.models.event.compiler import CompiledEvent
 
 
 class TimerEvent(Event):
-    _type = 'Timer'
+    _type = "Timer"
 
 
 class CompiledTimerEvent(CompiledEvent):
-    _type = 'Timer'
+    _type = "Timer"
 
     states = (
-        'started',  # A timer was started for the workflow execution
-        'start_failed',  # Failed to process StartTimer decision
-        'fired',  # A timer, previously started for this workflow execution, fired
-        'canceled',  # A timer, previously started for this workflow execution, was successfully canceled
-        'cancel_failed',  # Failed to process CancelTimer decision
-
+        "started",  # A timer was started for the workflow execution
+        "start_failed",  # Failed to process StartTimer decision
+        "fired",  # A timer, previously started for this workflow execution, fired
+        "canceled",  # A timer, previously started for this workflow execution, was successfully canceled
+        "cancel_failed",  # Failed to process CancelTimer decision
     )
 
     transitions = {
-        'started': ('canceled', 'fired'),
-        'start_failed': ('canceled'),
-        'fired': ('canceled'),
-        'canceled': ('cancel_failed', 'fired'),
+        "started": ("canceled", "fired"),
+        "start_failed": ("canceled"),
+        "fired": ("canceled"),
+        "canceled": ("cancel_failed", "fired"),
     }
 
-    initial_state = 'started'
+    initial_state = "started"

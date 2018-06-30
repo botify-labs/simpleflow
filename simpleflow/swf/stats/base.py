@@ -4,14 +4,14 @@ from future.utils import iteritems
 
 
 def get_start_to_close_timing(event):
-    last_state = event['state']
-    scheduled = event.get('scheduled_timestamp')
-    start = event.get('started_timestamp')
+    last_state = event["state"]
+    scheduled = event.get("scheduled_timestamp")
+    start = event.get("started_timestamp")
     if start is None:
         end = None
         duration = None
     else:
-        end = event['{}_timestamp'.format(last_state)]
+        end = event["{}_timestamp".format(last_state)]
         duration = (end - start).total_seconds()
 
     return last_state, scheduled, start, end, duration
@@ -52,12 +52,11 @@ class WorkflowStats(object):
         history.parse()
 
         events = chain(
-            iteritems(history._activities),
-            iteritems(history._child_workflows),
+            iteritems(history._activities), iteritems(history._child_workflows)
         )
         return [
-            (name,) + get_start_to_close_timing(attributes) for
-            name, attributes in events
+            (name,) + get_start_to_close_timing(attributes)
+            for name, attributes in events
         ]
 
     def get_timings_with_percentage(self):

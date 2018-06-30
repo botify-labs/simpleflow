@@ -30,11 +30,11 @@ class Decider(Supervisor):
     :ivar _poller: decider poller.
     :type _poller: DeciderPoller
     """
+
     def __init__(self, poller, nb_children=None):
         self._poller = poller
         super(Decider, self).__init__(
-            payload=self._poller.start,
-            nb_children=nb_children,
+            payload=self._poller.start, nb_children=nb_children
         )
 
 
@@ -49,15 +49,17 @@ class DeciderPoller(Poller, swf.actors.Decider):
     :ivar nb_retries: # of retries allowed
     :type nb_retries: int
     """
-    def __init__(self,
-                 workflow_executors,  # type: List[Executor]
-                 domain,  # type: swf.models.Domain
-                 task_list,  # type: str
-                 is_standalone,  # type: bool
-                 nb_retries=3,  # type: int
-                 *args,
-                 **kwargs
-                 ):
+
+    def __init__(
+        self,
+        workflow_executors,  # type: List[Executor]
+        domain,  # type: swf.models.Domain
+        task_list,  # type: str
+        is_standalone,  # type: bool
+        nb_retries=3,  # type: int
+        *args,
+        **kwargs
+    ):
         # type: (...) -> None
         """
         The decider is an actor that reads the full history of the workflow
@@ -79,10 +81,9 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
-        self.workflow_name = '{}'.format(','.join(
-            [
-                ex.workflow_class.name for ex in workflow_executors
-                ]))
+        self.workflow_name = "{}".format(
+            ",".join([ex.workflow_class.name for ex in workflow_executors])
+        )
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
@@ -108,11 +109,11 @@ class DeciderPoller(Poller, swf.actors.Decider):
         super(DeciderPoller, self).__init__(domain, self.task_list)
 
     def __repr__(self):
-        return '{cls}({domain}, {task_list}, {workflows})'.format(
+        return "{cls}({domain}, {task_list}, {workflows})".format(
             cls=self.__class__.__name__,
             domain=self.domain.name,
             task_list=self.task_list,
-            workflows=','.join(self._workflow_executors),
+            workflows=",".join(self._workflow_executors),
         )
 
     def _check_all_domains_identical(self):
@@ -120,15 +121,17 @@ class DeciderPoller(Poller, swf.actors.Decider):
             if ex.domain.name != self.domain.name:
                 raise ValueError(
                     'all workflows must be in the same domain "{}"'.format(
-                        self.domain.name))
+                        self.domain.name
+                    )
+                )
 
     def _check_all_task_lists_identical(self):
         for ex in self._workflow_executors.values():
             if ex.workflow_class.task_list != self.task_list:
                 raise ValueError(
-                    'all workflows must have the same task list '
-                    '"{}" unless you specify it explicitly'.format(
-                        self.task_list))
+                    "all workflows must have the same task list "
+                    '"{}" unless you specify it explicitly'.format(self.task_list)
+                )
 
     @property
     def name(self):
@@ -139,16 +142,16 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :rtype: str
         """
         if self.workflow_name:
-            suffix = '(workflow={})'.format(self.workflow_name)
+            suffix = "(workflow={})".format(self.workflow_name)
         else:
-            suffix = ''
-        return '{}{}'.format(self.__class__.__name__, suffix)
+            suffix = ""
+        return "{}{}".format(self.__class__.__name__, suffix)
 
-    @with_state('polling')
+    @with_state("polling")
     def poll(self, task_list=None, identity=None, **kwargs):
         return swf.actors.Decider.poll(self, task_list, identity, **kwargs)
 
-    @with_state('completing')
+    @with_state("completing")
     def complete(self, token, decisions=None, execution_context=None):
         # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext]) -> None
         """
@@ -159,10 +162,13 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :return: nothing.
         """
         if isinstance(decisions, DecisionsAndContext):
-            decisions, execution_context = decisions.decisions, decisions.execution_context
+            decisions, execution_context = (
+                decisions.decisions,
+                decisions.execution_context,
+            )
         return swf.actors.Decider.complete(self, token, decisions, execution_context)
 
-    @with_state('processing')
+    @with_state("processing")
     def process(self, decision_response):
         """
         Take a PollForDecisionTask response object and try to complete the
@@ -175,7 +181,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         """
         spawn(self, decision_response)
 
-    @with_state('deciding')
+    @with_state("deciding")
     def decide(self, decision_response):
         """
         Delegate the decision to the decider worker (which itself delegates to
@@ -188,7 +194,9 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :rtype: Union[List[swf.models.decision.base.Decision], DecisionsAndContext]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
-        decisions = worker.decide(decision_response, self.task_list if self.is_standalone else None)
+        decisions = worker.decide(
+            decision_response, self.task_list if self.is_standalone else None
+        )
         return decisions
 
 
@@ -218,21 +226,21 @@ class DeciderWorker(object):
         :rtype: list[swf.models.decision.base.Decision]
         """
         history = decision_response.history
-        workflow_name = history[0].workflow_type['name']
+        workflow_name = history[0].workflow_type["name"]
         workflow_executor = self._workflow_executors.get(workflow_name)
         if not workflow_executor:
             # Child workflow from another module
             from . import helpers
+
             workflow_executor = helpers.load_workflow_executor(
-                self._domain,
-                workflow_name,
-                task_list=task_list,
+                self._domain, workflow_name, task_list=task_list
             )
             self._workflow_executors[workflow_name] = workflow_executor
         try:
             decisions = workflow_executor.replay(decision_response)
         except Exception as err:
             import traceback
+
             details = traceback.format_exc()
             message = "workflow decision failed: {}".format(err)
             logger.exception(message)
@@ -261,8 +269,7 @@ def process_decision(poller, decision_response):
 def spawn(poller, decision_response):
     logger.debug("spawn() pid={}".format(os.getpid()))
     worker = multiprocessing.Process(
-        target=process_decision,
-        args=(poller, decision_response),
+        target=process_decision, args=(poller, decision_response)
     )
     worker.start()
     worker.join()

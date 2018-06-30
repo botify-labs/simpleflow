@@ -29,11 +29,13 @@ def sanitize_bucket_and_host(bucket):
     """
     # first case: we got a "<host>/<bucket_name>" input
     if "/" in bucket:
-        host, bucket = bucket.split('/', 1)
+        host, bucket = bucket.split("/", 1)
         if "/" in bucket:
-            raise ValueError('{} should contains only one slash separator'.format(bucket))
-        if not host.endswith('amazonaws.com'):
-            raise ValueError('host should be a *.amazonaws.com URL')
+            raise ValueError(
+                "{} should contains only one slash separator".format(bucket)
+            )
+        if not host.endswith("amazonaws.com"):
+            raise ValueError("host should be a *.amazonaws.com URL")
         return bucket, host
 
     # return location from cache is possible, so we don't issue "GetBucketLocation"
@@ -57,7 +59,9 @@ def sanitize_bucket_and_host(bucket):
     except S3ResponseError as e:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
-            logger.warning("Access denied while trying to get location of bucket {}".format(bucket))
+            logger.warning(
+                "Access denied while trying to get location of bucket {}".format(bucket)
+            )
             location = ""
         else:
             raise
@@ -88,7 +92,7 @@ def pull(bucket, path, dest_file):
 def pull_content(bucket, path):
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
-    return key.get_contents_as_string(encoding='utf-8')
+    return key.get_contents_as_string(encoding="utf-8")
 
 
 def push(bucket, path, src_file, content_type=None):

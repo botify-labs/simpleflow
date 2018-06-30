@@ -21,19 +21,23 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
     found_run_id = None
     if not run_id:
         qs = swf.querysets.WorkflowExecutionQuerySet(domain)
-        wfe = (qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN) or
-               qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED))
+        wfe = qs.filter(
+            workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN
+        ) or qs.filter(
+            workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED
+        )
         if wfe:
             # by default, workflow executions are returned in descending start time order
             # so the first returned is the last that has run
             found_run_id = wfe[0].run_id
         else:
             # we would send a malformed request to SWF API, better stop directly
-            raise ValueError("Couldn't find an execution with workflowId={}".format(workflow_id))
+            raise ValueError(
+                "Couldn't find an execution with workflowId={}".format(workflow_id)
+            )
 
     return swf.querysets.WorkflowExecutionQuerySet(domain).get(
-        workflow_id=workflow_id,
-        run_id=run_id or found_run_id,
+        workflow_id=workflow_id, run_id=run_id or found_run_id
     )
 
 
@@ -52,7 +56,7 @@ def sanitize_activity_context(context):
         "workflow_id": context["workflowExecution"]["workflowId"],
         "run_id": context["workflowExecution"]["runId"],
         "activity_id": context["activityId"],
-        "input": context["input"]
+        "input": context["input"],
     }
 
 
@@ -61,12 +65,13 @@ class DecisionsAndContext(object):
     Encapsulate decisions and execution context.
     The execution context contains keys with either plain values, lists or sets.
     """
+
     def __init__(self, decisions=None, execution_context=None):
         self.decisions = decisions or []  # type: List[Decision]
         self.execution_context = execution_context  # type: Dict[str, Any]
 
     def __repr__(self):
-        return '<{} decisions={}, execution_context={}>'.format(
+        return "<{} decisions={}, execution_context={}>".format(
             self.__class__.__name__, self.decisions, self.execution_context
         )
 

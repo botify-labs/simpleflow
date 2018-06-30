@@ -31,8 +31,8 @@ class ActivityTypeQuerySet(BaseQuerySet):
     """
 
     # Explicit is better than implicit, keep zen
-    _infos = 'typeInfo'
-    _infos_plural = 'typeInfos'
+    _infos = "typeInfo"
+    _infos_plural = "typeInfos"
 
     def __init__(self, domain, *args, **kwargs):
         super(ActivityTypeQuerySet, self).__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
     @property
     def domain(self):
         # type: () -> Optional[Domain]
-        if not hasattr(self, '_domain'):
+        if not hasattr(self, "_domain"):
             self._domain = None
         return self._domain
 
@@ -51,9 +51,10 @@ class ActivityTypeQuerySet(BaseQuerySet):
         from swf.models.domain import Domain  # NOQA
 
         if not isinstance(value, Domain):
-            err = "domain property has to be of"\
-                  "swf.model.domain.Domain type, not %r"\
-                  % type(value)
+            err = (
+                "domain property has to be of"
+                "swf.model.domain.Domain type, not %r" % type(value)
+            )
             raise TypeError(err)
         self._domain = value
 
@@ -61,17 +62,17 @@ class ActivityTypeQuerySet(BaseQuerySet):
     def to_activity_type(domain, type_info, **kwargs):
         return ActivityType(
             domain,
-            type_info['activityType']['name'],
-            type_info['activityType']['version'],
-            status=type_info.get('status'),
-            description=type_info.get('description'),
-            creation_date=type_info.get('creationDate'),
-            deprecation_date=type_info.get('deprecationDate'),
+            type_info["activityType"]["name"],
+            type_info["activityType"]["version"],
+            status=type_info.get("status"),
+            description=type_info.get("description"),
+            creation_date=type_info.get("creationDate"),
+            deprecation_date=type_info.get("deprecationDate"),
             **kwargs
         )
 
     def _list(self, *args, **kwargs):
-        return self.connection.list_activity_types(*args, **kwargs)['typeInfos']
+        return self.connection.list_activity_types(*args, **kwargs)["typeInfos"]
 
     def get(self, name, version, *args, **kwargs):
         """Fetches the activity type with provided ``name`` and ``version``
@@ -112,41 +113,43 @@ class ActivityTypeQuerySet(BaseQuerySet):
             }
         """
         try:
-            response = self.connection.describe_activity_type(self.domain.name, name, version)
+            response = self.connection.describe_activity_type(
+                self.domain.name, name, version
+            )
         except SWFResponseError as e:
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.error_message)
 
             raise ResponseError(e.error_message)
 
         activity_info = response[self._infos]
-        activity_config = response['configuration']
+        activity_config = response["configuration"]
 
-        task_list = kwargs.get('task_list')
+        task_list = kwargs.get("task_list")
         if task_list is None:
-            task_list = get_subkey(activity_config, ['defaultTaskList', 'name'])
+            task_list = get_subkey(activity_config, ["defaultTaskList", "name"])
 
-        task_heartbeat_timeout = kwargs.get('task_heartbeat_timeout')
+        task_heartbeat_timeout = kwargs.get("task_heartbeat_timeout")
         if task_heartbeat_timeout is None:
-            task_heartbeat_timeout = activity_config.get(
-                'defaultTaskHeartbeatTimeout')
+            task_heartbeat_timeout = activity_config.get("defaultTaskHeartbeatTimeout")
 
-        task_schedule_to_close_timeout = kwargs.get(
-            'task_schedule_to_close_timeout')
+        task_schedule_to_close_timeout = kwargs.get("task_schedule_to_close_timeout")
         if task_schedule_to_close_timeout is None:
             task_schedule_to_close_timeout = activity_config.get(
-                'defaultTaskScheduleToCloseTimeout')
+                "defaultTaskScheduleToCloseTimeout"
+            )
 
-        task_schedule_to_start_timeout = kwargs.get(
-            'task_schedule_to_start_timeout')
+        task_schedule_to_start_timeout = kwargs.get("task_schedule_to_start_timeout")
         if task_schedule_to_start_timeout is None:
             task_schedule_to_start_timeout = activity_config.get(
-                'defaultTaskScheduleToStartTimeout')
+                "defaultTaskScheduleToStartTimeout"
+            )
 
-        task_start_to_close_timeout = kwargs.get('task_start_to_close_timeout')
+        task_start_to_close_timeout = kwargs.get("task_start_to_close_timeout")
         if task_start_to_close_timeout is None:
             task_start_to_close_timeout = activity_config.get(
-                'defaultTaskStartToCloseTimeout')
+                "defaultTaskStartToCloseTimeout"
+            )
 
         return self.to_activity_type(
             self.domain,
@@ -158,17 +161,22 @@ class ActivityTypeQuerySet(BaseQuerySet):
             task_start_to_close_timeout=task_start_to_close_timeout,
         )
 
-    def get_or_create(self, name, version,
-                      status=REGISTERED,
-                      description=None,
-                      creation_date=0.0,
-                      deprecation_date=0.0,
-                      task_list=None,
-                      task_heartbeat_timeout=0,
-                      task_schedule_to_close_timeout=0,
-                      task_schedule_to_start_timeout=0,
-                      task_start_to_close_timeout=0,
-                      *args, **kwargs):
+    def get_or_create(
+        self,
+        name,
+        version,
+        status=REGISTERED,
+        description=None,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        task_heartbeat_timeout=0,
+        task_schedule_to_close_timeout=0,
+        task_schedule_to_start_timeout=0,
+        task_start_to_close_timeout=0,
+        *args,
+        **kwargs
+    ):
         """Fetches, or creates the ActivityType with ``name`` and ``version``
 
         When fetching trying to fetch a matching activity type, only
@@ -221,14 +229,17 @@ class ActivityTypeQuerySet(BaseQuerySet):
         :rtype: ActivityType
         """
         try:
-            return self.get(name,
-                            version,
-                            task_list=task_list,
-                            task_heartbeat_timeout=task_heartbeat_timeout,
-                            task_schedule_to_close_timeout=task_schedule_to_close_timeout,
-                            task_schedule_to_start_timeout=task_schedule_to_start_timeout,
-                            task_start_to_close_timeout=task_start_to_close_timeout,
-                            *args, **kwargs)
+            return self.get(
+                name,
+                version,
+                task_list=task_list,
+                task_heartbeat_timeout=task_heartbeat_timeout,
+                task_schedule_to_close_timeout=task_schedule_to_close_timeout,
+                task_schedule_to_start_timeout=task_schedule_to_start_timeout,
+                task_start_to_close_timeout=task_start_to_close_timeout,
+                *args,
+                **kwargs
+            )
         except DoesNotExistError:
             return self.create(
                 name,
@@ -244,9 +255,9 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 task_start_to_close_timeout=task_start_to_close_timeout,
             )
 
-    def filter(self, domain=None,
-               registration_status=REGISTERED,
-               name=None, *args, **kwargs):
+    def filter(
+        self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs
+    ):
         """Filters activity types based on their status, and/or name
 
         :param      domain: domain the activity type belongs to
@@ -267,11 +278,12 @@ class ActivityTypeQuerySet(BaseQuerySet):
         """
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
-        return [self.to_activity_type(domain, type_info) for type_info in
-                self._list(domain.name, registration_status, name=name)]
+        return [
+            self.to_activity_type(domain, type_info)
+            for type_info in self._list(domain.name, registration_status, name=name)
+        ]
 
-    def all(self, registration_status=REGISTERED,
-            *args, **kwargs):
+    def all(self, registration_status=REGISTERED, *args, **kwargs):
         """Retrieves every activity types
 
         :param      registration_status: activity type registration status to match,
@@ -304,32 +316,40 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 ]
             }
         """
+
         def get_activity_types():
-            response = {'nextPageToken': None}
-            while 'nextPageToken' in response:
+            response = {"nextPageToken": None}
+            while "nextPageToken" in response:
                 response = self.connection.list_activity_types(
                     self.domain.name,
                     registration_status,
-                    next_page_token=response['nextPageToken']
+                    next_page_token=response["nextPageToken"],
                 )
 
                 for activity_type_info in response[self._infos_plural]:
                     yield activity_type_info
 
-        return [self.to_activity_type(self.domain, activity_info) for activity_info
-                in get_activity_types()]
+        return [
+            self.to_activity_type(self.domain, activity_info)
+            for activity_info in get_activity_types()
+        ]
 
-    def create(self, name, version,
-               status=REGISTERED,
-               description=None,
-               creation_date=0.0,
-               deprecation_date=0.0,
-               task_list=None,
-               task_heartbeat_timeout=0,
-               task_schedule_to_close_timeout=0,
-               task_schedule_to_start_timeout=0,
-               task_start_to_close_timeout=0,
-               *args, **kwargs):
+    def create(
+        self,
+        name,
+        version,
+        status=REGISTERED,
+        description=None,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        task_heartbeat_timeout=0,
+        task_schedule_to_close_timeout=0,
+        task_schedule_to_start_timeout=0,
+        task_start_to_close_timeout=0,
+        *args,
+        **kwargs
+    ):
         """Creates a new remote activity type and returns the
         created ActivityType model instance.
 

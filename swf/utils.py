@@ -22,7 +22,7 @@ def decapitalize(s):
     :return:
     :rtype:
     """
-    return s[:1].lower() + s[1:] if s else ''
+    return s[:1].lower() + s[1:] if s else ""
 
 
 def past_day(days):
@@ -94,9 +94,7 @@ class _CachedProperty(property):
 
     def __init__(self, fget, fset=None, fdel=None, doc=None):
         """Initializes the cached property."""
-        self._cache_name = "_{name}_cache".format(
-            name=fget.__name__,
-        )
+        self._cache_name = "_{name}_cache".format(name=fget.__name__)
         # Wrap the accessors.
         fget = self._wrap_fget(fget)
         if callable(fset):
@@ -145,9 +143,9 @@ def immutable(mutableclass):
     """
 
     if not isinstance(type(mutableclass), type):
-        raise TypeError('@immutable: must be applied to a new-style class')
-    if not hasattr(mutableclass, '__slots__'):
-        raise TypeError('@immutable: class must have __slots__')
+        raise TypeError("@immutable: must be applied to a new-style class")
+    if not hasattr(mutableclass, "__slots__"):
+        raise TypeError("@immutable: class must have __slots__")
 
     class immutableclass(mutableclass):
         __slots__ = ()  # No __dict__, please
@@ -166,7 +164,7 @@ def immutable(mutableclass):
 
     # Make read-only:
     for name, member in mutableclass.__dict__.items():
-        if hasattr(member, '__set__'):
+        if hasattr(member, "__set__"):
             setattr(immutableclass, name, property(member.__get__))
 
     return immutableclass
@@ -179,11 +177,11 @@ def camel_to_underscore(string):
 
     for index, char in enumerate(string):
         if index != 0 and char.isupper():
-            res.extend(['_', char.lower()])
+            res.extend(["_", char.lower()])
         else:
             res.extend([char.lower()])
 
-    return ''.join(res)
+    return "".join(res)
 
 
 def underscore_to_camel(string):
@@ -205,11 +203,15 @@ def underscore_to_camel(string):
     'RequestCancelWorkflow'
 
     """
-    if string == '':
-        return ''
+    if string == "":
+        return ""
 
-    return ''.join(chain([string[0].upper()],
-                         ((c.upper() if p == '_' else c) if
-                          c != '_' else '' for p, c in
-                          zip(islice(string, 0, None),
-                              islice(string, 1, None)))))
+    return "".join(
+        chain(
+            [string[0].upper()],
+            (
+                (c.upper() if p == "_" else c) if c != "_" else ""
+                for p, c in zip(islice(string, 0, None), islice(string, 1, None))
+            ),
+        )
+    )

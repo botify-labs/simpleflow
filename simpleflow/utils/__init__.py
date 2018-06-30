@@ -28,9 +28,9 @@ def hex_hash(s):
     :return:
     """
     if not s:
-        return '0'
-    s = s.encode('utf-8')
-    return '{:x}'.format(adler32(s) & 0xffffffff)
+        return "0"
+    s = s.encode("utf-8")
+    return "{:x}".format(adler32(s) & 0xffffffff)
 
 
 def format_exc(exc):
@@ -57,7 +57,7 @@ def _some_str(value):
     try:
         return str(value)
     except Exception:
-        return '<unprintable %s object>' % type(value).__name__
+        return "<unprintable %s object>" % type(value).__name__
 
 
 def to_k8s_identifier(string):

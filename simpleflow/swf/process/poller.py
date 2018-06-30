@@ -13,7 +13,7 @@ from simpleflow.swf.helpers import swf_identity
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['Poller']
+__all__ = ["Poller"]
 
 
 @add_metaclass(abc.ABCMeta)
@@ -29,10 +29,9 @@ class Poller(swf.actors.Actor, NamedMixin):
         super(Poller, self).__init__(domain, task_list)
 
     def __repr__(self):
-        return '{}(domain={}, task_list={})'.format(
-            self.__class__.__name__,
-            self.domain.name,
-            self.task_list)
+        return "{}(domain={}, task_list={})".format(
+            self.__class__.__name__, self.domain.name, self.task_list
+        )
 
     @property
     def identity(self):
@@ -57,14 +56,16 @@ class Poller(swf.actors.Actor, NamedMixin):
 
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):
-            logger.info("process: caught signal signal=SIGTERM pid={}".format(os.getpid()))
+            logger.info(
+                "process: caught signal signal=SIGTERM pid={}".format(os.getpid())
+            )
             self.stop_gracefully()
 
         # bind SIGTERM and SIGINT
         signal.signal(signal.SIGTERM, _handle_graceful_shutdown)
         signal.signal(signal.SIGINT, _handle_graceful_shutdown)
 
-    @with_state('running')
+    @with_state("running")
     def start(self):
         """
         Start the main poller process. There is no daemonization. The process
@@ -82,7 +83,7 @@ class Poller(swf.actors.Actor, NamedMixin):
                 continue
             self.process(response)
 
-    @with_state('running')
+    @with_state("running")
     def run_once(self):
         """
         Run the main poller process and exits after first task is processed.
@@ -99,12 +100,12 @@ class Poller(swf.actors.Actor, NamedMixin):
             self.process(response)
             break
 
-    @with_state('stopping')
+    @with_state("stopping")
     def stop_gracefully(self):
         """
         Stop the actor processes and subprocesses.
         """
-        logger.info('stopping %s', self.name)
+        logger.info("stopping %s", self.name)
         self.is_alive = False  # No longer take requests.
 
     def complete_with_retry(self, token, response):
@@ -123,7 +124,9 @@ class Poller(swf.actors.Actor, NamedMixin):
                 delay=utils.retry.exponential,
                 log_with=logger.exception,
                 except_on=swf.exceptions.DoesNotExistError,
-            )(self.complete)  # Exponential backoff on errors.
+            )(
+                self.complete
+            )  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
             # This is embarrassing because the decider cannot notify SWF of the
@@ -149,7 +152,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         """
         Name of the poller, can be overriden in subclasses.
         """
-        return '{}()'.format(self.__class__.__name__)
+        return "{}()".format(self.__class__.__name__)
 
     def poll_with_retry(self):
         """

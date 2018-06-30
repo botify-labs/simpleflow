@@ -8,14 +8,14 @@
 from simpleflow import activity, Workflow
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def increment(x):
     return x + 1
 
 
 class BaseWorkflow(Workflow):
-    version = 'example'
-    task_list = 'example'
+    version = "example"
+    task_list = "example"
 
 
 # EXAMPLE 1: no priority set (equivalent to "0" per the docs)
@@ -84,7 +84,7 @@ class WorkflowPriority4(BaseWorkflow):
 # the next priority definition in the precedence list (equivalent to NOT having
 # it in the first place). This is advanced usage and you probably don't need
 # that.
-@activity.with_attributes(task_list='quickstart', version='example', task_priority=12)
+@activity.with_attributes(task_list="quickstart", version="example", task_priority=12)
 def increment_with_high_prio(x):
     return x + 1
 

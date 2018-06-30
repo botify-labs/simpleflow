@@ -3,34 +3,28 @@ from simpleflow._decorators import deprecated
 from simpleflow import exceptions
 
 
-__all__ = ['Future', 'get_result_or_raise', 'wait']
+__all__ = ["Future", "get_result_or_raise", "wait"]
 
 
-FIRST_COMPLETED = 'FIRST_COMPLETED'
-FIRST_EXCEPTION = 'FIRST_EXCEPTION'
-ALL_COMPLETED = 'ALL_COMPLETED'
-_AS_COMPLETED = '_AS_COMPLETED'
+FIRST_COMPLETED = "FIRST_COMPLETED"
+FIRST_EXCEPTION = "FIRST_EXCEPTION"
+ALL_COMPLETED = "ALL_COMPLETED"
+_AS_COMPLETED = "_AS_COMPLETED"
 
-PENDING = 'PENDING'
-RUNNING = 'RUNNING'
-CANCELLED = 'CANCELLED'
-CANCELLED_AND_NOTIFIED = 'CANCELLED_AND_NOTIFIED'
-FINISHED = 'FINISHED'
+PENDING = "PENDING"
+RUNNING = "RUNNING"
+CANCELLED = "CANCELLED"
+CANCELLED_AND_NOTIFIED = "CANCELLED_AND_NOTIFIED"
+FINISHED = "FINISHED"
 
-_FUTURE_STATES = [
-    PENDING,
-    RUNNING,
-    CANCELLED,
-    CANCELLED_AND_NOTIFIED,
-    FINISHED
-]
+_FUTURE_STATES = [PENDING, RUNNING, CANCELLED, CANCELLED_AND_NOTIFIED, FINISHED]
 
 _STATE_TO_DESCRIPTION_MAP = {
     PENDING: "pending",
     RUNNING: "running",
     CANCELLED: "cancelled",
     CANCELLED_AND_NOTIFIED: "cancelled",
-    FINISHED: "finished"
+    FINISHED: "finished",
 }
 
 
@@ -67,10 +61,10 @@ class Future(object):
         self._exception = None
 
     def __repr__(self):
-        return '<Future at %s state=%s%s>' % (
+        return "<Future at %s state=%s%s>" % (
             hex(id(self)),
             _STATE_TO_DESCRIPTION_MAP[self._state],
-            ' exception=%r' % self._exception if self._exception else ''
+            " exception=%r" % self._exception if self._exception else "",
         )
 
     def wait(self):
@@ -134,10 +128,7 @@ class Future(object):
 
     @property
     def done(self):
-        return self._state in [
-            CANCELLED,
-            FINISHED
-        ]
+        return self._state in [CANCELLED, FINISHED]
 
     # Internal methods
     def set_running(self):

@@ -12,20 +12,21 @@ from simpleflow import activity, settings, task
 
 
 class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
-
     def get_step_bucket(self):
         """
         Return the S3 bucket where to store the steps files
         """
         # noinspection PyUnresolvedReferences
-        return '/'.join((settings.SIMPLEFLOW_S3_HOST, settings.STEP_BUCKET))
+        return "/".join((settings.SIMPLEFLOW_S3_HOST, settings.STEP_BUCKET))
 
     def get_step_path_prefix(self):
         # type: () -> str
         """
         Return the S3 bucket's path prefix where to store the steps files
         """
-        return os.path.join(self.get_run_context().get("workflow_id", "default"), 'steps/')
+        return os.path.join(
+            self.get_run_context().get("workflow_id", "default"), "steps/"
+        )
 
     def get_step_activity_params(self):
         """
@@ -38,7 +39,7 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
         """
         Add steps to force
         """
-        if not hasattr(self, 'steps_forced'):
+        if not hasattr(self, "steps_forced"):
             self.steps_forced = set()
             self.steps_forced_reasons = defaultdict(set)
         steps = set(steps)
@@ -48,13 +49,13 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
                 self.steps_forced_reasons[step].add(reason)
 
     def get_forced_steps(self):
-        return list(getattr(self, 'steps_forced', []))
+        return list(getattr(self, "steps_forced", []))
 
     def add_skipped_steps(self, steps, reason=None):
         """
         Add steps to skip
         """
-        if not hasattr(self, 'steps_skipped'):
+        if not hasattr(self, "steps_skipped"):
             self.steps_skipped = set()
             self.steps_skipped_reasons = defaultdict(set)
         steps = set(steps)
@@ -64,7 +65,7 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
                 self.steps_skipped_reasons[step].add(reason)
 
     def get_skipped_steps(self):
-        return list(getattr(self, 'steps_skipped', []))
+        return list(getattr(self, "steps_skipped", []))
 
     def _get_step_activity_params(self):
         """
@@ -72,7 +73,7 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
         and the default STEP_ACTIVITY_PARAMS_DEFAULT + workflow task list
         """
         activity_params_merged = copy.copy(STEP_ACTIVITY_PARAMS_DEFAULT)
-        if hasattr(self, 'task_list'):
+        if hasattr(self, "task_list"):
             activity_params_merged["task_list"] = self.task_list
         activity_params = self.get_step_activity_params()
         if activity_params:
@@ -84,12 +85,11 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
         return Step(*args, **kwargs)
 
     def get_steps_done_activity(self):
-        return task.ActivityTask(activity.Activity(
-            GetStepsDoneTask,
-            **self._get_step_activity_params()),
+        return task.ActivityTask(
+            activity.Activity(GetStepsDoneTask, **self._get_step_activity_params()),
             self.get_step_bucket(),
-            self.get_step_path_prefix())
+            self.get_step_path_prefix(),
+        )
 
     def get_steps_done(self):
-        return self.submit(
-            self.get_steps_done_activity()).result
+        return self.submit(self.get_steps_done_activity()).result

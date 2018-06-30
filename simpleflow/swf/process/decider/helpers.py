@@ -3,18 +3,20 @@ import logging
 import swf.models
 
 from simpleflow.swf.executor import Executor
-from . import (
-    Decider,
-    DeciderPoller,
-)
+from . import Decider, DeciderPoller
 
 logger = logging.getLogger(__name__)
 
 
-def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=None,
-                           force_activities=None,
-                           repair_workflow_id=None, repair_run_id=None,
-                           ):
+def load_workflow_executor(
+    domain,
+    workflow_name,
+    task_list=None,
+    repair_with=None,
+    force_activities=None,
+    repair_workflow_id=None,
+    repair_run_id=None,
+):
     """
     Load a workflow executor.
 
@@ -36,8 +38,8 @@ def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=No
     :rtype: Executor
     """
     logger.debug('load_workflow_executor(workflow_name="{}")'.format(workflow_name))
-    module_name, object_name = workflow_name.rsplit('.', 1)
-    module = __import__(module_name, fromlist=['*'])
+    module_name, object_name = workflow_name.rsplit(".", 1)
+    module = __import__(module_name, fromlist=["*"])
 
     workflow = getattr(module, object_name)
 
@@ -46,7 +48,9 @@ def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=No
         domain = swf.models.Domain(domain)
 
     return Executor(
-        domain, workflow, task_list,
+        domain,
+        workflow,
+        task_list,
         repair_with=repair_with,
         force_activities=force_activities,
         repair_workflow_id=repair_workflow_id,
@@ -54,11 +58,16 @@ def load_workflow_executor(domain, workflow_name, task_list=None, repair_with=No
     )
 
 
-def make_decider_poller(workflows, domain, task_list, repair_with=None,
-                        force_activities=None,
-                        is_standalone=False,
-                        repair_workflow_id=None, repair_run_id=None,
-                        ):
+def make_decider_poller(
+    workflows,
+    domain,
+    task_list,
+    repair_with=None,
+    force_activities=None,
+    is_standalone=False,
+    repair_workflow_id=None,
+    repair_run_id=None,
+):
     """
     Factory building a decider poller.
     :param workflows:
@@ -88,23 +97,31 @@ def make_decider_poller(workflows, domain, task_list, repair_with=None,
 
     executors = [
         load_workflow_executor(
-            domain, workflow, task_list if is_standalone else None,
+            domain,
+            workflow,
+            task_list if is_standalone else None,
             repair_with=repair_with,
             force_activities=force_activities,
             repair_workflow_id=repair_workflow_id,
             repair_run_id=repair_run_id,
         )
         for workflow in workflows
-        ]
+    ]
     domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list, is_standalone)
 
 
-def make_decider(workflows, domain, task_list, nb_children=None,
-                 repair_with=None, force_activities=None,
-                 is_standalone=False,
-                 repair_workflow_id=None, repair_run_id=None,
-                 ):
+def make_decider(
+    workflows,
+    domain,
+    task_list,
+    nb_children=None,
+    repair_with=None,
+    force_activities=None,
+    is_standalone=False,
+    repair_workflow_id=None,
+    repair_run_id=None,
+):
     """
     Instantiate a Decider.
     :param workflows:
@@ -128,11 +145,14 @@ def make_decider(workflows, domain, task_list, nb_children=None,
     :return:
     :rtype: Decider
     """
-    poller = make_decider_poller(workflows, domain, task_list,
-                                 repair_with=repair_with,
-                                 force_activities=force_activities,
-                                 is_standalone=is_standalone,
-                                 repair_workflow_id=repair_workflow_id,
-                                 repair_run_id=repair_run_id,
-                                 )
+    poller = make_decider_poller(
+        workflows,
+        domain,
+        task_list,
+        repair_with=repair_with,
+        force_activities=force_activities,
+        is_standalone=is_standalone,
+        repair_workflow_id=repair_workflow_id,
+        repair_run_id=repair_run_id,
+    )
     return Decider(poller, nb_children=nb_children)

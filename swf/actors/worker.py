@@ -4,7 +4,12 @@ import boto.exception
 from simpleflow import format
 from swf.actors import Actor
 from swf.models import ActivityTask
-from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError, RateLimitExceededError
+from swf.exceptions import (
+    PollTimeout,
+    ResponseError,
+    DoesNotExistError,
+    RateLimitExceededError,
+)
 from swf.responses import Response
 
 
@@ -28,11 +33,9 @@ class ActivityWorker(Actor):
                       The form of this identity is user defined.
     :type   identity: string
     """
+
     def __init__(self, domain, task_list, identity=None):
-        super(ActivityWorker, self).__init__(
-            domain,
-            task_list
-        )
+        super(ActivityWorker, self).__init__(domain, task_list)
 
         self._identity = identity
 
@@ -47,12 +50,11 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.respond_activity_task_canceled(
-                task_token,
-                details=format.details(details),
+                task_token, details=format.details(details)
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to cancel activity task with token={}".format(task_token),
                     message,
@@ -71,12 +73,11 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.respond_activity_task_completed(
-                task_token,
-                format.result(result),
+                task_token, format.result(result)
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to complete activity task with token={}".format(task_token),
                     message,
@@ -104,7 +105,7 @@ class ActivityWorker(Actor):
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to fail activity task with token={}".format(task_token),
                     message,
@@ -123,20 +124,20 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.record_activity_task_heartbeat(
-                task_token,
-                format.heartbeat_details(details),
+                task_token, format.heartbeat_details(details)
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to send heartbeat with token={}".format(task_token),
-                    message,
+                    "Unable to send heartbeat with token={}".format(task_token), message
                 )
 
-            if e.error_code == 'ThrottlingException':
+            if e.error_code == "ThrottlingException":
                 raise RateLimitExceededError(
-                    "Rate exceeded when sending heartbeat with token={}".format(task_token),
+                    "Rate exceeded when sending heartbeat with token={}".format(
+                        task_token
+                    ),
                     message,
                 )
 
@@ -169,27 +170,20 @@ class ActivityWorker(Actor):
 
         try:
             polled_activity_data = self.connection.poll_for_activity_task(
-                self.domain.name,
-                task_list,
-                identity=format.identity(identity),
+                self.domain.name, task_list, identity=format.identity(identity)
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
-                raise DoesNotExistError(
-                    "Unable to poll activity task",
-                    message,
-                )
+            if e.error_code == "UnknownResourceFault":
+                raise DoesNotExistError("Unable to poll activity task", message)
 
             raise ResponseError(message)
 
-        if 'taskToken' not in polled_activity_data:
+        if "taskToken" not in polled_activity_data:
             raise PollTimeout("Activity Worker poll timed out")
 
         activity_task = ActivityTask.from_poll(
-            self.domain,
-            self.task_list,
-            polled_activity_data
+            self.domain, self.task_list, polled_activity_data
         )
 
         return Response(

@@ -1,11 +1,7 @@
 from . import settings
 from . import registry
 
-__all__ = [
-    'with_attributes',
-    'Activity',
-    'PRIORITY_NOT_SET',
-]
+__all__ = ["with_attributes", "Activity", "PRIORITY_NOT_SET"]
 
 
 class NotSet(object):
@@ -63,7 +59,10 @@ def with_attributes(
 
     def wrap(func):
         return Activity(
-            func, name, version, task_list,
+            func,
+            name,
+            version,
+            task_list,
             retry,
             raises_on_failure,
             start_to_close_timeout,
@@ -79,19 +78,22 @@ def with_attributes(
 
 
 class Activity(object):
-    def __init__(self, callable,
-                 name=None,
-                 version=None,
-                 task_list=None,
-                 retry=0,
-                 raises_on_failure=False,
-                 start_to_close_timeout=None,
-                 schedule_to_close_timeout=None,
-                 schedule_to_start_timeout=None,
-                 heartbeat_timeout=None,
-                 task_priority=PRIORITY_NOT_SET,
-                 idempotent=None,
-                 meta=None):
+    def __init__(
+        self,
+        callable,
+        name=None,
+        version=None,
+        task_list=None,
+        retry=0,
+        raises_on_failure=False,
+        start_to_close_timeout=None,
+        schedule_to_close_timeout=None,
+        schedule_to_start_timeout=None,
+        heartbeat_timeout=None,
+        task_priority=PRIORITY_NOT_SET,
+        idempotent=None,
+        meta=None,
+    ):
         self._callable = callable
 
         self._name = name
@@ -128,20 +130,19 @@ class Activity(object):
         callable = self._callable
         prefix = self._callable.__module__
 
-        if hasattr(callable, 'name'):
+        if hasattr(callable, "name"):
             name = callable.name
-        elif hasattr(callable, '__name__'):
+        elif hasattr(callable, "__name__"):
             name = callable.__name__
         else:
             name = callable.__class__.__name__
 
-        return '.'.join([prefix, name])
+        return ".".join([prefix, name])
 
     def __repr__(self):
-        return 'Activity(name={}, version={}, task_list={})'.format(
-            self.name,
-            self.version,
-            self.task_list)
+        return "Activity(name={}, version={}, task_list={})".format(
+            self.name, self.version, self.task_list
+        )
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)

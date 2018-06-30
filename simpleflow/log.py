@@ -2,26 +2,28 @@ from datetime import datetime
 import logging
 import sys
 
-RED = '\033[91m'
-GREEN = '\033[92m'
-YELLOW = '\033[93m'
-BLUE = '\033[94m'
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+BLUE = "\033[94m"
 ORANGE = "\033[38;5;214m"
-END = '\033[0m'
+END = "\033[0m"
 
 
 class ColorModes(object):
-    AUTO = 'auto'
-    ALWAYS = 'always'
-    NEVER = 'never'
+    AUTO = "auto"
+    ALWAYS = "always"
+    NEVER = "never"
 
 
-color_mode = 'auto'
+color_mode = "auto"
 
 
 def colorize(level, message):
     # if not in a tty, we're likely redirected or piped
-    if color_mode == ColorModes.NEVER or (color_mode == ColorModes.AUTO and not sys.stdout.isatty()):
+    if color_mode == ColorModes.NEVER or (
+        color_mode == ColorModes.AUTO and not sys.stdout.isatty()
+    ):
         return message
 
     # color mappings
@@ -73,7 +75,10 @@ class SimpleflowFormatter(logging.Formatter):
         record.isodate = date.isoformat()
         record.message = record.msg % record.args
         record.coloredlevel = colorize(record.levelname, record.levelname)
-        s = "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s" % record.__dict__
+        s = (
+            "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s"
+            % record.__dict__
+        )
 
         # C&P from logging.Formatter#format
         if record.exc_info:
@@ -93,7 +98,6 @@ class SimpleflowFormatter(logging.Formatter):
                 # We also use replace for when there are multiple
                 # encodings, e.g. UTF-8 for the filesystem and latin-1
                 # for a script. See issue 13232.
-                s = s + record.exc_text.decode(sys.getfilesystemencoding(),
-                                               'replace')
+                s = s + record.exc_text.decode(sys.getfilesystemencoding(), "replace")
 
         return s

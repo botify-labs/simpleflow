@@ -28,7 +28,7 @@ try:
 except ImportError:
     import subprocess
 
-__all__ = ['program', 'python']
+__all__ = ["program", "python"]
 
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536
@@ -67,56 +67,54 @@ def format_arguments(*args, **kwargs):
 
     def arg(key):
         if len(key) == 1:
-            return '-' + str(key)  # short option -c
-        return '--' + str(key)  # long option --val
+            return "-" + str(key)  # short option -c
+        return "--" + str(key)  # long option --val
 
-    return ['{}="{}"'.format(arg(k), v) for k, v in
-            iteritems(kwargs)] + list(map(str, args))
+    return ['{}="{}"'.format(arg(k), v) for k, v in iteritems(kwargs)] + list(
+        map(str, args)
+    )
 
 
 def zip_arguments_defaults(argspec):
     if not argspec.defaults:
         return []
 
-    return zip(
-        argspec.args[-len(argspec.defaults):],
-        argspec.defaults)
+    return zip(argspec.args[-len(argspec.defaults) :], argspec.defaults)
 
 
 def check_arguments(argspec, args):
     """Validates there is the right number of arguments"""
     # func() or func(**kwargs) or func(a=1, b=2)
     if not argspec.varargs and not argspec.args and args:
-        raise TypeError('command does not take varargs')
+        raise TypeError("command does not take varargs")
 
     # Calling func(a, b) with func(1, 2, 3)
     if not argspec.varargs and argspec.args and len(args) != len(argspec.args):
-        raise TypeError('command takes {} arguments: {} passed'.format(
-            len(argspec.args),
-            len(args)))
+        raise TypeError(
+            "command takes {} arguments: {} passed".format(len(argspec.args), len(args))
+        )
 
 
 def check_keyword_arguments(argspec, kwargs):
     # func() or func(*args) or func(a, b)
     if not argspec.keywords and not argspec.defaults and kwargs:
-        raise TypeError('command does not take keyword arguments')
+        raise TypeError("command does not take keyword arguments")
 
     arguments_defaults = zip_arguments_defaults(argspec)
-    not_found = (set(name for name, value in arguments_defaults if
-                     value is RequiredArgument) -
-                 set(kwargs))
+    not_found = set(
+        name for name, value in arguments_defaults if value is RequiredArgument
+    ) - set(kwargs)
     # Calling func(a=1, b) with func(2) instead of func(a=0, 2)
     if not_found:
-        raise TypeError('argument{} "{}" not found'.format(
-            's' if len(not_found) > 1 else '',
-            ', '.join(not_found)))
+        raise TypeError(
+            'argument{} "{}" not found'.format(
+                "s" if len(not_found) > 1 else "", ", ".join(not_found)
+            )
+        )
 
 
 def format_arguments_json(*args, **kwargs):
-    dump = json_dumps({
-        'args': args,
-        'kwargs': kwargs,
-    })
+    dump = json_dumps({"args": args, "kwargs": kwargs})
     return dump
 
 
@@ -136,17 +134,16 @@ def get_name(func):
     prefix = func.__module__
 
     if not callable(func):
-        raise ValueError('{} is not callable'.format(
-            func))
+        raise ValueError("{} is not callable".format(func))
 
-    if hasattr(func, 'name'):
+    if hasattr(func, "name"):
         name = func.name
-    elif hasattr(func, '__name__'):
+    elif hasattr(func, "__name__"):
         name = func.__name__
     else:
         name = func.__class__.__name__
 
-    return '.'.join([prefix, name])
+    return ".".join([prefix, name])
 
 
 def wait_subprocess(process, timeout=None, command_info=None):
@@ -180,7 +177,9 @@ def wait_subprocess(process, timeout=None, command_info=None):
     return process.wait()
 
 
-def python(interpreter='python', logger_name=__name__, timeout=None, kill_children=False):
+def python(
+    interpreter="python", logger_name=__name__, timeout=None, kill_children=False
+):
     """
     Execute a callable as an external Python program.
 
@@ -195,38 +194,44 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
         @functools.wraps(func)
         def execute(*args, **kwargs):
             logger = logging.getLogger(logger_name)
-            command = 'simpleflow.execute'  # name of a module.
+            command = "simpleflow.execute"  # name of a module.
             sys.stdout.flush()
             sys.stderr.flush()
             result_str = None  # useless
-            context = kwargs.pop('context', {})
+            context = kwargs.pop("context", {})
             with tempfile.TemporaryFile() as result_fd, tempfile.TemporaryFile() as error_fd:
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)
                 full_command = [
-                    interpreter, '-m', command,  # execute module a script.
+                    interpreter,
+                    "-m",
+                    command,  # execute module a script.
                     get_name(func),
-                    '--logger-name={}'.format(logger_name),
-                    '--result-fd={}'.format(dup_result_fd),
-                    '--error-fd={}'.format(dup_error_fd),
-                    '--context={}'.format(json_dumps(context)),
+                    "--logger-name={}".format(logger_name),
+                    "--result-fd={}".format(dup_result_fd),
+                    "--error-fd={}".format(dup_error_fd),
+                    "--context={}".format(json_dumps(context)),
                 ]
-                if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
+                if (
+                    len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH
+                ):  # command-line limit on Linux: 128K
                     full_command.append(arguments_json)
                     arg_file = None
                     arg_fd = None
                 else:
                     arg_file = tempfile.TemporaryFile()
-                    arg_file.write(arguments_json.encode('utf-8'))
+                    arg_file.write(arguments_json.encode("utf-8"))
                     arg_file.flush()
                     arg_file.seek(0)
                     arg_fd = os.dup(arg_file.fileno())
-                    full_command.append('--arguments-json-fd={}'.format(arg_fd))
-                    full_command.append('foo')  # dummy funcarg
+                    full_command.append("--arguments-json-fd={}".format(arg_fd))
+                    full_command.append("foo")  # dummy funcarg
                 if kill_children:
-                    full_command.append('--kill-children')
-                if compat.PY2:  # pass_fds doesn't work with subprocess32 < 3.5.0 (https://github.com/google/python-subprocess32/issues/4)  # NOQA
+                    full_command.append("--kill-children")
+                if (
+                    compat.PY2
+                ):  # pass_fds doesn't work with subprocess32 < 3.5.0 (https://github.com/google/python-subprocess32/issues/4)  # NOQA
                     close_fds = False
                     pass_fds = []
                 else:
@@ -235,12 +240,11 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     if arg_file:
                         pass_fds.append(arg_fd)
                 process = subprocess.Popen(
-                    full_command,
-                    bufsize=-1,
-                    close_fds=close_fds,
-                    pass_fds=pass_fds,
+                    full_command, bufsize=-1, close_fds=close_fds, pass_fds=pass_fds
                 )
-                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
+                rc = wait_subprocess(
+                    process, timeout=timeout, command_info=full_command
+                )
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if arg_file:
@@ -250,7 +254,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     err_output = error_fd.read()
                     if err_output:
                         if not compat.PY2:
-                            err_output = err_output.decode('utf-8', errors='replace')
+                            err_output = err_output.decode("utf-8", errors="replace")
                     raise ExecutionError(err_output)
 
                 result_fd.seek(0)
@@ -260,12 +264,16 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                 return None
             try:
                 if not compat.PY2:
-                    result_str = result_str.decode('utf-8', errors='replace')
+                    result_str = result_str.decode("utf-8", errors="replace")
                 result = format.decode(result_str)
                 return result
             except BaseException as ex:
-                logger.exception('Exception in python.execute: {} {}'.format(ex.__class__.__name__, ex))
-                logger.warning('%r', result_str)
+                logger.exception(
+                    "Exception in python.execute: {} {}".format(
+                        ex.__class__.__name__, ex
+                    )
+                )
+                logger.warning("%r", result_str)
 
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
@@ -312,8 +320,8 @@ def program(path=None, argument_format=format_arguments):
 
             command = path or func.__name__
             return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs),
-                universal_newlines=True)
+                [command] + argument_format(*args, **kwargs), universal_newlines=True
+            )
 
         argspec = inspect.getargspec(func)
         # Not automatically assigned in python < 3.2.
@@ -353,20 +361,19 @@ def make_callable(funcname):
     [1, 2, 3, 4]
 
     """
-    if '.' not in funcname:
-        module_name = 'builtins'
+    if "." not in funcname:
+        module_name = "builtins"
         object_name = funcname
     else:
-        module_name, object_name = funcname.rsplit('.', 1)
+        module_name, object_name = funcname.rsplit(".", 1)
 
-    module = __import__(module_name, fromlist=['*'])
+    module = __import__(module_name, fromlist=["*"])
     try:
         callable_ = getattr(module, object_name)
     except AttributeError:
-        raise AttributeError('module {} has no attribute {}'.format(
-            module.__name__,
-            object_name,
-        ))
+        raise AttributeError(
+            "module {} has no attribute {}".format(module.__name__, object_name)
+        )
     return callable_
 
 
@@ -409,48 +416,27 @@ def main():
 
     """
     import argparse
+
     parser = argparse.ArgumentParser()
+    parser.add_argument("funcname", help="name of the callable to execute")
+    parser.add_argument("funcargs", help="callable arguments in JSON")
+    parser.add_argument("--context", help="Activity Context")
+    parser.add_argument("--logger-name", help="logger name")
     parser.add_argument(
-        'funcname',
-        help='name of the callable to execute',
+        "--result-fd", type=int, default=1, metavar="N", help="result file descriptor"
     )
     parser.add_argument(
-        'funcargs',
-        help='callable arguments in JSON',
+        "--error-fd", type=int, default=2, metavar="N", help="error file descriptor"
     )
     parser.add_argument(
-        '--context',
-        help='Activity Context',
-    )
-    parser.add_argument(
-        '--logger-name',
-        help='logger name',
-    )
-    parser.add_argument(
-        '--result-fd',
-        type=int,
-        default=1,
-        metavar='N',
-        help='result file descriptor',
-    )
-    parser.add_argument(
-        '--error-fd',
-        type=int,
-        default=2,
-        metavar='N',
-        help='error file descriptor',
-    )
-    parser.add_argument(
-        '--arguments-json-fd',
+        "--arguments-json-fd",
         type=int,
         default=None,
-        metavar='N',
-        help='JSON input file descriptor',
+        metavar="N",
+        help="JSON input file descriptor",
     )
     parser.add_argument(
-        '--kill-children',
-        action='store_true',
-        help='kill child processes on exit',
+        "--kill-children", action="store_true", help="kill child processes on exit"
     )
     cmd_arguments = parser.parse_args()
 
@@ -474,53 +460,50 @@ def main():
     if cmd_arguments.arguments_json_fd is None:
         content = cmd_arguments.funcargs
         if content is None:
-            parser.error('the following arguments are required: funcargs')
+            parser.error("the following arguments are required: funcargs")
     else:
         with os.fdopen(cmd_arguments.arguments_json_fd) as arguments_json_file:
             content = arguments_json_file.read()
     try:
         arguments = format.decode(content)
     except Exception:
-        raise ValueError('cannot load arguments from {}'.format(
-            content))
+        raise ValueError("cannot load arguments from {}".format(content))
     if cmd_arguments.logger_name:
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
         logger = logging.getLogger(__name__)
     callable_ = make_callable(funcname)
-    if hasattr(callable_, '__wrapped__'):
+    if hasattr(callable_, "__wrapped__"):
         callable_ = callable_.__wrapped__
-    args = arguments.get('args', ())
-    kwargs = arguments.get('kwargs', {})
-    context = json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
+    args = arguments.get("args", ())
+    kwargs = arguments.get("kwargs", {})
+    context = (
+        json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
+    )
     try:
-        if hasattr(callable_, 'execute'):
+        if hasattr(callable_, "execute"):
             inst = callable_(*args, **kwargs)
             if context is not None:
                 inst.context = context
             result = inst.execute()
-            if hasattr(inst, 'post_execute'):
+            if hasattr(inst, "post_execute"):
                 inst.post_execute()
         else:
             if context is not None:
                 callable_.context = context
             result = callable_(*args, **kwargs)
     except Exception as err:
-        logger.error('Exception: {}'.format(err))
+        logger.error("Exception: {}".format(err))
         exc_type, exc_value, exc_traceback = sys.exc_info()
         tb = traceback.format_tb(exc_traceback)
         details = json_dumps(
-            {
-                'error': exc_type.__name__,
-                'message': str(exc_value),
-                'traceback': tb,
-            },
+            {"error": exc_type.__name__, "message": str(exc_value), "traceback": tb},
             default=repr,
         )
         if cmd_arguments.error_fd == 2:
             sys.stderr.flush()
         if not compat.PY2:
-            details = details.encode('utf-8')
+            details = details.encode("utf-8")
         os.write(cmd_arguments.error_fd, details)
         if cmd_arguments.kill_children:
             kill_child_processes()
@@ -528,14 +511,14 @@ def main():
 
     if cmd_arguments.result_fd == 1:  # stdout (legacy)
         sys.stdout.flush()  # may have print's in flight
-        os.write(cmd_arguments.result_fd, b'\n')
+        os.write(cmd_arguments.result_fd, b"\n")
     result = json_dumps(result)
     if not compat.PY2:
-        result = result.encode('utf-8')
+        result = result.encode("utf-8")
     os.write(cmd_arguments.result_fd, result)
     if cmd_arguments.kill_children:
         kill_child_processes()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

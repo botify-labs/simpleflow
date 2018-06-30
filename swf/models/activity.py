@@ -12,12 +12,7 @@ from swf.utils import immutable
 from swf.models import BaseModel
 from swf.models.base import ModelDiff
 from swf import exceptions
-from swf.exceptions import (
-    AlreadyExistsError,
-    DoesNotExistError,
-    ResponseError,
-    raises,
-)
+from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
 
 
 class ActivityTypeDoesNotExist(Exception):
@@ -72,34 +67,41 @@ class ActivityType(BaseModel):
                                           this activity type.
     :type    task_start_to_close_timeout: int
     """
-    kind = 'type'
+
+    kind = "type"
 
     __slots__ = [
-        'domain',
-        'name',
-        'version',
-        'status',
-        'description',
-        'creation_date',
-        'deprecation_date',
-        'task_list',
-        'task_heartbeat_timeout',
-        'task_schedule_to_close_timeout',
-        'task_schedule_to_start_timeout',
-        'task_start_to_close_timeout',
+        "domain",
+        "name",
+        "version",
+        "status",
+        "description",
+        "creation_date",
+        "deprecation_date",
+        "task_list",
+        "task_heartbeat_timeout",
+        "task_schedule_to_close_timeout",
+        "task_schedule_to_start_timeout",
+        "task_start_to_close_timeout",
     ]
 
-    def __init__(self, domain, name, version,
-                 status=REGISTERED,
-                 description=None,
-                 creation_date=0.0,
-                 deprecation_date=0.0,
-                 task_list=None,
-                 task_heartbeat_timeout=0,
-                 task_schedule_to_close_timeout=0,
-                 task_schedule_to_start_timeout=0,
-                 task_start_to_close_timeout=0,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        domain,
+        name,
+        version,
+        status=REGISTERED,
+        description=None,
+        creation_date=0.0,
+        deprecation_date=0.0,
+        task_list=None,
+        task_heartbeat_timeout=0,
+        task_schedule_to_close_timeout=0,
+        task_schedule_to_start_timeout=0,
+        task_start_to_close_timeout=0,
+        *args,
+        **kwargs
+    ):
 
         self.domain = domain
         self.name = name
@@ -130,50 +132,64 @@ class ActivityType(BaseModel):
         """
         try:
             description = self.connection.describe_activity_type(
-                self.domain.name,
-                self.name,
-                self.version
+                self.domain.name, self.name, self.version
             )
         except SWFResponseError as err:
-            if err.error_code == 'UnknownResourceFault':
+            if err.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote ActivityType does not exist")
 
-            raise ResponseError(err.body['message'])
+            raise ResponseError(err.body["message"])
 
-        info = description['typeInfo']
-        config = description['configuration']
+        info = description["typeInfo"]
+        config = description["configuration"]
 
         return ModelDiff(
-            ('name', self.name, info['activityType']['name']),
-            ('version', self.version, info['activityType']['version']),
-            ('status', self.status, info['status']),
-            ('description', self.description, info['description']),
-            ('creation_date', self.creation_date, info['creationDate']),
-            ('deprecation_date', self.deprecation_date, info['deprecationDate']),
-            ('task_list', self.task_list, config['defaultTaskList']['name']),
-            ('task_heartbeat_timeout', self.task_heartbeat_timeout, config['defaultTaskHeartbeatTimeout']),
-            ('task_schedule_to_close_timeout', self.task_schedule_to_close_timeout,
-             config['defaultTaskScheduleToCloseTimeout']),
-            ('task_schedule_to_start_timeout', self.task_schedule_to_start_timeout,
-             config['defaultTaskScheduleToStartTimeout']),
-            ('task_start_to_close_timeout', self.task_start_to_close_timeout, config['defaultTaskStartToCloseTimeout']),
+            ("name", self.name, info["activityType"]["name"]),
+            ("version", self.version, info["activityType"]["version"]),
+            ("status", self.status, info["status"]),
+            ("description", self.description, info["description"]),
+            ("creation_date", self.creation_date, info["creationDate"]),
+            ("deprecation_date", self.deprecation_date, info["deprecationDate"]),
+            ("task_list", self.task_list, config["defaultTaskList"]["name"]),
+            (
+                "task_heartbeat_timeout",
+                self.task_heartbeat_timeout,
+                config["defaultTaskHeartbeatTimeout"],
+            ),
+            (
+                "task_schedule_to_close_timeout",
+                self.task_schedule_to_close_timeout,
+                config["defaultTaskScheduleToCloseTimeout"],
+            ),
+            (
+                "task_schedule_to_start_timeout",
+                self.task_schedule_to_start_timeout,
+                config["defaultTaskScheduleToStartTimeout"],
+            ),
+            (
+                "task_start_to_close_timeout",
+                self.task_start_to_close_timeout,
+                config["defaultTaskStartToCloseTimeout"],
+            ),
         )
 
     @property
     @exceptions.is_not(ActivityTypeDoesNotExist)
-    @exceptions.catch(SWFResponseError,
-                      raises(ActivityTypeDoesNotExist,
-                             when=exceptions.is_unknown('ActivityType'),
-                             extract=exceptions.extract_resource))
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            ActivityTypeDoesNotExist,
+            when=exceptions.is_unknown("ActivityType"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def exists(self):
         """Checks if the ActivityType exists amazon-side
 
         :rtype: bool
         """
         self.connection.describe_activity_type(
-            self.domain.name,
-            self.name,
-            self.version
+            self.domain.name, self.name, self.version
         )
         return True
 
@@ -186,62 +202,80 @@ class ActivityType(BaseModel):
                 self.version,
                 task_list=str(self.task_list),
                 default_task_heartbeat_timeout=str(self.task_heartbeat_timeout),
-                default_task_schedule_to_close_timeout=str(self.task_schedule_to_close_timeout),
-                default_task_schedule_to_start_timeout=str(self.task_schedule_to_start_timeout),
-                default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
-                description=self.description)
+                default_task_schedule_to_close_timeout=str(
+                    self.task_schedule_to_close_timeout
+                ),
+                default_task_schedule_to_start_timeout=str(
+                    self.task_schedule_to_start_timeout
+                ),
+                default_task_start_to_close_timeout=str(
+                    self.task_start_to_close_timeout
+                ),
+                description=self.description,
+            )
         except SWFTypeAlreadyExistsError as err:
-            raise AlreadyExistsError('{} already exists'.format(self))
+            raise AlreadyExistsError("{} already exists".format(self))
         except SWFResponseError as err:
-            if err.error_code in ['UnknownResourceFault', 'TypeDeprecatedFault']:
-                raise DoesNotExistError(err.body['message'])
+            if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
+                raise DoesNotExistError(err.body["message"])
             raise
 
-    @exceptions.catch(SWFResponseError,
-                      raises(ActivityTypeDoesNotExist,
-                             when=exceptions.is_unknown('ActivityType'),
-                             extract=exceptions.extract_resource))
+    @exceptions.catch(
+        SWFResponseError,
+        raises(
+            ActivityTypeDoesNotExist,
+            when=exceptions.is_unknown("ActivityType"),
+            extract=exceptions.extract_resource,
+        ),
+    )
     def delete(self):
         """Deprecates the domain amazon side"""
         self.connection.deprecate_activity_type(
-                self.domain.name,
-                self.name,
-                self.version
-            )
+            self.domain.name, self.name, self.version
+        )
 
     def upstream(self):
         from swf.querysets.activity import ActivityTypeQuerySet
+
         qs = ActivityTypeQuerySet(self.domain)
         return qs.get(self.name, self.version)
 
     def __repr__(self):
-        return '<{} domain={} name={} version={} status={}>'.format(
-               self.__class__.__name__,
-               self.domain.name,
-               self.name,
-               self.version,
-               self.status)
+        return "<{} domain={} name={} version={} status={}>".format(
+            self.__class__.__name__,
+            self.domain.name,
+            self.name,
+            self.version,
+            self.status,
+        )
 
 
 @immutable
 class ActivityTask(BaseModel):
     __slots__ = [
-        'domain',
-        'task_list',
-        'task_token',
-        'activity_type',
-        'workflow_execution',
-        'input',
-        'activity_id',
-        'started_event_id'
+        "domain",
+        "task_list",
+        "task_token",
+        "activity_type",
+        "workflow_execution",
+        "input",
+        "activity_id",
+        "started_event_id",
     ]
 
     # noinspection PyMissingConstructor
-    def __init__(self, domain, task_list,
-                 task_token=None, activity_type=None,
-                 workflow_execution=None, input=None,
-                 activity_id=None, started_event_id=None,
-                 context=None):
+    def __init__(
+        self,
+        domain,
+        task_list,
+        task_token=None,
+        activity_type=None,
+        workflow_execution=None,
+        input=None,
+        activity_id=None,
+        started_event_id=None,
+        context=None,
+    ):
         self.domain = domain
         self.task_list = task_list
 
@@ -259,23 +293,23 @@ class ActivityTask(BaseModel):
         from .workflow import WorkflowExecution
 
         activity_type = ActivityType(
-            domain,
-            data['activityType']['name'],
-            data['activityType']['version'])
+            domain, data["activityType"]["name"], data["activityType"]["version"]
+        )
 
         workflow_execution = WorkflowExecution(
             domain,
-            data['workflowExecution']['workflowId'],
-            data['workflowExecution']['runId'])
+            data["workflowExecution"]["workflowId"],
+            data["workflowExecution"]["runId"],
+        )
 
         return cls(
             domain,
             task_list,
-            task_token=data['taskToken'],
+            task_token=data["taskToken"],
             activity_type=activity_type,
             workflow_execution=workflow_execution,
-            input=data.get('input'),
-            activity_id=data['activityId'],
-            started_event_id=data['startedEventId'],
+            input=data.get("input"),
+            activity_id=data["activityId"],
+            started_event_id=data["startedEventId"],
             context=data,
         )

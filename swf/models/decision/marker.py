@@ -10,7 +10,7 @@ from swf.models.decision.base import Decision, decision_action
 
 
 class MarkerDecision(Decision):
-    _base_type = 'Marker'
+    _base_type = "Marker"
 
     @decision_action
     def record(self, name, details=None):
@@ -25,7 +25,4 @@ class MarkerDecision(Decision):
         if details is not None:
             details = json_dumps(details)
 
-        self.update_attributes({
-            'markerName': name,
-            'details': details
-        })
+        self.update_attributes({"markerName": name, "details": details})

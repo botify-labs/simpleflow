@@ -4,7 +4,7 @@ from invoke import run, task
 
 @task
 def test():
-    run('python setup.py test', pty=True)
+    run("python setup.py test", pty=True)
 
 
 @task

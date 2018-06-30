@@ -11,7 +11,7 @@ from swf.models.workflow import CHILD_POLICIES
 
 
 class WorkflowExecutionDecision(Decision):
-    _base_type = 'WorkflowExecution'
+    _base_type = "WorkflowExecution"
 
     @decision_action
     def complete(self, result=None):
@@ -20,9 +20,7 @@ class WorkflowExecutionDecision(Decision):
         :param  result: The result of the workflow execution
         :type   result: Optional[Any]
         """
-        self.update_attributes({
-            'result': format.result(result),
-        })
+        self.update_attributes({"result": format.result(result)})
 
     @decision_action
     def cancel(self, details=None):
@@ -31,9 +29,7 @@ class WorkflowExecutionDecision(Decision):
         :param  details: Optional details of the cancellation
         :type   details: Optional[Any]
         """
-        self.update_attributes({
-            'details': format.details(details),
-        })
+        self.update_attributes({"details": format.details(details)})
 
     @decision_action
     def fail(self, details=None, reason=None):
@@ -45,23 +41,27 @@ class WorkflowExecutionDecision(Decision):
         :param  reason: A descriptive reason for the failure that may help in diagnostics
         :type   reason: Optional[str]
         """
-        self.update_attributes({
-            'details': format.details(details),
-            'reason': format.reason(reason),
-        })
+        self.update_attributes(
+            {"details": format.details(details), "reason": format.reason(reason)}
+        )
 
     @decision_action
     def terminate(self, reason=None, details=None):
-        self.update_attributes({
-            'reason': format.reason(reason),
-            'details': format.details(details),
-        })
+        self.update_attributes(
+            {"reason": format.reason(reason), "details": format.details(details)}
+        )
 
     @decision_action
-    def continue_as_new(self, child_policy=None,
-                        execution_timeout=None, task_timeout=None,
-                        input=None, tag_list=None, task_list=None,
-                        workflow_type_version=None):
+    def continue_as_new(
+        self,
+        child_policy=None,
+        execution_timeout=None,
+        task_timeout=None,
+        input=None,
+        tag_list=None,
+        task_list=None,
+        workflow_type_version=None,
+    ):
         """Coninue as new workflow execution decision builder
         :param  child_policy: specifies the policy to use for the
                               child workflow executions of the new execution
@@ -88,24 +88,35 @@ class WorkflowExecutionDecision(Decision):
         if input is not None:
             input = format.input(input)
 
-        self.update_attributes({
-            'childPolicy': child_policy,
-            'executionStartToCloseTimeout': execution_timeout,
-            'taskStartToCloseTimeout': task_timeout,
-            'input': input,
-            'tagList': tag_list,
-            'taskList': task_list,
-            'workflowTypeVersion': workflow_type_version,
-        })
+        self.update_attributes(
+            {
+                "childPolicy": child_policy,
+                "executionStartToCloseTimeout": execution_timeout,
+                "taskStartToCloseTimeout": task_timeout,
+                "input": input,
+                "tagList": tag_list,
+                "taskList": task_list,
+                "workflowTypeVersion": workflow_type_version,
+            }
+        )
 
 
 class ChildWorkflowExecutionDecision(Decision):
-    _base_type = 'ChildWorkflowExecution'
+    _base_type = "ChildWorkflowExecution"
 
     @decision_action
-    def start(self, workflow_type, workflow_id, child_policy=CHILD_POLICIES.TERMINATE,
-              execution_timeout='300', task_timeout='300', control=None,
-              input=None, tag_list=None, task_list=None):
+    def start(
+        self,
+        workflow_type,
+        workflow_id,
+        child_policy=CHILD_POLICIES.TERMINATE,
+        execution_timeout="300",
+        task_timeout="300",
+        control=None,
+        input=None,
+        tag_list=None,
+        task_list=None,
+    ):
         """Child workflow execution decision builder
 
         :param  workflow_type: workflow type to start
@@ -143,26 +154,26 @@ class ChildWorkflowExecutionDecision(Decision):
         if control is not None:
             control = format.control(control)
 
-        self.update_attributes({
-            'childPolicy': child_policy,
-            'executionStartToCloseTimeout': execution_timeout,
-            'taskStartToCloseTimeout': task_timeout,
-            'control': control,
-            'input': input,
-            'tagList': tag_list,
-            'taskList': {
-                'name': task_list,
-            },
-            'workflowId': workflow_id,
-            'workflowType': {
-                'name': workflow_type.name,
-                'version': workflow_type.version,
+        self.update_attributes(
+            {
+                "childPolicy": child_policy,
+                "executionStartToCloseTimeout": execution_timeout,
+                "taskStartToCloseTimeout": task_timeout,
+                "control": control,
+                "input": input,
+                "tagList": tag_list,
+                "taskList": {"name": task_list},
+                "workflowId": workflow_id,
+                "workflowType": {
+                    "name": workflow_type.name,
+                    "version": workflow_type.version,
+                },
             }
-        })
+        )
 
 
 class ExternalWorkflowExecutionDecision(Decision):
-    _base_type = 'ExternalWorkflowExecution'
+    _base_type = "ExternalWorkflowExecution"
 
     @decision_action
     def request_cancel(self, workflow_id, control=None, run_id=None):
@@ -181,15 +192,12 @@ class ExternalWorkflowExecutionDecision(Decision):
         if control is not None:
             control = format.control(control)
 
-        self.update_attributes({
-            'workflowId': workflow_id,
-            'control': control,
-            'runId': run_id
-        })
+        self.update_attributes(
+            {"workflowId": workflow_id, "control": control, "runId": run_id}
+        )
 
     @decision_action
-    def signal(self, signal_name, workflow_id,
-               control=None, input=None, run_id=None):
+    def signal(self, signal_name, workflow_id, control=None, input=None, run_id=None):
         """Signal external workflow execution decision builder
 
         :param  signal_name: name of the signal
@@ -214,10 +222,12 @@ class ExternalWorkflowExecutionDecision(Decision):
         if control is not None:
             control = format.control(control)
 
-        self.update_attributes({
-            'signalName': signal_name,
-            'workflowId': workflow_id,
-            'control': control,
-            'input': input,
-            'runId': run_id,
-        })
+        self.update_attributes(
+            {
+                "signalName": signal_name,
+                "workflowId": workflow_id,
+                "control": control,
+                "input": input,
+                "runId": run_id,
+            }
+        )

@@ -5,8 +5,8 @@
 #
 # See the file LICENSE for copying permission.
 
-REGISTERED = 'REGISTERED'
-DEPRECATED = 'DEPRECATED'
+REGISTERED = "REGISTERED"
+DEPRECATED = "DEPRECATED"
 
 # A SWF workflow cannot last more than a year, and workflows informations are
 # accessible for maximum 90 days (retention set at domain creation).

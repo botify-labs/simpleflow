@@ -15,63 +15,49 @@ from simpleflow.utils import json_dumps
 from .stats import pretty
 
 __all__ = [
-    'show_workflow_profile',
-    'show_workflow_status',
-    'list_workflow_executions',
-    'swf_identity',
+    "show_workflow_profile",
+    "show_workflow_status",
+    "list_workflow_executions",
+    "swf_identity",
 ]
 
 
 def get_workflow_execution(domain_name, workflow_id, run_id=None):
     def filter_execution(*args, **kwargs):
-        if 'workflow_status' in kwargs:
-            kwargs['status'] = kwargs.pop('workflow_status')
+        if "workflow_status" in kwargs:
+            kwargs["status"] = kwargs.pop("workflow_status")
         return query.filter(*args, **kwargs)[0]
 
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowExecutionQuerySet(domain)
 
     action = filter_execution
-    keywords = {
-        'workflow_id': workflow_id,
-    }
+    keywords = {"workflow_id": workflow_id}
     if run_id:
         action = query.get
-        keywords['run_id'] = run_id
+        keywords["run_id"] = run_id
 
     try:
         workflow_execution = action(**keywords)
     except (swf.exceptions.DoesNotExistError, IndexError):
-        keywords['workflow_status'] = swf.models.WorkflowExecution.STATUS_CLOSED
+        keywords["workflow_status"] = swf.models.WorkflowExecution.STATUS_CLOSED
         workflow_execution = action(**keywords)
 
     return workflow_execution
 
 
 def show_workflow_info(domain_name, workflow_id, run_id=None):
-    workflow_execution = get_workflow_execution(
-        domain_name,
-        workflow_id,
-        run_id,
-    )
+    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     return pretty.info(workflow_execution)
 
 
 def show_workflow_profile(domain_name, workflow_id, run_id=None, nb_tasks=None):
-    workflow_execution = get_workflow_execution(
-        domain_name,
-        workflow_id,
-        run_id,
-    )
+    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     return pretty.profile(workflow_execution, nb_tasks)
 
 
 def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
-    workflow_execution = get_workflow_execution(
-        domain_name,
-        workflow_id,
-        run_id,
-    )
+    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     return pretty.status(workflow_execution, nb_tasks)
 
 
@@ -83,14 +69,27 @@ def list_workflow_executions(domain_name, *args, **kwargs):
     return pretty.list_executions(executions)
 
 
-def filter_workflow_executions(domain_name, status, tag,
-                               workflow_id, workflow_type_name,
-                               workflow_type_version, *args, **kwargs):
+def filter_workflow_executions(
+    domain_name,
+    status,
+    tag,
+    workflow_id,
+    workflow_type_name,
+    workflow_type_version,
+    *args,
+    **kwargs
+):
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowExecutionQuerySet(domain)
-    executions = query.filter(status, tag,
-                              workflow_id, workflow_type_name,
-                              workflow_type_version, *args, **kwargs)
+    executions = query.filter(
+        status,
+        tag,
+        workflow_id,
+        workflow_type_name,
+        workflow_type_version,
+        *args,
+        **kwargs
+    )
 
     return pretty.list_details(executions)
 
@@ -124,28 +123,25 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     input_ = input or found_activity["input"]
     if input_ is None:
         input_ = {}
-    args = input_.get('args', ())
-    kwargs = input_.get('kwargs', {})
-    meta = input_.get('meta', {})
+    args = input_.get("args", ())
+    kwargs = input_.get("kwargs", {})
+    meta = input_.get("meta", {})
 
     # return everything
     return activity, args, kwargs, meta, found_activity
 
 
 def get_task(domain_name, workflow_id, task_id, details):
-    workflow_execution = get_workflow_execution(
-        domain_name,
-        workflow_id,
-    )
+    workflow_execution = get_workflow_execution(domain_name, workflow_id)
     return pretty.get_task(workflow_execution, task_id, details)
 
 
 def swf_identity():
     # basic identity
     identity = {
-        'user': getpass.getuser(),          # system's user
-        'hostname': socket.gethostname(),   # main hostname
-        'pid': os.getpid(),                 # current pid
+        "user": getpass.getuser(),  # system's user
+        "hostname": socket.gethostname(),  # main hostname
+        "pid": os.getpid(),  # current pid
     }
 
     # adapt with extra keys from env
