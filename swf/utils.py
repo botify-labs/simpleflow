@@ -5,13 +5,13 @@
 #
 # See the file LICENSE for copying permission.
 
+# noinspection PyCompatibility
+from builtins import zip
 from datetime import datetime, timedelta
 from time import mktime
 from itertools import chain, islice
 
 from functools import wraps
-
-from simpleflow import compat
 
 
 def decapitalize(s):
@@ -211,5 +211,5 @@ def underscore_to_camel(string):
     return ''.join(chain([string[0].upper()],
                          ((c.upper() if p == '_' else c) if
                           c != '_' else '' for p, c in
-                          compat.izip(islice(string, 0, None),
-                                      islice(string, 1, None)))))
+                          zip(islice(string, 0, None),
+                              islice(string, 1, None)))))

@@ -64,6 +64,7 @@ def sanitize_bucket_and_host(bucket):
 
     # fallback for backward compatibility
     if not location:
+        # noinspection PyUnresolvedReferences
         location = settings.SIMPLEFLOW_S3_HOST
 
     return bucket, location

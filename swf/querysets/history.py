@@ -4,6 +4,7 @@ from swf.querysets.base import BaseQuerySet
 
 class HistoryQuerySet(BaseQuerySet):
     """WorkflowExecution history queryset"""
+
     def __init__(self, domain, *args, **kwargs):
         super(HistoryQuerySet, self).__init__(*args, **kwargs)
         self.domain = domain
@@ -57,3 +58,15 @@ class HistoryQuerySet(BaseQuerySet):
             next_page = response.get('nextPageToken')
 
         return History.from_event_list(events)
+
+    def get_or_create(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def filter(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def all(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def create(self, *args, **kwargs):
+        raise NotImplementedError

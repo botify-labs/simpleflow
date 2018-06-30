@@ -6,7 +6,6 @@ from sure import expect
 
 from simpleflow.download import RemoteBinary, with_binaries
 
-
 # example binary remote/local location
 remote_location = "s3://a.bucket/v1.2.3/custom-bin"
 local_directory = "/tmp/simpleflow-binaries/custom-bin-585b3e5c252d6ec7aff52c24b149d719"
@@ -54,7 +53,7 @@ class TestRemoteBinary(unittest.TestCase):
 
 
 class TestWithBinariesDecorator(unittest.TestCase):
-    @with_binaries({ "custom-bin": remote_location })
+    @with_binaries({"custom-bin": remote_location})
     def method_needing_custom_binary(self):
         return "foo!"
 

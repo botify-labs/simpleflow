@@ -74,6 +74,7 @@ def read(fname):
 
 
 DEPS = [
+    'six',
     'future',
     'boto>=2.38.0',
     'diskcache==2.4.1',

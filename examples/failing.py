@@ -9,9 +9,9 @@ from simpleflow.canvas import Group
 from simpleflow.constants import MINUTE
 from simpleflow.log import GREEN, YELLOW, END, RED, ORANGE
 from simpleflow.swf.task import WorkflowTask
-from simpleflow.task import TaskFailureContext
+from simpleflow.task import TaskFailureContext  # NOQA
 
-
+# noinspection PyUnreachableCode
 if False:
     from typing import Optional  # NOQA
 

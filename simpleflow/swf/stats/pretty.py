@@ -251,7 +251,7 @@ def get_task(workflow_execution, task_id, details=False):
     if details:
         header.append('details')
     # print >>sys.stderr, task
-    state = task['state']
+    state = task['state']  # type: str
     rows = \
         [
             [

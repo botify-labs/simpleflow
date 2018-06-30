@@ -5,7 +5,7 @@ import swf.models
 import swf.querysets
 from simpleflow.history import History
 
-
+# noinspection PyUnreachableCode
 if False:
     from typing import Any, List, Dict  # NOQA
     from swf.models.decision.base import Decision  # NOQA

@@ -1,3 +1,8 @@
+import abc
+
+from future.utils import with_metaclass
+
+
 class Submittable(object):
     """
     Object directly submittable to an executor, without wrapping:
@@ -7,11 +12,15 @@ class Submittable(object):
         pass
 
 
-class SubmittableContainer(object):
+class SubmittableContainer(with_metaclass(abc.ABCMeta)):
     """
-    Objects where submission returns either Submittable or SubmittableContainer objects
+    Object where submission returns either Submittable or SubmittableContainer objects
 
     We cannot pass those objects directly to the executor
     """
     def propagate_attribute(self, attr, val):
+        pass
+
+    @abc.abstractmethod
+    def submit(self, executor):
         pass

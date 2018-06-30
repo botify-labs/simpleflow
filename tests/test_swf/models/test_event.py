@@ -8,7 +8,7 @@ import pytz
 
 from swf.models.event import Event
 from swf.models.history import History
-import swf.constants
+from swf import constants
 
 from ..mocks.event import mock_get_workflow_execution_history
 
@@ -27,12 +27,12 @@ class TestEvent(unittest.TestCase):
 
     def test_repr_with_missing_attr(self):
         with self.assertRaises(AttributeError):
-            ev = Event('WorkflowExecutionStarted', swf.contants.REGISTERED, 0, None)
+            ev = Event('WorkflowExecutionStarted', constants.REGISTERED, 0, {None: {}})
             delattr(ev, 'id')
-            ev.__repr__()
+            repr(ev)
 
     def test_iso_date(self):
-        ev = Event('WorkflowExecutionStarted', 'REGISTERED', 0, {None: {}})
+        ev = Event('WorkflowExecutionStarted', constants.REGISTERED, 0, {None: {}})
         self.assertEqual(datetime(1970, 1, 1, 0, 0, tzinfo=pytz.UTC), ev.timestamp)
 
 

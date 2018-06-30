@@ -54,6 +54,7 @@ class CompiledEvent(Event, Stateful):
 
     initial_state = None
 
+    # noinspection PyMissingConstructor
     def __init__(self, event):
         """Builds a  CompiledEvent from provided ``event``
 

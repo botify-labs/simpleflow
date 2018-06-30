@@ -13,8 +13,9 @@ from sure import expect
 from simpleflow.process import Supervisor, reset_signal_handlers
 from tests.utils import IntegrationTestCase
 
-
 TIME_STORE = {}
+
+
 def increase_wait_time(err, func_name, func, plugin):
     """
     This function is used as a "rerun_filter" for "flaky". It increases an offset
@@ -64,6 +65,7 @@ class TestSupervisor(IntegrationTestCase):
                 setproctitle("simpleflow worker: shutting down")
                 time.sleep(10)
                 os._exit(0)
+
             signal.signal(signal.SIGTERM, handle_sigterm)
             setproctitle("simpleflow worker: running")
             time.sleep(60)
@@ -87,12 +89,14 @@ class TestSupervisor(IntegrationTestCase):
     def test_payload_friendly_name(self):
         def foo():
             pass
+
         supervisor = Supervisor(foo, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "foo")
 
         class Foo(object):
             def bar(self):
                 pass
+
         supervisor = Supervisor(Foo().bar, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "Foo.bar")
 

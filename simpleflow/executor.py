@@ -3,9 +3,10 @@ import logging
 
 from ._decorators import deprecated
 
+# noinspection PyUnreachableCode
 if False:
-    from typing import Type
-    from simpleflow import Workflow
+    from typing import Type  # NOQA
+    from simpleflow import Workflow  # NOQA
 
 __all__ = ['Executor']
 
@@ -57,9 +58,7 @@ class Executor(object):
 
     def create_workflow(self):
         if self._workflow is None:
-            workflow = self._workflow_class(self)
-            if False:
-                assert isinstance(workflow, Workflow)
+            workflow = self._workflow_class(self)  # type: Workflow
             self._workflow = workflow
 
     def run_workflow(self, *args, **kwargs):

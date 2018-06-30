@@ -11,9 +11,10 @@ from tests.utils import IntegrationTestCase
 
 from simpleflow.utils import json_dumps
 
+# noinspection PyUnreachableCode
 if False:
-    from typing import List, Union
-    from click.testing import Result
+    from typing import List, Union  # NOQA
+    from click.testing import Result  # NOQA
 
 
 # Default SWF parameters
@@ -81,7 +82,7 @@ class VCRIntegrationTest(IntegrationTestCase):
         return events
 
     def invoke(self, command, arguments):
-        # type: (str, Union(str, List[str])) -> Result
+        # type: (str, Union[str, List[str]]) -> Result
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):

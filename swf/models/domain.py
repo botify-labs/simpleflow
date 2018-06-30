@@ -170,7 +170,7 @@ class Domain(BaseModel):
 
     @property
     def executions(self):
-        pass
+        return None
 
     def __repr__(self):
         return '<{} name={} status={}>'.format(

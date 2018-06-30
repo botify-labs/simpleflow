@@ -1,7 +1,6 @@
 from . import settings
 from . import registry
 
-
 __all__ = [
     'with_attributes',
     'Activity',
@@ -13,22 +12,23 @@ class NotSet(object):
     def __repr__(self):
         return "<Priority Not Set>"
 
+
 PRIORITY_NOT_SET = NotSet()
 
 
 def with_attributes(
-        name=None,
-        version=settings.ACTIVITY_DEFAULT_VERSION,
-        task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
-        task_priority=PRIORITY_NOT_SET,
-        retry=0,
-        raises_on_failure=False,
-        start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
-        schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
-        schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
-        heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
-        idempotent=None,
-        meta=None,
+    name=None,
+    version=settings.ACTIVITY_DEFAULT_VERSION,
+    task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
+    task_priority=PRIORITY_NOT_SET,
+    retry=0,
+    raises_on_failure=False,
+    start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
+    schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
+    schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
+    heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
+    idempotent=None,
+    meta=None,
 ):
     """
     Decorator: wrap a function/class into an Activity.
@@ -39,6 +39,8 @@ def with_attributes(
     :type version: str
     :param task_list: optional task list.
     :type task_list: str
+    :param task_priority:
+    :type task_priority: str | int | PRIORITY_NOT_SET
     :param retry: retry count.
     :type retry: int
     :param raises_on_failure: whether to raise on failuer.
@@ -58,6 +60,7 @@ def with_attributes(
     :rtype: () -> Activity[()]
 
     """
+
     def wrap(func):
         return Activity(
             func, name, version, task_list,

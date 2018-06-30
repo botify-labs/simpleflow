@@ -72,7 +72,10 @@ Let's take a closer look to the workflow definition.
 It is a **class** that inherits from `simpleflow.Workflow`:
 
 ```python
+from simpleflow import Workflow
+
 class BasicWorkflow(Workflow):
+    ...
 ```
 
 It defines 3 class attributes:
@@ -83,7 +86,7 @@ It defines 3 class attributes:
 - **task_list**, the default task list (see it as a dynamically created queue)
   where decision tasks for this workflow will be sent. Any **decider** that
   listens on this task list can handle this workflow. This value can be
-  overrided by the simpleflow commands and objects.
+  overriden by the simpleflow commands and objects.
 
 It also implements the `run` method that takes two arguments: `x` and
 `t=30` (i.e. `t` is optional and has the default value `30`). These

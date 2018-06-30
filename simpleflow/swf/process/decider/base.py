@@ -13,7 +13,7 @@ from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.utils import DecisionsAndContext
 
-
+# noinspection PyUnreachableCode
 if False:
     from typing import Any, List, Optional, Union  # NOQA
     from swf.responses import Response  # NOQA
@@ -150,7 +150,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     @with_state('completing')
     def complete(self, token, decisions=None, execution_context=None):
-        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext], Optional) -> None
+        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext]) -> None
         """
         DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
         :param token: task token.

@@ -61,7 +61,8 @@ If neither of the previous methods were used, you can still set the AWS credenti
 ...                  aws_secret_access_key='MYAWSSECRETACCESSKEY',
 ...                  region='REGION')
 # And then you're good to go...
->>> queryset = DomainQuery()
+>>> from swf.querysets import DomainQuerySet
+>>> queryset = DomainQuerySet()
 >>> queryset.all()
 [Domain('test1'), Domain('test2')]
 ```
@@ -152,10 +153,10 @@ they're behaving like django managers.
 >>> workflow_qs = WorkflowTypeQuerySet(workflow_domain)  # queryset built against model instance example
 
 >>> workflow_qs.all()
-[WorkflowType("TestType1"), WorkflowType("TestType2"),]
+[WorkflowType("TestType1"), WorkflowType("TestType2")]
 
 >>> workflow_qs.filter(status=DEPRECATED)
-[WorkflowType("DeprecatedType1"),]
+[WorkflowType("DeprecatedType1")]
 ```
 
 
@@ -186,33 +187,45 @@ such workers and decider, `swf` exposes base classes for them located in the `sw
 
 ```python
 class Actor(ConnectedSWFObject):
-    def __init__(self, domain, task_list)
+    def __init__(self, domain, task_list):
+        ...
     def start(self):
+        ...
     def stop(self):
+        ...
 ```
 
-* `Decider` base class implements the core functionality of a swf decider: polling for decisions tasks,
-  and sending back a decision task copleted decision. Every other special needs implementations are left
+* The `Decider` base class implements the core functionality of a swf decider: polling for decisions tasks,
+  and sending back a decision task completed decision. Every other special needs implementations are left
   up to the user.
 
 ```python
 class Decider(Actor):
-    def __init__(self, domain, task_list)
+    def __init__(self, domain, task_list):
+        ...
     def complete(self, task_token, decisions=None, execution_context=None)
+        ...
     def poll(self, task_list=None, identity=None, maximum_page_size=None)
+        ...
 ```
 
-* `Worker` base class implements the core functionality of a swf worker whoes role is to process activity
+* The `Worker` base class implements the core functionality of a swf worker whoes role is to process activity
   tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to SWF
   service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity
   task it's processing.
 
 ```python
 class ActivityWorker(Actor):
-    def __init__(self, domain, task_list)
-    def cancel(self, task_token, details=None)
-    def complete(self, task_token, result=None)
-    def fail(self, task_token, details=None, reason=None)
-    def heartbeat(self, task_token, details=None)
-    def poll(self, task_list=None, **kwargs)
+    def __init__(self, domain, task_list):
+        ...
+    def cancel(self, task_token, details=None):
+        ...
+    def complete(self, task_token, result=None):
+        ...
+    def fail(self, task_token, details=None, reason=None):
+        ...
+    def heartbeat(self, task_token, details=None):
+        ...
+    def poll(self, task_list=None, **kwargs):
+        ...
 ```

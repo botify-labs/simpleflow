@@ -1,3 +1,4 @@
+from __future__ import print_function
 from simpleflow import activity, Workflow
 from simpleflow.exceptions import ExecutionBlocked
 from .worker import (
@@ -55,4 +56,4 @@ class PirateBusiness(Workflow):
             raise ExecutionBlocked()
 
         # finished!
-        print "Arr! Let's go test this boat!"
+        print("Arr! Let's go test this boat!")

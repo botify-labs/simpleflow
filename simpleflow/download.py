@@ -6,6 +6,7 @@ import os
 
 from lockfile import FileLock
 
+# noinspection PyUnresolvedReferences
 from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
 

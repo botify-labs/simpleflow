@@ -1,6 +1,9 @@
+import abc
 import os
 import copy
 from collections import defaultdict
+
+from future.utils import with_metaclass
 
 from .constants import STEP_ACTIVITY_PARAMS_DEFAULT
 from .submittable import Step
@@ -8,19 +11,21 @@ from .tasks import GetStepsDoneTask
 from simpleflow import activity, settings, task
 
 
-class WorkflowStepMixin(object):
+class WorkflowStepMixin(with_metaclass(abc.ABCMeta)):
 
     def get_step_bucket(self):
         """
         Return the S3 bucket where to store the steps files
         """
+        # noinspection PyUnresolvedReferences
         return '/'.join((settings.SIMPLEFLOW_S3_HOST, settings.STEP_BUCKET))
 
     def get_step_path_prefix(self):
+        # type: () -> str
         """
         Return the S3 bucket's path prefix where to store the steps files
         """
-        return os.path.join(self.get_execution_context().get("workflow_id", "default"), 'steps/')
+        return os.path.join(self.get_run_context().get("workflow_id", "default"), 'steps/')
 
     def get_step_activity_params(self):
         """
@@ -74,7 +79,8 @@ class WorkflowStepMixin(object):
             activity_params_merged.update(activity_params)
         return activity_params_merged
 
-    def step(self, *args, **kwargs):
+    @staticmethod
+    def step(*args, **kwargs):
         return Step(*args, **kwargs)
 
     def get_steps_done_activity(self):

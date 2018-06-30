@@ -33,12 +33,11 @@ class TestWorkflowMixin(object):
         decision_id = self.history.last_id
         activity_id = attributes["activityId"]
         activity_input = attributes["input"]
-        (self.history
-            .add_activity_task(
-                activity,
-                decision_id=decision_id,
-                activity_id=activity_id,
-                last_state=last_state,
-                input=activity_input,
-                result=result)
+        self.history.add_activity_task(
+            activity,
+            decision_id=decision_id,
+            activity_id=activity_id,
+            last_state=last_state,
+            input=activity_input,
+            result=result
         )

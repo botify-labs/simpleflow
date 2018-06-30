@@ -14,6 +14,7 @@ from . import futures
 from .activity import Activity
 
 
+# noinspection PyUnreachableCode
 if False:
     from typing import Optional, Any, Dict, Union, Type  # NOQA
 
@@ -23,7 +24,7 @@ def get_actual_value(value):
     Unwrap the result of a Future or return the value.
     """
     if isinstance(value, futures.Future):
-        return futures.get_result_or_raise(value)
+        return value.result
     return value
 
 
@@ -32,7 +33,8 @@ class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         raise NotImplementedError()
 

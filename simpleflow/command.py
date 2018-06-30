@@ -32,6 +32,7 @@ from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
+# noinspection PyUnreachableCode
 if False:
     from typing import Text, Type  # NOQA
     from swf.models import WorkflowType  # NOQA

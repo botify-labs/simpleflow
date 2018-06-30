@@ -91,18 +91,19 @@ class EventFactory(object):
 
     will instantiate a ``swf.models.event.task.DecisionTaskEvent`` with state
     set to 'scheduled' from input attributes.
-
-    :param  raw_event: The input json event representation provided by
-                       amazon service
-    :type   raw_event: dict
-
-    :returns: ``swf.models.event.Event`` subclass instance
     """
 
     # eventType to Event subclass bindings
     events = EVENTS
 
     def __new__(klass, raw_event):
+        """
+        :param raw_event: The input json event representation provided by
+                          amazon service
+        :type raw_event: dict
+        :return: ``swf.models.event.Event`` subclass instance
+        :rtype: Event
+        """
         event_id = raw_event['eventId']
         event_name = raw_event['eventType']
         event_timestamp = raw_event['eventTimestamp']

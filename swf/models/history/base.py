@@ -6,6 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from itertools import groupby
+# noinspection PyCompatibility
 from builtins import object, range
 
 from future.utils import iteritems
@@ -254,7 +255,7 @@ class History(object):
         return self.compile()
 
     @classmethod
-    def from_event_list(cls, data):
+    def from_event_list(cls, events):
         """Instantiates a new ``swf.models.history.History`` instance
         from amazon service response.
 
@@ -262,16 +263,16 @@ class History(object):
         subclasses instances, exposing their type, state, and so on to
         facilitate decisions according to the history.
 
-        :param  data: event history description (typically, an amazon response)
-        :type   data: dict[str, Any]
+        :param  events: list of event history description (typically, an amazon response)
+        :type   events: List[Dict[str, Any]]
 
         :returns: History model instance built upon data description
         :rtype: swf.model.history.History
         """
         events_history = []
 
-        for index, d in enumerate(data):
+        for index, d in enumerate(events):
             event = EventFactory(d)
             events_history.append(event)
 
-        return cls(events=events_history, raw=data)
+        return cls(events=events_history, raw=events)

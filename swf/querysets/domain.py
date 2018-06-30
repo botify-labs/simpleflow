@@ -171,3 +171,6 @@ class DomainQuerySet(BaseQuerySet):
         domain.save()
 
         return domain
+
+    def filter(self, *args, **kwargs):
+        raise NotImplementedError

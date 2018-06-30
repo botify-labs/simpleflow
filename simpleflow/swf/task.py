@@ -3,7 +3,7 @@ import logging
 import swf.models
 import swf.models.decision
 from simpleflow import task, Workflow
-from simpleflow.utils import json_dumps
+
 
 logger = logging.getLogger(__name__)
 

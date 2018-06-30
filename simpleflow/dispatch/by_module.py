@@ -1,4 +1,4 @@
-from . import exceptions
+from simpleflow.dispatch import exceptions
 
 
 class ModuleDispatcher(object):

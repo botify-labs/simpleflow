@@ -3,6 +3,8 @@ import logging
 import os
 import signal
 
+from six import add_metaclass
+
 import swf.actors
 import swf.exceptions
 from simpleflow import utils
@@ -14,6 +16,7 @@ logger = logging.getLogger(__name__)
 __all__ = ['Poller']
 
 
+@add_metaclass(abc.ABCMeta)
 class Poller(swf.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor.
 
@@ -140,7 +143,8 @@ class Poller(swf.actors.Actor, NamedMixin):
     def process(self, request):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         """
         Name of the poller, can be overriden in subclasses.

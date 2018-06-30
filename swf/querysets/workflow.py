@@ -16,6 +16,10 @@ from swf.utils import datetime_timestamp, past_day, get_subkey
 from swf.exceptions import (ResponseError, DoesNotExistError,
                             InvalidKeywordArgumentError, AlreadyExistsError)
 
+# noinspection PyUnreachableCode
+if False:
+    from typing import Optional  # NOQA
+
 
 class BaseWorkflowQuerySet(BaseQuerySet):
     """Base domain bounded workflow queryset objects
@@ -39,16 +43,14 @@ class BaseWorkflowQuerySet(BaseQuerySet):
 
     @property
     def domain(self):
-        if not hasattr(self, '_domain'):
+        # type: () -> Optional[Domain]
+        if not hasattr(self, "_domain"):
             self._domain = None
         return self._domain
 
     @domain.setter
     def domain(self, value):
-        # Avoiding circular import
-        from swf.models.domain import Domain
-
-        if not isinstance(value, Domain):
+        if not isinstance(value, Domain):  # FIXME: justify why not using Domain.check(value)
             err = "domain property has to be of" \
                   "swf.model.domain.Domain type, not %r" \
                   % type(value)
@@ -438,7 +440,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             workflow_type['version'],
         )
 
-    def to_WorkflowExecution(self, domain, execution_info, **kwargs):
+    def to_workflow_execution(self, domain, execution_info, **kwargs):
         workflow_type = WorkflowType(
             self.domain,
             execution_info['workflowType']['name'],
@@ -476,7 +478,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         execution_info = response[self._infos]
         execution_config = response['executionConfiguration']
 
-        return self.to_WorkflowExecution(
+        return self.to_workflow_execution(
             self.domain,
             execution_info,
             task_list=get_subkey(execution_config, ['taskList', 'name']),
@@ -588,7 +590,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         else:
             start_oldest_date = None
 
-        return [self.to_WorkflowExecution(self.domain, wfe) for wfe in
+        return [self.to_workflow_execution(self.domain, wfe) for wfe in
                 self._list_items(
                     *args,
                     domain=self.domain.name,
@@ -653,7 +655,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         """
         start_oldest_date = datetime_timestamp(past_day(start_oldest_date))
 
-        return [self.to_WorkflowExecution(self.domain, wfe) for wfe
+        return [self.to_workflow_execution(self.domain, wfe) for wfe
                 in self._list_items(
                 status,
                 self.domain.name,

@@ -43,6 +43,7 @@ class History(swf.models.History):
     Helper class to build a history to simulate the execution of a workflow.
 
     """
+    # noinspection PyMissingConstructor
     def __init__(self, workflow, input=None, tag_list=None):
         """
         Bootstrap a history with the first events added by SWF.

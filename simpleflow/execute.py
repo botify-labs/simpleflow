@@ -9,12 +9,6 @@ import time
 
 import psutil
 
-MAX_ARGUMENTS_JSON_LENGTH = 65536
-
-try:
-    import subprocess32 as subprocess
-except ImportError:
-    import subprocess
 import functools
 import logging
 import tempfile
@@ -29,7 +23,15 @@ from simpleflow import compat, format
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
+try:
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
+
 __all__ = ['program', 'python']
+
+
+MAX_ARGUMENTS_JSON_LENGTH = 65536
 
 
 class RequiredArgument(object):
@@ -224,7 +226,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     full_command.append('foo')  # dummy funcarg
                 if kill_children:
                     full_command.append('--kill-children')
-                if compat.PY2:  # close_fds doesn't work with python2 (using its C _posixsubprocess helper)
+                if compat.PY2:  # pass_fds doesn't work with subprocess32 < 3.5.0 (https://github.com/google/python-subprocess32/issues/4)  # NOQA
                     close_fds = False
                     pass_fds = []
                 else:

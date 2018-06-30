@@ -88,6 +88,7 @@ class WorkflowPriority4(BaseWorkflow):
 def increment_with_high_prio(x):
     return x + 1
 
+
 class WorkflowPriority5(BaseWorkflow):
     name = "priority-5"
     task_priority = 5

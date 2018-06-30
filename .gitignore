@@ -41,7 +41,9 @@ output/*.html
 output/*/index.html
 
 # Mkdocs
+docs/api
 docs/site
+docs/_build/
 
 # Coverage
 htmlcov/

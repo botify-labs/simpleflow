@@ -12,6 +12,8 @@ from simpleflow import storage
 class DevNullCache(dict):
     def __setitem__(self, key, value):
         pass
+
+
 storage.BUCKET_LOCATIONS_CACHE = DevNullCache()
 
 

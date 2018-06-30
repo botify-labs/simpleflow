@@ -50,6 +50,8 @@ from swf.core import ConnectedSWFObject
 # noinspection PyUnreachableCode
 if False:
     from typing import Optional, Type, Union, Tuple  # NOQA
+    from swf.responses import Response  # NOQA
+
 
 logger = logging.getLogger(__name__)
 
@@ -1043,7 +1045,7 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response, decref_workflow=True):
-        # type: (swf.responses.Response, bool) -> DecisionsAndContext
+        # type: (Response, bool) -> DecisionsAndContext
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 

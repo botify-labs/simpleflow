@@ -3,6 +3,7 @@ import random
 
 
 def sleep_random(min_s, max_s, unit=1):
+    # type: (int, int, float) -> None
     seconds = random.randint(min_s, max_s)
     time.sleep(seconds * unit)
 

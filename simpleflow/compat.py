@@ -1,26 +1,35 @@
 # -*- coding: utf-8 -*-
-import sys
+# TODO: remove this file and use future directly.
 
-PY2 = int(sys.version[0]) == 2
-PY26 = PY2 and int(sys.version_info[1]) < 7
+# noinspection PyUnresolvedReferences
+from future.utils import (  # NOQA
+    PY2,
+    PY26,
+    PYPY,
+    text_type,
+    binary_type,
+    string_types,
+)
+
 
 if PY2:
+    # noinspection PyUnresolvedReferences
     from itertools import imap, izip
+    # noinspection PyUnresolvedReferences
     import urllib2 as request  # NOQA
+    # noinspection PyUnresolvedReferences
     from urllib import quote as urlquote  # NOQA
-    text_type = unicode  # NOQA
-    binary_type = str
-    string_types = (str, unicode)  # NOQA
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable,PyCompatibility
     unicode = unicode  # NOQA
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable,PyCompatibility
     basestring = basestring  # NOQA
     imap = imap
     izip = izip
 else:
+    # noinspection PyUnresolvedReferences
     from urllib import request  # NOQA
+    # noinspection PyUnresolvedReferences,PyCompatibility
     from urllib.parse import quote as urlquote  # NOQA
-    text_type = str
-    binary_type = bytes
-    string_types = (str,)
     unicode = str
     basestring = (str, bytes)
     imap = map

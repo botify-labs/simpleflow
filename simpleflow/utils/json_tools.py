@@ -7,7 +7,7 @@ import types
 import lazy_object_proxy
 from future.utils import iteritems
 
-from simpleflow.compat import PY2
+from simpleflow.compat import PY2, PYPY
 from simpleflow.futures import Future
 
 
@@ -78,8 +78,9 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
     try:
         return json.dumps(obj, **kwargs)
     except TypeError:
-        # lazy_object_proxy.Proxy subclasses basestring: serialize_complex_object isn't called on python2
-        if PY2:
+        # lazy_object_proxy.Proxy subclasses basestring: serialize_complex_object isn't called on python2.
+        # On pypy3 5.10.1, I don't know what happens...
+        if PY2 or PYPY:
             obj = _resolve_proxy(obj)
             return json.dumps(obj, **kwargs)
         raise

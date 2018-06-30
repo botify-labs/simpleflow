@@ -236,6 +236,7 @@ class ActivityTask(BaseModel):
         'started_event_id'
     ]
 
+    # noinspection PyMissingConstructor
     def __init__(self, domain, task_list,
                  task_token=None, activity_type=None,
                  workflow_execution=None, input=None,

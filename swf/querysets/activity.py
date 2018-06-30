@@ -14,6 +14,11 @@ from swf.exceptions import ResponseError, DoesNotExistError
 
 from swf.utils import get_subkey
 
+# noinspection PyUnreachableCode
+if False:
+    from typing import Optional  # NOQA
+    from swf.models import Domain  # NOQA
+
 
 class ActivityTypeQuerySet(BaseQuerySet):
     """Swf activity type queryset object
@@ -22,7 +27,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
     activity types through a django-queryset-like interface
 
     :param      domain: domain the activity type belongs to
-    :type       domain: swf.models.domain.Domain
+    :type       domain: Domain
     """
 
     # Explicit is better than implicit, keep zen
@@ -35,6 +40,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
 
     @property
     def domain(self):
+        # type: () -> Optional[Domain]
         if not hasattr(self, '_domain'):
             self._domain = None
         return self._domain
@@ -42,7 +48,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
     @domain.setter
     def domain(self, value):
         # Avoiding circular import
-        from swf.models.domain import Domain
+        from swf.models.domain import Domain  # NOQA
 
         if not isinstance(value, Domain):
             err = "domain property has to be of"\
@@ -51,7 +57,8 @@ class ActivityTypeQuerySet(BaseQuerySet):
             raise TypeError(err)
         self._domain = value
 
-    def to_ActivityType(self, domain, type_info, **kwargs):
+    @staticmethod
+    def to_activity_type(domain, type_info, **kwargs):
         return ActivityType(
             domain,
             type_info['activityType']['name'],
@@ -141,7 +148,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
             task_start_to_close_timeout = activity_config.get(
                 'defaultTaskStartToCloseTimeout')
 
-        return self.to_ActivityType(
+        return self.to_activity_type(
             self.domain,
             activity_info,
             task_list=task_list,
@@ -260,7 +267,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         """
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
-        return [self.to_ActivityType(domain, type_info) for type_info in
+        return [self.to_activity_type(domain, type_info) for type_info in
                 self._list(domain.name, registration_status, name=name)]
 
     def all(self, registration_status=REGISTERED,
@@ -309,7 +316,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 for activity_type_info in response[self._infos_plural]:
                     yield activity_type_info
 
-        return [self.to_ActivityType(self.domain, activity_info) for activity_info
+        return [self.to_activity_type(self.domain, activity_info) for activity_info
                 in get_activity_types()]
 
     def create(self, name, version,
