@@ -74,7 +74,14 @@ class SimpleflowFormatter(logging.Formatter):
         # NB: we strip microseconds out so things are readable
         date = datetime.fromtimestamp(record.created).replace(microsecond=0)
         record.isodate = date.isoformat()
-        record.message = record.msg % record.args
+
+        # don't risk bad interpolation if args is empty (in most cases it's because the
+        # logged string is already formatted)
+        if record.args:
+            record.message = record.msg % record.args
+        else:
+            record.message = record.msg
+
         record.coloredlevel = colorize(record.levelname, record.levelname)
         s = "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s" % record.__dict__
 
