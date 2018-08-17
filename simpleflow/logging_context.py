@@ -24,16 +24,3 @@ def get(key):
 def reset():
     for env_var in ENV_KEYS.values():
         os.environ[env_var] = ""
-
-
-def format_pairs():
-    pairs = {k: get(v) for k, v in ENV_KEYS.items()}
-
-    if not pairs["workflow_id"]:
-        return
-
-    formatted = "%(workflow_id)s: type=%(task_type)s tl=%(task_list)s evt_id=%(event_id)s"
-    if pairs["activity_id"]:
-        formatted += " activity_id=%(activity_id)s"
-
-    return formatted % pairs
