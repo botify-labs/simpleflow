@@ -24,12 +24,6 @@ Settings
 !!! bug
     The informations in this "Settings" section may be outdated, they need some love.
 
-
-Mandatory:
-
-- aws_access_key_id
-- aws_secret_access_key
-
 Optional:
 
 - region
@@ -66,6 +60,8 @@ If neither of the previous methods were used, you can still set the AWS credenti
 [Domain('test1'), Domain('test2')]
 ```
 
+Leaving these AWS API keys unspecified as fine, as Boto's credentials chain
+handler will discovery them if present.
 
 Example usage
 -------------
