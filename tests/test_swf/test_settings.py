@@ -1,15 +1,14 @@
 import os
 import unittest
 
-from swf.core import ConnectedSWFObject
-from swf.settings import from_env
+from swf.core import ConnectedSWFObject, SETTINGS
+from swf.settings import from_env, clear
 
 AWS_ENV_KEYS = (
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_DEFAULT_REGION",
 )
-
 
 class TestSettings(unittest.TestCase):
     def setUp(self):
@@ -67,6 +66,8 @@ class TestSettings(unittest.TestCase):
         os.environ["AWS_ACCESS_KEY_ID"] = "foo"
         os.environ["AWS_SECRET_ACCESS_KEY"] = "bar"
         os.environ["AWS_SECURITY_TOKEN"] = "baz"
+        # Clear any global settings from other tests.
+        clear()
         obj = ConnectedSWFObject()
         self.assertEqual(obj.connection.aws_access_key_id, "foo")
         self.assertEqual(obj.connection.aws_secret_access_key, "bar")

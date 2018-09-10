@@ -149,3 +149,9 @@ def set(**settings):
     """Set settings"""
     from swf.core import SETTINGS
     SETTINGS.update({k: v for k, v in settings.items() if v is not None})
+
+
+def clear():
+    """Clear settings"""
+    from swf.core import SETTINGS
+    SETTINGS.clear()
