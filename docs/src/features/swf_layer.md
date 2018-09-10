@@ -60,8 +60,8 @@ If neither of the previous methods were used, you can still set the AWS credenti
 [Domain('test1'), Domain('test2')]
 ```
 
-Leaving these AWS API keys unspecified as fine, as Boto's credentials chain
-handler will discovery them if present.
+Leaving these AWS API keys unspecified is fine, as Boto's credentials chain
+handler will discover them if present.
 
 Example usage
 -------------
