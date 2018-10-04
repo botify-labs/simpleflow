@@ -42,7 +42,7 @@ class TestGroup(unittest.TestCase):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         bucket = self.conn.get_bucket(self.bucket)
-        self.assertEquals(
+        self.assertEqual(
             bucket.get_key("mykey.txt").get_contents_as_string(
                 encoding='utf-8'),
             "42")
@@ -52,7 +52,7 @@ class TestGroup(unittest.TestCase):
         self.create()
         storage.push_content(self.bucket, "mykey.txt", "Hey Jude")
         bucket = self.conn.get_bucket(self.bucket)
-        self.assertEquals(
+        self.assertEqual(
             bucket.get_key("mykey.txt").get_contents_as_string(
                 encoding='utf-8'),
             "Hey Jude")
@@ -64,13 +64,13 @@ class TestGroup(unittest.TestCase):
         dest_tmp_filename = tempfile.mktemp()
         storage.pull(self.bucket, "mykey.txt", dest_tmp_filename)
         f = open(dest_tmp_filename)
-        self.assertEquals(f.readline(), "42")
+        self.assertEqual(f.readline(), "42")
 
     @mock_s3
     def test_pull_content(self):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
-        self.assertEquals(
+        self.assertEqual(
             storage.pull_content(self.bucket, "mykey.txt"),
             "42")
 
@@ -79,14 +79,14 @@ class TestGroup(unittest.TestCase):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         keys = [k for k in storage.list_keys(self.bucket, None)]
-        self.assertEquals(keys[0].key, "mykey.txt")
+        self.assertEqual(keys[0].key, "mykey.txt")
 
     @mock_s3
     def test_sanitize_bucket_and_host(self):
         self.create()
 
         # bucket where "get_location" works: return bucket+region
-        self.assertEquals(
+        self.assertEqual(
             storage.sanitize_bucket_and_host(self.bucket),
             (self.bucket, 'us-east-1'))
 
@@ -99,12 +99,12 @@ class TestGroup(unittest.TestCase):
 
         with patch("boto.s3.bucket.Bucket.get_location", side_effect=_access_denied):
             with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
-                self.assertEquals(
+                self.assertEqual(
                     storage.sanitize_bucket_and_host(self.bucket),
                     (self.bucket, default))
 
         # bucket where we provided a host/bucket: return bucket+host
-        self.assertEquals(
+        self.assertEqual(
             storage.sanitize_bucket_and_host('s3.amazonaws.com/{}'.format(self.bucket)),
             (self.bucket, 's3.amazonaws.com'))
 

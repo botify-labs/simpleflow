@@ -85,7 +85,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         for _ in range(count):
             heartbeat(None)
 
-        self.assertEquals(heartbeat._count, count)
+        self.assertEqual(heartbeat._count, count)
 
     def test_fake_heartbeat_max_count(self):
         max_count = 7
@@ -96,7 +96,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         with self.assertRaises(StopIteration):
             heartbeat(None)
 
-        self.assertEquals(heartbeat._count, max_count)
+        self.assertEqual(heartbeat._count, max_count)
 
     def test_heartbeat_ok(self):
         heartbeat = FakeHeartbeat(max_count=1)
@@ -106,7 +106,7 @@ class TestHeartbeatProcess(unittest.TestCase):
             heartbeater.run(token, FakeTask('test_task'))
         except StopIteration:
             pass
-        self.assertEquals(heartbeat._token,
+        self.assertEqual(heartbeat._token,
                           token)
 
     def test_heartbeat_cancel(self):
@@ -115,7 +115,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         token = uuid4()
 
         heartbeater.run(token, FakeTask('test_task'))
-        self.assertEquals(heartbeat._token,
+        self.assertEqual(heartbeat._token,
                           token)
 
     def test_heartbeat_doesnotexist_error(self):
@@ -127,7 +127,7 @@ class TestHeartbeatProcess(unittest.TestCase):
         token = uuid4()
 
         heartbeater.run(token, FakeTask('test_task'))
-        self.assertEquals(heartbeat._token,
+        self.assertEqual(heartbeat._token,
                           token)
 
     def test_heartbeat_running(self):
@@ -139,8 +139,8 @@ class TestHeartbeatProcess(unittest.TestCase):
             heartbeater.run(token, FakeTask('test_task'))
         except StopIteration:
             pass
-        self.assertEquals(heartbeat._max_count, max_count)
-        self.assertEquals(heartbeat._token,
+        self.assertEqual(heartbeat._max_count, max_count)
+        self.assertEqual(heartbeat._token,
                           token)
 
     # TODO: fix test not working in containers

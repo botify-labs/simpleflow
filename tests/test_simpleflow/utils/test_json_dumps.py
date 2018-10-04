@@ -21,7 +21,7 @@ class TestJsonDumps(unittest.TestCase):
             [{'start': d}, '{"start":"1970-01-01T00:00:00Z"}'],
         ]
         for case in cases:
-            self.assertEquals(
+            self.assertEqual(
                 json_dumps(case[0]),
                 case[1],
             )
@@ -29,14 +29,14 @@ class TestJsonDumps(unittest.TestCase):
     def test_json_dumps_futures(self):
         resolved = Future()
         resolved.set_finished("foo")
-        self.assertEquals(json_dumps(resolved), '"foo"')
+        self.assertEqual(json_dumps(resolved), '"foo"')
 
         pending = Future()
         with self.assertRaises(ExecutionBlocked):
             json_dumps(pending)
 
     def test_json_dumps_pretty(self):
-        self.assertEquals(
+        self.assertEqual(
             json_dumps({"z": 1, "abc": "def"}, pretty=True),
             '{\n    "abc": "def",\n    "z": 1\n}',
         )
@@ -51,7 +51,7 @@ class TestJsonDumps(unittest.TestCase):
             [{'a': 'b'}, '{"a": "b"}'],
         ]
         for case in cases:
-            self.assertEquals(
+            self.assertEqual(
                 json_dumps(case[0], compact=False),
                 case[1],
             )

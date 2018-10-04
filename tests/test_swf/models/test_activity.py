@@ -76,7 +76,7 @@ class TestActivityType(unittest.TestCase):
 
             diffs = activity._diff()
 
-            self.assertEquals(len(diffs), 0)
+            self.assertEqual(len(diffs), 0)
 
     def test_exists_with_existing_activity_type(self):
         with patch.object(Layer1, 'describe_activity_type'):

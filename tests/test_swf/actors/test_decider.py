@@ -44,9 +44,9 @@ class TestActor(unittest.TestCase):
         response = self.actor.poll()
 
         self.assertIsNotNone(response.token)
-        self.assertEquals(
+        self.assertEqual(
             [evt.type for evt in response.history],
             ['WorkflowExecution', 'DecisionTask', 'DecisionTask']
         )
-        self.assertEquals(response.execution.workflow_id, 'wfe-1234')
+        self.assertEqual(response.execution.workflow_id, 'wfe-1234')
         self.assertIsNotNone(response.execution.run_id)

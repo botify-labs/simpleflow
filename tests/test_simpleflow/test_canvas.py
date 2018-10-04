@@ -88,8 +88,8 @@ class TestGroup(unittest.TestCase):
             (sum_values, [1, 2])
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(future.count_finished_activities, 2)
-        self.assertEquals(future._result, ["test1", None, 3])
+        self.assertEqual(future.count_finished_activities, 2)
+        self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
 
@@ -108,8 +108,8 @@ class TestGroup(unittest.TestCase):
         ]
         future = group.submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(future.count_finished_activities, 2)
-        self.assertEquals(future._result, ["test1", None, 3])
+        self.assertEqual(future.count_finished_activities, 2)
+        self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
 
@@ -138,7 +138,7 @@ class TestGroup(unittest.TestCase):
             max_parallel=2
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(len(future.futures), 2)
+        self.assertEqual(len(future.futures), 2)
 
         future = Group(
             (to_string, "test1"),
@@ -148,8 +148,8 @@ class TestGroup(unittest.TestCase):
             max_parallel=2
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(len(future.futures), 3)
-        self.assertEquals([f.state for f in future.futures],
+        self.assertEqual(len(future.futures), 3)
+        self.assertEqual([f.state for f in future.futures],
                           [futures.FINISHED, futures.RUNNING, futures.RUNNING])
 
         future = Group(
@@ -183,7 +183,7 @@ class TestChain(unittest.TestCase):
             (to_string, "test")
         ).submit(executor)
         self.assertTrue(future.finished)
-        self.assertEquals(future.count_finished_activities, 2)
+        self.assertEqual(future.count_finished_activities, 2)
 
         future = Chain(
             (to_string, "test"),
@@ -191,7 +191,7 @@ class TestChain(unittest.TestCase):
             (to_string, "test")
         ).submit(executor)
         self.assertTrue(future.running)
-        self.assertEquals(future.count_finished_activities, 1)
+        self.assertEqual(future.count_finished_activities, 1)
 
     def test_previous_value(self):
         future = Chain(
@@ -201,7 +201,7 @@ class TestChain(unittest.TestCase):
             send_result=True
         ).submit(executor)
         self.assertTrue(future.finished)
-        self.assertEquals(future.result, [3, 8, 17])
+        self.assertEqual(future.result, [3, 8, 17])
 
     def test_exceptions(self):
         future = Chain(
@@ -293,7 +293,7 @@ class TestFuncGroup(unittest.TestCase):
             FuncGroup(custom_func),
             (sum_values,),
             send_result=True).submit(executor)
-        self.assertEquals(chain.result, [3, [0, 2, 4], 6])
+        self.assertEqual(chain.result, [3, [0, 2, 4], 6])
 
     def test_raises_on_failure(self):
         def custom_func():
@@ -374,14 +374,14 @@ class TestComplexCanvas(unittest.TestCase):
         self.assertTrue(result.futures[3].futures[0].finished)
         self.assertFalse(result.futures[3].futures[1].finished)
         # As result.futures[3] is not finished, we shouldn't find other future
-        self.assertEquals(len(result.futures), 4)
+        self.assertEqual(len(result.futures), 4)
 
         # Change the state of the n-1 chain to make the whole
         # canvas done
         complex_canvas.activities[3].activities[1] = ActivityTask(to_int, 1)
         result = complex_canvas.submit(executor)
         self.assertTrue(result.finished)
-        self.assertEquals(len(result.futures), 5)
+        self.assertEqual(len(result.futures), 5)
 
 
 class TestComplexCanvasSimplifiedDeclaration(unittest.TestCase):
@@ -409,14 +409,14 @@ class TestComplexCanvasSimplifiedDeclaration(unittest.TestCase):
         self.assertTrue(result.futures[3].futures[0].finished)
         self.assertFalse(result.futures[3].futures[1].finished)
         # As result.futures[3] is not finished, we shouldn't find other future
-        self.assertEquals(len(result.futures), 4)
+        self.assertEqual(len(result.futures), 4)
 
         # Change the state of the n-1 chain to make the whole
         # canvas done
         complex_canvas.activities[3].activities[1] = ActivityTask(to_int, 1)
         result = complex_canvas.submit(executor)
         self.assertTrue(result.finished)
-        self.assertEquals(len(result.futures), 5)
+        self.assertEqual(len(result.futures), 5)
 
 
 class TestAggregateException(unittest.TestCase):
