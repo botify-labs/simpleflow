@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.7
+------
+
+- Fix reading requirements-dev.txt again (#352)
+
 0.21.6
 ------
 
