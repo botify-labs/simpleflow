@@ -54,6 +54,7 @@ def load(conf_module_name=None):
         default,
     )
 
+
 def str_or_none(val):
     return val or None
 
@@ -74,6 +75,7 @@ ACTIVITY_HEARTBEAT_TIMEOUT = str
 LOGGING = dict
 
 SIMPLEFLOW_S3_HOST = str
+SIMPLEFLOW_S3_SSE = bool
 
 STEP_BUCKET = str
 

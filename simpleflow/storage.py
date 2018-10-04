@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from boto.s3 import connect_to_region, connection
 from boto.s3.key import Key
@@ -6,6 +7,10 @@ from boto.exception import S3ResponseError
 
 from . import settings
 
+if TYPE_CHECKING:
+    from typing import Optional, Tuple  # NOQA
+    from boto.s3.bucket import Bucket  # NOQA
+    from boto.s3.bucketlistresultset import BucketListResultSet  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +19,7 @@ BUCKET_LOCATIONS_CACHE = {}
 
 
 def get_connection(host_or_region):
+    # type: (str) -> connection.S3Connection
     # first case: we got a valid DNS (host)
     if "." in host_or_region:
         return connection.S3Connection(host=host_or_region)
@@ -23,6 +29,7 @@ def get_connection(host_or_region):
 
 
 def sanitize_bucket_and_host(bucket):
+    # type: (str) -> Tuple[str, str]
     """
     if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
     Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
@@ -70,6 +77,7 @@ def sanitize_bucket_and_host(bucket):
 
 
 def get_bucket(bucket_name):
+    # type: (str) -> Bucket
     bucket_name, location = sanitize_bucket_and_host(bucket_name)
     conn = get_connection(location)
     if bucket_name not in BUCKET_CACHE:
@@ -79,35 +87,40 @@ def get_bucket(bucket_name):
 
 
 def pull(bucket, path, dest_file):
+    # type: (str, str, str) -> None
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
     key.get_contents_to_filename(dest_file)
 
 
 def pull_content(bucket, path):
+    # type: (str, str) -> str
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
     return key.get_contents_as_string(encoding='utf-8')
 
 
 def push(bucket, path, src_file, content_type=None):
+    # type: (str, str, str, Optional[str]) -> None
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_filename(src_file, headers=headers)
+    key.set_contents_from_filename(src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
 def push_content(bucket, path, content, content_type=None):
+    # type: (str, str, str, Optional[str]) -> None
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_string(content, headers=headers)
+    key.set_contents_from_string(content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
 def list_keys(bucket, path=None):
+    # type: (str, str) -> BucketListResultSet
     bucket = get_bucket(bucket)
     return bucket.list(path)
