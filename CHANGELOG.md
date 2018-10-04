@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.21.5
+------
+
+- Remove explicit handling of AWS credentials from env vars. (#347)
+- Enhancement: use moto 1.x (#349)
+- Add optional S3 server-side encryption (#350)
+
 0.21.4
 ------
 
