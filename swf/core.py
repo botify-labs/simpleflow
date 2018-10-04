@@ -42,16 +42,16 @@ class ConnectedSWFObject(object):
                       delay=retry.exponential,
                       on_exceptions=(TypeError, NoAuthHandlerFound))
     def __init__(self, *args, **kwargs):
-        settings_ = {key: SETTINGS.get(key, kwargs.get(key)) for key in
-                     ('aws_access_key_id',
-                      'aws_secret_access_key')}
-
         self.region = (SETTINGS.get('region') or
                        kwargs.get('region') or
                        boto.swf.layer1.Layer1.DefaultRegionName)
-
+        # Use settings-provided keys if available, otherwise pass empty
+        # dictionary to boto SWF client, which will use its default credentials
+        # chain provider.
+        cred_keys = ['aws_access_key_id', 'aws_secret_access_key']
+        creds_ = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
         self.connection = (kwargs.pop('connection', None) or
-                           boto.swf.connect_to_region(self.region, **settings_))
+                           boto.swf.connect_to_region(self.region, **creds_))
         if self.connection is None:
             raise ValueError('invalid region: {}'.format(self.region))
 

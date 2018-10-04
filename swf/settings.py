@@ -102,18 +102,12 @@ def from_env():
     """Retrieves AWS settings from environment.
 
     Supported environment variables are:
-        - `AWS_ACCESS_KEY_ID`
-        - `AWS_SECRET_ACCESS_KEY`
         - `AWS_DEFAULT_REGION`
 
     :rtype: dict
 
     """
     hsh = {}
-
-    if "AWS_ACCESS_KEY_ID" in os.environ:
-        hsh["aws_access_key_id"] = os.environ["AWS_ACCESS_KEY_ID"]
-        hsh["aws_secret_access_key"] = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
     if "AWS_DEFAULT_REGION" in os.environ:
         hsh["region"] = os.environ["AWS_DEFAULT_REGION"]
@@ -155,3 +149,9 @@ def set(**settings):
     """Set settings"""
     from swf.core import SETTINGS
     SETTINGS.update({k: v for k, v in settings.items() if v is not None})
+
+
+def clear():
+    """Clear settings"""
+    from swf.core import SETTINGS
+    SETTINGS.clear()
