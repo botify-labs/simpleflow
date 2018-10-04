@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import json
+import sys
 import tempfile
 import os.path
 import platform
@@ -297,7 +298,9 @@ def create_sleeper_subprocess():
     return pid
 
 
-@pytest.mark.xfail(platform.system() == 'Darwin', reason="psutil process statuses are buggy on OSX")
+@pytest.mark.xfail(
+    platform.system() == 'Darwin' or "PyPy" in sys.version,
+    reason="psutil process statuses are buggy on OSX, and test randomly fails on PyPy")
 def test_execute_dont_kill_children():
     pid = execute.python()(create_sleeper_subprocess)()
     subprocess = psutil.Process(pid)
