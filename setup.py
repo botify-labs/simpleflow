@@ -114,7 +114,7 @@ if PY2:
     ]
 
 tests_require = []
-for line in open('requirements-dev.txt'):
+for line in open(os.path.join(os.path.dirname(__file__), 'requirements-dev.txt')):
     line = re.sub(r'(?: +|^)#.*$', '', line).strip()
     if line:
         tests_require.append(line)
