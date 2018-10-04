@@ -6,6 +6,7 @@ import sys
 import json
 
 import time
+from typing import TYPE_CHECKING
 
 import psutil
 
@@ -28,6 +29,11 @@ from future.utils import iteritems
 from simpleflow import compat, format
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
+
+if TYPE_CHECKING:
+    from typing import Any, Iterable  # NOQA
+    import inspect  # NOQA
+
 
 __all__ = ['program', 'python']
 
@@ -73,6 +79,7 @@ def format_arguments(*args, **kwargs):
 
 
 def zip_arguments_defaults(argspec):
+    # type: (inspect.ArgSpec) -> Iterable
     if not argspec.defaults:
         return []
 
@@ -82,6 +89,7 @@ def zip_arguments_defaults(argspec):
 
 
 def check_arguments(argspec, args):
+    # type: (inspect.ArgSpec, Any) -> None
     """Validates there is the right number of arguments"""
     # func() or func(**kwargs) or func(a=1, b=2)
     if not argspec.varargs and not argspec.args and args:
@@ -95,6 +103,7 @@ def check_arguments(argspec, args):
 
 
 def check_keyword_arguments(argspec, kwargs):
+    # type: (inspect.ArgSpec, dict) -> None
     # func() or func(*args) or func(a, b)
     if not argspec.keywords and not argspec.defaults and kwargs:
         raise TypeError('command does not take keyword arguments')
@@ -313,7 +322,13 @@ def program(path=None, argument_format=format_arguments):
                 [command] + argument_format(*args, **kwargs),
                 universal_newlines=True)
 
-        argspec = inspect.getargspec(func)
+        try:
+            args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, ann = inspect.getfullargspec(func)
+            argspec = inspect.ArgSpec(args, varargs, varkw, defaults)
+        except AttributeError:
+            # noinspection PyDeprecation
+            argspec = inspect.getargspec(func)
+
         # Not automatically assigned in python < 3.2.
         execute.__wrapped__ = func
         return execute

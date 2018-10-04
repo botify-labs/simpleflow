@@ -1,8 +1,13 @@
 import json
 import unittest
 
-from moto import mock_swf, mock_s3
+try:
+    from moto import mock_swf_deprecated as mock_swf, mock_s3_deprecated as mock_s3
+except ImportError:
+    from moto import mock_swf, mock_s3
+
 import boto
+
 from simpleflow.local import Executor
 
 from simpleflow.canvas import Chain
@@ -87,14 +92,14 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         storage.push_content(BUCKET, "steps/mystep2", "data")
         t = GetStepsDoneTask(BUCKET, "steps")
         res = t.execute()
-        self.assertEquals(res, ["mystep", "mystep2"])
+        self.assertEqual(res, ["mystep", "mystep2"])
 
     @mock_s3
     def test_mark_step_done(self):
         self.create_bucket()
         t = MarkStepDoneTask(BUCKET, "steps/", "mystep")
         t.execute()
-        self.assertEquals(
+        self.assertEqual(
             storage.pull_content(BUCKET, "steps/mystep"),
             json.dumps(UNKNOWN_CONTEXT))
 
@@ -117,8 +122,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
 
         # Call marker
         decisions = self.replay()
-        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(
+        self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEqual(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "scheduled", "forced": True, "step": "my_step", "reasons": ["workflow_init"]})
 
@@ -132,7 +137,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         # Check that we'll force the step 'my_step_3'
-        self.assertEquals(self.executor._workflow.get_forced_steps(), ["my_step_2"])
+        self.assertEqual(self.executor._workflow.get_forced_steps(), ["my_step_2"])
 
     @mock_s3
     @mock_swf
@@ -151,8 +156,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         # Call Marker Step is done
         # Check that the workflow is done
         decisions = self.replay()
-        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(
+        self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEqual(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "skipped", "forced": False, "step": "my_step", "reasons": ["Step was already played"]})
 
@@ -175,8 +180,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Call marker
-        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(
+        self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEqual(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "scheduled", "forced": True, "step": "my_step", "reasons": ["workflow_init"]})
 
@@ -190,8 +195,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         decisions = self.replay()
-        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(
+        self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEqual(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "completed", "forced": False, "step": "my_step", "reasons": ["workflow_init"]})
 
@@ -214,8 +219,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Call marker
-        self.assertEquals(decisions[0]["decisionType"], "RecordMarker")
-        self.assertEquals(
+        self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
+        self.assertEqual(
             json.loads(decisions[0]["recordMarkerDecisionAttributes"]["details"]),
             {"status": "skipped", "forced": True, "step": "my_step", "reasons": ["workflow_init"]})
 
@@ -244,7 +249,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
             "a.b": ["MY_REASON"],
             "a": ["MY_ROOT_REASON"]
         }
-        self.assertEquals(
+        self.assertEqual(
             sorted(get_step_force_reasons(step_name, reasons)),
             ["MY_REASON", "MY_ROOT_REASON"])
 

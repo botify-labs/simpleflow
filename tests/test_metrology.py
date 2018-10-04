@@ -7,7 +7,11 @@ from simpleflow.constants import MINUTE, HOUR
 from simpleflow.local.executor import Executor
 
 import boto
-from moto import mock_s3
+
+try:
+    from moto import mock_s3_deprecated as mock_s3
+except ImportError:
+    from moto import mock_s3
 
 
 @with_attributes(task_list='test_task_list')
@@ -48,19 +52,19 @@ class MetrologyTestCase(unittest.TestCase):
         res = json.loads(storage.pull_content(
             settings.METROLOGY_BUCKET,
             "local/local/activity.0.json"))
-        self.assertEquals(res["meta"], "foo bar")
+        self.assertEqual(res["meta"], "foo bar")
         steps = res["steps"]
-        self.assertEquals(steps[0]["name"], "Step1")
-        self.assertEquals(steps[0]["read"]["records"], 1)
-        self.assertEquals(steps[0]["metadata"]["num"], 1)
+        self.assertEqual(steps[0]["name"], "Step1")
+        self.assertEqual(steps[0]["read"]["records"], 1)
+        self.assertEqual(steps[0]["metadata"]["num"], 1)
 
         res = json.loads(storage.pull_content(
             settings.METROLOGY_BUCKET,
             "local/local/metrology.json"))
-        self.assertEquals(res[0][1]["metrology"]["meta"], "foo bar")
-        self.assertEquals(res[0][1]["metrology"]["steps"][0]["name"], "Step1")
-        self.assertEquals(res[0][1]["metrology"]["steps"][0]["read"]["records"], 1)
-        self.assertEquals(res[0][1]["metrology"]["steps"][0]["metadata"]["num"], 1)
+        self.assertEqual(res[0][1]["metrology"]["meta"], "foo bar")
+        self.assertEqual(res[0][1]["metrology"]["steps"][0]["name"], "Step1")
+        self.assertEqual(res[0][1]["metrology"]["steps"][0]["read"]["records"], 1)
+        self.assertEqual(res[0][1]["metrology"]["steps"][0]["metadata"]["num"], 1)
 
 
 if __name__ == '__main__':

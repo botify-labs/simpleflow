@@ -2,11 +2,19 @@
 
 language: python
 
+# 3.7 not currently working: "ModuleNotFoundError: No module named 'google_compute_engine'"
+# (furthermore, pypy isn't available on xenial)
 python:
   - "2.7"
   - "pypy"
-  - "3.5"
   - "3.6"
+#  - "3.7"
+## Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
+#matrix:
+#  include:
+#    - python: 3.7
+#      dist: xenial
+#      sudo: required
 
 install:
   - pip install .

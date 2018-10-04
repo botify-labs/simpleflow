@@ -2,7 +2,10 @@ from collections import namedtuple
 from mock import patch
 import unittest
 
-from moto import mock_swf
+try:
+    from moto import mock_swf_deprecated as mock_swf
+except ImportError:
+    from moto import mock_swf
 
 from simpleflow.swf.process.worker.base import ActivityWorker, ActivityPoller
 from swf.models import Domain, ActivityTask
@@ -27,8 +30,8 @@ class TestActivityWorker(unittest.TestCase):
         with patch.object(poller, "fail_with_retry") as mock:
             worker.process(poller, "token", task)
 
-        self.assertEquals(1, mock.call_count)
-        self.assertEquals(mock.call_args[0], ("token", task))
+        self.assertEqual(1, mock.call_count)
+        self.assertEqual(mock.call_args[0], ("token", task))
         self.assertIn("No module named ", mock.call_args[1]["reason"])
 
 

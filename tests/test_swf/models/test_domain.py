@@ -199,4 +199,4 @@ class TestDomain(unittest.TestCase):
     def test_domain_workflows_without_existent_workflows(self):
         with patch.object(WorkflowTypeQuerySet, 'all') as all_method:
             all_method.return_value = []
-            self.assertEquals(self.domain.workflows(), [])
+            self.assertEqual(self.domain.workflows(), [])

@@ -1,6 +1,10 @@
-import boto
 import unittest
-from moto import mock_swf
+import boto
+
+try:
+    from moto import mock_swf_deprecated as mock_swf
+except ImportError:
+    from moto import mock_swf
 
 from swf.exceptions import PollTimeout
 from swf.actors import Decider
@@ -40,9 +44,9 @@ class TestActor(unittest.TestCase):
         response = self.actor.poll()
 
         self.assertIsNotNone(response.token)
-        self.assertEquals(
+        self.assertEqual(
             [evt.type for evt in response.history],
             ['WorkflowExecution', 'DecisionTask', 'DecisionTask']
         )
-        self.assertEquals(response.execution.workflow_id, 'wfe-1234')
+        self.assertEqual(response.execution.workflow_id, 'wfe-1234')
         self.assertIsNotNone(response.execution.run_id)
