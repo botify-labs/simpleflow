@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.6
+------
+
+- Fix reading requirements-dev.txt :roll_eyes: (#351)
+
 0.21.5
 ------
 
