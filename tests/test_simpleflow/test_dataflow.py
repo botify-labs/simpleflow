@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 import datetime
 import functools
-import re
 from builtins import range
 
 import boto
@@ -263,7 +262,7 @@ def test_workflow_with_after_replay(mock_decref_workflow):
 
     # The executor should only schedule the *increment* task.
     assert not hasattr(executor.workflow, 'b')
-    decisions = executor.replay(Response(history=history, execution=None)).decisions
+    executor.replay(Response(history=history, execution=None))
     assert executor.workflow.b == 5
     # Check that workflow is not marked as finished
     assert not hasattr(executor.workflow, 'c')
@@ -574,7 +573,7 @@ class ATestDefinitionTwoTasksSameFuture(BaseTestWorkflow):
         b = self.submit(double, a)
         c = self.submit(increment, a)
 
-        return (b.result, c.result)
+        return b.result, c.result
 
 
 @mock_swf
@@ -834,15 +833,17 @@ def test_workflow_with_child_workflow():
     }]
 
     # Let's add the child workflow to the history to simulate its completion.
-    (history
+    (
+        history
         .add_decision_task()
         .add_child_workflow(
-        workflow,
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=BaseTestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-        result='4'
-    ))
+            workflow,
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=BaseTestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+            result='4'
+        )
+    )
 
     # Now the child workflow is finished and the executor should complete the
     # workflow.
@@ -860,14 +861,16 @@ def test_workflow_with_child_workflow_failed():
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     # Let's add the child workflow to the history to simulate its completion.
-    (history
+    (
+        history
         .add_child_workflow(
-        workflow,
-        last_state='failed',
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=BaseTestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-    ))
+            workflow,
+            last_state='failed',
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=BaseTestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        )
+    )
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
@@ -887,14 +890,16 @@ def test_workflow_with_child_workflow_timed_out():
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     # Let's add the child workflow to the history to simulate its completion.
-    (history
+    (
+        history
         .add_child_workflow(
-        workflow,
-        last_state='timed_out',
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=BaseTestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-    ))
+            workflow,
+            last_state='timed_out',
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=BaseTestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        )
+    )
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
@@ -914,14 +919,16 @@ def test_workflow_with_child_workflow_canceled():
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     # Let's add the child workflow to the history to simulate its completion.
-    (history
+    (
+        history
         .add_child_workflow(
-        workflow,
-        last_state='canceled',
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=BaseTestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-    ))
+            workflow,
+            last_state='canceled',
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=BaseTestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        )
+    )
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
@@ -941,14 +948,16 @@ def test_workflow_with_child_workflow_terminated():
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     # Let's add the child workflow to the history to simulate its completion.
-    (history
+    (
+        history
         .add_child_workflow(
-        workflow,
-        last_state='terminated',
-        workflow_id='workflow-test_workflow-None--0--1',
-        task_list=BaseTestWorkflow.task_list,
-        input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
-    ))
+            workflow,
+            last_state='terminated',
+            workflow_id='workflow-test_workflow-None--0--1',
+            task_list=BaseTestWorkflow.task_list,
+            input='"{\\"args\\": [1], \\"kwargs\\": {}}"',
+        )
+    )
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
@@ -1014,7 +1023,7 @@ def test_workflow_with_more_than_max_decisions():
      .add_decision_task_scheduled()
      .add_decision_task_started())
 
-    # All tasks are finised, the executor should complete the workflow.
+    # All tasks are finished, the executor should complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     workflow_completed = swf.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=None)
@@ -1202,7 +1211,7 @@ def test_multiple_scheduled_activities():
     """
     When ``Future.exception`` was made blocking if the future is not finished,
     :py:meth:`swf.executor.Executor.resume` did not check ``future.finished``
-    before ``future.exception is None``. It mades the call to ``.resume()`` to
+    before ``future.exception is None``. It made the call to ``.resume()`` to
     block for the first scheduled task it encountered instead of returning it.
     This issue was fixed in commit 6398aa8.
     With the wrong behaviour, the call to ``executor.replay()`` would not
@@ -1214,21 +1223,24 @@ def test_multiple_scheduled_activities():
     history = builder.History(workflow)
 
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task_scheduled(
-        increment,
-        decision_id=decision_id,
-        activity_id='activity-tests.data.activities.increment-1',
-        input={'args': 1})
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.data.activities.increment-1',
+            input={'args': 1}
+        )
         # The right behaviour is to schedule the ``double`` task when *b* is in
         # state finished.
         .add_activity_task(
-        increment,
-        decision_id=decision_id,
-        activity_id='activity-tests.data.activities.increment-2',
-        last_state='completed',
-        input={'args': 2},
-        result='3'))
+            increment,
+            decision_id=decision_id,
+            activity_id='activity-tests.data.activities.increment-2',
+            last_state='completed',
+            input={'args': 2},
+            result='3')
+    )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     check_task_scheduled_decision(decisions[0], double)
@@ -1241,13 +1253,16 @@ def test_activity_task_timeout():
 
     history = builder.History(workflow)
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task(
-        increment,
-        activity_id='activity-tests.data.activities.increment-1',
-        decision_id=decision_id,
-        last_state='timed_out',
-        timeout_type='START_TO_CLOSE'))
+            increment,
+            activity_id='activity-tests.data.activities.increment-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'
+        )
+    )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     # The task timed out and there is no retry.
@@ -1262,13 +1277,16 @@ def test_activity_task_timeout_retry():
 
     history = builder.History(workflow)
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task(
-        increment_retry,
-        activity_id='activity-tests.data.activities.increment_retry-1',
-        decision_id=decision_id,
-        last_state='timed_out',
-        timeout_type='START_TO_CLOSE'))
+            increment_retry,
+            activity_id='activity-tests.data.activities.increment_retry-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'
+        )
+    )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     assert len(decisions) == 1
@@ -1282,13 +1300,16 @@ def test_activity_task_timeout_raises():
 
     history = builder.History(workflow)
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task(
-        raise_on_failure,
-        activity_id='activity-tests.data.activities.raise_on_failure-1',
-        decision_id=decision_id,
-        last_state='timed_out',
-        timeout_type='START_TO_CLOSE'))
+            raise_on_failure,
+            activity_id='activity-tests.data.activities.raise_on_failure-1',
+            decision_id=decision_id,
+            last_state='timed_out',
+            timeout_type='START_TO_CLOSE'
+        )
+    )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
@@ -1310,15 +1331,18 @@ def test_activity_not_found_schedule_failed():
 
     history = builder.History(workflow)
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task_schedule_failed(
-        activity_id='activity-tests.data.activities.increment-1',
-        decision_id=decision_id,
-        activity_type={
-            'name': increment.name,
-            'version': increment.version
-        },
-        cause='ACTIVITY_TYPE_DOES_NOT_EXIST'))
+            activity_id='activity-tests.data.activities.increment-1',
+            decision_id=decision_id,
+            activity_type={
+                'name': increment.name,
+                'version': increment.version
+            },
+            cause='ACTIVITY_TYPE_DOES_NOT_EXIST'
+        )
+    )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
     check_task_scheduled_decision(decisions[0], increment)
@@ -1332,7 +1356,8 @@ def raise_already_exists(activity):
             'already exists'.format(
                 DOMAIN.name,
                 activity.name,
-                activity.version))
+                activity.version)
+        )
 
     return wrapped
 
@@ -1344,15 +1369,18 @@ def test_activity_not_found_schedule_failed_already_exists():
 
     history = builder.History(workflow)
     decision_id = history.last_id
-    (history
+    (
+        history
         .add_activity_task_schedule_failed(
-        activity_id='activity-tests.data.activities.increment-1',
-        decision_id=decision_id,
-        activity_type={
-            'name': increment.name,
-            'version': increment.version
-        },
-        cause='ACTIVITY_TYPE_DOES_NOT_EXIST'))
+            activity_id='activity-tests.data.activities.increment-1',
+            decision_id=decision_id,
+            activity_type={
+                'name': increment.name,
+                'version': increment.version
+            },
+            cause='ACTIVITY_TYPE_DOES_NOT_EXIST'
+        )
+    )
 
     with patch(
             'swf.models.ActivityType.save',
@@ -1507,7 +1535,7 @@ def test_more_than_1000_open_activities_partial_max():
 class ATestTaskNaming(BaseTestWorkflow):
     """
     This workflow executes a few tasks and tests the naming (task ID
-    assignation) depending on their idempotence.
+    assignation) depending on their idempotency.
     """
 
     def run(self):

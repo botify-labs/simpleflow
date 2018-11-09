@@ -1,12 +1,12 @@
 from __future__ import absolute_import
+from typing import TYPE_CHECKING
 
 import swf.exceptions
 import swf.models
 import swf.querysets
 from simpleflow.history import History
 
-
-if False:
+if TYPE_CHECKING:
     from typing import Any, List, Dict  # NOQA
     from swf.models.decision.base import Decision  # NOQA
 
@@ -61,6 +61,7 @@ class DecisionsAndContext(object):
     Encapsulate decisions and execution context.
     The execution context contains keys with either plain values, lists or sets.
     """
+
     def __init__(self, decisions=None, execution_context=None):
         self.decisions = decisions or []  # type: List[Decision]
         self.execution_context = execution_context  # type: Dict[str, Any]

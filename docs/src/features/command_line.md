@@ -57,7 +57,7 @@ The SWF domain is controlled by the `--domain` on most simpleflow commands. It c
 be set via the `SWF_DOMAIN` environment variable. In case both are supplied, the
 command-line value takes precedence over the environment variable.
 
-Note that some simpleflow commands expect the domain to be passed as a positionnal argument.
+Note that some simpleflow commands expect the domain to be passed as a positional argument.
 In that case the environment variable has no effect for now.
 
 The number of retries for accessing SWF can be controlled via `SWF_CONNECTION_RETRIES`

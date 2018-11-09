@@ -27,8 +27,8 @@ class CompiledTimerEvent(CompiledEvent):
 
     transitions = {
         'started': ('canceled', 'fired'),
-        'start_failed': ('canceled'),
-        'fired': ('canceled'),
+        'start_failed': 'canceled',
+        'fired': 'canceled',
         'canceled': ('cancel_failed', 'fired'),
     }
 

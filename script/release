@@ -171,6 +171,8 @@ def release_tag(version_str, changes):
     """
     :param version_str: Version in string format
     :type version_str: string
+    :param changes:
+
     Commits and pushes the branch an tag
     """
     execute("git commit -a -m 'Bump version to {}'".format(version_str), log=True)

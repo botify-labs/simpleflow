@@ -16,7 +16,7 @@ FakeActivityType = namedtuple("FakeActivityType", ["name"])
 
 @mock_swf
 class TestActivityWorker(unittest.TestCase):
-    def test_dispatch_is_catched_correctly(self):
+    def test_dispatch_is_caught_correctly(self):
         domain = Domain("test-domain")
         poller = ActivityPoller(domain, "task-list")
 

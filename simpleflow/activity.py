@@ -13,6 +13,7 @@ class NotSet(object):
     def __repr__(self):
         return "<Priority Not Set>"
 
+
 PRIORITY_NOT_SET = NotSet()
 
 
@@ -39,9 +40,10 @@ def with_attributes(
     :type version: str
     :param task_list: optional task list.
     :type task_list: str
+    :param task_priority: priority.
     :param retry: retry count.
     :type retry: int
-    :param raises_on_failure: whether to raise on failuer.
+    :param raises_on_failure: whether to raise on failure.
     :type raises_on_failure: bool
     :param start_to_close_timeout:
     :type start_to_close_timeout: str | int
@@ -58,6 +60,7 @@ def with_attributes(
     :rtype: () -> Activity[()]
 
     """
+
     def wrap(func):
         return Activity(
             func, name, version, task_list,

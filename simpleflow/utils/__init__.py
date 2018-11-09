@@ -9,7 +9,7 @@ def issubclass_(arg1, arg2):
     """
     Like issubclass but without exception.
     :param arg1:
-    :type arg1: object
+    :type arg1: Union[object, type]
     :param arg2:
     :type arg2: type
     :return: True for a subclass
@@ -56,7 +56,7 @@ def _some_str(value):
     """
     try:
         return str(value)
-    except:
+    except Exception:
         return '<unprintable %s object>' % type(value).__name__
 
 

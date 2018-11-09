@@ -62,7 +62,7 @@ class WorkflowExecutionDecision(Decision):
                         execution_timeout=None, task_timeout=None,
                         input=None, tag_list=None, task_list=None,
                         workflow_type_version=None):
-        """Coninue as new workflow execution decision builder
+        """Continue as new workflow execution decision builder
         :param  child_policy: specifies the policy to use for the
                               child workflow executions of the new execution
         :type   child_policy: CHILD_POLICIES.{TERMINATE | REQUEST_CANCEL | ABANDON}
@@ -82,7 +82,7 @@ class WorkflowExecutionDecision(Decision):
         :param  task_timeout: maximum duration of decision tasks for the new workflow execution
         :type   task_timeout: str
 
-        :param  workflow_type_version: workflow type version the execution shold belong to
+        :param  workflow_type_version: workflow type version the execution should belong to
         :type   workflow_type_version: str
         """
         if input is not None:

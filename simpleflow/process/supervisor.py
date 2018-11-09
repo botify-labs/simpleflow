@@ -73,7 +73,7 @@ class Supervisor(NamedMixin):
         :type arguments: tuple | list
         :param nb_children:
         :type nb_children: int
-        :param background: wether the supervisor process should launch in background
+        :param background: whether the supervisor process should launch in background
         :type background: bool
         """
         # NB: below, compare explicitly to "None" there because nb_children could be 0
@@ -166,7 +166,7 @@ class Supervisor(NamedMixin):
             # the supervisor process
             if self._terminating:
                 for proc in self._processes.values():
-                    logger.info("process: waiting for proces={} to finish.".format(proc))
+                    logger.info("process: waiting for process={} to finish.".format(proc))
                     proc.wait()
                 break
 

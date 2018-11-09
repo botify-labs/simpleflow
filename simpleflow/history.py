@@ -1,5 +1,9 @@
 import collections
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, Dict  # NOQA
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +63,7 @@ class History(object):
     def activities(self):
         """
         :return: activities
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: Dict[str, dict[str, Any]]
         """
         return self._activities
 
@@ -67,7 +71,7 @@ class History(object):
     def child_workflows(self):
         """
         :return: child WFs
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: Dict[str, dict[str, Any]]
         """
         return self._child_workflows
 
@@ -75,7 +79,7 @@ class History(object):
     def external_workflows_signaling(self):
         """
         :return: external WFs
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: Dict[str, dict[str, Any]]
         """
         return self._external_workflows_signaling
 
@@ -83,7 +87,7 @@ class History(object):
     def signals(self):
         """
         :return: signals
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        :rtype: Dict[str, dict[str, Any]]
         """
         return self._signals
 
@@ -318,6 +322,7 @@ class History(object):
         """
 
         def get_workflow():
+            # type: () -> Dict[str, Any]
             initiated_event = events[event.initiated_event_id - 1]
             return self._child_workflows[initiated_event.workflow_id]
 

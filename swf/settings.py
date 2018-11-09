@@ -118,7 +118,7 @@ def from_env():
 def from_home(path='.swf'):
     """Retrieves settings from home environment
 
-    If HOME environment is applicapable, search for any files in *path*.
+    If HOME environment is available, search for any files in *path*.
 
     :rtype: dict
 

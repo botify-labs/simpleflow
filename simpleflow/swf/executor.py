@@ -8,6 +8,7 @@ import logging
 import multiprocessing
 import re
 import traceback
+from typing import TYPE_CHECKING
 
 import simpleflow.task as base_task
 import swf.exceptions
@@ -47,9 +48,9 @@ from simpleflow.utils import (
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
-# noinspection PyUnreachableCode
-if False:
+if TYPE_CHECKING:
     from typing import Optional, Type, Union, Tuple  # NOQA
+    from swf import responses  # NOQA
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +200,11 @@ class Executor(executor.Executor):
         self.handled_failures = {}
         self.created_activity_types = set()
 
+    @property
+    def history(self):
+        # type: () -> Optional[History]
+        return self._history
+
     def reset(self):
         """
         Clears the state of the execution.
@@ -219,6 +225,10 @@ class Executor(executor.Executor):
         self.create_workflow()
 
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
+        # Old name: stay compatible with potential users...
+        return self.make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
+
+    def make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
         """
         Assign a new ID to *a_task*.
 
@@ -981,19 +991,7 @@ class Executor(executor.Executor):
         priority_set_on_submit = kwargs.pop("__priority", PRIORITY_NOT_SET)
 
         # casts simpleflow.task.*Task to their equivalent in simpleflow.swf.task
-        if not isinstance(func, SwfTask):
-            if isinstance(func, base_task.ActivityTask):
-                func = ActivityTask.from_generic_task(func)
-            elif isinstance(func, base_task.WorkflowTask):
-                func = WorkflowTask.from_generic_task(func)
-            elif isinstance(func, base_task.SignalTask):
-                func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
-            elif isinstance(func, base_task.MarkerTask):
-                func = MarkerTask.from_generic_task(func)
-            elif isinstance(func, base_task.TimerTask):
-                func = TimerTask.from_generic_task(func)
-            elif isinstance(func, base_task.CancelTimerTask):
-                func = CancelTimerTask.from_generic_task(func)
+        func = self.convert_generic_task(func)
 
         try:
             # do not use directly "Submittable" here because we want to catch if
@@ -1027,6 +1025,22 @@ class Executor(executor.Executor):
         # finally resume task
         return self.resume(a_task, *a_task.args, **a_task.kwargs)
 
+    def convert_generic_task(self, func):
+        if not isinstance(func, SwfTask):
+            if isinstance(func, base_task.ActivityTask):
+                func = ActivityTask.from_generic_task(func)
+            elif isinstance(func, base_task.WorkflowTask):
+                func = WorkflowTask.from_generic_task(func)
+            elif isinstance(func, base_task.SignalTask):
+                func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
+            elif isinstance(func, base_task.MarkerTask):
+                func = MarkerTask.from_generic_task(func)
+            elif isinstance(func, base_task.TimerTask):
+                func = TimerTask.from_generic_task(func)
+            elif isinstance(func, base_task.CancelTimerTask):
+                func = CancelTimerTask.from_generic_task(func)
+        return func
+
     # TODO: check if really used or remove it
     def map(self, callable, iterable):
         """Submit *callable* with each of the items in ``*iterables``.
@@ -1043,7 +1057,7 @@ class Executor(executor.Executor):
         return super(Executor, self).starmap(callable, iterable)
 
     def replay(self, decision_response, decref_workflow=True):
-        # type: (swf.responses.Response, bool) -> DecisionsAndContext
+        # type: (responses.Response, bool) -> DecisionsAndContext
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
@@ -1416,3 +1430,46 @@ class Executor(executor.Executor):
             pass
         decision.cancel()
         return [decision]
+
+    def prepare_submittable(self, submittable, *args, **kwargs):
+        submittable = self.convert_generic_task(submittable)
+        # do not use directly "Submittable" here because we want to catch if
+        # we don't have an instance from a class known to work under simpleflow.swf
+        if isinstance(submittable, SwfTask):
+            # no need to wrap it, already wrapped in the correct format
+            a_task = submittable
+        elif isinstance(submittable, Activity):
+            a_task = ActivityTask(submittable, *args, **kwargs)
+        elif issubclass_(submittable, Workflow):
+            a_task = WorkflowTask(self, submittable, *args, **kwargs)
+        elif isinstance(submittable, WaitForSignal):
+            raise NotImplementedError
+        elif isinstance(submittable, Submittable):
+            raise TypeError(
+                'invalid type Submittable {} for {} (you probably wanted a simpleflow.swf.task.*Task)'.format(
+                    type(submittable), submittable))
+        else:
+            raise TypeError('invalid type {} for {}'.format(
+                type(submittable), submittable))
+        if not a_task.id:
+            a_task.id = self._make_task_id(a_task, self._workflow_id, self._run_id, *args, **kwargs)
+
+        if isinstance(submittable, Activity):
+            activity_type = swf.models.ActivityType(
+                self.domain,
+                name=submittable.name,
+                version=submittable.version)
+            if not activity_type.exists:
+                try:
+                    activity_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    pass
+        elif isinstance(submittable, Workflow):
+            workflow_type = swf.models.WorkflowType(self.domain, name=submittable.name, version=submittable.version)
+            if not workflow_type.exists:
+                try:
+                    workflow_type.save()
+                except swf.exceptions.AlreadyExistsError:
+                    pass
+
+        return a_task

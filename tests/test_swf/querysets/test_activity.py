@@ -21,11 +21,6 @@ swf.settings.set(aws_access_key_id='fakeaccesskey',
                  aws_secret_access_key='fakesecret')
 
 
-if 0:
-    # for PyCharm
-    patch.object = patch.object
-
-
 class TestActivityTypeQuerySet(unittest.TestCase):
 
     def setUp(self):
@@ -39,7 +34,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         """Assert .__init__() instantiate _domain private attr"""
         bw = ActivityTypeQuerySet(self.domain)
         delattr(bw, '_domain')
-        dummy = bw.domain
+        _ = bw.domain
 
         self.assertTrue(hasattr(bw, '_domain'))
 

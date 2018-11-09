@@ -28,7 +28,7 @@ class TestMarkers(VCRIntegrationTest):
             lambda e: e['eventType'] == 'MarkerRecorded',
             events
         ))
-        expect(len((marker_recorded))).to.equal(3)  # 3 markers
+        expect(len(marker_recorded)).to.equal(3)  # 3 markers
         marker_details = [
             e['markerRecordedEventAttributes'].get('details') for e in marker_recorded
         ]

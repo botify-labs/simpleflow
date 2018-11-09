@@ -2,6 +2,7 @@ import collections
 import logging
 import sys
 import traceback
+from typing import TYPE_CHECKING
 
 from simpleflow import (
     exceptions,
@@ -18,6 +19,9 @@ from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
 
+if TYPE_CHECKING:
+    from typing import Tuple, Union  # NOQA
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +31,17 @@ class Executor(executor.Executor):
     Executes all tasks synchronously in a single local process.
 
     """
-
     def __init__(self, workflow_class):
         super(Executor, self).__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
         self.signals_sent = set()
         self._markers = collections.OrderedDict()
+        self._history = None  # type: Union[History, builder.History]
+
+    @property
+    def history(self):
+        return self._history
 
     def update_workflow_class(self):
         """
@@ -87,44 +95,56 @@ class Executor(executor.Executor):
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
+        future_state = futures.FINISHED
         try:
             future._result = task.execute()
             if hasattr(task, 'post_execute'):
                 task.post_execute()
-            state = 'completed'
+            task_state = 'completed'
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            future._exception = exc_value
-            logger.exception('rescuing exception: {}'.format(exc_value))
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
-                tb = traceback.format_tb(exc_traceback)
-                message = format_exc(exc_value)
-                details = json_dumps(
-                    {
-                        'error': exc_type.__name__,
-                        'message': str(exc_value),
-                        'traceback': tb,
-                    },
-                    default=repr
-                )
-                raise exceptions.TaskFailed(
-                    func.name,
-                    message,
-                    details,
-                )
-            state = 'failed'
+            task_state, future_state = self.do_handle_failure(func, future)
         finally:
-            future._state = futures.FINISHED
+            future._state = future_state
 
         if func:
+            # FIXME: handle child workflows
             self._history.add_activity_task(
                 func,
                 decision_id=None,
-                last_state=state,
+                last_state=task_state,
                 activity_id=context["activity_id"],
                 input={'args': args, 'kwargs': kwargs},
                 result=future.result)
         return future
+
+    def do_handle_failure(self, func, future):
+        # type: (Union[Activity, Workflow], futures.Future) -> Tuple[str, str]
+        # TODO: call workflow's on_task_failure if it exists, handle retry, etc.
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        future._exception = exc_value
+        logger.error('rescuing exception:')
+        # FIXME: too many displays?
+        logger.error("%s", "".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+        if (
+                (isinstance(func, Activity) or issubclass_(func, Workflow))
+                and getattr(func, 'raises_on_failure', None)
+        ):
+            tb = traceback.format_tb(exc_traceback)
+            message = format_exc(exc_value)
+            details = json_dumps(
+                {
+                    'error': exc_type.__name__,
+                    'message': str(exc_value),
+                    'traceback': tb,
+                },
+                default=repr
+            )
+            raise exceptions.TaskFailed(
+                func.name,
+                message,
+                details,
+            )
+        return 'failed', futures.FINISHED
 
     def run(self, input=None):
         if input is None:
@@ -175,3 +195,10 @@ class Executor(executor.Executor):
 
     def get_event_details(self, event_type, event_name):
         return None  # To be implemented if needed
+
+    @staticmethod
+    def default_failure_handling(failure_context):
+        return failure_context
+
+    def prepare_submittable(self, submittable, *args, **kwargs):
+        return submittable

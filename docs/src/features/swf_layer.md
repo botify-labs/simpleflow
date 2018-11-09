@@ -7,7 +7,7 @@ SWF Object Layer
 It aims to provide:
 
 - **Modelisation**: Swf entities and concepts are to be manipulated through *Models* and
-  *QuerySets* (any ressemblance with the Django API would not be a coincidence).
+  *QuerySets* (any resemblance with the Django API would not be a coincidence).
 - **High-level Events, History**: A higher level of abstractions over SWF *events* and
   *history*. Events are implemented as stateful objects aware of their own state and
   possible transitions. History enhances the events flow description, and can be
@@ -22,7 +22,7 @@ Settings
 --------
 
 !!! bug
-    The informations in this "Settings" section may be outdated, they need some love.
+    The information in this "Settings" section may be outdated, they need some love.
 
 Optional:
 
@@ -49,7 +49,7 @@ The following environment variables
 
 If neither of the previous methods were used, you can still set the AWS credentials with `swf.settings.set`:
 
-```python
+```python console
 >>> import swf.settings
 >>> swf.settings.set(aws_access_key_id='MYAWSACCESSKEYID',
 ...                  aws_secret_access_key='MYAWSSECRETACCESSKEY',
@@ -73,7 +73,7 @@ manipulated through swf using `models`. They are immutable `swf` objects represe
 interface to objects attributes, local/remote objects synchronization and changes watch between these
 local and remote objects.
 
-```python
+```python console
 # Models reside in the swf.models module
 >>> from swf.models import Domain, WorkflowType, WorkflowExecution, ActivityType
 
@@ -95,7 +95,7 @@ whether you've acquired it through a queryset, or the remote object has been del
 Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and
 consistent.
 
-```python
+```python console
 # Exists method lets you know if your model instance has an upstream version
 >>> D.exists
 True
@@ -115,7 +115,7 @@ ModelDiff()
 What if your local object is out of sync? Models `upstream` method will fetch the remote version of
 your object and will build a new model instance using its attributes.
 
-```python
+```python console
 >>> D.is_synced
 False
 >>> D.changes
@@ -136,7 +136,7 @@ ModelDiff()
 Models can be retrieved and instantiated via querysets. To continue over the django comparison,
 they're behaving like django managers.
 
-```python
+```python console
 # As querying for models needs a valid connection to amazon service,
 # Queryset objects cannot act as classmethods proxy and have to be instantiated;
 # most of the time against a Domain model instance
@@ -144,7 +144,7 @@ they're behaving like django managers.
 
 # Domain querysets can be instantiated directly
 >>> domain_qs = DomainQuerySet()
->>> workflow_domain = domain_qs.get("MyTestDomain")  # and specific model retieved via .get method
+>>> workflow_domain = domain_qs.get("MyTestDomain")  # and specific model retrieved via .get method
 >>> workflow_qs = WorkflowTypeQuerySet(workflow_domain)  # queryset built against model instance example
 
 >>> workflow_qs.all()
@@ -181,34 +181,52 @@ such workers and decider, `swf` exposes base classes for them located in the `sw
   runtime implementation you need: thread, gevent, multiprocess...
 
 ```python
+from swf.core import ConnectedSWFObject
+
 class Actor(ConnectedSWFObject):
-    def __init__(self, domain, task_list)
+    def __init__(self, domain, task_list):
+        ...
     def start(self):
+        ...
     def stop(self):
+        ...
 ```
 
 * `Decider` base class implements the core functionality of a swf decider: polling for decisions tasks,
-  and sending back a decision task copleted decision. Every other special needs implementations are left
+  and sending back a decision task completed decision. Every other special needs implementations are left
   up to the user.
 
 ```python
+from swf.actors import Actor
+
 class Decider(Actor):
-    def __init__(self, domain, task_list)
-    def complete(self, task_token, decisions=None, execution_context=None)
-    def poll(self, task_list=None, identity=None, maximum_page_size=None)
+    def __init__(self, domain, task_list):
+        ...
+    def complete(self, task_token, decisions=None, execution_context=None):
+        ...
+    def poll(self, task_list=None, identity=None, maximum_page_size=None):
+        ...
 ```
 
-* `Worker` base class implements the core functionality of a swf worker whoes role is to process activity
+* `Worker` base class implements the core functionality of a swf worker whose role is to process activity
   tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to SWF
   service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity
   task it's processing.
 
 ```python
+from swf.actors import Actor
+
 class ActivityWorker(Actor):
-    def __init__(self, domain, task_list)
-    def cancel(self, task_token, details=None)
-    def complete(self, task_token, result=None)
-    def fail(self, task_token, details=None, reason=None)
-    def heartbeat(self, task_token, details=None)
-    def poll(self, task_list=None, **kwargs)
+    def __init__(self, domain, task_list):
+        ...
+    def cancel(self, task_token, details=None):
+        ...
+    def complete(self, task_token, result=None):
+        ...
+    def fail(self, task_token, details=None, reason=None):
+        ...
+    def heartbeat(self, task_token, details=None):
+        ...
+    def poll(self, task_list=None, **kwargs):
+        ...
 ```

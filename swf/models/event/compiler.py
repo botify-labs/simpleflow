@@ -27,7 +27,7 @@ class CompiledEvent(Event, Stateful):
 
     Amazon service history events comes with a type and
     a state. swf.models.eventEvent class already implements
-    these specificities.
+    these basics.
 
     But history manipulation and analysis in order to take
     decisions calls for state-aware events.
@@ -65,7 +65,7 @@ class CompiledEvent(Event, Stateful):
         """
         if event.state != self.initial_state:
             raise InconsistentStateError("Provided event is in {0} state "
-                                         "when attended intial state is {1}"
+                                         "when attended initial state is {1}"
                                          .format(event.state, self.initial_state))
         self.__dict__ = event.__dict__.copy()
 

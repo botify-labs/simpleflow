@@ -10,7 +10,7 @@ import signal
 import sys
 import time
 from uuid import uuid4
-
+from typing import TYPE_CHECKING
 import boto.connection
 import click
 
@@ -32,7 +32,7 @@ from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps
 from simpleflow import __version__
 
-if False:
+if TYPE_CHECKING:
     from typing import Text, Type  # NOQA
     from swf.models import WorkflowType  # NOQA
 
@@ -61,7 +61,7 @@ def disable_boto_connection_pooling():
     # when polling on analysis-testjbb-repair-a61ff96e854344748e308fefc9ddff61
     #
     # It's because when forking, file handles are copied and sockets are shared.
-    # Even sockets that handle SSL conections to AWS services, but SSL
+    # Even sockets that handle SSL connections to AWS services, but SSL
     # connections are stateful! So with multiple workers, it collides.
     #
     # To disable boto's connection pooling (which in practice makes boto open a
@@ -369,7 +369,7 @@ def filter_workflows(ctx, domain, status, tag,
               default=False,
               help='Display details.'
               )
-@cli.command('task.info', help='Informations on a task.')
+@cli.command('task.info', help='Information on a task.')
 @click.pass_context
 def task_info(ctx, domain, workflow_id, task_id, details):
     print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id, details))
@@ -695,7 +695,7 @@ def activity_rerun(domain,
     for line in json_dumps(params, pretty=True).split("\n"):
         logger.debug(line)
     if input_override:
-        logger.info("NB: input will be overriden with the passed one!")
+        logger.info("NB: input will be overridden with the passed one!")
     logger.info("Will re-run: {}(*{}, **{}) [+meta={}]".format(task, args, kwargs, meta))
 
     # download binaries if needed

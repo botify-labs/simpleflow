@@ -1,5 +1,6 @@
 import inspect
 import os
+from typing import TYPE_CHECKING
 
 import boto.swf
 from click.testing import CliRunner
@@ -11,9 +12,9 @@ from tests.utils import IntegrationTestCase
 
 from simpleflow.utils import json_dumps
 
-if False:
-    from typing import List, Union
-    from click.testing import Result
+if TYPE_CHECKING:
+    from typing import List, Union  # NOQA
+    from click.testing import Result  # NOQA
 
 
 # Default SWF parameters
@@ -81,7 +82,7 @@ class VCRIntegrationTest(IntegrationTestCase):
         return events
 
     def invoke(self, command, arguments):
-        # type: (str, Union(str, List[str])) -> Result
+        # type: (str, Union[str, List[str]]) -> Result
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):

@@ -303,9 +303,9 @@ def create_sleeper_subprocess():
     reason="psutil process statuses are buggy on OSX, and test randomly fails on PyPy")
 def test_execute_dont_kill_children():
     pid = execute.python()(create_sleeper_subprocess)()
-    subprocess = psutil.Process(pid)
-    assert subprocess.status() == 'sleeping'
-    subprocess.terminate()  # cleanup
+    subproc = psutil.Process(pid)
+    assert subproc.status() == 'sleeping'
+    subproc.terminate()  # cleanup
 
 
 def test_execute_kill_children():

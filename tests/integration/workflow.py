@@ -27,7 +27,7 @@ def sleep(seconds):
 
 
 @activity.with_attributes(task_list='quickstart', version='example', idempotent=True)
-def get_uuid(unused=None):
+def get_uuid(_=None):
     return str(uuid.uuid4())
 
 

@@ -12,7 +12,7 @@ except ImportError:
 from simpleflow import storage
 
 
-# disable storage.BUCKET_LOCATIONS_CACHE because it interfers with tests
+# disable storage.BUCKET_LOCATIONS_CACHE because it interferes with tests
 class DevNullCache(dict):
     def __setitem__(self, key, value):
         pass

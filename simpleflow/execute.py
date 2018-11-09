@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 import errno
+import inspect
 import os
 import sys
 import json
@@ -10,12 +11,11 @@ from typing import TYPE_CHECKING
 
 import psutil
 
-MAX_ARGUMENTS_JSON_LENGTH = 65536
-
 try:
     import subprocess32 as subprocess
-except ImportError:
+except ImportError:  # Python3 < 3.3 (not sure we really support these)
     import subprocess
+
 import functools
 import logging
 import tempfile
@@ -32,10 +32,10 @@ from simpleflow.utils import json_dumps
 
 if TYPE_CHECKING:
     from typing import Any, Iterable  # NOQA
-    import inspect  # NOQA
-
 
 __all__ = ['program', 'python']
+
+MAX_ARGUMENTS_JSON_LENGTH = 65536
 
 
 class RequiredArgument(object):
@@ -309,8 +309,6 @@ def program(path=None, argument_format=format_arguments):
     argument *path*.
 
     """
-    import inspect
-
     def wrap_callable(func):
         @functools.wraps(func)
         def execute(*args, **kwargs):

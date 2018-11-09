@@ -17,8 +17,8 @@ class HistoryQuerySet(BaseQuerySet):
         :param  workflow_id: The user defined identifier associated with the workflow execution
         :type   workflow_id: string
 
-        :param  max_results: Max output history size. Retrieved history will be shrinked
-                             if it's size is greater than max_results.
+        :param  max_results: Max output history size. Retrieved history will be shrunk
+                             if its size is greater than max_results.
         :type   max_results: int
 
         :param  page_size: Swf api response page size: controls how many history events

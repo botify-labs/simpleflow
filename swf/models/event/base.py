@@ -30,18 +30,6 @@ class Event(object):
     ``swf.models.event.task.DecisionTaskEvent``, which a typical
     instance would for example have type 'DecisionTask',
     name 'DecisionTaskScheduleFailed', id '1' and state 'failed'.
-
-    :param  id: event id provided by amazon service
-    :type   id: string
-
-    :param  state: event current state
-    :type   state: string
-
-    :param  timestamp: event creation timestamp
-    :type   timestamp: float
-
-    :param  raw_data: raw_event representation provided by amazon service
-    :type   raw_data: dict
     """
     _type = None
     _name = None
@@ -56,6 +44,17 @@ class Event(object):
 
     def __init__(self, id, state, timestamp, raw_data):
         """
+        :param  id: event id provided by amazon service
+        :type   id: string
+
+        :param  state: event current state
+        :type   state: string
+
+        :param  timestamp: event creation timestamp
+        :type   timestamp: float
+
+        :param  raw_data: raw_event representation provided by amazon service
+        :type   raw_data: dict
         """
         self._id = id
         self._state = state

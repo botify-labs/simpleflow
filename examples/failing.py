@@ -1,4 +1,5 @@
 import time
+from typing import TYPE_CHECKING
 
 from simpleflow import (
     activity,
@@ -11,8 +12,7 @@ from simpleflow.log import GREEN, YELLOW, END, RED, ORANGE
 from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
 
-
-if False:
+if TYPE_CHECKING:
     from typing import Optional  # NOQA
 
 

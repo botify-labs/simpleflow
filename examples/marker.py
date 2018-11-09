@@ -8,7 +8,7 @@ class MarkerWorkflow(Workflow):
     task_list = 'example'
 
     def run(self):
-        m = self.submit(self.record_marker('marker 1'))
+        self.submit(self.record_marker('marker 1'))
         m = self.submit(self.record_marker('marker 1', 'some details'))
         self.submit(self.record_marker('marker 2', "2nd marker's details"))
         futures.wait(m)

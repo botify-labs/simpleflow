@@ -1,4 +1,4 @@
-# See README for more informations about integration tests
+# See README for more information about integration tests
 import unittest
 
 from sure import expect
@@ -30,6 +30,6 @@ class TestSimpleflowSwfHelpers(unittest.TestCase):
         expect(meta).to.equal({})
         expect(params["id"]).to.equal("activity-tests.integration.workflow.sleep-1")
 
-    def test_find_activity_with_overriden_input(self):
+    def test_find_activity_with_overridden_input(self):
         _, args, _, _, _ = find_activity(FakeHistory(), scheduled_id=5, input={"args": [4]})
         expect(args).to.equal([4])

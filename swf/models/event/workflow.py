@@ -44,7 +44,7 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
             'continued_as_new',
         ),
 
-        'cancel_requested': ('canceled'),
+        'cancel_requested': 'canceled',
 
     }
 
@@ -71,7 +71,7 @@ class CompiledChildWorkflowExecutionEvent(CompiledEvent):
 
     transitions = {
         'start_initiated': ('start_failed', 'started'),
-        'start_failed': ('failed'),
+        'start_failed': 'failed',
         'started': ('canceled', 'failed', 'timed_out', 'terminated'),
     }
 
@@ -98,8 +98,8 @@ class CompiledExternalWorkflowExecutionEvent(CompiledEvent):
 
     transitions = {
         'signal_initiated': ('signal_failed', 'signaled'),
-        'request_cancel_initiated': ('request_cancel_failed'),
-        'cancel_requested': ('request_cancel_failed'),
+        'request_cancel_initiated': 'request_cancel_failed',
+        'cancel_requested': 'request_cancel_failed',
     }
 
     initial_state = 'signal_initiated'

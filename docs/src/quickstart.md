@@ -7,10 +7,9 @@ will find this example in `examples/basic.py`.
 We need to declare the functions as activities to make them available:
 
 ```python
+import time
 from simpleflow import (
     activity,
-    Workflow,
-    futures,
 )
 
 @activity.with_attributes(task_list='quickstart', version='example')
@@ -30,6 +29,9 @@ def delay(t, x):
 And then define the workflow itself in a `example.py` file:
 
 ```python
+from simpleflow import Workflow, futures
+from examples.basic import increment, Delay, double
+
 class BasicWorkflow(Workflow):
     name = 'basic'
     version = 'example'
@@ -37,7 +39,7 @@ class BasicWorkflow(Workflow):
 
     def run(self, x, t=30):
         y = self.submit(increment, x)
-        yy = self.submit(delay, t, y)
+        yy = self.submit(Delay, t, y)
         z = self.submit(double, y)
 
         print('({x} + 1) * 2 = {result}'.format(
@@ -72,7 +74,11 @@ Let's take a closer look to the workflow definition.
 It is a **class** that inherits from `simpleflow.Workflow`:
 
 ```python
+from simpleflow import Workflow
+
 class BasicWorkflow(Workflow):
+    pass
+
 ```
 
 It defines 3 class attributes:

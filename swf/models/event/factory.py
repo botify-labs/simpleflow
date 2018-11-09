@@ -91,33 +91,34 @@ class EventFactory(object):
 
     will instantiate a ``swf.models.event.task.DecisionTaskEvent`` with state
     set to 'scheduled' from input attributes.
-
-    :param  raw_event: The input json event representation provided by
-                       amazon service
-    :type   raw_event: dict
-
-    :returns: ``swf.models.event.Event`` subclass instance
     """
 
     # eventType to Event subclass bindings
     events = EVENTS
 
-    def __new__(klass, raw_event):
+    def __new__(cls, raw_event):
+        """
+        :param  raw_event: The input json event representation provided by
+                           amazon service
+        :type   raw_event: dict
+
+        :returns: ``swf.models.event.Event`` subclass instance
+        """
         event_id = raw_event['eventId']
         event_name = raw_event['eventType']
         event_timestamp = raw_event['eventTimestamp']
 
-        event_type = klass._extract_event_type(event_name)
-        event_state = klass._extract_event_state(event_type, event_name)
+        event_type = cls._extract_event_type(event_name)
+        event_state = cls._extract_event_state(event_type, event_name)
         # amazon swf format is not very normalized and event attributes
         # response field is non-capitalized...
         event_attributes_key = decapitalize(event_name) + 'EventAttributes'
 
-        klass = EventFactory.events[event_type]['event']
-        klass._name = event_name
-        klass._attributes_key = event_attributes_key
+        cls = EventFactory.events[event_type]['event']
+        cls._name = event_name
+        cls._attributes_key = event_attributes_key
 
-        instance = klass(
+        instance = cls(
             id=event_id,
             state=event_state,
             timestamp=event_timestamp,
@@ -127,7 +128,7 @@ class EventFactory(object):
         return instance
 
     @classmethod
-    def _extract_event_type(klass, event_name):
+    def _extract_event_type(cls, event_name):
         """Extracts event type from raw event_name
 
         :param  event_name:
@@ -141,13 +142,13 @@ class EventFactory(object):
             'ChildWorkflowExecution'
 
         """
-        for name in klass.events:
+        for name in cls.events:
             if name in event_name:
                 return name
         return
 
     @classmethod
-    def _extract_event_state(klass, event_type, event_name):
+    def _extract_event_state(cls, event_type, event_name):
         """Extracts event state from raw event type and name
 
         Example:

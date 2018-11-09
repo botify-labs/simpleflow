@@ -1,11 +1,16 @@
 import abc
 import logging
+from typing import TYPE_CHECKING
+
+from future.utils import with_metaclass
 
 from ._decorators import deprecated
 
-if False:
-    from typing import Type
-    from simpleflow import Workflow
+if TYPE_CHECKING:
+    from typing import Optional, Type  # NOQA
+    from simpleflow import Workflow  # NOQA
+    from simpleflow.history import History  # NOQA
+    from simpleflow.task import TaskFailureContext  # NOQA
 
 __all__ = ['Executor']
 
@@ -13,7 +18,7 @@ __all__ = ['Executor']
 logger = logging.getLogger(__name__)
 
 
-class Executor(object):
+class Executor(with_metaclass(abc.ABCMeta)):
     """
     Abstract class that describes the interface to manage the execution of
     a workflow.
@@ -32,8 +37,6 @@ class Executor(object):
     - asynchronous with full replay
 
     """
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, workflow_class):
         # type: (Type[Workflow]) -> None
         """
@@ -45,7 +48,7 @@ class Executor(object):
 
         """
         self._workflow_class = workflow_class
-        self._workflow = None
+        self._workflow = None  # type: Workflow
 
     @property
     def workflow_class(self):
@@ -53,14 +56,18 @@ class Executor(object):
 
     @property
     def workflow(self):
+        # type: () -> Workflow
         return self._workflow
+
+    @property
+    @abc.abstractmethod
+    def history(self):
+        # type: () -> Optional[History]
+        pass
 
     def create_workflow(self):
         if self._workflow is None:
-            workflow = self._workflow_class(self)
-            if False:
-                assert isinstance(workflow, Workflow)
-            self._workflow = workflow
+            self._workflow = self._workflow_class(self)
 
     def run_workflow(self, *args, **kwargs):
         """
@@ -75,8 +82,8 @@ class Executor(object):
         """
         Submit a task for execution.
 
-        :param task: activity or workflow.
-        :type  task: base.Submittable | simpleflow.Activity | simpleflow.Workflow
+        :param submittable: activity or workflow.
+        :type  submittable: base.Submittable | simpleflow.Activity | simpleflow.Workflow
 
         :returns:
         :rtype: :py:class:`simpleflow.futures.Future`
@@ -184,3 +191,13 @@ class Executor(object):
     @abc.abstractmethod
     def get_event_details(self, event_type, event_name):
         raise NotImplementedError
+
+    @staticmethod
+    @abc.abstractmethod
+    def default_failure_handling(failure_context):
+        # type: (TaskFailureContext) -> TaskFailureContext
+        pass
+
+    @abc.abstractmethod
+    def prepare_submittable(self, submittable, *args, **kwargs):
+        pass

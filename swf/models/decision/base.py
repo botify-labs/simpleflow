@@ -12,7 +12,7 @@ from swf.utils import decapitalize, underscore_to_camel
 
 
 def decision_action(fn):
-    """Ensures the decorated method class instance is bootstraped
+    """Ensures the decorated method class instance is bootstrapped
     with decision type, attributes_key, and body
     """
     @wraps(fn)

@@ -6,6 +6,7 @@
 # See the file LICENSE for copying permission.
 
 from itertools import groupby
+# noinspection PyCompatibility
 from builtins import object, range
 
 from future.utils import iteritems
@@ -263,7 +264,7 @@ class History(object):
         facilitate decisions according to the history.
 
         :param  data: event history description (typically, an amazon response)
-        :type   data: dict[str, Any]
+        :type   data: List[Dict[str, Any]]
 
         :returns: History model instance built upon data description
         :rtype: swf.model.history.History

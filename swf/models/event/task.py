@@ -32,7 +32,7 @@ class CompiledActivityTaskEvent(CompiledEvent):
         'schedule_failed': ('scheduled', 'timed_out'),
         'started': ('canceled', 'failed', 'timed_out', 'completed'),
         'failed': ('scheduled', 'timed_out'),
-        'timed_out': ('scheduled'),
+        'timed_out': 'scheduled',
         'canceled': ('scheduled', 'timed_out'),
         'cancel_requested': ('canceled', 'request_cancel_failed', 'timed_out'),
         'request_cancel_failed': ('scheduled', 'timed_out'),

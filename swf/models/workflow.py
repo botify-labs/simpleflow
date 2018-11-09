@@ -122,7 +122,7 @@ class WorkflowType(BaseModel):
         self.set_child_policy(child_policy)
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def set_child_policy(self, policy):
@@ -386,7 +386,7 @@ class WorkflowExecution(BaseModel):
         self.parent = parent or {}  # so we can query keys in any case
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     def _diff(self):

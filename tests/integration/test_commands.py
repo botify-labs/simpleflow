@@ -1,4 +1,4 @@
-# See README for more informations about integration tests
+# See README for more information about integration tests
 
 from click.testing import CliRunner
 from flaky import flaky
@@ -80,8 +80,10 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # run a very short workflow
         result = self.invoke(
             simpleflow.command.cli,
-            "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
-            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
+            (
+                    "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 "
+                    "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
+            )
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
@@ -120,9 +122,9 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             e['activityTaskScheduledEventAttributes']['activityId']
             for e in events
             if (
-                e['eventType'] == 'ActivityTaskScheduled' and
-                e['activityTaskScheduledEventAttributes']['activityType']['name'] == 'tests.integration.workflow'
-                                                                                     '.get_uuid')
+                    e['eventType'] == 'ActivityTaskScheduled' and
+                    e['activityTaskScheduledEventAttributes']['activityType']['name'] == 'tests.integration.workflow'
+                                                                                         '.get_uuid')
         ]
         expect(activities).should.have.length_of(2)
         expect(activities[0]).should.be.different_of(activities[1])

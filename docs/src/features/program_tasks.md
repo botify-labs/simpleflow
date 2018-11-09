@@ -6,7 +6,7 @@ executed as a program.
 
 There are two modes:
 
-- Convert the definition of a fonction as a command line.
+- Convert the definition of a function as a command line.
 - Execute a Python function in another process.
 
 Please refer to the `simpleflow.tests.test_activity` test module for
@@ -19,6 +19,8 @@ Executing a function as a command line
 Let's take the example of `ls`:
 
 ```python
+from simpleflow import execute
+
 @execute.program()
 def ls():
     pass
@@ -38,6 +40,8 @@ The rationale for this feature is to execute a function with another
 interpreter (such as pypy) or in another environment (virtualenv).
 
 ```python
+from simpleflow import execute
+
 @execute.python(interpreter='pypy')
 def inc(xs):
     return [x + 1 for x in xs]

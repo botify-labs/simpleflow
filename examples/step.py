@@ -72,7 +72,7 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
 
     def get_step_bucket(self):
         # It can be a S3 Bucket name
-        bucket = "my_bucket"
+        # bucket = "my_bucket"
         # In case the bucket is not in US-east, you can prepend the s3 host endpoint
         # in the bucket return
         # List available here : http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region

@@ -1,3 +1,4 @@
+# noinspection PyCompatibility
 from builtins import range
 import unittest
 
@@ -77,9 +78,9 @@ executor._workflow = MyWorkflow(executor)
 class TestGroup(unittest.TestCase):
     def test(self):
         future = Group(
-                (to_string, 1),
-                (to_string, 2)
-            ).submit(executor)
+            (to_string, 1),
+            (to_string, 2)
+        ).submit(executor)
         self.assertTrue(future.finished)
 
         future = Group(
@@ -121,8 +122,8 @@ class TestGroup(unittest.TestCase):
         self.assertIsNone(future.exception)
 
         future = Group(
-            (zero_division),
-            (zero_division),
+            zero_division,
+            zero_division,
         ).submit(executor)
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
@@ -150,7 +151,7 @@ class TestGroup(unittest.TestCase):
         self.assertTrue(future.running)
         self.assertEqual(len(future.futures), 3)
         self.assertEqual([f.state for f in future.futures],
-                          [futures.FINISHED, futures.RUNNING, futures.RUNNING])
+                         [futures.FINISHED, futures.RUNNING, futures.RUNNING])
 
         future = Group(
             (to_string, "test1"),
@@ -213,7 +214,7 @@ class TestChain(unittest.TestCase):
         # Do not execute the 3rd step is the 2nd is failing on chains
         future = Chain(
             (to_string, "test1"),
-            (zero_division),
+            zero_division,
             (to_string, "test2"),
         ).submit(executor)
         self.assertTrue(future.finished)
@@ -226,7 +227,7 @@ class TestChain(unittest.TestCase):
     def test_raises_on_failure(self):
         chain = Chain(
             (to_string, "test1"),
-            (zero_division),
+            zero_division,
             raises_on_failure=False
         )
         self.assertFalse(chain.activities[0].activity.raises_on_failure)
@@ -234,7 +235,7 @@ class TestChain(unittest.TestCase):
 
         chain = Chain(
             (to_string, "test1"),
-            (zero_division),
+            zero_division,
             raises_on_failure=True
         )
         self.assertTrue(chain.activities[0].activity.raises_on_failure)
@@ -242,7 +243,7 @@ class TestChain(unittest.TestCase):
 
     def test_raises_on_failure_doesnt_set_exception(self):
         future = Chain(
-            (zero_division),
+            zero_division,
             (to_string, "test1"),
             raises_on_failure=False
         ).submit(executor)
@@ -327,8 +328,8 @@ class TestFuncGroup(unittest.TestCase):
 
         first = ActivityTask(running_task, "test1")
         intermediary_activities = Chain(
-                (running_task, "test2"),
-                (running_task, "test3"),
+            (running_task, "test2"),
+            (running_task, "test3"),
         )
         last = ActivityTask(running_task, "test4")
 

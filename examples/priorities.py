@@ -88,15 +88,16 @@ class WorkflowPriority4(BaseWorkflow):
 def increment_with_high_prio(x):
     return x + 1
 
+
 class WorkflowPriority5(BaseWorkflow):
     name = "priority-5"
     task_priority = 5
 
     def run(self, x):
-        # priorty will be: 12
+        # priority will be: 12
         a = self.submit(increment_with_high_prio, x)
-        # priorty will be: 13
+        # priority will be: 13
         b = self.submit(increment_with_high_prio, a, __priority=13)
-        # priorty will not be set
+        # priority will not be set
         c = self.submit(increment_with_high_prio, b, __priority=None)
         return c.result

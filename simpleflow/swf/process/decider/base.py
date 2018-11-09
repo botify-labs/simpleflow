@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import logging
 import multiprocessing
 import os
+from typing import TYPE_CHECKING
 
 from simpleflow import format
 import swf.actors
@@ -14,7 +15,7 @@ from simpleflow.swf.process import Poller
 from simpleflow.swf.utils import DecisionsAndContext
 
 
-if False:
+if TYPE_CHECKING:
     from typing import Any, List, Optional, Union  # NOQA
     from swf.responses import Response  # NOQA
     from simpleflow.swf.executor import Executor  # NOQA
@@ -150,7 +151,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     @with_state('completing')
     def complete(self, token, decisions=None, execution_context=None):
-        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext], Optional) -> None
+        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext]) -> None
         """
         DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
         :param token: task token.

@@ -23,6 +23,7 @@ class TestEvent(unittest.TestCase):
 
     def test_instantiate_with_invalid_type(self):
         with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
             Event("WrongType")
 
     def test_repr_with_missing_attr(self):

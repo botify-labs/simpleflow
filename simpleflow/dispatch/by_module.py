@@ -1,4 +1,6 @@
-from . import exceptions
+from __future__ import absolute_import
+
+from simpleflow.dispatch import exceptions
 
 
 class ModuleDispatcher(object):

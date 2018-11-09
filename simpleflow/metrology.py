@@ -4,6 +4,9 @@ import os
 import re
 import time
 from collections import OrderedDict
+
+from future.utils import with_metaclass
+
 try:
     from urllib.parse import quote_plus  # py 3.x
 except ImportError:
@@ -81,7 +84,7 @@ class StepExecution(object):
         self.step.done()
 
 
-class MetrologyTask(object):
+class MetrologyTask(with_metaclass(abc.ABCMeta)):
 
     def can_upload(self):
         return all(c in self.context for c in ('workflow_id', 'run_id', 'activity_id'))
@@ -133,7 +136,7 @@ class MetrologyTask(object):
         self.upload_stats()
 
 
-class MetrologyWorkflow(Workflow):
+class MetrologyWorkflow(with_metaclass(abc.ABCMeta, Workflow)):
 
     def after_closed(self, history):
         super(MetrologyWorkflow, self).after_closed(history)

@@ -52,7 +52,7 @@ Start an activity worker with::
 Then execute `./extras/demo`.
 
 
-More informations
------------------
+More information
+----------------
 
 Read the main documentation at https://botify-labs.github.io/simpleflow/.

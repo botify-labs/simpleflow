@@ -140,10 +140,11 @@ class Poller(swf.actors.Actor, NamedMixin):
     def process(self, request):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         """
-        Name of the poller, can be overriden in subclasses.
+        Name of the poller, can be overridden in subclasses.
         """
         return '{}()'.format(self.__class__.__name__)
 

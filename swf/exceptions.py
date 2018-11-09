@@ -15,7 +15,7 @@ from simpleflow import compat
 
 
 class SWFError(Exception):
-    def __init__(self, message, raw_error='', *args, **kwargs):
+    def __init__(self, message, raw_error='', *args):
         """
         Examples:
 
@@ -54,7 +54,7 @@ class SWFError(Exception):
         'details'
 
         """
-        Exception.__init__(self, message, *args, **kwargs)
+        Exception.__init__(self, message, *args)
 
         values = raw_error.split(':', 1)
 
@@ -251,6 +251,8 @@ def raises(exception, when, extract=str):
 
     :param when: predicate to apply.
     :type  when: (error, *args, **kwargs) -> bool
+
+    :param extract:
 
     Examples
     --------

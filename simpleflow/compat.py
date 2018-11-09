@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
 import sys
 
-PY2 = int(sys.version[0]) == 2
-PY26 = PY2 and int(sys.version_info[1]) < 7
+# noinspection PyUnresolvedReferences
+from future.utils import text_type, binary_type, string_types  # NOQA
+# noinspection PyUnresolvedReferences,PyCompatibility
+from past.types import unicode, basestring  # NOQA
+
+
+PY3 = sys.version_info[0] == 3
+PY2 = sys.version_info[0] == 2
+PY26 = sys.version_info[0:2] == (2, 6)
+PY27 = sys.version_info[0:2] == (2, 7)
+PYPY = hasattr(sys, 'pypy_translation_info')
 
 if PY2:
-    from itertools import imap, izip
+    # noinspection PyUnresolvedReferences
+    from itertools import imap, izip  # NOQA
+    # noinspection PyUnresolvedReferences
     import urllib2 as request  # NOQA
+    # noinspection PyUnresolvedReferences
     from urllib import quote as urlquote  # NOQA
-    text_type = unicode  # NOQA
-    binary_type = str
-    string_types = (str, unicode)  # NOQA
-    unicode = unicode  # NOQA
-    basestring = basestring  # NOQA
-    imap = imap
-    izip = izip
 else:
+    # noinspection PyUnresolvedReferences
     from urllib import request  # NOQA
+    # noinspection PyUnresolvedReferences,PyCompatibility
     from urllib.parse import quote as urlquote  # NOQA
-    text_type = str
-    binary_type = bytes
-    string_types = (str,)
-    unicode = str
-    basestring = (str, bytes)
     imap = map
     izip = zip

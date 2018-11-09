@@ -62,7 +62,7 @@ class Domain(BaseModel):
         self.retention_period = retention_period
 
         # immutable decorator rebinds class name,
-        # so have to use generice self.__class__
+        # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
     @classmethod
@@ -170,7 +170,7 @@ class Domain(BaseModel):
 
     @property
     def executions(self):
-        pass
+        return None
 
     def __repr__(self):
         return '<{} name={} status={}>'.format(

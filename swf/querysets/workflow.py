@@ -4,6 +4,7 @@
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+from typing import TYPE_CHECKING
 
 from boto.swf.exceptions import SWFResponseError
 
@@ -15,6 +16,9 @@ from swf.models.workflow import (WorkflowType, WorkflowExecution,
 from swf.utils import datetime_timestamp, past_day, get_subkey
 from swf.exceptions import (ResponseError, DoesNotExistError,
                             InvalidKeywordArgumentError, AlreadyExistsError)
+
+if TYPE_CHECKING:
+    from typing import Optional  # NOQA
 
 
 class BaseWorkflowQuerySet(BaseQuerySet):
@@ -28,7 +32,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     :type       domain: swf.model.domain.Domain
     """
     # Amazon response section corresponding
-    # to current queryset informations
+    # to current queryset information
     _infos = 'typeInfo'
     _infos_plural = 'typeInfos'
 
@@ -39,14 +43,15 @@ class BaseWorkflowQuerySet(BaseQuerySet):
 
     @property
     def domain(self):
+        # type: () -> Optional[Domain]
         if not hasattr(self, '_domain'):
             self._domain = None
         return self._domain
 
     @domain.setter
     def domain(self, value):
-        # Avoiding circular import
-        from swf.models.domain import Domain
+        # # Avoiding circular import
+        # from swf.models.domain import Domain
 
         if not isinstance(value, Domain):
             err = "domain property has to be of" \
@@ -76,7 +81,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     _infos = 'typeInfo'
     _infos_plural = 'typeInfos'
 
-    def to_WorkflowType(self, domain, workflow_info, **kwargs):
+    def to_workflow_type(self, domain, workflow_info, **kwargs):
         # Not using get_subkey in order for it to explictly
         # raise when workflowType name doesn't exist for example
         return WorkflowType(
@@ -141,11 +146,6 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         if child_policy is None:
             child_policy = wt_config.get('defaultChildPolicy')
 
-        decision_task_timeout = kwargs.get('decision_task_timeout')
-        if decision_task_timeout is None:
-            decision_task_timeout = wt_config.get(
-                'defaultTaskStartToCloseTimeout')
-
         execution_timeout = kwargs.get('execution_timeout')
         if execution_timeout is None:
             execution_timeout = wt_config.get(
@@ -156,7 +156,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             decision_tasks_timeout = wt_config.get(
                 'defaultTaskStartToCloseTimeout')
 
-        return self.to_WorkflowType(
+        return self.to_workflow_type(
             self.domain,
             wt_info,
             task_list=task_list,
@@ -279,7 +279,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         # As WorkflowTypeQuery has to be built against a specific domain
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
-        return [self.to_WorkflowType(domain, wf) for wf in
+        return [self.to_workflow_type(domain, wf) for wf in
                 self._list_items(domain.name, registration_status, name=name)]
 
     def all(self, registration_status=REGISTERED, *args, **kwargs):
@@ -438,7 +438,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             workflow_type['version'],
         )
 
-    def to_WorkflowExecution(self, domain, execution_info, **kwargs):
+    def to_workflow_execution(self, domain, execution_info, **kwargs):
         workflow_type = WorkflowType(
             self.domain,
             execution_info['workflowType']['name'],
@@ -476,7 +476,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         execution_info = response[self._infos]
         execution_config = response['executionConfiguration']
 
-        return self.to_WorkflowExecution(
+        return self.to_workflow_execution(
             self.domain,
             execution_info,
             task_list=get_subkey(execution_config, ['taskList', 'name']),
@@ -493,7 +493,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
                workflow_id=None, workflow_type_name=None,
                workflow_type_version=None,
                *args, **kwargs):
-        """Filters workflow executions based on kwargs provided criteras
+        """Filters workflow executions based on kwargs-provided criteria.
 
         :param  status: workflow executions with provided status will be kept.
                         Valid values are:
@@ -520,37 +520,37 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
         * STATUS_OPEN
 
-            :param start_latest_date: latest start or close date and time to return (in days)
-            :type  start_latest_date: int
+             start_latest_date: latest start or close date and time to return (in days)
+             start_latest_date: int
 
         * STATUS_CLOSED
 
-            :param  start_latest_date: workflow executions that meet the start time criteria
-                                       of the filter are kept (in days)
-            :type   start_latest_date: int
+             start_latest_date: workflow executions that meet the start time criteria
+                                of the filter are kept (in days)
+             start_latest_date: int
 
-            :param  start_oldest_date: workflow executions that meet the start time criteria
-                                       of the filter are kept (in days)
-            :type   start_oldest_date: int
+             start_oldest_date: workflow executions that meet the start time criteria
+                                of the filter are kept (in days)
+             start_oldest_date: int
 
-            :param  close_latest_date: workflow executions that meet the close time criteria
-                                       of the filter are kept (in days)
-            :type   close_latest_date: int
+             close_latest_date: workflow executions that meet the close time criteria
+                                of the filter are kept (in days)
+             close_latest_date: int
 
-            :param  close_oldest_date: workflow executions that meet the close time criteria
-                                       of the filter are kept (in days)
-            :type   close_oldest_date: int
+             close_oldest_date: workflow executions that meet the close time criteria
+                                of the filter are kept (in days)
+             close_oldest_date: int
 
-            :param  close_status: must match the close status of an execution for it
-                                  to meet the criteria of this filter.
-                                  Valid values are:
-                                  * ``CLOSE_STATUS_COMPLETED``
-                                  * ``CLOSE_STATUS_FAILED``
-                                  * ``CLOSE_STATUS_CANCELED``
-                                  * ``CLOSE_STATUS_TERMINATED``
-                                  * ``CLOSE_STATUS_CONTINUED_AS_NEW``
-                                  * ``CLOSE_TIMED_OUT``
-            :type   close_status: string
+             close_status: must match the close status of an execution for it
+                           to meet the criteria of this filter.
+                           Valid values are:
+                           * ``CLOSE_STATUS_COMPLETED``
+                           * ``CLOSE_STATUS_FAILED``
+                           * ``CLOSE_STATUS_CANCELED``
+                           * ``CLOSE_STATUS_TERMINATED``
+                           * ``CLOSE_STATUS_CONTINUED_AS_NEW``
+                           * ``CLOSE_TIMED_OUT``
+             close_status: string
 
             :returns: workflow executions objects list
             :rtype: list
@@ -588,7 +588,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         else:
             start_oldest_date = None
 
-        return [self.to_WorkflowExecution(self.domain, wfe) for wfe in
+        return [self.to_workflow_execution(self.domain, wfe) for wfe in
                 self._list_items(
                     *args,
                     domain=self.domain.name,
@@ -653,7 +653,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         """
         start_oldest_date = datetime_timestamp(past_day(start_oldest_date))
 
-        return [self.to_WorkflowExecution(self.domain, wfe) for wfe
+        return [self.to_workflow_execution(self.domain, wfe) for wfe
                 in self._list_items(
                 status,
                 self.domain.name,

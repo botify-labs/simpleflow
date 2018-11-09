@@ -1,4 +1,9 @@
+import abc
 import copy
+from typing import TYPE_CHECKING
+
+from future.utils import with_metaclass
+
 from .tasks import MarkStepDoneTask
 
 from simpleflow.base import SubmittableContainer
@@ -10,6 +15,14 @@ from .utils import (
     step_will_run,
     step_is_forced,
     step_is_skipped_by_force)
+
+
+if TYPE_CHECKING:
+    from simpleflow.step.workflow import WorkflowStepMixin
+    from simpleflow import Workflow
+
+    class WorkflowStep(with_metaclass(abc.ABCMeta, Workflow, WorkflowStepMixin)):
+        pass
 
 
 class Step(SubmittableContainer):
@@ -35,7 +48,7 @@ class Step(SubmittableContainer):
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
     def submit(self, executor):
-        workflow = executor.workflow
+        workflow = executor.workflow  # type: WorkflowStep
 
         def fn_steps_done(steps_done):
             marker = {

@@ -8,7 +8,7 @@
 REGISTERED = 'REGISTERED'
 DEPRECATED = 'DEPRECATED'
 
-# A SWF workflow cannot last more than a year, and workflows informations are
+# A SWF workflow cannot last more than a year, and workflows information are
 # accessible for maximum 90 days (retention set at domain creation).
 # Hence this value is an upper limit to retrieve *all* open/closed workflow
 # executions on a given region+domain.
