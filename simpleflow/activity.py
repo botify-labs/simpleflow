@@ -41,7 +41,7 @@ def with_attributes(
     :type task_list: str
     :param retry: retry count.
     :type retry: int
-    :param raises_on_failure: whether to raise on failuer.
+    :param raises_on_failure: whether to raise on failure.
     :type raises_on_failure: bool
     :param start_to_close_timeout:
     :type start_to_close_timeout: str | int
