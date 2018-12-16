@@ -261,6 +261,46 @@ def spawn_kubernetes_job(poller, swf_response):
     job.schedule()
 
 
+def reap_process_tree(pid, wait_timeout=0.3):
+    """
+    TERMinates (and KILLs) if necessary a process and its descendants.
+
+    See also: https://psutil.readthedocs.io/en/latest/#kill-process-tree.
+
+    :param pid: Process ID
+    :type pid: int
+    :param wait_timeout: Wait timeout
+    :type wait_timeout: float
+    """
+
+    def on_terminate(p):
+        logger.info('process: terminated pid={} retcode={}'.format(p.pid, p.returncode))
+
+    if pid == os.getpid():
+        raise RuntimeError('process: cannot terminate self!')
+    parent = psutil.Process(pid)
+    procs = parent.children(recursive=True)
+    procs.append(parent)
+    # Terminate
+    for p in procs:
+        try:
+            p.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
+    # Kill
+    for p in alive:
+        logger.warn('process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL'.format(p.pid, p.status()))
+        try:
+            p.kill()
+        except psutil.NoSuchProcess:
+            pass
+    # Check
+    _, alive = psutil.wait_procs(alive, timeout=wait_timeout, callback=on_terminate)
+    for p in alive:
+        logger.error('process: pid={} status={} still alive. Giving up!'.format(p.pid, p.status()))
+
+
 def spawn(poller, token, task, heartbeat=60):
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
@@ -317,7 +357,7 @@ def spawn(poller, token, task, heartbeat=60):
                 # The try/except protects us from a race condition: by the
                 # time we issue the os.kill() call, we're not 100% sure
                 # that the worker process is still alive.
-                os.kill(worker.pid, signal.SIGKILL)
+                reap_process_tree(worker.pid)
             except OSError as e:
                 # Compare errno to the errno for "No such process"
                 if e.errno != errno.ESRCH:
