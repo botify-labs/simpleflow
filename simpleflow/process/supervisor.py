@@ -158,7 +158,7 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception("Child processes map is not empty, already called .start() ?")
+            raise Exception("Child processes map is not empty, already called .start()?")
 
         # wait for all processes to finish
         while True:
@@ -166,7 +166,7 @@ class Supervisor(NamedMixin):
             # the supervisor process
             if self._terminating:
                 for proc in self._processes.values():
-                    logger.info("process: waiting for proces={} to finish.".format(proc))
+                    logger.info("process: waiting for process={} to finish.".format(proc))
                     proc.wait()
                 break
 
@@ -224,7 +224,10 @@ class Supervisor(NamedMixin):
         """
         for process in self._processes.values():
             logger.info("process: sending SIGTERM to pid={}".format(process.pid))
-            process.terminate()
+            try:
+                process.terminate()
+            except psutil.NoSuchProcess:
+                logger.info("process: pid={} already terminated".format(process.pid))
 
     def payload_friendly_name(self):
         payload = self._payload
