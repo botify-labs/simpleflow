@@ -1,29 +1,19 @@
 import json
 import unittest
 
-try:
-    from moto import mock_swf_deprecated as mock_swf, mock_s3_deprecated as mock_s3
-except ImportError:
-    from moto import mock_swf, mock_s3
-
 import boto
 
-from simpleflow.local import Executor
-
-from simpleflow.canvas import Chain
-
+from simpleflow import futures, storage, task, workflow
 from simpleflow.activity import with_attributes
-from simpleflow import workflow, task, storage, futures
-from simpleflow.constants import MINUTE, HOUR
-from simpleflow.step.submittable import Step
-from simpleflow.step.workflow import WorkflowStepMixin
-from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
-from simpleflow.step.utils import (
-    should_force_step,
-    get_step_force_reasons,
-    step_will_run,
-)
+from simpleflow.canvas import Chain
+from simpleflow.constants import HOUR, MINUTE
+from simpleflow.local import Executor
 from simpleflow.step.constants import UNKNOWN_CONTEXT
+from simpleflow.step.submittable import Step
+from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
+from simpleflow.step.utils import (get_step_force_reasons, should_force_step, step_will_run)
+from simpleflow.step.workflow import WorkflowStepMixin
+from tests.moto_compat import mock_s3, mock_swf
 from .base import TestWorkflowMixin
 
 BUCKET = "perfect_day"

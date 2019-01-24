@@ -3,16 +3,10 @@ from __future__ import absolute_import
 
 import datetime
 import functools
-import re
 from builtins import range
 
 import boto
 from mock import patch
-
-try:
-    from moto import mock_swf_deprecated as mock_swf
-except ImportError:
-    from moto import mock_swf
 
 import swf.models
 import swf.models.decision
@@ -41,6 +35,7 @@ from tests.data import (
     raise_on_failure,
     triple,
 )
+from tests.moto_compat import mock_swf
 
 
 def check_task_scheduled_decision(decision, task):

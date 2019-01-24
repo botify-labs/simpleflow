@@ -1,15 +1,13 @@
-from collections import namedtuple
-from mock import patch
+from __future__ import absolute_import
+
 import unittest
+from collections import namedtuple
 
-try:
-    from moto import mock_swf_deprecated as mock_swf
-except ImportError:
-    from moto import mock_swf
+from mock import patch
 
-from simpleflow.swf.process.worker.base import ActivityWorker, ActivityPoller
-from swf.models import Domain, ActivityTask
-
+from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
+from swf.models import ActivityTask, Domain
+from tests.moto_compat import mock_swf
 
 FakeActivityType = namedtuple("FakeActivityType", ["name"])
 

@@ -1,17 +1,15 @@
+from __future__ import absolute_import
+
 import json
 import unittest
 
-from simpleflow.activity import with_attributes
-from simpleflow import metrology, storage, settings
-from simpleflow.constants import MINUTE, HOUR
-from simpleflow.local.executor import Executor
-
 import boto
 
-try:
-    from moto import mock_s3_deprecated as mock_s3
-except ImportError:
-    from moto import mock_s3
+from simpleflow import metrology, settings, storage
+from simpleflow.activity import with_attributes
+from simpleflow.constants import HOUR, MINUTE
+from simpleflow.local.executor import Executor
+from tests.moto_compat import mock_s3
 
 
 @with_attributes(task_list='test_task_list')

@@ -11,11 +11,6 @@ from swf.models import Domain, ActivityType
 from ..mocks.activity import mock_describe_activity_type
 
 
-if 0:
-    # for PyCharm
-    patch.object = patch.object
-
-
 def throw(exception):
     raise exception
 

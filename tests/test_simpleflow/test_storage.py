@@ -1,15 +1,12 @@
 import os
-import unittest
 import tempfile
+import unittest
+
 import boto
 from mock import patch
 
-try:
-    from moto import mock_s3_deprecated as mock_s3
-except ImportError:
-    from moto import mock_s3
-
 from simpleflow import storage
+from tests.moto_compat import mock_s3
 
 
 # disable storage.BUCKET_LOCATIONS_CACHE because it interfers with tests

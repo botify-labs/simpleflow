@@ -19,10 +19,6 @@ from ..mocks.workflow import mock_describe_workflow_type,\
                              mock_list_open_workflow_executions,\
                              mock_list_closed_workflow_executions
 
-if 0:
-    # for PyCharm
-    patch.object = patch.object
-
 
 class TestBaseWorkflowTypeQuerySet(unittest.TestCase):
 

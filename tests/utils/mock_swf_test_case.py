@@ -3,15 +3,12 @@ import unittest
 import boto
 import boto.swf
 from moto.swf import swf_backend
-try:
-    from moto import mock_s3_deprecated as mock_s3, mock_swf_deprecated as mock_swf
-except ImportError:
-    from moto import mock_s3, mock_swf
 
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from swf.actors import Decider
 from tests.data import DOMAIN
+from tests.moto_compat import mock_s3, mock_swf
 
 
 @mock_s3
