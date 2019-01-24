@@ -168,6 +168,10 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def task_list(self):
+        get_task_list = getattr(self.workflow, 'get_task_list', None)
+        if get_task_list:
+            return get_task_list(self.workflow, *self.args, **self.kwargs)
+
         return getattr(self.workflow, 'task_list', None)
 
     def schedule(self, domain, task_list=None, executor=None, **kwargs):
