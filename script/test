@@ -26,5 +26,8 @@ export SIMPLEFLOW_VCR_RECORD_MODE=none
 # Disable jumbo fields
 export SIMPLEFLOW_JUMBO_FIELDS_BUCKET=""
 
+# Prevent Travis from overriding boto configuration
+export BOTO_CONFIG=/dev/null
+
 # run tests
 py.test --no-success-flaky-report -q $PYTEST_OPTIONS $*
