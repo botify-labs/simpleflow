@@ -3,7 +3,6 @@ import logging
 import swf.models
 import swf.models.decision
 from simpleflow import task, Workflow
-from simpleflow.utils import json_dumps
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +173,14 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
         return getattr(self.workflow, 'task_list', None)
 
+    @property
+    def tag_list(self):
+        get_tag_list = getattr(self.workflow, 'get_tag_list', None)
+        if get_tag_list:
+            return get_tag_list(self.workflow, *self.args, **self.kwargs)
+
+        return getattr(self.workflow, 'tag_list', None)
+
     def schedule(self, domain, task_list=None, executor=None, **kwargs):
         """
         Schedule a child workflow.
@@ -197,12 +204,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         input = self.get_input()
         control = kwargs.get('control')
 
-        get_tag_list = getattr(workflow, 'get_tag_list', None)
-        if get_tag_list:
-            tag_list = get_tag_list(workflow, *self.args, **self.kwargs)
-        else:
-            tag_list = getattr(workflow, 'tag_list', None)
-
+        tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
             tag_list = executor.get_run_context()['tag_list']
 
