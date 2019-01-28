@@ -4,7 +4,6 @@ from simpleflow import activity
 from simpleflow.swf.task import ActivityTask
 
 
-
 @activity.with_attributes()
 def show_context_func():
     return show_context_func.context

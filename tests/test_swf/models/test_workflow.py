@@ -16,10 +16,6 @@ from ..mocks.workflow import mock_describe_workflow_type, \
     mock_describe_workflow_execution
 from ..mocks.event import mock_get_workflow_execution_history
 
-if 0:
-    # for PyCharm
-    patch.object = patch.object
-
 
 class CustomAssertions(object):
     def assertLength(self, a_list, count):

@@ -21,11 +21,6 @@ swf.settings.set(aws_access_key_id='fakeaccesskey',
                  aws_secret_access_key='fakesecret')
 
 
-if 0:
-    # for PyCharm
-    patch.object = patch.object
-
-
 class TestDomain(unittest.TestCase):
     def setUp(self):
         self.domain = Domain("testdomain")

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from swf.core import ConnectedSWFObject, SETTINGS
+from swf.core import ConnectedSWFObject
 from swf.settings import from_env, clear
 
 AWS_ENV_KEYS = (
@@ -9,6 +9,7 @@ AWS_ENV_KEYS = (
     "AWS_SECRET_ACCESS_KEY",
     "AWS_DEFAULT_REGION",
 )
+
 
 class TestSettings(unittest.TestCase):
     def setUp(self):
