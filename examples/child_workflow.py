@@ -38,9 +38,6 @@ class ChildWorkflow(Workflow):
     def get_tag_list(cls, *args, **kwargs):
         return kwargs.get('my_tag_list', None)
 
-    def get_task_list(cls, *args, **kwargs):
-        return kwargs.get('task_list', None)
-
     def run(self, x, name="CHILD", **kwargs):
         y = self.submit(loudly_increment, x, name)
         z = self.submit(loudly_increment, y, name)
