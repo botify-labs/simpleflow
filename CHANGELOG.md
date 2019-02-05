@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.21.8
+------
+
+- swf: WorkflowTask: add the possibility to use a custom task list (#356)
+- tests/moto_compat.py: new file (#358)
+- Add BOTO_CONFIG=/dev/null to scripts/test (#357)
+- spelling fix, failuer->failure (#353)
+
 0.21.7
 ------
 
