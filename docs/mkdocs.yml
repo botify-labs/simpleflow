@@ -66,8 +66,11 @@ pages:
     - Command Line: features/command_line.md
     - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
-    - Signals: features/signals.md
-    - Error Handling: features/error_handling.md
+    - Advanced Features:
+      - Signals: features/signals.md
+      - Task Lists: features/task_lists.md
+      - Tags: features/tags.md
+      - Error Handling: features/error_handling.md
   - Development: development.md
   - Contributing: contributing.md
   - License: license.md
