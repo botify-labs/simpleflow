@@ -457,6 +457,25 @@
           
 
 
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-6" type="checkbox" id="nav-5-6">
+    
+    <label class="md-nav__link" for="nav-5-6">
+      Advanced Features
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-6">
+        Advanced Features
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
   <li class="md-nav__item">
     <a href="../signals/" title="Signals" class="md-nav__link">
       Signals
@@ -470,9 +489,38 @@
 
 
   <li class="md-nav__item">
+    <a href="../task_lists/" title="Task Lists" class="md-nav__link">
+      Task Lists
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../tags/" title="Tags" class="md-nav__link">
+      Tags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../error_handling/" title="Error Handling" class="md-nav__link">
       Error Handling
     </a>
+  </li>
+
+        
+      </ul>
+    </nav>
   </li>
 
         
@@ -637,11 +685,6 @@
 <p class="admonition-title">Bug</p>
 <p>The informations in this "Settings" section may be outdated, they need some love.</p>
 </div>
-<p>Mandatory:</p>
-<ul>
-<li>aws_access_key_id</li>
-<li>aws_secret_access_key</li>
-</ul>
 <p>Optional:</p>
 <ul>
 <li>region</li>
@@ -671,6 +714,8 @@
 <span class="p">[</span><span class="n">Domain</span><span class="p">(</span><span class="s1">&#39;test1&#39;</span><span class="p">),</span> <span class="n">Domain</span><span class="p">(</span><span class="s1">&#39;test2&#39;</span><span class="p">)]</span>
 </pre></div>
 
+<p>Leaving these AWS API keys unspecified is fine, as Boto's credentials chain
+handler will discover them if present.</p>
 <h2 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h2>
 <h3 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h3>
 <p>Simple Workflow entities such as domains, workflow types, workflow executions and activity types are to be
