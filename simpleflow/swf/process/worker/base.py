@@ -17,6 +17,7 @@ import swf.actors
 import swf.exceptions
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
+from simpleflow.constants import ACTIVITY_SIGTERM_WAIT_SEC
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.job import KubernetesJob
@@ -261,7 +262,7 @@ def spawn_kubernetes_job(poller, swf_response):
     job.schedule()
 
 
-def reap_process_tree(pid, wait_timeout=0.3):
+def reap_process_tree(pid, wait_timeout=ACTIVITY_SIGTERM_WAIT_SEC):
     """
     TERMinates (and KILLs) if necessary a process and its descendants.
 
@@ -296,7 +297,7 @@ def reap_process_tree(pid, wait_timeout=0.3):
         except psutil.NoSuchProcess:
             pass
     # Check
-    _, alive = psutil.wait_procs(alive, timeout=wait_timeout, callback=on_terminate)
+    _, alive = psutil.wait_procs(alive, timeout=0.3, callback=on_terminate)
     for p in alive:
         logger.error('process: pid={} status={} still alive. Giving up!'.format(p.pid, p.status()))
 
@@ -304,6 +305,10 @@ def reap_process_tree(pid, wait_timeout=0.3):
 def spawn(poller, token, task, heartbeat=60):
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
+
+    On activity timeouts and termination, we reap the worker process and its
+    children.
+
     :param poller:
     :type poller: ActivityPoller
     :param token:
@@ -353,17 +358,7 @@ def spawn(poller, token, task, heartbeat=60):
             # let's kill the worker process.
             logger.warning('heartbeat failed: {}'.format(error))
             logger.warning('killing (KILL) worker with pid={}'.format(worker.pid))
-            try:
-                # The try/except protects us from a race condition: by the
-                # time we issue the os.kill() call, we're not 100% sure
-                # that the worker process is still alive.
-                reap_process_tree(worker.pid)
-            except OSError as e:
-                # Compare errno to the errno for "No such process"
-                if e.errno != errno.ESRCH:
-                    # re-raise if we get an OSError for another reason
-                    raise
-                logger.warning('process was not here anymore, got OSError: {}'.format(e.strerror))
+            reap_process_tree(worker.pid)
             return
         except swf.exceptions.RateLimitExceededError as error:
             # ignore rate limit errors: high chances the next heartbeat will be
@@ -382,7 +377,7 @@ def spawn(poller, token, task, heartbeat=60):
                 error))
             raise
 
+        # Task cancelled.
         if response and response.get('cancelRequested'):
-            # Task cancelled.
-            worker.terminate()  # SIGTERM
+            reap_process_tree(worker.pid)
             return
