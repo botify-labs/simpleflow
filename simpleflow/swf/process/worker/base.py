@@ -297,7 +297,7 @@ def reap_process_tree(pid, wait_timeout=ACTIVITY_SIGTERM_WAIT_SEC):
         except psutil.NoSuchProcess:
             pass
     # Check
-    _, alive = psutil.wait_procs(alive, timeout=0.3, callback=on_terminate)
+    _, alive = psutil.wait_procs(alive)
     for p in alive:
         logger.error('process: pid={} status={} still alive. Giving up!'.format(p.pid, p.status()))
 
