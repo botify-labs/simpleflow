@@ -1,10 +1,8 @@
 from base64 import b64decode
-import errno
 import logging
 import json
 import multiprocessing
 import os
-import signal
 import sys
 import traceback
 import uuid
@@ -17,7 +15,7 @@ import swf.actors
 import swf.exceptions
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
-from simpleflow.constants import ACTIVITY_SIGTERM_WAIT_SEC
+from simpleflow import settings
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.job import KubernetesJob
@@ -262,7 +260,7 @@ def spawn_kubernetes_job(poller, swf_response):
     job.schedule()
 
 
-def reap_process_tree(pid, wait_timeout=ACTIVITY_SIGTERM_WAIT_SEC):
+def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     """
     TERMinates (and KILLs) if necessary a process and its descendants.
 
@@ -291,7 +289,7 @@ def reap_process_tree(pid, wait_timeout=ACTIVITY_SIGTERM_WAIT_SEC):
     _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
     # Kill
     for p in alive:
-        logger.warn('process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL'.format(p.pid, p.status()))
+        logger.warning('process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL'.format(p.pid, p.status()))
         try:
             p.kill()
         except psutil.NoSuchProcess:

@@ -55,3 +55,9 @@ LOGGING = {
 
 SIMPLEFLOW_ENABLE_DISK_CACHE = False
 SIMPLEFLOW_BINARIES_DIRECTORY = '/tmp/simpleflow-binaries'
+
+# Activity management
+
+# Amount of time to wait for process spawned by an activity poller to wait in
+# response to a SIGTERM.
+ACTIVITY_SIGTERM_WAIT_SEC = 3

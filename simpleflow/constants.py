@@ -27,9 +27,3 @@ JUMBO_FIELDS_MAX_SIZE = 5 * 1024 ** 2  # 5MB
 
 # Cache directory
 CACHE_DIR = "/tmp/simpleflow-cache"
-
-# Activity management
-
-# Amount of time to wait for process spawned by an activity poller to wait in
-# response to a SIGTERM.
-ACTIVITY_SIGTERM_WAIT_SEC = float(os.getenv("ACTIVITY_SIGTERM_WAIT_SEC", 3))
