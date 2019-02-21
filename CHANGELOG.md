@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.9
+------
+
+- Prune worker process tree. (#355)
+
 0.21.8
 ------
 
