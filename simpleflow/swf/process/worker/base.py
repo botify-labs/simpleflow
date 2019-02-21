@@ -1,10 +1,8 @@
 from base64 import b64decode
-import errno
 import logging
 import json
 import multiprocessing
 import os
-import signal
 import sys
 import traceback
 import uuid
@@ -17,6 +15,7 @@ import swf.actors
 import swf.exceptions
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
+from simpleflow import settings
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.job import KubernetesJob
@@ -261,9 +260,53 @@ def spawn_kubernetes_job(poller, swf_response):
     job.schedule()
 
 
+def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
+    """
+    TERMinates (and KILLs) if necessary a process and its descendants.
+
+    See also: https://psutil.readthedocs.io/en/latest/#kill-process-tree.
+
+    :param pid: Process ID
+    :type pid: int
+    :param wait_timeout: Wait timeout
+    :type wait_timeout: float
+    """
+
+    def on_terminate(p):
+        logger.info('process: terminated pid={} retcode={}'.format(p.pid, p.returncode))
+
+    if pid == os.getpid():
+        raise RuntimeError('process: cannot terminate self!')
+    parent = psutil.Process(pid)
+    procs = parent.children(recursive=True)
+    procs.append(parent)
+    # Terminate
+    for p in procs:
+        try:
+            p.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
+    # Kill
+    for p in alive:
+        logger.warning('process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL'.format(p.pid, p.status()))
+        try:
+            p.kill()
+        except psutil.NoSuchProcess:
+            pass
+    # Check
+    _, alive = psutil.wait_procs(alive)
+    for p in alive:
+        logger.error('process: pid={} status={} still alive. Giving up!'.format(p.pid, p.status()))
+
+
 def spawn(poller, token, task, heartbeat=60):
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
+
+    On activity timeouts and termination, we reap the worker process and its
+    children.
+
     :param poller:
     :type poller: ActivityPoller
     :param token:
@@ -313,17 +356,7 @@ def spawn(poller, token, task, heartbeat=60):
             # let's kill the worker process.
             logger.warning('heartbeat failed: {}'.format(error))
             logger.warning('killing (KILL) worker with pid={}'.format(worker.pid))
-            try:
-                # The try/except protects us from a race condition: by the
-                # time we issue the os.kill() call, we're not 100% sure
-                # that the worker process is still alive.
-                os.kill(worker.pid, signal.SIGKILL)
-            except OSError as e:
-                # Compare errno to the errno for "No such process"
-                if e.errno != errno.ESRCH:
-                    # re-raise if we get an OSError for another reason
-                    raise
-                logger.warning('process was not here anymore, got OSError: {}'.format(e.strerror))
+            reap_process_tree(worker.pid)
             return
         except swf.exceptions.RateLimitExceededError as error:
             # ignore rate limit errors: high chances the next heartbeat will be
@@ -342,7 +375,7 @@ def spawn(poller, token, task, heartbeat=60):
                 error))
             raise
 
+        # Task cancelled.
         if response and response.get('cancelRequested'):
-            # Task cancelled.
-            worker.terminate()  # SIGTERM
+            reap_process_tree(worker.pid)
             return
