@@ -1,7 +1,7 @@
 from builtins import range
 import unittest
 
-from simpleflow import futures, workflow, exceptions
+from simpleflow import futures, workflow, exceptions, Workflow
 from simpleflow.canvas import (
     FuncGroup,
     Group,
@@ -11,7 +11,7 @@ from simpleflow.exceptions import AggregateException
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
-from simpleflow.task import ActivityTask
+from simpleflow.task import ActivityTask, WorkflowTask
 
 
 @with_attributes()
@@ -112,6 +112,26 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
+
+    def test_group_with_workflow(self):
+        """ Test that it is possible to provide a WorkflowTask to a Group(). """
+
+        class ChildWorkflowGroupWithWorkflow(Workflow):
+            name = "ChildWorkflow"
+
+            def run(self, str1, *args, **kwargs):
+                return {"str1": str1, "kwargs": kwargs}
+
+        future = Group(
+            WorkflowTask(
+                None,
+                ChildWorkflowGroupWithWorkflow,
+                str1="str1",
+                **{"hello": "world"}
+            )
+        ).submit(executor)
+        self.assertTrue(future.finished)
+        self.assertEqual(future.result, [{"str1": "str1", "kwargs": {"hello": "world"}}])
 
     def test_exceptions(self):
         future = Group(
