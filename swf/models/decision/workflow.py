@@ -61,8 +61,9 @@ class WorkflowExecutionDecision(Decision):
     def continue_as_new(self, child_policy=None,
                         execution_timeout=None, task_timeout=None,
                         input=None, tag_list=None, task_list=None,
+                        lambda_role=None,
                         workflow_type_version=None):
-        """Coninue as new workflow execution decision builder
+        """Continue as new workflow execution decision builder
         :param  child_policy: specifies the policy to use for the
                               child workflow executions of the new execution
         :type   child_policy: CHILD_POLICIES.{TERMINATE | REQUEST_CANCEL | ABANDON}
@@ -78,6 +79,9 @@ class WorkflowExecutionDecision(Decision):
 
         :param  task_list: task list name
         :type   task_list: str
+
+        :param lambda_role: Lambda role
+        :type lambda_role: str
 
         :param  task_timeout: maximum duration of decision tasks for the new workflow execution
         :type   task_timeout: str
@@ -95,6 +99,7 @@ class WorkflowExecutionDecision(Decision):
             'input': input,
             'tagList': tag_list,
             'taskList': task_list,
+            'lambdaRole': lambda_role,
             'workflowTypeVersion': workflow_type_version,
         })
 
@@ -105,7 +110,7 @@ class ChildWorkflowExecutionDecision(Decision):
     @decision_action
     def start(self, workflow_type, workflow_id, child_policy=CHILD_POLICIES.TERMINATE,
               execution_timeout='300', task_timeout='300', control=None,
-              input=None, tag_list=None, task_list=None):
+              input=None, tag_list=None, task_list=None, lambda_role=None):
         """Child workflow execution decision builder
 
         :param  workflow_type: workflow type to start
@@ -121,6 +126,12 @@ class ChildWorkflowExecutionDecision(Decision):
         :param  execution_timeout: specifies the total duration for this workflow execution
         :type   execution_timeout: str
 
+        :param  task_timeout: maximum duration of decision tasks for the child workflow execution
+        :type   task_timeout: str
+
+        :param control: data attached to the event that can be used by the decider in subsequent workflow tasks
+        :type control: Optional[str]
+
         :param  input: The input provided to the child workflow execution
         :type   input: Optional[dict]
 
@@ -130,8 +141,8 @@ class ChildWorkflowExecutionDecision(Decision):
         :param  task_list: task list name
         :type   task_list: str
 
-        :param  task_timeout: maximum duration of decision tasks for the child workflow execution
-        :type   task_timeout: str
+        :param lambda_role: workflow lambda role
+        :type lambda_role: Optional[str]
 
         :param  control: data attached to the event that can be used by
                   the decider in subsequent workflow tasks
@@ -153,6 +164,7 @@ class ChildWorkflowExecutionDecision(Decision):
             'taskList': {
                 'name': task_list,
             },
+            'lambdaRole': lambda_role,
             'workflowId': workflow_id,
             'workflowType': {
                 'name': workflow_type.name,

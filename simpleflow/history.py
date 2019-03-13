@@ -26,6 +26,8 @@ class History(object):
     :type _markers: collections.OrderedDict[str, list[dict[str, Any]]]
     :ivar _timers: timer events
     :type _timers: dict[str, dict[str, Any]]]
+    :ivar _lambda_functions: activity events
+    :type _lambda_functions: collections.OrderedDict[str, dict[str, Any]]
     :ivar _tasks: ordered list of tasks/etc
     :type _tasks: list[dict[str, Any]]
     """
@@ -40,6 +42,7 @@ class History(object):
         self._signaled_workflows = collections.defaultdict(list)
         self._markers = collections.OrderedDict()
         self._timers = {}
+        self._lambda_functions = collections.OrderedDict()
         self._tasks = []
         self._cancel_requested = None
         self._cancel_failed = None
@@ -118,6 +121,14 @@ class History(object):
         :rtype: Optional[int]
         """
         return self._cancel_failed['decision_task_completed_event_id'] if self._cancel_failed else None
+
+    @property
+    def lambda_functions(self):
+        """
+        :return: lambda_functions
+        :rtype: collections.OrderedDict[str, dict[str, Any]]
+        """
+        return self._lambda_functions
 
     @property
     def signaled_workflows(self):
@@ -639,6 +650,84 @@ class History(object):
         if event.state == 'completed':
             self.completed_decision_id = event.id
 
+    def parse_lambda_function_event(self, events, event):
+        """
+        Parse a lambda function event.
+        :param events:
+        :param event:
+        """
+        def get_lambda():
+            scheduled_event_id = events[event.scheduled_event_id - 1]
+            return self._lambda_functions[scheduled_event_id.lambda_id]
+
+        if event.state == 'scheduled':
+            lambda_function = {
+                'type': 'lambda_function',
+                'id': event.lambda_id,
+                'name': event.lambda_name,
+                'input': event.input,
+                'state': event.state,
+                'start_to_close_timeout': getattr(event, 'start_to_close_timeout', None),
+                'scheduled_id': event.id,
+                'scheduled_timestamp': event.timestamp,
+            }
+            self._lambda_functions[event.lambda_id] = lambda_function
+        elif event.state == 'schedule_failed':
+            lambda_function = {
+                'type': 'lambda_function',
+                'id': event.lambda_id,
+                'name': event.lambda_name,
+                'state': event.state,
+                'schedule_failed_id': event.id,
+                'schedule_failed_timestamp': event.timestamp,
+            }
+            self._lambda_functions[event.lambda_id] = lambda_function
+        elif event.state == 'started':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'started_id': event.id,
+                'started_timestamp': event.timestamp,
+            })
+        elif event.state == 'start_failed':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'cause': event.cause,
+                'message': getattr(event, 'message', ''),
+                'start_failed_id': event.id,
+                'start_failed_timestamp': event.timestamp,
+                'retry': lambda_function.get('retry', -1) + 1,
+            })
+        elif event.state == 'completed':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'result': getattr(event, 'result', None),
+                'completed_id': event.id,
+                'completed_timestamp': event.timestamp,
+            })
+        elif event.state == 'failed':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'reason': getattr(event, 'reason', ''),
+                'details': getattr(event, 'details', ''),
+                'failed_id': event.id,
+                'failed_timestamp': event.timestamp,
+                'retry': lambda_function.get('retry', -1) + 1,
+            })
+        elif event.state == 'timed_out':
+            lambda_function = get_lambda()
+            lambda_function.update({
+                'state': event.state,
+                'timeout_type': getattr(event, 'timeout_type', 'START_TO_CLOSE'),
+                'timeout_value': lambda_function['start_to_close_timeout'],
+                'timed_out_id': event.id,
+                'timed_out_timestamp': event.timestamp,
+                'retry': lambda_function.get('retry', -1) + 1,
+            })
+
     TYPE_TO_PARSER = {
         'ActivityTask': parse_activity_event,
         'DecisionTask': parse_decision_event,
@@ -647,6 +736,7 @@ class History(object):
         'ExternalWorkflowExecution': parse_external_workflow_event,
         'Marker': parse_marker_event,
         'Timer': parse_timer_event,
+        'LambdaFunction': parse_lambda_function_event,
     }
 
     def parse(self):

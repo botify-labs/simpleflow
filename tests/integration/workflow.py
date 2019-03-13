@@ -10,6 +10,8 @@ from simpleflow import (
 from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.swf.utils import get_workflow_execution
+from simpleflow.lambda_function import LambdaFunction
+from simpleflow.swf.task import LambdaFunctionTask
 from simpleflow.task import ActivityTask
 
 
@@ -152,6 +154,26 @@ class TestRunChild(Workflow):
         future = self.submit(ChainTestWorkflow)
         print('Result: {}'.format(future.result))
         return future.result
+
+
+class LambdaWorkflow(Workflow):
+    name = 'basic'
+    version = 'example'
+    task_list = 'example'
+    lambda_role = 'arn:aws:iam::111111000000:role/swf-lambda'
+
+    def run(self):
+        future = self.submit(
+            LambdaFunctionTask(
+                LambdaFunction(
+                    'hello-world-python',
+                    idempotent=True,
+                ),
+                8,
+                foo='bar',
+            )
+        )
+        print(future.result)
 
 
 class TimerWorkflow(Workflow):
