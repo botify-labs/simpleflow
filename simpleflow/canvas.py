@@ -81,7 +81,10 @@ class Group(SubmittableContainer):
         Tuples are (activity, args).
         """
         for it in iterable:
-            if not isinstance(it, tuple):
+            if isinstance(it, list):
+                for e in it:
+                    self.append(e)
+            elif not isinstance(it, tuple):
                 self.append(it)
             else:
                 self.append(*it)

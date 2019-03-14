@@ -113,6 +113,12 @@ class TestGroup(unittest.TestCase):
         with self.assertRaises(exceptions.ExecutionBlocked):
             future.result
 
+        future = Group(
+            [ActivityTask(to_string, arg=i) for i in range(0, 2)]
+        ).submit(executor)
+        self.assertTrue(future.finished)
+        self.assertEqual(future.result, ["0", "1"])
+
     def test_exceptions(self):
         future = Group(
             (to_string, 1),
