@@ -61,6 +61,8 @@ class Group(SubmittableContainer):
         if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:
                 raise ValueError('args, kwargs not supported for Submittable or SubmittableContainer')
+            if isinstance(submittable, WorkflowTask):
+                self.workflow_tasks.append(submittable)
         elif isinstance(submittable, Activity):
             submittable = ActivityTask(submittable, *args, **kwargs)
         elif issubclass_(submittable, Workflow):
