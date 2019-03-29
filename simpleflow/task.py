@@ -159,6 +159,15 @@ class WorkflowTask(Task):
         setattr(self.workflow, attr, val)
 
 
+class ChildWorkflowTask(WorkflowTask):
+    """
+    WorkflowTask subclass for cases where the executor isn't needed
+    (yet).
+    """
+    def __init__(self, workflow, *args, **kwargs):
+        super(ChildWorkflowTask, self).__init__(None, workflow, *args, **kwargs)
+
+
 class SignalTask(Task):
     """
     Signal.
