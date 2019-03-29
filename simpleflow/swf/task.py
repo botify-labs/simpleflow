@@ -206,7 +206,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
         tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
-            tag_list = executor.get_run_context()['tag_list']
+            tag_list = executor.get_run_context()['tag_list']  # FIXME what about self.executor?
 
         execution_timeout = getattr(workflow, 'execution_timeout', None)
         decision = swf.models.decision.ChildWorkflowExecutionDecision(

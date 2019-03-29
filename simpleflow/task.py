@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 
 import abc
-from copy import deepcopy
-
 import time
+from copy import deepcopy
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import six
 
@@ -13,8 +13,7 @@ from simpleflow.history import History
 from . import futures
 from .activity import Activity
 
-
-if False:
+if TYPE_CHECKING:
     from typing import Optional, Any, Dict, Union, Type  # NOQA
 
 
@@ -32,7 +31,8 @@ class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         raise NotImplementedError()
 
@@ -52,7 +52,7 @@ class ActivityTask(Task):
 
     :type activity: Activity
     :type idempotent: Optional[bool]
-    :type id: str
+    :type id: Optional[str]
     """
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
@@ -115,7 +115,7 @@ class WorkflowTask(Task):
 
     :type executor: type(simpleflow.executor.Executor)
     :type workflow: type(simpleflow.workflow.Workflow)
-    :type id: str
+    :type id: Optional[str]
     """
     def __init__(self, executor, workflow, *args, **kwargs):
         # Keep original arguments for use in subclasses
