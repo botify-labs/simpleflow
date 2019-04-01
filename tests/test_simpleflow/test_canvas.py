@@ -11,7 +11,7 @@ from simpleflow.exceptions import AggregateException
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
-from simpleflow.task import ActivityTask, WorkflowTask
+from simpleflow.task import ActivityTask, ChildWorkflowTask
 
 
 @with_attributes()
@@ -123,8 +123,7 @@ class TestGroup(unittest.TestCase):
                 return {"str1": str1, "kwargs": kwargs}
 
         future = Group(
-            WorkflowTask(
-                None,
+            ChildWorkflowTask(
                 ChildWorkflowGroupWithWorkflow,
                 str1="str1",
                 **{"hello": "world"}

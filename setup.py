@@ -104,6 +104,7 @@ DEPS = [
     'click',
     'psutil>=3.2.1',
     'pytz',
+    'six',
     'typing',
     'PyYAML',
 ]
