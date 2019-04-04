@@ -76,7 +76,6 @@ class TestRunContext(unittest.TestCase):
             .result
         )
         child1_1, child1_2, child3 = result
-        print(result)
         self.assertTrue(child1_1["workflow_id"].startswith("local_childworkflow"))
         self.assertTrue(child1_2["workflow_id"].startswith("local_childworkflow"))
         self.assertNotEqual(child1_1["run_id"], child1_2["run_id"])
