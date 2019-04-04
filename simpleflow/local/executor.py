@@ -2,6 +2,7 @@ import collections
 import logging
 import sys
 import traceback
+import uuid
 
 from simpleflow import (
     exceptions,
@@ -35,6 +36,9 @@ class Executor(executor.Executor):
         self.signals_sent = set()
         self._markers = collections.OrderedDict()
 
+        self.wf_run_id = []
+        self.wf_id = []
+
     def update_workflow_class(self):
         """
         Returns the workflow class with all the needed attributes for
@@ -52,6 +56,16 @@ class Executor(executor.Executor):
         self._history = builder.History(
             self._workflow_class,
             input=input)
+
+    def on_new_workflow(self, task):
+        self.wf_run_id.append("{}".format(uuid.uuid4()))
+        self.wf_id.append(
+            task.id if task.id else "local_{}".format(task.workflow.name.lower()),
+        )
+
+    def on_completed_workflow(self):
+        self.wf_run_id.pop()
+        self.wf_id.pop()
 
     def submit(self, func, *args, **kwargs):
         logger.info('executing task {}(args={}, kwargs={})'.format(
@@ -87,6 +101,9 @@ class Executor(executor.Executor):
             raise TypeError('invalid type {} for {}'.format(
                 type(func), func))
 
+        if isinstance(task, WorkflowTask):
+            self.on_new_workflow(task)
+
         try:
             future._result = task.execute()
             if hasattr(task, 'post_execute'):
@@ -114,6 +131,8 @@ class Executor(executor.Executor):
                 )
             state = 'failed'
         finally:
+            if isinstance(task, WorkflowTask):
+                self.on_completed_workflow()
             future._state = futures.FINISHED
 
         if func:
@@ -154,8 +173,8 @@ class Executor(executor.Executor):
         return {
             "name": "local",
             "version": "1.0",
-            "run_id": "local",
-            "workflow_id": "local",
+            "run_id": self.wf_run_id[-1] if self.wf_run_id else "local",
+            "workflow_id": self.wf_id[-1] if self.wf_id else "local",
             "tag_list": []
         }
 
