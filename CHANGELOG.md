@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.21.10
+-------
+
+- task/DATA-7023/local_executor_run_id (#362)
+- Enhancement 364: add ChildWorkflowTask class (#365)
+- canvas: support WorkflowTask in the Group() canvas (#360)
+
 0.21.9
 ------
 
