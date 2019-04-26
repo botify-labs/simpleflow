@@ -1,10 +1,8 @@
 import functools
-import logging
 
 from setproctitle import setproctitle
 
-
-logger = logging.getLogger(__name__)
+from simpleflow import logger
 
 
 def with_state(state):

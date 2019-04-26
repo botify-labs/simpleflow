@@ -1,5 +1,4 @@
 from base64 import b64decode
-import logging
 import json
 import multiprocessing
 import os
@@ -9,7 +8,7 @@ import uuid
 
 import psutil
 
-from simpleflow import format
+from simpleflow import format, logger
 from simpleflow.exceptions import ExecutionError
 import swf.actors
 import swf.exceptions
@@ -26,9 +25,6 @@ from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, json_dumps, to_k8s_identifier
-
-
-logger = logging.getLogger(__name__)
 
 
 class Worker(Supervisor):
@@ -228,6 +224,7 @@ class ActivityWorker(object):
             )
 
         try:
+            logger.info('completing activity')
             poller.complete_with_retry(token, result)
         except Exception as err:
             logger.exception("complete error")
@@ -256,6 +253,7 @@ def process_task(poller, token, task):
 
 
 def spawn_kubernetes_job(poller, swf_response):
+    logger.info('scheduling new kubernetes job name={}'.format(poller.job_name))
     job = KubernetesJob(poller.job_name, poller.domain.name, swf_response)
     job.schedule()
 
@@ -316,7 +314,7 @@ def spawn(poller, token, task, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.debug('spawn() pid={} heartbeat={}'.format(os.getpid(), heartbeat))
+    logger.info('spawning new activity worker pid={} heartbeat={}'.format(os.getpid(), heartbeat))
     worker = multiprocessing.Process(
         target=process_task,
         args=(poller, token, task),

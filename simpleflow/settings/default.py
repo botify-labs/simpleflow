@@ -1,8 +1,6 @@
 import logging  # NOQA
 import os
 
-from simpleflow.log import SimpleflowFormatter
-
 
 WORKFLOW_DEFAULT_TASK_LIST = 'default'
 WORKFLOW_DEFAULT_VERSION = 'default'
@@ -47,11 +45,12 @@ LOGGING = {
     },
     'formatters': {
         'simpleflow_formatter': {
-            '()': SimpleflowFormatter,
+            '()': 'simpleflow.log.SimpleflowFormatter',
             'format': '%(asctime)s %(message)s',
         },
     }
 }
+SIMPLEFLOW_SYSLOG_TARGET = None
 
 SIMPLEFLOW_ENABLE_DISK_CACHE = False
 SIMPLEFLOW_BINARIES_DIRECTORY = '/tmp/simpleflow-binaries'

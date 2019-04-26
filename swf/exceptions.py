@@ -5,13 +5,12 @@
 #
 # See the file LICENSE for copying permission.
 
-import logging
 import collections
 from functools import wraps, partial
 import re
 
 import boto.swf.exceptions
-from simpleflow import compat
+from simpleflow import compat, logger
 
 
 class SWFError(Exception):
@@ -370,8 +369,6 @@ def catch(exceptions, handle_with=None, log=False):
                 return func(*args, **kwargs)
             except exceptions as err:
                 if log is True:
-                    logger = logging.getLogger(__name__)
-
                     logger.error('call to {} raised: {}'.format(
                         func.__name__,
                         err))

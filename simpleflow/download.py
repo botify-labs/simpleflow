@@ -1,16 +1,13 @@
 import errno
 import functools
 import hashlib
-import logging
 import os
 
 from lockfile import FileLock
 
+from simpleflow import logger
 from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
-
-
-logger = logging.getLogger(__name__)
 
 
 class RemoteBinary(object):

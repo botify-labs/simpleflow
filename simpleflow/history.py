@@ -1,8 +1,6 @@
 import collections
-import logging
 
-
-logger = logging.getLogger(__name__)
+from simpleflow import logger
 
 
 # noinspection PyUnresolvedReferences

@@ -1,6 +1,9 @@
 from datetime import datetime
-import logging
+import logging.config
 import sys
+
+from . import logging_context, settings
+
 
 RED = '\033[91m'
 GREEN = '\033[92m'
@@ -71,7 +74,14 @@ class SimpleflowFormatter(logging.Formatter):
         # NB: we strip microseconds out so things are readable
         date = datetime.fromtimestamp(record.created).replace(microsecond=0)
         record.isodate = date.isoformat()
-        record.message = record.msg % record.args
+
+        # don't risk bad interpolation if args is empty (in most cases it's because the
+        # logged string is already formatted)
+        if record.args:
+            record.message = record.msg % record.args
+        else:
+            record.message = record.msg
+
         record.coloredlevel = colorize(record.levelname, record.levelname)
         s = "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s" % record.__dict__
 
@@ -97,3 +107,66 @@ class SimpleflowFormatter(logging.Formatter):
                                                'replace')
 
         return s
+
+
+class SyslogFormatter(logging.Formatter):
+    # Example of record dict:
+    # {
+    #     'threadName': 'MainThread',
+    #     'name': 'simpleflow.swf.process.poller',
+    #     'thread': 140735241315072,
+    #     'created': 1450436645.513802,
+    #     'process': 84828,
+    #     'processName': 'MainProcess',
+    #     'args': (),
+    #     'module': 'poller',,
+    #     'filename': 'poller.py',
+    #     'levelno': 20,
+    #     'exc_text': None,
+    #     'pathname': '/path/to/simpleflow/simpleflow/swf/process/poller.py',
+    #     'lineno': 76,
+    #     'msg': 'starting <bound method ActivityPoller.start of <simpleflow.swf.process.worker.base.ActivityPoller>',
+    #     'exc_info': None,
+    #     'funcName': 'start',
+    #     'relativeCreated': 235.57710647583008,
+    #     'levelname': 'INFO',
+    #     'msecs': 513.8020515441895,
+    # }
+    def format(self, record):
+        msg = []
+        workflow_id = logging_context.get("workflow_id")[0:64]
+        if workflow_id:
+            msg.append(workflow_id + ":")
+            msg.append("{}#{}".format(logging_context.get("task_type"), logging_context.get("event_id")))
+
+        msg.append(record.levelname)
+        msg.append("pid={}".format(record.process))
+        msg.append(record.message)
+        return " ".join(msg)
+
+
+def setup_logging():
+    base_settings = settings.base.load()
+    config = base_settings["LOGGING"]
+
+    syslog_target = base_settings.get("SIMPLEFLOW_SYSLOG_TARGET")
+    if syslog_target:
+        host, port = syslog_target.rsplit(":", 1)
+        config = setup_syslog_logging(config, host, int(port))
+
+    logging.config.dictConfig(config)
+
+
+def setup_syslog_logging(config, host, port):
+    config["loggers"]["simpleflow"]["handlers"].append("syslog")
+    config["handlers"]["syslog"] = {
+        "class": "logging.handlers.SysLogHandler",
+        "address": (host, port),
+        "level": "DEBUG",
+        "formatter": "syslog_formatter",
+    }
+    config["formatters"]["syslog_formatter"] = {
+        "()": "simpleflow.log.SyslogFormatter",
+        "format": "%(message)s",
+    }
+    return config

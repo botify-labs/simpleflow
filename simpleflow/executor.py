@@ -1,16 +1,12 @@
 import abc
-import logging
 
 from ._decorators import deprecated
 
 if False:
-    from typing import Type
+    from typing import Type  # noqa
     from simpleflow import Workflow
 
 __all__ = ['Executor']
-
-
-logger = logging.getLogger(__name__)
 
 
 class Executor(object):

@@ -1,13 +1,11 @@
-import logging
 import multiprocessing
 import os
 import time
 
 import swf.exceptions
+from simpleflow import logger
 from simpleflow._decorators import deprecated
 from simpleflow.utils import retry
-
-logger = logging.getLogger(__name__)
 
 
 __all__ = ['Heartbeater', 'HeartbeatProcess']

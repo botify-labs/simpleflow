@@ -1,5 +1,4 @@
 import collections
-import logging
 import sys
 import traceback
 import uuid
@@ -8,6 +7,7 @@ from simpleflow import (
     exceptions,
     executor,
     futures,
+    logger,
 )
 from simpleflow.base import Submittable
 from simpleflow.marker import Marker
@@ -18,9 +18,6 @@ from simpleflow.utils import format_exc, json_dumps, issubclass_
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
-
-
-logger = logging.getLogger(__name__)
 
 
 class Executor(executor.Executor):

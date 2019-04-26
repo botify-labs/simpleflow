@@ -1,15 +1,12 @@
 import abc
-import logging
 import os
 import signal
 
 import swf.actors
 import swf.exceptions
-from simpleflow import utils
+from simpleflow import logger, utils
 from simpleflow.process import NamedMixin, with_state
 from simpleflow.swf.helpers import swf_identity
-
-logger = logging.getLogger(__name__)
 
 __all__ = ['Poller']
 

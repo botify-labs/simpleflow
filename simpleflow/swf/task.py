@@ -1,10 +1,6 @@
-import logging
-
 import swf.models
 import swf.models.decision
-from simpleflow import task, Workflow
-
-logger = logging.getLogger(__name__)
+from simpleflow import logger, task, Workflow
 
 
 class SwfTask(object):

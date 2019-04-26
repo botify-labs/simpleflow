@@ -1,7 +1,8 @@
 import time
 import collections
 import functools
-import logging
+
+from simpleflow import logger
 
 
 def _to_tuple(exceptions):
@@ -53,7 +54,7 @@ def with_delay(
     :param log_with: logger instance to use.
     """
     if log_with is None:
-        log_with = logging.getLogger(__name__).info
+        log_with = logger.info
     if except_on is None:
         except_on = ()  # Can't "except None" in py3
 

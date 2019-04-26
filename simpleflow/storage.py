@@ -1,18 +1,15 @@
-import logging
 from typing import TYPE_CHECKING
 
 from boto.s3 import connect_to_region, connection
 from boto.s3.key import Key
 from boto.exception import S3ResponseError
 
-from . import settings
+from . import logger, settings
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple  # NOQA
     from boto.s3.bucket import Bucket  # NOQA
     from boto.s3.bucketlistresultset import BucketListResultSet  # NOQA
-
-logger = logging.getLogger(__name__)
 
 BUCKET_CACHE = {}
 BUCKET_LOCATIONS_CACHE = {}
