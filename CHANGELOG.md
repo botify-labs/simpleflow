@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.11
+-------
+
+- task/340/remote-syslog-support (#345)
+
 0.21.10
 -------
 
