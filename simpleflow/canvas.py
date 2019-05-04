@@ -1,3 +1,5 @@
+from builtins import zip  # noqa
+
 from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
 from . import futures
@@ -15,6 +17,7 @@ class FuncGroup(SubmittableContainer):
     Class calling a function returning an ActivityTask, a group or a chain
     activities : Group, Chain...
     """
+
     def __init__(self, func, *args, **kwargs):
         self.func = func
         self.args = list(args)
@@ -54,6 +57,8 @@ class Group(SubmittableContainer):
         self.max_parallel = options.pop('max_parallel', None)
         self.raises_on_failure = options.pop('raises_on_failure', None)
         self.bubbles_exception_on_failure = options.pop('bubbles_exception_on_failure', True)
+        self.use_canvas_result_label = options.pop("use_canvas_result_label", None)
+        self.canvas_result_label = options.pop("canvas_result_label", None)
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
@@ -74,6 +79,9 @@ class Group(SubmittableContainer):
 
         if self.raises_on_failure is not None:
             submittable.propagate_attribute('raises_on_failure', self.raises_on_failure)
+        # XXX propagate_attribute doesn't propagate to Groups themselves
+        # if self.use_canvas_result_label:
+        #     submittable.propagate_attribute('use_canvas_result_label', self.use_canvas_result_label)
         self.activities.append(submittable)
 
     def extend(self, iterable):
@@ -99,7 +107,13 @@ class Group(SubmittableContainer):
 
     def submit(self, executor):
         self.set_workflow_tasks_executor(executor)
-        return GroupFuture(self.activities, executor.workflow, self.max_parallel, self.bubbles_exception_on_failure)
+        return GroupFuture(
+            self.activities,
+            executor.workflow,
+            self.max_parallel,
+            self.bubbles_exception_on_failure,
+            self.use_canvas_result_label
+        )
 
     def __repr__(self):
         return '<{} at {:#x}, activities={!r}>'.format(self.__class__.__name__, id(self), self.activities)
@@ -108,6 +122,9 @@ class Group(SubmittableContainer):
         """
         Propagate attribute to all activities of the Group.
         """
+        # FIXME should we setattr(self)? Backward incompatible :-/
+        #  if getattr(self, attr, None) is None:
+        #      setattr(self, attr, val)
         for activities in self.activities:
             activities.propagate_attribute(attr, val)
 
@@ -125,17 +142,20 @@ class Group(SubmittableContainer):
 
 class GroupFuture(futures.Future):
 
-    def __init__(self, activities, workflow, max_parallel=None, bubbles_exception_on_failure=True):
+    def __init__(self, activities, workflow, max_parallel, bubbles_exception_on_failure, use_canvas_result_label):
         super(GroupFuture, self).__init__()
         self.activities = activities
         self.futures = []
         self.workflow = workflow
         self.max_parallel = max_parallel
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
+        self.use_canvas_result_label = use_canvas_result_label
 
         for a in self.activities:
             if not self.max_parallel or self._count_pending_or_running < self.max_parallel:
                 future = workflow.submit(a)
+                if hasattr(a, "canvas_result_label") and a.canvas_result_label is not None:
+                    future.canvas_result_label = a.canvas_result_label
                 self.futures.append(future)
                 if self._count_pending_or_running == self.max_parallel:
                     break
@@ -162,7 +182,8 @@ class GroupFuture(futures.Future):
     def sync_result(self):
         self._result = []
         exceptions = []
-        for future in self.futures:
+        canvas_result_labels = []
+        for i, future in enumerate(self.futures):
             if future.finished:
                 self._result.append(future.result)
                 if self.bubbles_exception_on_failure is not False:
@@ -171,8 +192,11 @@ class GroupFuture(futures.Future):
             else:
                 self._result.append(None)
                 exceptions.append(None)
+            canvas_result_labels.append(getattr(future, "canvas_result_label", "result#{}".format(i)))
         if any(ex for ex in exceptions):
             self._exception = AggregateException(exceptions)
+        if self.use_canvas_result_label:
+            self._result = {k: v for k, v in zip(canvas_result_labels, self._result)}
 
     @property
     def count_finished_activities(self):
@@ -199,13 +223,16 @@ class Chain(Group):
     if `send_result` is set to True, `task.result` will be sent to
         the next task as last argument
     """
+
     def __init__(self,
                  *activities,
                  **options):
         self.send_result = options.pop('send_result', False)
         self.break_on_failure = options.pop('break_on_failure', True)
-        if self.send_result and not self.break_on_failure:
-            raise ValueError("Cannot combine send_result=True with break_on_failure=False")
+        if self.send_result and not self.break_on_failure and not options.get("use_canvas_result_label"):
+            raise ValueError(
+                "Cannot combine send_result=True with break_on_failure=False unless use_canvas_result_label is True"
+            )
         if options.get('raises_on_failure') is False and 'bubbles_exception_on_failure' not in options:
             options['bubbles_exception_on_failure'] = False  # Compatible with 10cd67f: don't break upper chains
         super(Chain, self).__init__(*activities, **options)
@@ -218,16 +245,19 @@ class Chain(Group):
             bubbles_exception_on_failure=self.bubbles_exception_on_failure,
             send_result=self.send_result,
             break_on_failure=self.break_on_failure,
+            use_canvas_result_label=self.use_canvas_result_label,
         )
 
 
 class ChainFuture(GroupFuture):
     # Don't call GroupFuture.__init__ on purpose
     # noinspection PyMissingConstructor
-    def __init__(self, activities, workflow, bubbles_exception_on_failure, send_result, break_on_failure):
+    def __init__(self, activities, workflow, bubbles_exception_on_failure, send_result, break_on_failure,
+                 use_canvas_result_label):
         self.activities = activities
         self.workflow = workflow
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
+        self.use_canvas_result_label = use_canvas_result_label
         self._state = futures.PENDING
         self._result = None
         self._exception = None
@@ -240,11 +270,18 @@ class ChainFuture(GroupFuture):
                 if isinstance(a, ActivityTask):
                     # ActivityTask.args is ignored when building swf.ActivityTask (#247)
                     args = a.args + [previous_result]
-                    a = ActivityTask(a.activity, *args, **a.kwargs)
+                    # We lose the context and canvas_result_label when recreating an ActivityTask
+                    kwargs = a.kwargs.copy()
+                    kwargs["context"] = a.context
+                    if hasattr(a, "canvas_result_label"):
+                        kwargs["canvas_result_label"] = a.canvas_result_label
+                    a = ActivityTask(a.activity, *args, **kwargs)
                 else:
                     a.args.append(previous_result)
 
             future = workflow.submit(a)
+            if hasattr(a, "canvas_result_label") and a.canvas_result_label is not None:
+                future.canvas_result_label = a.canvas_result_label
             self.futures.append(future)
             if not future.finished:
                 break
@@ -252,7 +289,8 @@ class ChainFuture(GroupFuture):
                 # End this chain
                 self._has_failed = True
                 break
-            previous_result = future.result
+            if not future.exception:
+                previous_result = future.result
 
         self.sync_state()
         self.sync_result()

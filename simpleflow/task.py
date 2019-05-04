@@ -66,6 +66,8 @@ class ActivityTask(Task):
         self.activity = activity
         self.idempotent = activity.idempotent
         self.context = kwargs.pop("context", None)
+        if "canvas_result_label" in kwargs:
+            self.canvas_result_label = kwargs.pop("canvas_result_label")
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
@@ -128,6 +130,8 @@ class WorkflowTask(Task):
         self.workflow = workflow
         self.idempotent = getattr(workflow, 'idempotent', False)
         get_workflow_id = getattr(workflow, 'get_workflow_id', None)
+        if "canvas_result_label" in kwargs:
+            self.canvas_result_label = kwargs.pop("canvas_result_label")
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
 

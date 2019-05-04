@@ -3,6 +3,8 @@ import sys
 import traceback
 import uuid
 
+from typing import TYPE_CHECKING
+
 from simpleflow import (
     exceptions,
     executor,
@@ -18,6 +20,9 @@ from simpleflow.utils import format_exc, json_dumps, issubclass_
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
+
+if TYPE_CHECKING:
+    from typing import Union  # NOQA
 
 
 class Executor(executor.Executor):
@@ -132,7 +137,7 @@ class Executor(executor.Executor):
                 self.on_completed_workflow()
             future._state = futures.FINISHED
 
-        if func:
+        if func:  # FIXME this is wrong (use add_child_workflow etc. as needed; or remove)
             self._history.add_activity_task(
                 func,
                 decision_id=None,
@@ -156,7 +161,7 @@ class Executor(executor.Executor):
 
         # Hack: self._history must be available to the callback as a
         # simpleflow.history.History, not a swf.models.history.builder.History
-        self._history = History(self._history)
+        self._history = History(self._history)  # type: Union[History, builder]
         self._history.parse()
         self.after_replay()
         self.on_completed()
