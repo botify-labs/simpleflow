@@ -288,7 +288,8 @@ def is_buggy_subprocess32():
     """
     subprocess32 < 3.5.0:
     * doesn't support close_fds
-    * has its _subprocess C helper named _subprocess
+    * has its _subprocess C helper named _subprocess (changed to
+        _posixsubprocess32 in 3.5.0rc3)
     """
     if not compat.PY2:
         return False

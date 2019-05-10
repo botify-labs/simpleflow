@@ -15,8 +15,6 @@ REQUIRES = [
 PUBLISH_CMD = "python setup.py sdist bdist_wheel upload"
 TEST_PUBLISH_CMD = 'python setup.py sdist bdist_wheel upload -r test'
 
-PY2 = int(sys.version[0]) == 2
-
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -107,12 +105,9 @@ DEPS = [
     'six',
     'typing',
     'PyYAML',
+    'enum34;python_version<"3.4"',
+    'subprocess32>=3.5.0;python_version<"3.5"',
 ]
-if PY2:
-    DEPS += [
-        'enum34',
-        'subprocess32',  # TODO: >=3.5.0
-    ]
 
 tests_require = []
 try:
