@@ -135,7 +135,7 @@ setup(
     },
     include_package_data=True,
     install_requires=DEPS,
-    license=read("LICENSE"),
+    license="MIT License",
     zip_safe=False,
     keywords='simpleflow amazon swf simple workflow',
     classifiers=[
