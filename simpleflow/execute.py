@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING
 
 import psutil
 
-MAX_ARGUMENTS_JSON_LENGTH = 65536
-
 try:
     import subprocess32 as subprocess
 except ImportError:
@@ -34,6 +32,9 @@ from simpleflow.utils import json_dumps
 if TYPE_CHECKING:
     from typing import Any, Iterable  # NOQA
     import inspect  # NOQA
+
+
+MAX_ARGUMENTS_JSON_LENGTH = 65536
 
 
 __all__ = ['program', 'python']
@@ -234,7 +235,7 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
                     full_command.append('foo')  # dummy funcarg
                 if kill_children:
                     full_command.append('--kill-children')
-                if compat.PY2:  # close_fds doesn't work with python2 (using its C _posixsubprocess helper)
+                if is_buggy_subprocess32():  # close_fds doesn't work with subprocess32 < 3.5.0
                     close_fds = False
                     pass_fds = []
                 else:
@@ -281,6 +282,22 @@ def python(interpreter='python', logger_name=__name__, timeout=None, kill_childr
         return execute
 
     return wrap_callable
+
+
+def is_buggy_subprocess32():
+    """
+    subprocess32 < 3.5.0:
+    * doesn't support close_fds
+    * has its _subprocess C helper named _subprocess (changed to
+        _posixsubprocess32 in 3.5.0rc3)
+    """
+    if not compat.PY2:
+        return False
+    return (
+            subprocess.__name__ == "subprocess32"
+            and hasattr(subprocess, "_posixsubprocess")
+            and subprocess._posixsubprocess.__name__ == "_posixsubprocess"
+    )
 
 
 def program(path=None, argument_format=format_arguments):
