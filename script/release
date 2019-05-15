@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+import argparse
 import subprocess
 import re
 import sys
-from builtins import str, input
-
+from builtins import str, input  # noqa
 
 VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "master"
@@ -102,7 +103,7 @@ def increment_version(current):
     return ".".join(nums)
 
 
-def generate_version_file(new_version):
+def generate_version_file(new_version, dry_run):
     """
     Generates and modifies the simpleflow/__init__.py file
     """
@@ -115,9 +116,13 @@ def generate_version_file(new_version):
         return line
 
     lines = [bump_version_line(line) for line in lines]
+    lines = "".join(lines)
 
-    with open(VERSION_FILE, "w") as f:
-        f.write("".join(lines))
+    if dry_run:
+        print("Would write:\n{}".format(lines))
+    else:
+        with open(VERSION_FILE, "w") as f:
+            f.write(lines)
 
 
 def changelog_lines(from_tag):
@@ -160,10 +165,11 @@ def write_changelog(content, new_tag):
             f.write(line)
 
 
-def generate_changelog(from_tag, to_tag):
+def generate_changelog(from_tag, to_tag, dry_run):
     proposed = proposed_changelog(from_tag, to_tag)
     print(proposed.replace("\n", "\n  "))
-    write_changelog(proposed, to_tag)
+    if not dry_run:
+        write_changelog(proposed, to_tag)
     return proposed
 
 
@@ -181,7 +187,12 @@ def release_tag(version_str, changes):
     execute("git push origin {}".format(version_str), ignore=True, log=True)
 
 
-def main(argv):
+def main():
+    parser = argparse.ArgumentParser(description="Build and upload a new release.")
+    parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
+    args = parser.parse_args()
+    dry_run = args.dry_run
+
     step("Detect current/new version")
     current = current_version()
     print("Current version: {}".format(current))
@@ -208,20 +219,24 @@ def main(argv):
 
     # generate new version file
     step("Generate version file {}".format(VERSION_FILE))
-    generate_version_file(new_version)
+    generate_version_file(new_version, dry_run)
 
     # generate changelog
     step("Generate {}".format(CHANGELOG_FILE))
-    changes = generate_changelog(current, new_version)
+    changes = generate_changelog(current, new_version, dry_run)
 
     # tag version
     step("Release tag")
-    release_tag(new_version, changes)
+    if not dry_run:
+        release_tag(new_version, changes)
 
     # push package to pypi
     step("Generate and push package to pypi.python.org")
-    execute("python setup.py sdist upload -r pypi", log=True)
+    execute("python setup.py bdist_wheel", log=True)
+    wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
+    if not dry_run:
+        execute("twine upload {}".format(wheel), log=True)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
