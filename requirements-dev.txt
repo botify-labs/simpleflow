@@ -2,6 +2,7 @@ flaky  # py.test plugin for rerunning flaky tests
 invoke
 mock
 moto>=1.3.6
+packaging
 pytest
 sphinx
 sphinx_rtd_theme

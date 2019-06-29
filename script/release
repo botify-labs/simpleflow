@@ -2,10 +2,12 @@
 from __future__ import print_function
 
 import argparse
-import subprocess
 import re
+import subprocess
 import sys
-from builtins import str, input  # noqa
+from builtins import input, str  # noqa
+
+from packaging.version import InvalidVersion, Version
 
 VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "master"
@@ -84,26 +86,63 @@ def on_main_branch():
 
 
 def current_version():
+    # type: () -> Version
     with open(VERSION_FILE, "r") as f:
-        lines = f.readlines()
-        version_line = [line for line in lines if line.startswith("__version__")]
-        if version_line:
-            version_num = version_line[0].split()[-1]
-            version_num = version_num.replace("'", "")
-            version_num = version_num.replace('"', '')
-            if not re.search("^[0-9.]+$", version_num):
-                fail("Found version num == {}, but it looks suspicious".format(version_num))
-            return version_num
+        version_line_regex = re.compile(r"""^__version__\s*=\s*['"](?P<version>.*?)['"]\s*$""")
+        for line in f:
+            m = version_line_regex.match(line)
+            if m:
+                return Version(m.group("version"))
     fail("Unable to find current version in {}".format(VERSION_FILE))
 
 
 def increment_version(current):
-    nums = re.split(r"[.\-]", current)
-    nums[-1] = str(int(nums[-1]) + 1)
-    return ".".join(nums)
+    # type: (Version) -> Version
+    epoch = current.epoch
+    release = current.release
+    pre = None
+    post = None
+    dev = None
+    local = current.local
+    if current.dev is not None:
+        dev = current.dev + 1
+    elif current.post is not None:
+        post = current.post + 1
+    elif current.pre is not None:
+        pre = current.pre[:-1] + (current.pre[-1] + 1,)
+    else:
+        release = release[:-1] + (release[-1] + 1,)
+
+    parts = []
+
+    # Epoch
+    if epoch != 0:
+        parts.append("{0}!".format(epoch))
+
+    # Release segment
+    parts.append(".".join(str(x) for x in release))
+
+    # Pre-release
+    if pre is not None:
+        parts.append("".join(str(x) for x in pre))
+
+    # Post-release
+    if post is not None:
+        parts.append(".post{0}".format(post))
+
+    # Development release
+    if dev is not None:
+        parts.append(".dev{0}".format(dev))
+
+    # Local version segment
+    if local is not None:
+        parts.append("+{0}".format(local))
+
+    return Version("".join(parts))
 
 
 def generate_version_file(new_version, dry_run):
+    # type: (Version, bool) -> None
     """
     Generates and modifies the simpleflow/__init__.py file
     """
@@ -190,6 +229,7 @@ def release_tag(version_str, changes):
 def main():
     parser = argparse.ArgumentParser(description="Build and upload a new release.")
     parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
+    parser.add_argument("--version", help="new version number")
     args = parser.parse_args()
     dry_run = args.dry_run
 
@@ -199,13 +239,21 @@ def main():
 
     # decide a new version number to release
     new_version = ""
+    if args.version:
+        try:
+            new_version = Version(args.version)
+        except InvalidVersion:
+            pass
+
     default_new_version = increment_version(current)
-    while not re.match(r'^(\d+)(\.\d+){2,3}?$', new_version):
-        if new_version:
-            print("BAD FORMAT ({})! Should be in the form: 1.2.3".format(new_version))
+    while not new_version:
         new_version = input("New version to release [{}]: ".format(default_new_version))
         if not new_version:
-            new_version = default_new_version
+            new_version = str(default_new_version)
+        try:
+            new_version = str(Version(new_version))
+        except InvalidVersion as ex:
+            print("{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(ex))
 
     # check if on main branch or not
     step("Check current branch")
