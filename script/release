@@ -94,8 +94,8 @@ def current_branch():
 def on_main_branch():
     # type: () -> bool
     """
-    Checks whether we're on main branch or not. If you're not on main
-    branch, you're supposed to know what you do!
+    Check whether we're on the main branch or not. If you're not on the
+    main branch, you're supposed to know what you do!
     """
     return current_branch() == MAIN_BRANCH
 
@@ -161,7 +161,7 @@ def increment_version(current):
 def generate_version_file(new_version, dry_run):
     # type: (Version, bool) -> None
     """
-    Generates and modifies the simpleflow/__init__.py file
+    Generate and modify the simpleflow/__init__.py file.
     """
     with open(VERSION_FILE, "r") as f:
         lines = f.readlines()
@@ -233,17 +233,16 @@ def generate_changelog(previous_version, new_version, dry_run):
     return proposed
 
 
-def release_tag(new_version, changes):
-    # type: (Version, str) -> None
+def release_tag(new_version, changes, dry_run):
+    # type: (Version, str, bool) -> None
     """
     Commit and push the branch and tag.
     """
-    execute(["git", "commit", "-a", "-m", "Bump version to {}".format(new_version)], log=True)
+    execute(["git", "commit", "-a", "-m", "Bump version to {}".format(new_version)], log=True, dry_run=dry_run)
     annotation_message = "{}\n\nChangelog:\n{}".format(new_version, changes)
-    # use "subprocess" directly to avoid escaping nightmares in annotation_message
-    subprocess.check_output(["git", "tag", "-a", str(new_version), "-m", annotation_message])
-    execute(["git", "push", "origin", "HEAD"], ignore=True, log=True)
-    execute(["git", "push", "origin", "{}".format(new_version)], ignore=True, log=True)
+    execute(["git", "tag", "-a", str(new_version), "-m", annotation_message], log=True, dry_run=dry_run)
+    execute(["git", "push", "origin", "HEAD"], ignore=True, log=True, dry_run=dry_run)
+    execute(["git", "push", "origin", "{}".format(new_version)], ignore=True, log=True, dry_run=dry_run)
 
 
 def input_new_version(current):
@@ -300,8 +299,7 @@ def main():
 
     # tag version
     step("Release tag")
-    if not dry_run:
-        release_tag(new_version, changes)
+    release_tag(new_version, changes, dry_run)
 
     # push package to pypi
     step("Generate and push package to pypi.python.org")
