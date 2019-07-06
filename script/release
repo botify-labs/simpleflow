@@ -9,6 +9,16 @@ from builtins import input, str  # noqa
 
 from packaging.version import InvalidVersion, Version
 
+try:
+    from shlex import quote
+except ImportError:
+    from pipes import quote  # undocumented; still available anyway
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterator, List
+
 VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "master"
 CHANGELOG_FILE = "CHANGELOG.md"
@@ -43,20 +53,23 @@ def fail(message):
     sys.exit(2)
 
 
-def execute(command, ignore=False, log=False):
-    # type: (str, bool, bool) -> str
+def execute(command, ignore=False, log=False, dry_run=False):
+    # type: (List[str], bool, bool, bool) -> str
     """
     Execute a command and return the output.
     :param command: command to execute
     :param ignore: whether errors should be ignored (default: False)
     :param log: whether to log commands to stdout (default: False)
+    :param dry_run: whether to not execute the command (default: False)
     :return: command output
     """
-    if log:
-        print("execute: {}".format(command))
+    if log or dry_run:
+        print("{}execute: {}".format("would " if dry_run else "", " ".join(quote(c) for c in command)))
+    if dry_run:
+        return ""
     pr = subprocess.Popen(
         command,
-        shell=True,
+        shell=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -71,7 +84,7 @@ def current_branch():
     """
     Return current branch name.
     """
-    for branch in execute("git branch --no-color").split("\n"):
+    for branch in execute(["git", "branch", "--no-color"]).split("\n"):
         if branch.startswith("* "):
             return branch.split()[1]
     fail("Couldn't find current branch, please don't"
@@ -225,34 +238,18 @@ def release_tag(new_version, changes):
     """
     Commit and push the branch and tag.
     """
-    execute("git commit -a -m 'Bump version to {}'".format(new_version), log=True)
+    execute(["git", "commit", "-a", "-m", "Bump version to {}".format(new_version)], log=True)
     annotation_message = "{}\n\nChangelog:\n{}".format(new_version, changes)
     # use "subprocess" directly to avoid escaping nightmares in annotation_message
     subprocess.check_output(["git", "tag", "-a", str(new_version), "-m", annotation_message])
-    execute("git push origin HEAD", ignore=True, log=True)
-    execute("git push origin {}".format(new_version), ignore=True, log=True)
+    execute(["git", "push", "origin", "HEAD"], ignore=True, log=True)
+    execute(["git", "push", "origin", "{}".format(new_version)], ignore=True, log=True)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Build and upload a new release.")
-    parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
-    parser.add_argument("--version", help="new version number")
-    args = parser.parse_args()
-    dry_run = args.dry_run
-
-    step("Detect current/new version")
-    current = current_version()
-    print("Current version: {}".format(current))
-
-    # decide a new version number to release
-    new_version = None
-    if args.version:
-        try:
-            new_version = Version(args.version)
-        except InvalidVersion:
-            pass
-
+def input_new_version(current):
+    # type: (Version) -> Version
     default_new_version = increment_version(current)
+    new_version = None
     while not new_version:
         new_version_str = input("New version to release [{}]: ".format(default_new_version))
         if new_version_str:
@@ -262,8 +259,18 @@ def main():
                 print("{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(ex))
         else:
             new_version = default_new_version
+    return new_version
 
-    # check if on main branch or not
+
+def main():
+    parser = argparse.ArgumentParser(description="Build and upload a new release.")
+    parser.add_argument("--dry-run", "-n", action="store_true", help="Don't actually do anything.")
+    parser.add_argument("--repository-url", help="The repository (package index) URL to upload the package to.")
+    parser.add_argument("--new-version", help="New version number.")
+    args = parser.parse_args()
+    dry_run = args.dry_run
+
+    # check whether on main branch or not
     step("Check current branch")
     if not on_main_branch():
         print("WARNING!")
@@ -272,6 +279,16 @@ def main():
         answer = input()
         if not answer.lower().startswith("y"):
             fail("Will not continue as you're not on the main branch")
+
+    step("Detect current/new version")
+    current = current_version()
+    print("Current version: {}".format(current))
+
+    # decide a new version number to release
+    if args.new_version:
+        new_version = Version(args.new_version)
+    else:
+        new_version = input_new_version(current)
 
     # generate new version file
     step("Generate version file {}".format(VERSION_FILE))
@@ -288,10 +305,12 @@ def main():
 
     # push package to pypi
     step("Generate and push package to pypi.python.org")
-    execute("python setup.py bdist_wheel", log=True)
+    execute(["python", "setup.py", "bdist_wheel"], log=True)
     wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
-    if not dry_run:
-        execute("twine upload {}".format(wheel), log=True)
+    cmd = ["twine", "upload", wheel]
+    if args.repository_url:
+        cmd += ["--repository-url", args.repository_url]
+    execute(cmd, log=True, dry_run=dry_run)
 
 
 if __name__ == "__main__":
