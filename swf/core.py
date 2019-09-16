@@ -22,6 +22,7 @@ SETTINGS = settings.get()
 RETRIES = int(os.environ.get('SWF_CONNECTION_RETRIES', '5'))
 
 
+
 class ConnectedSWFObject(object):
     """Authenticated object interface
 
@@ -56,3 +57,19 @@ class ConnectedSWFObject(object):
             raise ValueError('invalid region: {}'.format(self.region))
 
         logger.debug("initiated connection to region={}".format(self.region))
+
+        self.metro_host = SETTINGS.get('metro_host')
+        self.metro_port = SETTINGS.get('metro_port')
+        self.hostname = socket.gethostname()
+
+    def send_endpoint_usage(endpoint):
+        # build the data point
+        # [measurement,tag1,tagn field1 fieldn]
+        # https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax
+        line_body = ["swf,region={},endpoint={},hostname={} swf_call=1".format(self.region, endpoint, self.hostname]
+        #feed the InfluxDB database with the datapoint
+        try:
+            client = InfluxDBClient(self.metro_host, use_udp=True, udp_port=self.metro_port)
+            client.send_packet(line_body, protocol=u'line')
+        except Exception, e:
+            logger.error("Unable to send metrology statistics : {}".format(e.args))

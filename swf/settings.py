@@ -76,6 +76,12 @@ def from_stream(stream):
     if config.has_section('defaults'):
         settings['region'] = config.get('defaults', 'region')
 
+    if config.has_section('metrology'):
+        settings.update({
+            'metro_host': config.get('metrology','metro_host'),
+            'metro_port': config.get('metrology','metro_port')
+        })
+
     return settings
 
 

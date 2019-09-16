@@ -123,6 +123,8 @@ class ActivityWorker(Actor):
         :type   details: string
         """
         try:
+            # instrumentation
+            self.send_endpoint_usage("RecordActivityTaskHeartbeat")
             return self.connection.record_activity_task_heartbeat(
                 task_token,
                 format.heartbeat_details(details),
@@ -170,6 +172,8 @@ class ActivityWorker(Actor):
         identity = identity or self._identity
 
         try:
+            # instrumentation
+            self.send_endpoint_usage("PollForActivityTask")
             task = self.connection.poll_for_activity_task(
                 self.domain.name,
                 task_list,
