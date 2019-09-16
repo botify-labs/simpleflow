@@ -127,6 +127,9 @@ class ActivityWorker(Actor):
                 task_token,
                 format.heartbeat_details(details),
             )
+           # instrumentation
+           self.send_endpoint_usage("RecordActivityTaskHeartbeat")
+ 
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':
@@ -175,6 +178,9 @@ class ActivityWorker(Actor):
                 task_list,
                 identity=format.identity(identity),
             )
+            # instrumentation
+            self.send_endpoint_usage("PollForActivityTask")
+
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == 'UnknownResourceFault':

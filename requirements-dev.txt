@@ -10,3 +10,4 @@ vcrpy
 wheel
 setuptools
 twine
+influxdb
