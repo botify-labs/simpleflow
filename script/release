@@ -229,8 +229,12 @@ def release_tag(version_str, changes):
 def main():
     parser = argparse.ArgumentParser(description="Build and upload a new release.")
     parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
-    parser.add_argument("--version", help="new version number")
+    parser.add_argument("--version", "-V", action="store_true", help="display version number")
+    parser.add_argument("--new-version", help="new version number")
     args = parser.parse_args()
+    if args.version:
+        print("simpleflow {}".format(current_version()))
+        return
     dry_run = args.dry_run
 
     step("Detect current/new version")
@@ -239,9 +243,9 @@ def main():
 
     # decide a new version number to release
     new_version = ""
-    if args.version:
+    if args.new_version:
         try:
-            new_version = Version(args.version)
+            new_version = Version(args.new_version)
         except InvalidVersion:
             pass
 
