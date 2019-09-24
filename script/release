@@ -155,13 +155,13 @@ def generate_version_file(new_version, dry_run):
         return line
 
     lines = [bump_version_line(line) for line in lines]
-    lines = "".join(lines)
+    joined_lines = "".join(lines)
 
     if dry_run:
-        print("Would write:\n{}".format(lines))
+        print("Would write:\n{}".format(joined_lines))
     else:
         with open(VERSION_FILE, "w") as f:
-            f.write(lines)
+            f.write(joined_lines)
 
 
 def changelog_lines(from_tag):
