@@ -16,7 +16,7 @@ mkdocs-material==1.8.1
 mkdocs==0.16.3
 pygments==2.2.0
 pymdown-extensions==3.5
-pyyaml==3.12              # via mkdocs
+pyyaml==5.1              # via mkdocs
 singledispatch==3.4.0.3   # via tornado
 six==1.10.0               # via livereload, singledispatch
 tornado==4.5.1            # via livereload, mkdocs
