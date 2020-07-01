@@ -10,7 +10,6 @@ from simpleflow.storage import push_content
 from tests.moto_compat import mock_s3
 
 
-@mock_s3
 class TestFormat(unittest.TestCase):
 
     def setUp(self):
@@ -25,12 +24,14 @@ class TestFormat(unittest.TestCase):
         self.conn = boto.connect_s3()
         self.conn.create_bucket(bucket.split("/")[0])
 
+    @mock_s3
     def test_encode_none(self):
         self.assertEqual(
             format.encode(None, 1),
             None
         )
 
+    @mock_s3
     def test_encode_smaller(self):
         MAX_LENGTH = random.randint(10, 1000)
         message = 'A' * (MAX_LENGTH // 2)
@@ -39,18 +40,21 @@ class TestFormat(unittest.TestCase):
             message,
         )
 
+    @mock_s3
     def test_encode_longer(self):
         MAX_LENGTH = random.randint(10, 1000)
-        message = 'A' * 1000
+        message = 'A' * (MAX_LENGTH + 1)
         with self.assertRaisesRegexp(ValueError, "Message too long"):
             format.encode(message, MAX_LENGTH)
 
+    @mock_s3
     def test_identity_doesnt_use_jumbo_fields(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = 'A' * (constants.MAX_RESULT_LENGTH * 2)
         with self.assertRaisesRegexp(ValueError, "Message too long"):
             format.identity(message)
 
+    @mock_s3
     def test_jumbo_fields_encoding_without_directory(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = 'A' * 64000
@@ -66,6 +70,7 @@ class TestFormat(unittest.TestCase):
             json.dumps(message),
         )
 
+    @mock_s3
     def test_jumbo_fields_encoding_with_directory(self):
         self.setup_jumbo_fields("jumbo-bucket/with/subdir")
         message = 'A' * 64000
@@ -81,6 +86,7 @@ class TestFormat(unittest.TestCase):
             json.dumps(message),
         )
 
+    @mock_s3
     def test_jumbo_fields_with_directory_strip_trailing_slash(self):
         self.setup_jumbo_fields("jumbo-bucket/with/subdir/")
         message = 'A' * 64000
@@ -88,6 +94,7 @@ class TestFormat(unittest.TestCase):
 
         assert not encoded.startswith("simpleflow+s3://jumbo-bucket/with/subdir//")
 
+    @mock_s3
     def test_jumbo_fields_encoding_raise_if_encoded_form_overflows_thresholds(self):
         # 'reason' field is limited to 256 chars for instance
         self.setup_jumbo_fields("jumbo-bucket/with/a/very/long/name/" + "a" * 256)
@@ -96,6 +103,7 @@ class TestFormat(unittest.TestCase):
         with self.assertRaisesRegexp(ValueError, "Jumbo field signature is longer than"):
             format.reason(message)
 
+    @mock_s3
     def test_decode(self):
         self.setup_jumbo_fields("jumbo-bucket")
         push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
@@ -111,6 +119,7 @@ class TestFormat(unittest.TestCase):
         for case in cases:
             self.assertEqual(case[1], format.decode(case[0]))
 
+    @mock_s3
     def test_decode_no_parse_json(self):
         self.setup_jumbo_fields("jumbo-bucket")
         push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
