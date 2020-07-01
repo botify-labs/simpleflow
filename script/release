@@ -263,10 +263,15 @@ def input_new_version(current):
 
 def main():
     parser = argparse.ArgumentParser(description="Build and upload a new release.")
-    parser.add_argument("--dry-run", "-n", action="store_true", help="Don't actually do anything.")
-    parser.add_argument("--repository-url", help="The repository (package index) URL to upload the package to.")
-    parser.add_argument("--new-version", help="New version number.")
+    parser.add_argument("--version", "-V", action="store_true", help="display version number")
+    parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
+    parser.add_argument("--repository-url", help="repository (package index) URL to upload the package to")
+    parser.add_argument("--new-version", help="new version number")
     args = parser.parse_args()
+    if args.version:
+        print("simpleflow {}".format(current_version()))
+        return
+
     dry_run = args.dry_run
 
     # check whether on main branch or not
