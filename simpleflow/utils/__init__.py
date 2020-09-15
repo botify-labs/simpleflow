@@ -2,6 +2,7 @@ import re
 from typing import TYPE_CHECKING
 from zlib import adler32
 
+from simpleflow.compat import PY2
 from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
@@ -74,3 +75,27 @@ def to_k8s_identifier(string):
     string = re.sub(r"[^a-z-]", "-", string)
     string = re.sub(r"--+", "-", string)
     return string
+
+
+def import_from_module(path):
+    # type: (str) -> Any
+    """
+    Import a class or other object: either module.Foo or (builtin) Foo.
+    :param path: object name
+    :return: object
+    :raise ImportError: module not found
+    """
+    module_path, _, obj_name = path.rpartition(".")
+    return import_object_from_module(module_path, obj_name)
+
+
+def import_object_from_module(module_name, *object_names):
+    # type: (str, *str) -> Any
+    if not module_name:
+        module_name = "builtins" if not PY2 else "__builtin__"
+    from importlib import import_module
+
+    obj = import_module(module_name)
+    for object_name in object_names:
+        obj = getattr(obj, object_name)
+    return obj
