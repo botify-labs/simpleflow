@@ -90,6 +90,7 @@ def read(fname):
 
 
 DEPS = [
+    'attrs',
     'future',
     'boto>=2.49.0',
     'diskcache>=2.4.1',
