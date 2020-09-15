@@ -14,7 +14,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
 from simpleflow.activity import Activity
-from simpleflow.utils import format_exc, json_dumps, issubclass_
+from simpleflow.utils import format_exc, format_exc_type, json_dumps, issubclass_
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
@@ -108,24 +108,24 @@ class Executor(executor.Executor):
             state = 'completed'
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            future._exception = exc_value
-            logger.exception('rescuing exception: {}'.format(exc_value))
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
-                tb = traceback.format_tb(exc_traceback)
-                message = format_exc(exc_value)
-                details = json_dumps(
+            tb = traceback.format_tb(exc_traceback)
+            task_failed = exceptions.TaskFailed(
+                name=getattr(task, "name", "unknown"),
+                reason=format_exc(exc_value),
+                details=json_dumps(
                     {
                         'error': exc_type.__name__,
+                        'error_type': format_exc_type(exc_type),
                         'message': str(exc_value),
                         'traceback': tb,
                     },
                     default=repr
                 )
-                raise exceptions.TaskFailed(
-                    func.name,
-                    message,
-                    details,
-                )
+            )
+            future.set_exception(task_failed)
+            logger.exception('rescuing exception: {}'.format(exc_value))
+            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
+                raise task_failed
             state = 'failed'
         finally:
             if isinstance(task, WorkflowTask):
