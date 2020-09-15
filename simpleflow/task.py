@@ -295,6 +295,7 @@ class TaskFailureContext(object):
     decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
     retry_wait_timeout = attr.ib(default=None)  # type: Optional[int]
     _task_error = attr.ib(default=None)  # type: Optional[str]
+    _task_error_type = attr.ib(default=None)  # type: Optional[Type]
 
     @property
     def retry_count(self):
@@ -326,15 +327,26 @@ class TaskFailureContext(object):
             self._cache_error()
         return self._task_error
 
+    @property
+    def task_error_type(self):
+        if self._task_error is None:
+            self._cache_error()
+        return self._task_error_type
+
     def _cache_error(self):
         from simpleflow.exceptions import TaskFailed
-        from simpleflow.utils import json_loads_or_raw
+        from simpleflow.utils import import_from_module, json_loads_or_raw
         self._task_error = ""  # falsy value different from None
         if isinstance(self.exception, TaskFailed) and self.exception.details:
             details = json_loads_or_raw(self.exception.details)
             if isinstance(details, dict):
                 if 'error' in details:
                     self._task_error = details['error']
+                if 'error_type' in details:
+                    try:
+                        self._task_error_type = import_from_module(details['error_type'])
+                    except Exception:
+                        pass
 
     @property
     def id(self):
