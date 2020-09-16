@@ -89,9 +89,9 @@ def current_branch():
     """
     Return current branch name.
     """
-    for branch in execute(["git", "branch", "--no-color"]).split("\n"):
-        if branch.startswith("* "):
-            return branch.split()[1]
+    branch = execute(["git", "branch", "--show-current"]).strip()
+    if branch:
+        return branch
     fail("Couldn't find current branch, please don't"
          " be in 'detached' state when running this.")
 
