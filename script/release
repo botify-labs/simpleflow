@@ -314,9 +314,12 @@ def main():
         "--test-pypi",
         "-T",
         action="store_const",
-        const="https://test.pypi.org/simple/",
+        const="https://test.pypi.org/legacy/",
         dest="repository_url",
         help="upload to TestPyPI",
+    )
+    group.add_argument(
+        "--repository", help="repository (package index) to upload the package to",
     )
     group.add_argument(
         "--repository-url",
@@ -362,13 +365,15 @@ def main():
     # push package to pypi
     step(
         "Generate and push package to {}".format(
-            args.repository_url or "pypi.python.org"
+            args.repository or args.repository_url or "pypi"
         )
     )
     execute(["python", "setup.py", "bdist_wheel"], log=True)
     wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
-    cmd = ["twine", "upload", wheel]
-    if args.repository_url:
+    cmd = ["twine", "upload", wheel, "--non-interactive"]
+    if args.repository:
+        cmd += ["--repository", args.repository]
+    elif args.repository_url:
         cmd += ["--repository-url", args.repository_url]
     execute(cmd, log=True, dry_run=dry_run)
 
