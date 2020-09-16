@@ -30,7 +30,7 @@ class TestActivityWorker(unittest.TestCase):
 
         self.assertEqual(1, mock.call_count)
         self.assertEqual(mock.call_args[0], ("token", task))
-        self.assertIn("No module named ", mock.call_args[1]["reason"])
+        self.assertIn("unable to import ", mock.call_args[1]["reason"])
 
 
 if __name__ == '__main__':
