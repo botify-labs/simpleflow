@@ -188,9 +188,9 @@ def generate_version_file(new_version, dry_run):
 
 def changelog_lines(previous_version):
     # type: (Version) -> Iterator[str]
-    cmd = ["git", "log", "--pretty=format:- %b (%s)",
-           "--merges", "{}..".format(previous_version)]
-    out = subprocess.check_output(cmd)
+    out = execute(
+        ["git", "log", "--pretty=format:- %b (%s)", "--merges", "{}..".format(previous_version)]
+    )
     for line in out.splitlines():
         line = re.sub(r"\(Merge pull request (#\d+)[^)]+\)", r"(\1)", line)
         yield line
