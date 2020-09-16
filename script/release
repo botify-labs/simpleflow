@@ -360,7 +360,11 @@ def main():
     release_tag(new_version, changes, dry_run)
 
     # push package to pypi
-    step("Generate and push package to pypi.python.org")
+    step(
+        "Generate and push package to {}".format(
+            args.repository_url or "pypi.python.org"
+        )
+    )
     execute(["python", "setup.py", "bdist_wheel"], log=True)
     wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
     cmd = ["twine", "upload", wheel]
