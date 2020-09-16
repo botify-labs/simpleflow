@@ -2,6 +2,7 @@ import collections
 import sys
 import traceback
 import uuid
+from typing import TYPE_CHECKING
 
 from simpleflow import (
     exceptions,
@@ -19,6 +20,10 @@ from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
 
+if TYPE_CHECKING:
+    from typing import Optional, Union
+    from simpleflow.history import History
+
 
 class Executor(executor.Executor):
     """
@@ -35,6 +40,16 @@ class Executor(executor.Executor):
 
         self.wf_run_id = []
         self.wf_id = []
+        self._history = None  # type: Optional[Union[builder.History, History]]
+
+    @property
+    def history(self):
+        # type: () -> Optional[History]
+        if not isinstance(self._history, History):
+            history = History(self._history)
+            history.parse()
+            return history
+        return self._history
 
     def update_workflow_class(self):
         """
