@@ -314,8 +314,8 @@ def main():
         "--test-pypi",
         "-T",
         action="store_const",
-        const="https://test.pypi.org/legacy/",
-        dest="repository_url",
+        const="testpypi",
+        dest="repository",
         help="upload to TestPyPI",
     )
     group.add_argument(
