@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -67,11 +68,15 @@ def execute(command, ignore=False, log=False, dry_run=False):
         print("{}execute: {}".format("would " if dry_run else "", " ".join(quote(c) for c in command)))
     if dry_run:
         return ""
+    env = os.environ.copy()
+    env["LANG"] = "C.UTF-8"
     pr = subprocess.Popen(
         command,
         shell=False,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        env=env,
+    )
 
     (out, error) = pr.communicate()
     if pr.returncode != 0 and not ignore:
