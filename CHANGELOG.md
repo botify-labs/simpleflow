@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.21.14a1
+---------
+
+- Enhancement/367/improve release script v2 (#376)
+- Bugfix/update dependencies (#373)
+
 0.21.13
 -------
 
