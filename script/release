@@ -1,61 +1,82 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import subprocess
-import re
-import sys
-from builtins import str, input
 
+import argparse
+import os
+import re
+import subprocess
+import sys
+from builtins import input, str  # noqa
+
+from packaging.version import InvalidVersion, Version
+
+try:
+    from shlex import quote
+except ImportError:
+    from pipes import quote  # undocumented; still available anyway
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterator, List
 
 VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "master"
-CHANGELOG_FILE = 'CHANGELOG.md'
+CHANGELOG_FILE = "CHANGELOG.md"
 
 
 def color_msg(color, msg):
+    # type: (str, str) -> str
     colors = {
         "green": "\033[92m",
         "yellow": "\033[93m",
         "red": "\033[91m",
-        "blue": "\033[94m"
+        "blue": "\033[94m",
     }
     if color in colors and sys.stdout.isatty():
-        return colors[color] + msg + '\033[0m'
+        return colors[color] + msg + "\033[0m"
     else:
         return msg
 
 
 def step(msg):
+    # type: (str) -> None
     print(color_msg("blue", "* {}".format(msg)))
 
 
 def fail(message):
+    # type: (str) -> None
     """
+    Print a message and exit.
     :param message: message to print
-    :type message: string
-    prints a message and exits
     """
     sys.stderr.write(color_msg("red", "Error: {}\nExiting...\n".format(message)))
     sys.exit(2)
 
 
-def execute(command, ignore=False, log=False):
+def execute(command, ignore=False, log=False, dry_run=False):
+    # type: (List[str], bool, bool, bool) -> str
     """
+    Execute a command and return the output.
     :param command: command to execute
-    :type command: string
-    :param ignore: if error should be ignored
-    :type ignore: bool
-    :param log: logs commands to stdout (default: False)
-    :type log: bool
-    :return : string command output
-    Executes a command and returns the output
+    :param ignore: whether errors should be ignored (default: False)
+    :param log: whether to log commands to stdout (default: False)
+    :param dry_run: whether to not execute the command (default: False)
+    :return: command output
     """
-    if log:
-        print("execute: {}".format(command))
+    if log or dry_run:
+        print(
+            "{}execute: {}".format(
+                "would " if dry_run else "", " ".join(quote(c) for c in command)
+            )
+        )
+    if dry_run:
+        return ""
+    env = os.environ.copy()
+    env["LANG"] = "C.UTF-8"
     pr = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+    )
 
     (out, error) = pr.communicate()
     if pr.returncode != 0 and not ignore:
@@ -64,164 +85,293 @@ def execute(command, ignore=False, log=False):
 
 
 def current_branch():
+    # type: () -> str
     """
-    Returns current branch name
+    Return current branch name.
     """
-    for branch in execute("git branch --no-color").split("\n"):
-        if branch.startswith("* "):
-            return branch.split()[1]
-    fail("Couldn't find current branch, please don't"
-         " be in 'detached' state when running this.")
+    branch = execute(["git", "branch", "--show-current"]).strip()
+    if branch:
+        return branch
+    fail(
+        "Couldn't find current branch, please don't"
+        " be in 'detached' state when running this."
+    )
 
 
 def on_main_branch():
+    # type: () -> bool
     """
-    Checks whether we're on main branch or not. If you're not on main
-    branch, you're supposed to know what you do!
+    Check whether we're on the main branch or not. If you're not on the
+    main branch, you're supposed to know what you do!
     """
     return current_branch() == MAIN_BRANCH
 
 
 def current_version():
+    # type: () -> Version
     with open(VERSION_FILE, "r") as f:
-        lines = f.readlines()
-        version_line = [line for line in lines if line.startswith("__version__")]
-        if version_line:
-            version_num = version_line[0].split()[-1]
-            version_num = version_num.replace("'", "")
-            version_num = version_num.replace('"', '')
-            if not re.search("^[0-9.]+$", version_num):
-                fail("Found version num == {}, but it looks suspicious".format(version_num))
-            return version_num
+        version_line_regex = re.compile(
+            r"""^__version__\s*=\s*['"](?P<version>.*?)['"]\s*$"""
+        )
+        for line in f:
+            m = version_line_regex.match(line)
+            if m:
+                return Version(m.group("version"))
     fail("Unable to find current version in {}".format(VERSION_FILE))
 
 
 def increment_version(current):
-    nums = re.split(r"[.\-]", current)
-    nums[-1] = str(int(nums[-1]) + 1)
-    return ".".join(nums)
+    # type: (Version) -> Version
+    epoch = current.epoch
+    release = current.release
+    pre = None
+    post = None
+    dev = None
+    local = current.local
+
+    # Increment least significant part
+    if current.dev is not None:
+        dev = current.dev + 1
+    elif current.post is not None:
+        post = current.post + 1
+    elif current.pre is not None:
+        pre = current.pre[:-1] + (current.pre[-1] + 1,)
+    else:
+        release = release[:-1] + (release[-1] + 1,)
+
+    parts = []
+
+    # Epoch
+    if epoch != 0:
+        parts.append("{0}!".format(epoch))
+
+    # Release segment
+    parts.append(".".join(str(x) for x in release))
+
+    # Pre-release
+    if pre is not None:
+        parts.append("".join(str(x) for x in pre))
+
+    # Post-release
+    if post is not None:
+        parts.append(".post{0}".format(post))
+
+    # Development release
+    if dev is not None:
+        parts.append(".dev{0}".format(dev))
+
+    # Local version segment
+    if local is not None:
+        parts.append("+{0}".format(local))
+
+    return Version("".join(parts))
 
 
-def generate_version_file(new_version):
+def generate_version_file(new_version, dry_run):
+    # type: (Version, bool) -> None
     """
-    Generates and modifies the simpleflow/__init__.py file
+    Generate and modify the simpleflow/__init__.py file.
     """
     with open(VERSION_FILE, "r") as f:
         lines = f.readlines()
 
     def bump_version_line(line):
         if line.startswith("__version__"):
-            return "__version__ = '{}'\n".format(new_version)
+            return '__version__ = "{}"\n'.format(new_version)
         return line
 
     lines = [bump_version_line(line) for line in lines]
+    joined_lines = "".join(lines)
 
-    with open(VERSION_FILE, "w") as f:
-        f.write("".join(lines))
+    if dry_run:
+        print("Would write:\n{}".format(joined_lines))
+    else:
+        with open(VERSION_FILE, "w") as f:
+            f.write(joined_lines)
 
 
-def changelog_lines(from_tag):
-    cmd = ["git", "log", "--pretty=format:- %b (%s)",
-           "--merges", "{}..".format(from_tag)]
-    out = subprocess.check_output(cmd)
+def changelog_lines(previous_version):
+    # type: (Version) -> Iterator[str]
+    out = execute(
+        [
+            "git",
+            "log",
+            "--pretty=format:- %b (%s)",
+            "--merges",
+            "{}..".format(previous_version),
+        ]
+    )
     for line in out.splitlines():
         line = re.sub(r"\(Merge pull request (#\d+)[^)]+\)", r"(\1)", line)
         yield line
 
 
-def proposed_changelog(from_tag, new_tag):
+def proposed_changelog(previous_version, new_version):
+    # type: (Version, Version) -> str
     return "\n{version}\n{underline}\n\n{content}\n".format(
-        version=new_tag,
-        underline="-" * len(new_tag),
-        content="\n".join(list(changelog_lines(from_tag)))
+        version=new_version,
+        underline="-" * len(str(new_version)),
+        content="\n".join(list(changelog_lines(previous_version))),
     )
 
 
-def write_changelog(content, new_tag):
+def write_changelog(new_content, new_version):
+    # type: (str, Version) -> None
     with open(CHANGELOG_FILE, "r") as f:
         current_changelog = f.readlines()
 
     # safeguard for not documenting the same tag twice
-    if new_tag+"\n" in current_changelog:
-        fail("The tag {} is already present in {}".format(new_tag, CHANGELOG_FILE))
+    tag = str(new_version)
+    if tag + "\n" in current_changelog:
+        fail("The tag {} is already present in {}".format(tag, CHANGELOG_FILE))
 
     # detect where the first sub-title begins, it will be the first version
-    # section ; we will introduce our new changelog here
-    first_version_line_number = [
-        idx for idx, line in enumerate(current_changelog)
-        if line.startswith("---")
-    ][0] - 2
+    # section; we will introduce our new changelog just above
+    first_version_line_number = (
+        next(
+            idx for idx, line in enumerate(current_changelog) if line.startswith("---")
+        )
+        - 2
+    )
 
-    tmp_file = CHANGELOG_FILE
-    with open(tmp_file, "w") as f:
+    with open(CHANGELOG_FILE, "w") as f:
         for idx, line in enumerate(current_changelog):
             if idx == first_version_line_number:
-                f.write(content)
+                f.write(new_content)
             f.write(line)
 
 
-def generate_changelog(from_tag, to_tag):
-    proposed = proposed_changelog(from_tag, to_tag)
+def generate_changelog(previous_version, new_version, dry_run):
+    # type: (Version, Version, bool) -> str
+    proposed = proposed_changelog(previous_version, new_version)
     print(proposed.replace("\n", "\n  "))
-    write_changelog(proposed, to_tag)
+    if not dry_run:
+        write_changelog(proposed, new_version)
     return proposed
 
 
-def release_tag(version_str, changes):
+def release_tag(new_version, changes, dry_run):
+    # type: (Version, str, bool) -> None
     """
-    :param version_str: Version in string format
-    :type version_str: string
-    Commits and pushes the branch an tag
+    Commit and push the branch and tag.
     """
-    execute("git commit -a -m 'Bump version to {}'".format(version_str), log=True)
-    annotation_message = "{}\n\nChangelog:\n{}".format(version_str, changes)
-    # use "subprocess" directly to avoid escaping nightmares in annotation_message
-    subprocess.check_output(["git", "tag", "-a", version_str, "-m", annotation_message])
-    execute("git push origin HEAD", ignore=True, log=True)
-    execute("git push origin {}".format(version_str), ignore=True, log=True)
+    execute(
+        ["git", "commit", "-a", "-m", "Bump version to {}".format(new_version)],
+        log=True,
+        dry_run=dry_run,
+    )
+    annotation_message = "{}\n\nChangelog:\n{}".format(new_version, changes)
+    execute(
+        ["git", "tag", "-a", str(new_version), "-m", annotation_message],
+        log=True,
+        dry_run=dry_run,
+    )
+    execute(["git", "push", "origin", "HEAD"], ignore=True, log=True, dry_run=dry_run)
+    execute(
+        ["git", "push", "origin", "{}".format(new_version)],
+        ignore=True,
+        log=True,
+        dry_run=dry_run,
+    )
 
 
-def main(argv):
+def input_new_version(current):
+    # type: (Version) -> Version
+    default_new_version = increment_version(current)
+    new_version = None
+    while not new_version:
+        new_version_str = input(
+            "New version to release [{}]: ".format(default_new_version)
+        )
+        if new_version_str:
+            try:
+                new_version = Version(new_version_str)
+            except InvalidVersion as ex:
+                print(
+                    "{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(
+                        ex
+                    )
+                )
+        else:
+            new_version = default_new_version
+    return new_version
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Build and upload a new release.")
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="version",
+        version="simpleflow {}".format(current_version()),
+        help="display version number",
+    )
+    parser.add_argument(
+        "--dry-run", "-n", action="store_true", help="don't actually do anything"
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--test-pypi",
+        "-T",
+        action="store_const",
+        const="https://test.pypi.org/simple/",
+        dest="repository_url",
+        help="upload to TestPyPI",
+    )
+    group.add_argument(
+        "--repository-url",
+        help="repository (package index) URL to upload the package to",
+    )
+    parser.add_argument("--new-version", help="new version number")
+    args = parser.parse_args()
+
+    dry_run = args.dry_run
+
+    # check whether on main branch or not
+    step("Check current branch")
+    if not on_main_branch():
+        print("WARNING!")
+        print("  You're not on the main branch ({}).".format(MAIN_BRANCH))
+        print("Please confirm you want to continue [y/N]", end=" ")
+        answer = input()
+        if not answer.lower().startswith("y"):
+            fail("Will not continue as you're not on the main branch")
+
     step("Detect current/new version")
     current = current_version()
     print("Current version: {}".format(current))
 
     # decide a new version number to release
-    new_version = ""
-    default_new_version = increment_version(current)
-    while not re.match(r'^(\d+)(\.\d+){2,3}?$', new_version):
-        if new_version:
-            print("BAD FORMAT ({})! Should be in the form: 1.2.3".format(new_version))
-        new_version = input("New version to release [{}]: ".format(default_new_version))
-        if not new_version:
-            new_version = default_new_version
-
-    # check if on main branch or not
-    step("Check current branch")
-    if not on_main_branch():
-        print("WARNING!")
-        print("  You're not on the main branch ({}).".format(MAIN_BRANCH))
-        print("Please confirm you want to continue [y/N]", end=' ')
-        answer = input()
-        if not answer.lower().startswith("y"):
-            fail("Will not continue as you're not on the main branch")
+    if args.new_version:
+        new_version = Version(args.new_version)
+    else:
+        new_version = input_new_version(current)
 
     # generate new version file
     step("Generate version file {}".format(VERSION_FILE))
-    generate_version_file(new_version)
+    generate_version_file(new_version, dry_run)
 
     # generate changelog
     step("Generate {}".format(CHANGELOG_FILE))
-    changes = generate_changelog(current, new_version)
+    changes = generate_changelog(current, new_version, dry_run)
 
     # tag version
     step("Release tag")
-    release_tag(new_version, changes)
+    release_tag(new_version, changes, dry_run)
 
     # push package to pypi
-    step("Generate and push package to pypi.python.org")
-    execute("python setup.py sdist upload -r pypi", log=True)
+    step(
+        "Generate and push package to {}".format(
+            args.repository_url or "pypi.python.org"
+        )
+    )
+    execute(["python", "setup.py", "bdist_wheel"], log=True)
+    wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
+    cmd = ["twine", "upload", wheel]
+    if args.repository_url:
+        cmd += ["--repository-url", args.repository_url]
+    execute(cmd, log=True, dry_run=dry_run)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
