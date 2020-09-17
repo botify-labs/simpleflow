@@ -355,22 +355,29 @@ class TaskFailureContext(object):
         return History.get_event_id(event)
 
     def decide_abort(self):
-        # type: () -> None
+        # type: () -> TaskFailureContext
         self.decision = self.Decision.abort
+        return self
 
     def decide_ignore(self):
+        # type: () -> TaskFailureContext
         self.decision = self.Decision.ignore
+        return self
 
     def decide_cancel(self):
+        # type: () -> TaskFailureContext
         self.decision = self.Decision.cancel
+        return self
 
     def decide_retry(self, retry_wait_timeout=0):
-        # type: (Optional[int]) -> None
+        # type: (Optional[int]) -> TaskFailureContext
         self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
         self.retry_wait_timeout = retry_wait_timeout
+        return self
 
     def decide_handled(self, a_task, future=None):
-        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> None
+        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> TaskFailureContext
         self.a_task = a_task
         self.future = future
         self.decision = self.Decision.handled
+        return self
