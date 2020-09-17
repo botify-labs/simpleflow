@@ -289,7 +289,7 @@ class TaskFailureContext(object):
 
     a_task = attr.ib()  # type: Union[ActivityTask, WorkflowTask]
     event = attr.ib()  # type: Dict[str, Any]
-    future = attr.ib()  # type: futures.Future
+    future = attr.ib()  # type: Optional[futures.Future]
     exception_class = attr.ib()  # type: Type[Exception]
     history = attr.ib(default=None)  # type: Optional[History]
     decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
@@ -353,3 +353,24 @@ class TaskFailureContext(object):
         # type: () -> Optional[int]
         event = self.event
         return History.get_event_id(event)
+
+    def decide_abort(self):
+        # type: () -> None
+        self.decision = self.Decision.abort
+
+    def decide_ignore(self):
+        self.decision = self.Decision.ignore
+
+    def decide_cancel(self):
+        self.decision = self.Decision.cancel
+
+    def decide_retry(self, retry_wait_timeout=0):
+        # type: (Optional[int]) -> None
+        self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
+        self.retry_wait_timeout = retry_wait_timeout
+
+    def decide_handled(self, a_task, future=None):
+        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> None
+        self.a_task = a_task
+        self.future = future
+        self.decision = self.Decision.handled
