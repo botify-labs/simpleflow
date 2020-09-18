@@ -299,10 +299,17 @@ class TaskFailureContext(object):
 
     @property
     def retry_count(self):
+        # type: () -> Optional[int]
         return self.event.get('retry')
 
     @property
+    def attempt_number(self):
+        # type: () -> int
+        return self.event.get('retry', 0) + 1
+
+    @property
     def task_name(self):
+        # type: () -> Optional[str]
         if hasattr(self.a_task, 'payload'):
             return self.a_task.payload.name
         if hasattr(self.a_task, 'name'):
@@ -311,24 +318,29 @@ class TaskFailureContext(object):
 
     @property
     def exception(self):
+        # type: () -> Optional[Exception]
         return self.future.exception
 
     @property
     def current_started_decision_id(self):
+        # type: () -> Optional[int]
         return self.history.started_decision_id if self.history else None
 
     @property
     def last_completed_decision_id(self):
+        # type: () -> Optional[int]
         return self.history.completed_decision_id if self.history else None
 
     @property
     def task_error(self):
+        # type: () -> str
         if self._task_error is None:
             self._cache_error()
         return self._task_error
 
     @property
     def task_error_type(self):
+        # type: () -> Optional[Type]
         if self._task_error is None:
             self._cache_error()
         return self._task_error_type
