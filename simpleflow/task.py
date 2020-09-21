@@ -295,7 +295,7 @@ class TaskFailureContext(object):
     decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
     retry_wait_timeout = attr.ib(default=None)  # type: Optional[int]
     _task_error = attr.ib(default=None)  # type: Optional[str]
-    _task_error_type = attr.ib(default=None)  # type: Optional[Type]
+    _task_error_type = attr.ib(default=None)  # type: Optional[Type[Exception]]
 
     @property
     def retry_count(self):
@@ -340,7 +340,7 @@ class TaskFailureContext(object):
 
     @property
     def task_error_type(self):
-        # type: () -> Optional[Type]
+        # type: () -> Optional[Type[Exception]]
         if self._task_error is None:
             self._cache_error()
         return self._task_error_type
