@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import six
+import attr
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
@@ -22,7 +23,7 @@ def get_actual_value(value):
     Unwrap the result of a Future or return the value.
     """
     if isinstance(value, futures.Future):
-        return futures.get_result_or_raise(value)
+        return value.result
     return value
 
 
@@ -272,6 +273,7 @@ class CancelTimerTask(Task):
         return
 
 
+@attr.s
 class TaskFailureContext(object):
     """
     Some context for a task/workflow failure.
@@ -285,54 +287,29 @@ class TaskFailureContext(object):
         cancel = 5
         handled = 6
 
-    def __init__(self,
-                 a_task,  # type: Union[ActivityTask, WorkflowTask]
-                 event,  # type: Dict[str, Any]
-                 future,  # type: futures.Future
-                 exception_class,  # type: Type[Exception]
-                 history=None,  # type: Optional[History]
-                 ):
-        self.a_task = a_task
-        self.event = event
-        self.future = future
-        self.exception_class = exception_class
-        self.history = history
-        self.decision = TaskFailureContext.Decision.none
-        self.retry_wait_timeout = None
-        self._task_error = None
-
-    def __repr__(self):
-        return '<TaskFailureContext' \
-               ' task type={type}' \
-               ' task.id={id}' \
-               ' task.name={name}' \
-               ' event={event}' \
-               ' future={future}' \
-               ' task_error={task_error}' \
-               ' current_started_decision_id={started_decision_id}' \
-               ' last_completed_decision_id={completed_decision_id}' \
-               ' decision={decision}' \
-               ' retry_wait_timeout={retry_wait_timeout}' \
-               '>' \
-            .format(
-                type=type(self.a_task),
-                id=getattr(self.a_task, 'id', None),
-                name=getattr(self.a_task, 'name', None),
-                event=self.event,
-                future=self.future,
-                task_error=self.task_error,
-                started_decision_id=self.current_started_decision_id,
-                completed_decision_id=self.last_completed_decision_id,
-                decision=self.decision,
-                retry_wait_timeout=self.retry_wait_timeout,
-                )
+    a_task = attr.ib()  # type: Union[ActivityTask, WorkflowTask]
+    event = attr.ib()  # type: Dict[str, Any]
+    future = attr.ib()  # type: Optional[futures.Future]
+    exception_class = attr.ib()  # type: Type[Exception]
+    history = attr.ib(default=None)  # type: Optional[History]
+    decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
+    retry_wait_timeout = attr.ib(default=None)  # type: Optional[int]
+    _task_error = attr.ib(default=None)  # type: Optional[str]
+    _task_error_type = attr.ib(default=None)  # type: Optional[Type[Exception]]
 
     @property
     def retry_count(self):
+        # type: () -> Optional[int]
         return self.event.get('retry')
 
     @property
+    def attempt_number(self):
+        # type: () -> int
+        return self.event.get('retry', 0) + 1
+
+    @property
     def task_name(self):
+        # type: () -> Optional[str]
         if hasattr(self.a_task, 'payload'):
             return self.a_task.payload.name
         if hasattr(self.a_task, 'name'):
@@ -341,30 +318,78 @@ class TaskFailureContext(object):
 
     @property
     def exception(self):
+        # type: () -> Optional[Exception]
         return self.future.exception
 
     @property
     def current_started_decision_id(self):
+        # type: () -> Optional[int]
         return self.history.started_decision_id if self.history else None
 
     @property
     def last_completed_decision_id(self):
+        # type: () -> Optional[int]
         return self.history.completed_decision_id if self.history else None
 
     @property
     def task_error(self):
+        # type: () -> str
         if self._task_error is None:
-            from simpleflow.exceptions import TaskFailed
-            from simpleflow.utils import json_loads_or_raw
-            self._task_error = ()  # falsy value different from None
-            if isinstance(self.exception, TaskFailed) and self.exception.details:
-                details = json_loads_or_raw(self.exception.details)
-                if isinstance(details, dict) and 'error' in details:
-                    self._task_error = details['error']
+            self._cache_error()
         return self._task_error
+
+    @property
+    def task_error_type(self):
+        # type: () -> Optional[Type[Exception]]
+        if self._task_error is None:
+            self._cache_error()
+        return self._task_error_type
+
+    def _cache_error(self):
+        from simpleflow.exceptions import TaskFailed
+        from simpleflow.utils import import_from_module, json_loads_or_raw
+        self._task_error = ""  # falsy value different from None
+        if isinstance(self.exception, TaskFailed) and self.exception.details:
+            details = json_loads_or_raw(self.exception.details)
+            if isinstance(details, dict):
+                if 'error' in details:
+                    self._task_error = details['error']
+                if 'error_type' in details:
+                    try:
+                        self._task_error_type = import_from_module(details['error_type'])
+                    except Exception:
+                        pass
 
     @property
     def id(self):
         # type: () -> Optional[int]
         event = self.event
         return History.get_event_id(event)
+
+    def decide_abort(self):
+        # type: () -> TaskFailureContext
+        self.decision = self.Decision.abort
+        return self
+
+    def decide_ignore(self):
+        # type: () -> TaskFailureContext
+        self.decision = self.Decision.ignore
+        return self
+
+    def decide_cancel(self):
+        # type: () -> TaskFailureContext
+        self.decision = self.Decision.cancel
+        return self
+
+    def decide_retry(self, retry_wait_timeout=0):
+        # type: (Optional[int]) -> TaskFailureContext
+        self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
+        self.retry_wait_timeout = retry_wait_timeout
+        return self
+
+    def decide_handled(self, a_task, future=None):
+        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> TaskFailureContext
+        self.a_task = a_task
+        self.future = future
+        self.decision = self.Decision.handled
+        return self

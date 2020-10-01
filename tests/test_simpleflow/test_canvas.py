@@ -1,13 +1,15 @@
 from builtins import range
 import unittest
 
+from jsonpickle import json
+
 from simpleflow import futures, workflow, exceptions, Workflow
 from simpleflow.canvas import (
     FuncGroup,
     Group,
     Chain,
 )
-from simpleflow.exceptions import AggregateException
+from simpleflow.exceptions import AggregateException, TaskFailed
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
 from simpleflow.activity import with_attributes
@@ -91,7 +93,7 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(future.count_finished_activities, 2)
         self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result
+            future.result  # noqa
 
     def test_simplified_declaration(self):
         future = Group(
@@ -111,7 +113,7 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(future.count_finished_activities, 2)
         self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result
+            future.result  # noqa
 
     def test_group_with_workflow(self):
         """ Test that it is possible to provide a WorkflowTask to a Group(). """
@@ -146,8 +148,8 @@ class TestGroup(unittest.TestCase):
         self.assertTrue(future.finished)
         self.assertIsInstance(future.exception, AggregateException)
         self.assertEqual(2, len(future.exception.exceptions))
-        self.assertIsInstance(future.exception.exceptions[0], ZeroDivisionError)
-        self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
+        self.assertIsInstance(future.exception.exceptions[0], TaskFailed)
+        self.assertIsInstance(future.exception.exceptions[1], TaskFailed)
 
     def test_max_parallel(self):
         future = Group(
@@ -240,7 +242,10 @@ class TestChain(unittest.TestCase):
         # Both tasks were tried and failed (being in a chain doesn't change this)
         self.assertEqual(2, len(future.exception.exceptions))
         self.assertIsNone(future.exception.exceptions[0])
-        self.assertIsInstance(future.exception.exceptions[1], ZeroDivisionError)
+        exc = future.exception.exceptions[1]
+        self.assertIsInstance(exc, TaskFailed)
+        details = json.loads(exc.details)
+        self.assertEqual("ZeroDivisionError", details["error_type"])
 
     def test_raises_on_failure(self):
         chain = Chain(

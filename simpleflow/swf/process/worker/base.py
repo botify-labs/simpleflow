@@ -24,7 +24,7 @@ from simpleflow.swf.process import Poller
 
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import format_exc, json_dumps, to_k8s_identifier
+from simpleflow.utils import format_exc, format_exc_type, json_dumps, to_k8s_identifier
 
 
 class Worker(Supervisor):
@@ -211,6 +211,7 @@ class ActivityWorker(object):
                 details = json_dumps(
                     {
                         'error': exc_type.__name__,
+                        'error_type': format_exc_type(exc_type),
                         'message': str(exc_value),
                         'traceback': tb,
                     },

@@ -216,6 +216,11 @@ class Executor(executor.Executor):
         self.created_activity_types = set()
         self.create_workflow()
 
+    @property
+    def history(self):
+        # type: () -> Optional[History]
+        return self._history
+
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
         """
         Assign a new ID to *a_task*.

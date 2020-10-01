@@ -2,6 +2,7 @@ import collections
 import sys
 import traceback
 import uuid
+from typing import TYPE_CHECKING
 
 from simpleflow import (
     exceptions,
@@ -14,10 +15,14 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.task import ActivityTask, WorkflowTask, SignalTask, MarkerTask
 from simpleflow.activity import Activity
-from simpleflow.utils import format_exc, json_dumps, issubclass_
+from simpleflow.utils import format_exc, format_exc_type, json_dumps, issubclass_
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 from simpleflow.history import History
+
+if TYPE_CHECKING:
+    from typing import Optional, Union
+    from simpleflow.history import History
 
 
 class Executor(executor.Executor):
@@ -35,6 +40,16 @@ class Executor(executor.Executor):
 
         self.wf_run_id = []
         self.wf_id = []
+        self._history = None  # type: Optional[Union[builder.History, History]]
+
+    @property
+    def history(self):
+        # type: () -> Optional[History]
+        if not isinstance(self._history, History):
+            history = History(self._history)
+            history.parse()
+            return history
+        return self._history
 
     def update_workflow_class(self):
         """
@@ -108,24 +123,24 @@ class Executor(executor.Executor):
             state = 'completed'
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            future._exception = exc_value
-            logger.exception('rescuing exception: {}'.format(exc_value))
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
-                tb = traceback.format_tb(exc_traceback)
-                message = format_exc(exc_value)
-                details = json_dumps(
+            tb = traceback.format_tb(exc_traceback)
+            task_failed = exceptions.TaskFailed(
+                name=getattr(task, "name", "unknown"),
+                reason=format_exc(exc_value),
+                details=json_dumps(
                     {
                         'error': exc_type.__name__,
+                        'error_type': format_exc_type(exc_type),
                         'message': str(exc_value),
                         'traceback': tb,
                     },
                     default=repr
                 )
-                raise exceptions.TaskFailed(
-                    func.name,
-                    message,
-                    details,
-                )
+            )
+            future.set_exception(task_failed)
+            logger.exception('rescuing exception: {}'.format(exc_value))
+            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, 'raises_on_failure', None):
+                raise task_failed
             state = 'failed'
         finally:
             if isinstance(task, WorkflowTask):

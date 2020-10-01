@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import importlib
 
 from simpleflow.activity import Activity
-
+from simpleflow.utils import import_object_from_module
 from .exceptions import DispatchError
 
 
@@ -22,9 +21,9 @@ class Dispatcher(object):
         :raise DispatchError: if doesn't exist or not an activity
         """
         module_name, activity_name = name.rsplit('.', 1)
-        module = importlib.import_module(module_name)
-        activity = getattr(module, activity_name, None)
-        if not activity:
+        try:
+            activity = import_object_from_module(module_name, activity_name)
+        except ImportError:
             # We were not able to import a function at all.
             raise DispatchError("unable to import '{}'".format(name))
         if not isinstance(activity, Activity):

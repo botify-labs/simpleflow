@@ -90,21 +90,22 @@ def read(fname):
 
 
 DEPS = [
+    'attrs',
     'future',
     'boto>=2.49.0',
     'diskcache>=2.4.1',
     'Jinja2>=2.8',
-    'kubernetes>=10.0.1',
+    'kubernetes>=3.0.0',
     'lazy_object_proxy',
     'lockfile>=0.9.1',
     'tabulate>=0.8.2,<1.0.0',
     'setproctitle',
     'click',
-    'psutil>=5.6.6',
+    'psutil',
     'pytz',
     'six',
     'typing',
-    'PyYAML>=5.3.1',
+    # 'PyYAML',
     'enum34;python_version<"3.4"',
     'subprocess32>=3.5.0;python_version<"3.5"',
 ]

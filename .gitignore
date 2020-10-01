@@ -36,6 +36,9 @@ nosetests.xml
 # Vim swap files
 *.swp
 
+# Jetbrains
+.idea/
+
 # Complexity
 output/*.html
 output/*/index.html
