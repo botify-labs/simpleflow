@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.15
+-------
+
+- Improvement/375/task failure context add full exception class name (#377)
+
 0.21.14a3
 ---------
 
