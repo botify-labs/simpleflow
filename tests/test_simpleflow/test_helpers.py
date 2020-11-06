@@ -26,7 +26,16 @@ class TestSimpleflowSwfHelpers(unittest.TestCase):
         func, args, kwargs, meta, params = find_activity(FakeHistory(), scheduled_id=5)
         expect(str(func)).to.match(r'^Activity\(name=tests.integration.workflow.sleep,')
         expect(args).to.equal([37])
-        expect(kwargs).to.equal({})
+        expect(kwargs).to.equal(
+            {
+                'context': {
+                    'activity_id': 'activity-tests.integration.workflow.sleep-1',
+                    'input': {'args': [37]},
+                    'name': 'tests.integration.workflow.sleep',
+                    'version': None,
+                }
+            }
+        )
         expect(meta).to.equal({})
         expect(params["id"]).to.equal("activity-tests.integration.workflow.sleep-1")
 

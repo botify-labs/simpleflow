@@ -686,6 +686,10 @@ def activity_rerun(domain,
     task, args, kwargs, meta, params = helpers.find_activity(
         history, scheduled_id=scheduled_id, activity_id=activity_id, input=input_override,
     )
+    kwargs["context"].update({
+        "workflow_id": wfe.workflow_id,
+        "run_id": wfe.run_id,
+    })
     logger.debug("Found activity. Last execution:")
     for line in json_dumps(params, pretty=True).split("\n"):
         logger.debug(line)
