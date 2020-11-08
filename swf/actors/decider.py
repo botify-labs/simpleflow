@@ -87,7 +87,7 @@ class Decider(Actor):
             **kwargs
         )
         token = task.get('taskToken')
-        if token is None:
+        if not token:
             raise PollTimeout("Decider poll timed out")
 
         events = task['events']
@@ -116,7 +116,7 @@ class Decider(Actor):
                 raise ResponseError(message)
 
             token = task.get('taskToken')
-            if token is None:
+            if not token:
                 raise PollTimeout("Decider poll timed out")
 
             events.extend(task['events'])
