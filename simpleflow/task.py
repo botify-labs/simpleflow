@@ -6,11 +6,15 @@ from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING
 
+import inspect
+from importlib import import_module
+
 import attr
 import six
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
+from simpleflow.utils import import_object_from_module
 
 from . import futures
 from .activity import Activity
@@ -62,6 +66,12 @@ class ActivityTask(Task):
             raise TypeError(
                 "Wrong value for `activity`, got {} instead".format(type(activity))
             )
+
+        self.pre_execute_funcs = []
+        self.post_execute_funcs = []
+        # Avoid spreading middlewares in kwargs
+        self.__load_middlewares__(kwargs.pop("simpleflow_middlewares", None))
+
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.ActivityTask.from_generic_task() factory
@@ -74,6 +84,30 @@ class ActivityTask(Task):
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
+
+    def __load_middlewares__(self, middlewares):
+        if not middlewares:
+            return
+            
+        for pre in middlewares["pre"]:
+            module, func = pre.rsplit('.', 1)
+            try:
+                func = import_object_from_module(module, func)
+            except AttributeError:
+                pass
+            else:
+                self.pre_execute_funcs.append(func)
+
+        for post in middlewares["post"]:
+            module, func = post.rsplit('.', 1)
+            try:
+                func = import_object_from_module(module, func)
+            except AttributeError:
+                pass
+            else:
+                self.post_execute_funcs.append(func)
+>>>>>>> 694d4455 (add middleware handling to workers)
+
 
     @property
     def name(self):
@@ -90,19 +124,29 @@ class ActivityTask(Task):
         if getattr(method, "add_context_in_kwargs", False):
             self.kwargs["context"] = self.context
 
+        for func in self.pre_execute_funcs:
+            func(self.context)
+
+        result = None
         if hasattr(method, "execute"):
             task = method(*self.args, **self.kwargs)
             task.context = self.context
+
             result = task.execute()
+
             if hasattr(task, "post_execute"):
                 task.post_execute()
-            return result
         else:
             # NB: the following line attaches some *state* to the callable, so it
             # can be used directly for advanced usage. This works well because we
             # don't do multithreading, but if we ever do, DANGER!
             method.context = self.context
-            return method(*self.args, **self.kwargs)
+            result =  method(*self.args, **self.kwargs)
+
+        for func in self.post_execute_funcs:
+            func(self.context, result=result)
+
+        return result
 
     def propagate_attribute(self, attr, val):
         """

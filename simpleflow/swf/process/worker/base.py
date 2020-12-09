@@ -40,7 +40,13 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     """
 
     def __init__(
-        self, domain, task_list, heartbeat=60, process_mode=None, poll_data=None
+        self,
+        domain,
+        task_list,
+        middlewares=None,
+        heartbeat=60,
+        process_mode=None,
+        poll_data=None,
     ):
         """
 
@@ -58,6 +64,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # replace it by None because multiprocessing.Process.join() treats
         # this as "no timeout"
         self._heartbeat = heartbeat or None
+        self.middlewares = middlewares
 
         self.process_mode = process_mode or "local"
         assert (
@@ -110,7 +117,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 )
                 self.fail_with_retry(token, task, reason)
         else:
-            spawn(self, token, task, self._heartbeat)
+            spawn(self, token, task, self.middlewares, self._heartbeat)
 
     @with_state("completing")
     def complete(self, token, result=None):
@@ -173,7 +180,7 @@ class ActivityWorker(object):
         name = task.activity_type.name
         return self._dispatcher.dispatch_activity(name)
 
-    def process(self, poller, token, task):
+    def process(self, poller, token, task, middleware=None):
         """
 
         :param poller:
@@ -193,7 +200,7 @@ class ActivityWorker(object):
             context["domain_name"] = poller.domain.name
             if input.get("meta", {}).get("binaries"):
                 download_binaries(input["meta"]["binaries"])
-            result = ActivityTask(activity, *args, context=context, **kwargs).execute()
+            result = ActivityTask(activity, *args, context=context, _simpleflow_middleware_module=middleware_module, **kwargs).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.exception("process error: {}".format(str(exc_value)))
@@ -225,7 +232,7 @@ class ActivityWorker(object):
             poller.fail_with_retry(token, task, reason)
 
 
-def process_task(poller, token, task):
+def process_task(poller, token, task, middlewares=None):
     """
 
     :param poller:
@@ -238,7 +245,7 @@ def process_task(poller, token, task):
     logger.debug("process_task() pid={}".format(os.getpid()))
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
-    worker.process(poller, token, task)
+    worker.process(poller, token, task, middlewares)
 
 
 def spawn_kubernetes_job(poller, swf_response):
@@ -295,7 +302,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
         )
 
 
-def spawn(poller, token, task, heartbeat=60):
+def spawn(poller, token, task, middlewares=None, heartbeat=60):
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
 
@@ -316,7 +323,7 @@ def spawn(poller, token, task, heartbeat=60):
             os.getpid(), heartbeat
         )
     )
-    worker = multiprocessing.Process(target=process_task, args=(poller, token, task),)
+    worker = multiprocessing.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
     def worker_alive():

@@ -1,11 +1,15 @@
 from __future__ import absolute_import
 
+from importlib import import_module
+
 import swf.models
 
 from .base import ActivityPoller, Worker
 
 
-def make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data):
+def make_worker_poller(
+    domain, task_list, middlewares, heartbeat, process_mode, poll_data
+):
     """
     Make a worker poller for the domain and task list.
     :param domain:
@@ -22,12 +26,15 @@ def make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data):
     :rtype: ActivityPoller
     """
     domain = swf.models.Domain(domain)
-    return ActivityPoller(domain, task_list, heartbeat, process_mode, poll_data)
+    return ActivityPoller(
+        domain, task_list, middlewares, heartbeat, process_mode, poll_data
+    )
 
 
 def start(
     domain,
     task_list,
+    middlewares=None,
     nb_processes=None,
     heartbeat=60,
     one_task=False,
@@ -51,7 +58,9 @@ def start(
     :param poll_data: Base64 encoded poll data from SWF, in case you don't want to poll directly.
     :type poll_data: Optional[str]
     """
-    poller = make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data)
+    poller = make_worker_poller(
+        domain, task_list, middlewares, heartbeat, process_mode, poll_data
+    )
 
     if poll_data:
         # if "poll_data" is provided, no need to process it multiple times

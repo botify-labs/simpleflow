@@ -430,6 +430,8 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     )
 
 
+@click.option("--middleware-pre-execution", required=False, multiple=True)
+@click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
     "--poll-data",
     help="Provide a base64 encoded json dump of the SWF poll response, instead of polling SWF",
@@ -464,6 +466,8 @@ def start_worker(
     one_task,
     process_mode,
     poll_data,
+    middleware_pre_execution,
+    middleware_post_execution,
 ):
     if log_level:
         logger.warning(
@@ -480,8 +484,13 @@ def start_worker(
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
 
+    middlewares = {
+            "pre": middleware_pre_execution,
+            "post": middleware_post_execution
+    }
+
     worker.command.start(
-        domain, task_list, nb_processes, heartbeat, one_task, process_mode, poll_data,
+        domain, task_list, middlewares, nb_processes, heartbeat, one_task, process_mode, poll_data,
     )
 
 
@@ -496,6 +505,8 @@ def create_unique_task_list(workflow_id=""):
     return task_list
 
 
+@click.option("--middleware-pre-execution", required=False, multiple=True)
+@click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
     "--heartbeat",
     type=int,
@@ -574,6 +585,8 @@ def standalone(
     display_status,
     repair,
     force_activities,
+    middleware_pre_execution,
+    middleware_post_execution,
 ):
     """
     This command spawn a decider and an activity worker to execute a workflow
@@ -649,7 +662,11 @@ def standalone(
     worker_proc = multiprocessing.Process(
         target=worker.command.start,
         args=(domain, task_list,),
-        kwargs={"nb_processes": nb_workers, "heartbeat": heartbeat,},
+        kwargs={
+            "nb_processes": nb_workers, 
+            "heartbeat": heartbeat,
+            "middlewares": {"pre": middleware_pre_execution, "post": middleware_post_execution}
+        },
     )
     worker_proc.start()
 
