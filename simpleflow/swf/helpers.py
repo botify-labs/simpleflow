@@ -5,6 +5,7 @@ import json
 import os
 import socket
 
+import psutil
 from future.utils import iteritems
 
 import swf.exceptions
@@ -142,10 +143,12 @@ def get_task(domain_name, workflow_id, task_id, details):
 
 def swf_identity():
     # basic identity
+    pid = os.getpid()
     identity = {
-        'user': getpass.getuser(),          # system's user
-        'hostname': socket.gethostname(),   # main hostname
-        'pid': os.getpid(),                 # current pid
+        'user': getpass.getuser(),         # system's user
+        'hostname': socket.gethostname(),  # main hostname
+        'pid': pid,                        # current pid
+        'exe': psutil.Process(pid).exe(),  # executable path
     }
 
     # adapt with extra keys from env
