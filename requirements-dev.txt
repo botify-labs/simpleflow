@@ -7,7 +7,7 @@ pytest
 sphinx
 sphinx_rtd_theme
 sure
-vcrpy
+vcrpy==3.0.0
 wheel
 setuptools
 twine

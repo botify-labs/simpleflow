@@ -185,7 +185,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
 
-        if 'taskToken' not in task:
+        if not task.get('taskToken'):
             raise PollTimeout("Activity Worker poll timed out")
 
         logging_context.set("workflow_id", task["workflowExecution"]["workflowId"])

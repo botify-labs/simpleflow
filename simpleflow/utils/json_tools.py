@@ -79,10 +79,9 @@ def json_dumps(obj, pretty=False, compact=True, **kwargs):
         return json.dumps(obj, **kwargs)
     except TypeError:
         # lazy_object_proxy.Proxy subclasses basestring: serialize_complex_object isn't called on python2
-        if PY2:
-            obj = _resolve_proxy(obj)
-            return json.dumps(obj, **kwargs)
-        raise
+        # and some versions of pypy
+        obj = _resolve_proxy(obj)
+        return json.dumps(obj, **kwargs)
 
 
 def json_loads_or_raw(data):
