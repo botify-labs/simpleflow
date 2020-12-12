@@ -84,6 +84,8 @@ class StepExecution(object):
 class MetrologyTask(object):
 
     def can_upload(self):
+        if not hasattr(self, 'context'):
+            return False
         return all(c in self.context for c in ('workflow_id', 'run_id', 'activity_id'))
 
     @property

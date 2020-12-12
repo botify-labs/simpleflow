@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
+import copy
 import getpass
 import json
 import os
 import socket
 
 import psutil
-from future.utils import iteritems
+from future.utils import iteritems, itervalues
 
 import swf.exceptions
 import swf.models
@@ -107,7 +108,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     :type input: Optional[dict[str, Any]]
     """
     found_activity = None
-    for _, params in iteritems(history.activities):
+    for params in itervalues(history.activities):
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
@@ -128,6 +129,13 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     args = input_.get('args', ())
     kwargs = input_.get('kwargs', {})
     meta = input_.get('meta', {})
+
+    kwargs["context"] = {
+        "name": activity_str,
+        "version": None,  # not stored in the activity dict
+        "activity_id": found_activity["id"],
+        "input": copy.deepcopy(input_),
+    }
 
     # return everything
     return activity, args, kwargs, meta, found_activity
