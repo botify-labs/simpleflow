@@ -20,6 +20,7 @@ class Actor(ConnectedSWFObject):
     :ivar  task_list: task list the Actor should watch for tasks on
     :type  task_list: str
     """
+
     def __init__(self, domain, task_list):
         super(Actor, self).__init__()
 
@@ -59,5 +60,5 @@ class Actor(ConnectedSWFObject):
         if not message:
             if e.body:
                 # Expected 'message', got 'Message' ¯\_(ツ)_/¯
-                message = e.body.get('Message')
+                message = e.body.get("Message")
         return message

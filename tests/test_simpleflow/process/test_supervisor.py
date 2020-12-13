@@ -45,14 +45,18 @@ class TestSupervisor(IntegrationTestCase):
             time.sleep(seconds)
 
         # create a supervisor sub-process
-        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2, background=True)
+        supervisor = Supervisor(
+            sleep_long, arguments=(30,), nb_children=2, background=True
+        )
         supervisor.start()
 
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
         self.wait(0.5)
-        self.assertProcess(r'simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)')
-        self.assertProcess(r'simpleflow Worker\(sleep_long, 30\)', count=2)
+        self.assertProcess(
+            r"simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)"
+        )
+        self.assertProcess(r"simpleflow Worker\(sleep_long, 30\)", count=2)
 
     @mark.skip("flaky test based on time.sleep")
     # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
@@ -75,14 +79,14 @@ class TestSupervisor(IntegrationTestCase):
 
         # TODO: find a non-sleep approach
         self.wait(1)
-        self.assertProcess(r'worker: running')
+        self.assertProcess(r"worker: running")
 
         supervisor_process = Process().children()[0]
         os.kill(supervisor_process.pid, signal.SIGTERM)
 
         # TODO: find a non-sleep approach
         self.wait(1)
-        self.assertProcess(r'worker: shutting down')
+        self.assertProcess(r"worker: shutting down")
 
     @mark.skip("flaky test based on time.sleep")
     # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
@@ -111,12 +115,15 @@ class TestSupervisor(IntegrationTestCase):
         # retrieve workers (not great; TODO: move it to Supervisor class)
         def workers():
             return [
-                p for p in Process().children(recursive=True)
+                p
+                for p in Process().children(recursive=True)
                 if "Worker(sleep_long" in p.name()
             ]
 
         # create a supervisor sub-process
-        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=1, background=True)
+        supervisor = Supervisor(
+            sleep_long, arguments=(30,), nb_children=1, background=True
+        )
         supervisor.start()
 
         # we need to wait a little here so the workers start

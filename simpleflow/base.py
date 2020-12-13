@@ -3,6 +3,7 @@ class Submittable(object):
     Object directly submittable to an executor, without wrapping:
     E.g. an ActivityTask but not an Activity.
     """
+
     def propagate_attribute(self, attr, val):
         pass
 
@@ -13,5 +14,6 @@ class SubmittableContainer(object):
 
     We cannot pass those objects directly to the executor
     """
+
     def propagate_attribute(self, attr, val):
         pass

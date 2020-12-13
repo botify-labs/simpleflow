@@ -49,7 +49,7 @@ class KubernetesJob(object):
         # render the job template with those context variables
         path, filename = os.path.split(job_template)
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(path or './'),
+            loader=jinja2.FileSystemLoader(path or "./"),
             undefined=jinja2.StrictUndefined,
         )
         rendered = env.get_template(filename).render(variables)

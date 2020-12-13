@@ -24,13 +24,13 @@ class TestProcessContext(unittest.TestCase):
         expect(ctx.get("event_id")).to.equal("4")
 
     def test_set_and_get_invalid_key(self):
-        (expect(ctx.set)
+        (
+            expect(ctx.set)
             .when.called_with("invalid_key", "bar")
-            .to.have.raised(KeyError))
+            .to.have.raised(KeyError)
+        )
 
-        (expect(ctx.get)
-            .when.called_with("invalid_key")
-            .to.have.raised(KeyError))
+        (expect(ctx.get).when.called_with("invalid_key").to.have.raised(KeyError))
 
     def test_reset(self):
         ctx.set("workflow_id", "foo-bar")

@@ -14,7 +14,7 @@ from simpleflow import compat, logger
 
 
 class SWFError(Exception):
-    def __init__(self, message, raw_error='', *args, **kwargs):
+    def __init__(self, message, raw_error="", *args, **kwargs):
         """
         Examples:
 
@@ -55,26 +55,25 @@ class SWFError(Exception):
         """
         Exception.__init__(self, message, *args, **kwargs)
 
-        values = raw_error.split(':', 1)
+        values = raw_error.split(":", 1)
 
         if len(values) == 2:
             self.details = values[1].strip()
         else:
-            self.details = ''
+            self.details = ""
 
         self.kind = values[0].strip()
-        self.type_ = (self.kind.lower().strip().replace(' ', '_') if
-                      self.kind else None)
+        self.type_ = self.kind.lower().strip().replace(" ", "_") if self.kind else None
 
     @property
     def message(self):
-        return self.args[0] if self.args else ''
+        return self.args[0] if self.args else ""
 
     def __repr__(self):
         msg = self.message.strip()
 
         if self.kind and self.details:
-            msg += '\nReason: {}, {}'.format(self.kind, self.details)
+            msg += "\nReason: {}, {}".format(self.kind, self.details)
 
         return msg
 
@@ -82,7 +81,7 @@ class SWFError(Exception):
         msg = self.message
 
         if self.kind and self.details:
-            msg += '\nReason: {}, {}'.format(self.kind, self.details)
+            msg += "\nReason: {}, {}".format(self.kind, self.details)
 
         return msg
 
@@ -119,8 +118,8 @@ def ignore(*args, **kwargs):
     return
 
 
-REGEX_UNKNOWN_RESOURCE = re.compile(r'^[^ ]+\s+([^ :]+)')
-REGEX_NESTED_RESOURCE = re.compile(r'Unknown (?:type|execution):\s*([^=]+)=\[')
+REGEX_UNKNOWN_RESOURCE = re.compile(r"^[^ ]+\s+([^ :]+)")
+REGEX_NESTED_RESOURCE = re.compile(r"Unknown (?:type|execution):\s*([^=]+)=\[")
 
 
 def match_equals(regex, string, values):
@@ -144,8 +143,9 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if (isinstance(values, compat.basestring) and
-            not isinstance(values, collections.Sequence)):
+    if isinstance(values, compat.basestring) and not isinstance(
+        values, collections.Sequence
+    ):
         values = (values,)
     return matched[0] in values
 
@@ -172,7 +172,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     if not isinstance(error, boto.swf.exceptions.SWFResponseError):
         return False
 
-    return getattr(error, 'error_code', None) == 'UnknownResourceFault'
+    return getattr(error, "error_code", None) == "UnknownResourceFault"
 
 
 def is_unknown(resource):
@@ -190,14 +190,11 @@ def is_unknown(resource):
         """
         if not is_unknown_resource_raised(error, *args, **kwargs):
             return False
-        if getattr(error, 'error_code', None) != 'UnknownResourceFault':
-            raise ValueError('cannot extract resource from {}'.format(
-                error))
+        if getattr(error, "error_code", None) != "UnknownResourceFault":
+            raise ValueError("cannot extract resource from {}".format(error))
 
-        message = error.body.get('message')
-        if match_equals(REGEX_UNKNOWN_RESOURCE,
-                        message,
-                        ('type', 'execution')):
+        message = error.body.get("message")
+        if match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution")):
             return match_equals(REGEX_NESTED_RESOURCE, message, resource)
         return match_equals(REGEX_UNKNOWN_RESOURCE, message, resource)
 
@@ -232,15 +229,12 @@ def always(value):
 
 
 def extract_resource(error):
-    if getattr(error, 'error_code', None) != 'UnknownResourceFault':
-        raise ValueError('cannot extract resource from {}'.format(
-            error))
+    if getattr(error, "error_code", None) != "UnknownResourceFault":
+        raise ValueError("cannot extract resource from {}".format(error))
 
-    message = error.body.get('message')
-    resource = (REGEX_UNKNOWN_RESOURCE.findall(message) if
-                message else None)
-    return "Resource {} does not exist".format(
-        resource[0] if resource else 'unknown')
+    message = error.body.get("message")
+    resource = REGEX_UNKNOWN_RESOURCE.findall(message) if message else None
+    return "Resource {} does not exist".format(resource[0] if resource else "unknown")
 
 
 def raises(exception, when, extract=str):
@@ -369,9 +363,7 @@ def catch(exceptions, handle_with=None, log=False):
                 return func(*args, **kwargs)
             except exceptions as err:
                 if log is True:
-                    logger.error('call to {} raised: {}'.format(
-                        func.__name__,
-                        err))
+                    logger.error("call to {} raised: {}".format(func.__name__, err))
 
                 if handle_with is None:
                     raise

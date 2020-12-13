@@ -21,12 +21,12 @@ def test_task_has_an_empty_context_by_default():
 
 
 def test_task_attaches_context_to_functions():
-    ctx = {'foo': 'bar'}
+    ctx = {"foo": "bar"}
     expect(ActivityTask(show_context_func, context=ctx).execute()).to.equal(ctx)
     expect(show_context_func.context).to.equal(ctx)
 
 
 def test_task_attaches_context_to_object_instances():
-    ctx = {'foo': 'bar'}
+    ctx = {"foo": "bar"}
     expect(ActivityTask(ShowContextCls, context=ctx).execute()).to.equal(ctx)
     expect(ShowContextCls.context).to.be.none

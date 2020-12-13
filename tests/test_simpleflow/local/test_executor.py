@@ -7,6 +7,7 @@ from simpleflow.constants import MINUTE, HOUR
 from simpleflow.local import Executor
 from simpleflow.task import WorkflowTask
 
+
 @with_attributes()
 def to_int(arg):
     return int(arg)

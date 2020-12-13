@@ -24,8 +24,9 @@ class IntegrationTestCase(unittest.TestCase):
         children = Process().children(recursive=True)
         matching = [p for p in children if re.search(regex, p.name())]
         self.assertEqual(
-            len(matching), count,
+            len(matching),
+            count,
             "Expected {} processes matching {}, found {} in {}.".format(
                 count, regex, len(matching), children
-            )
+            ),
         )

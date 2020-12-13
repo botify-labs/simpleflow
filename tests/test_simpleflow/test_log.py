@@ -21,4 +21,4 @@ class TestLog(unittest.TestCase):
         formatter = SimpleflowFormatter()
         record = FakeRecord("Foo %s", [])
 
-        expect(formatter.format(record)).to.match(r'Foo %s$')
+        expect(formatter.format(record)).to.match(r"Foo %s$")

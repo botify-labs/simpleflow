@@ -14,7 +14,6 @@ from tests.moto_compat import mock_s3, mock_swf
 @mock_s3
 @mock_swf
 class MockSWFTestCase(unittest.TestCase):
-
     def setUp(self):
         # SWF preparation
         self.domain = DOMAIN
@@ -25,8 +24,11 @@ class MockSWFTestCase(unittest.TestCase):
         self.conn = boto.connect_swf()
         self.conn.register_domain(self.domain.name, "50")
         self.conn.register_workflow_type(
-            self.domain.name, self.workflow_type_name, self.workflow_type_version,
-            task_list=self.decision_task_list, default_child_policy="TERMINATE",
+            self.domain.name,
+            self.workflow_type_name,
+            self.workflow_type_version,
+            task_list=self.decision_task_list,
+            default_child_policy="TERMINATE",
             default_execution_start_to_close_timeout="6",
             default_task_start_to_close_timeout="3",
         )
@@ -37,8 +39,9 @@ class MockSWFTestCase(unittest.TestCase):
 
     def tearDown(self):
         swf_backend.reset()
-        assert not self.conn.list_domains("REGISTERED")["domainInfos"], \
-            "moto state incorrectly reset!"
+        assert not self.conn.list_domains("REGISTERED")[
+            "domainInfos"
+        ], "moto state incorrectly reset!"
 
     def register_activity_type(self, func, task_list):
         self.conn.register_activity_type(self.domain.name, func, task_list)
@@ -46,8 +49,10 @@ class MockSWFTestCase(unittest.TestCase):
     def start_workflow_execution(self, input=None):
         self.workflow_id = "wfe-1234"
         response = self.conn.start_workflow_execution(
-            self.domain.name, self.workflow_id,
-            self.workflow_type_name, self.workflow_type_version,
+            self.domain.name,
+            self.workflow_id,
+            self.workflow_type_name,
+            self.workflow_type_version,
             input=input,
         )
         self.run_id = response["runId"]
@@ -60,9 +65,11 @@ class MockSWFTestCase(unittest.TestCase):
         return self.executor.replay(response)
 
     def take_decisions(self, decisions, execution_context=None):
-        self.decider.complete(self._decision_token,
-                              decisions=decisions,
-                              execution_context=execution_context)
+        self.decider.complete(
+            self._decision_token,
+            decisions=decisions,
+            execution_context=execution_context,
+        )
 
     def get_workflow_execution_history(self):
         return self.conn.get_workflow_execution_history(

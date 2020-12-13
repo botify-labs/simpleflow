@@ -7,11 +7,7 @@ from swf.models.decision import ActivityTaskDecision
 class TestActivityTaskDecision(unittest.TestCase):
     def setUp(self):
         self.domain = Domain("test-domain")
-        self.activity_type = ActivityType(
-            self.domain,
-            "test-name",
-            "test-version"
-        )
+        self.activity_type = ActivityType(self.domain, "test-name", "test-version")
 
     def tearDown(self):
         pass
@@ -36,5 +32,6 @@ class TestActivityTaskDecision(unittest.TestCase):
 
         for stupid_arg in ("", "not-a-number", ["list"]):
             with self.assertRaises((ValueError, TypeError)):
-                decision.schedule("my-activity", self.activity_type,
-                                  task_priority=stupid_arg)
+                decision.schedule(
+                    "my-activity", self.activity_type, task_priority=stupid_arg
+                )

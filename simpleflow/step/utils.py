@@ -33,9 +33,7 @@ def step_will_run(step_name, force_steps, skipped_steps, steps_done, force=False
 
 
 def step_is_forced(step_name, force_steps, force):
-    return (
-        force or
-        should_force_step(step_name, force_steps))
+    return force or should_force_step(step_name, force_steps)
 
 
 def _get_step_reasons(step_name, step_reasons):

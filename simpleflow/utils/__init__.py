@@ -28,9 +28,9 @@ def hex_hash(s):
     :return:
     """
     if not s:
-        return '0'
-    s = s.encode('utf-8')
-    return '{:x}'.format(adler32(s) & 0xffffffff)
+        return "0"
+    s = s.encode("utf-8")
+    return "{:x}".format(adler32(s) & 0xFFFFFFFF)
 
 
 def format_exc(exc):
@@ -56,7 +56,7 @@ def _some_str(value):
     try:
         return str(value)
     except Exception:
-        return '<unprintable %s object>' % type(value).__name__
+        return "<unprintable %s object>" % type(value).__name__
 
 
 def format_exc_type(exc_type):
@@ -64,7 +64,7 @@ def format_exc_type(exc_type):
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
-        type_str = '%s.%s' % (type_mod, type_str)
+        type_str = "%s.%s" % (type_mod, type_str)
     return type_str
 
 

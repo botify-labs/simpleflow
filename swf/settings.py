@@ -7,6 +7,7 @@
 from __future__ import unicode_literals
 
 import os
+
 try:
     from ConfigParser import ConfigParser
 except ImportError:
@@ -58,23 +59,25 @@ def from_stream(stream):
 
     """
     config = ConfigParser(allow_no_value=True)
-    if hasattr(config, 'read_file'):
+    if hasattr(config, "read_file"):
         config.read_file(stream)
     else:
         config.readfp(stream)  # deprecated name
 
     settings = {}
 
-    if config.has_section('credentials'):
-        settings.update({
-            'aws_access_key_id': config.get('credentials',
-                                            'aws_access_key_id'),
-            'aws_secret_access_key': config.get('credentials',
-                                                'aws_secret_access_key')
-        })
+    if config.has_section("credentials"):
+        settings.update(
+            {
+                "aws_access_key_id": config.get("credentials", "aws_access_key_id"),
+                "aws_secret_access_key": config.get(
+                    "credentials", "aws_secret_access_key"
+                ),
+            }
+        )
 
-    if config.has_section('defaults'):
-        settings['region'] = config.get('defaults', 'region')
+    if config.has_section("defaults"):
+        settings["region"] = config.get("defaults", "region")
 
     return settings
 
@@ -115,7 +118,7 @@ def from_env():
     return hsh
 
 
-def from_home(path='.swf'):
+def from_home(path=".swf"):
     """Retrieves settings from home environment
 
     If HOME environment is applicapable, search for any files in *path*.
@@ -123,14 +126,14 @@ def from_home(path='.swf'):
     :rtype: dict
 
     """
-    if 'HOME' in os.environ:
-        swf_path = os.path.join(os.environ['HOME'], path)
+    if "HOME" in os.environ:
+        swf_path = os.path.join(os.environ["HOME"], path)
         return from_file(swf_path)
 
     return {}
 
 
-def get(path='.swf'):
+def get(path=".swf"):
     """Retrieves settings from a file or the environment.
 
     First, it will try to retrieve settings from a *path* in the user's home
@@ -148,10 +151,12 @@ def get(path='.swf'):
 def set(**settings):
     """Set settings"""
     from swf.core import SETTINGS
+
     SETTINGS.update({k: v for k, v in settings.items() if v is not None})
 
 
 def clear():
     """Clear settings"""
     from swf.core import SETTINGS
+
     SETTINGS.clear()

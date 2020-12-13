@@ -2,9 +2,11 @@
 import os
 from invoke import task, run
 
+
 @task
 def test():
-    run('python setup.py test', pty=True)
+    run("python setup.py test", pty=True)
+
 
 @task
 def clean():

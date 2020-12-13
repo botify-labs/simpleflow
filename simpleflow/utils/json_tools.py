@@ -12,14 +12,16 @@ from simpleflow.futures import Future
 
 
 def serialize_complex_object(obj):
-    if isinstance(obj, bytes):  # Python 3 only (serialize_complex_object not called here in Python 2)
-        return obj.decode('utf-8', errors='replace')
+    if isinstance(
+        obj, bytes
+    ):  # Python 3 only (serialize_complex_object not called here in Python 2)
+        return obj.decode("utf-8", errors="replace")
     if isinstance(obj, datetime.datetime):
         r = obj.isoformat()
         if obj.microsecond:
             r = r[:23] + r[26:]  # milliseconds only
-        if r.endswith('+00:00'):
-            r = r[:-6] + 'Z'
+        if r.endswith("+00:00"):
+            r = r[:-6] + "Z"
         return r
     elif isinstance(obj, datetime.date):
         return obj.isoformat()
@@ -40,7 +42,8 @@ def serialize_complex_object(obj):
         return list(obj)
     raise TypeError(
         "Type %s couldn't be serialized. This is a bug in simpleflow,"
-        " please file a new issue on GitHub!" % type(obj))
+        " please file a new issue on GitHub!" % type(obj)
+    )
 
 
 def _resolve_proxy(obj):

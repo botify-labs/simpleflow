@@ -23,5 +23,5 @@ class MyTestCase(unittest.TestCase):
             expect(to_k8s_identifier(case[0])).to.equal(case[1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

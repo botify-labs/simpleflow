@@ -7,6 +7,7 @@ class SwfTask(object):
     """
     simpleflow.swf task; useful for type checking.
     """
+
     @property
     def payload(self):
         raise NotImplementedError
@@ -16,6 +17,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
     """
     Activity task managed on SWF.
     """
+
     cached_models = {}
 
     @classmethod
@@ -46,41 +48,31 @@ class ActivityTask(task.ActivityTask, SwfTask):
         :rtype: list[swf.models.decision.Decision]
         """
         activity = self.activity
-        model = self.get_activity_type(
-            domain,
-            activity.name,
-            activity.version
-        )
+        model = self.get_activity_type(domain, activity.name, activity.version)
 
         input = self.get_input()
 
         if task_list is None:
             task_list = activity.task_list
-        task_timeout = kwargs.get(
-            'task_timeout',
-            activity.task_start_to_close_timeout,
-        )
+        task_timeout = kwargs.get("task_timeout", activity.task_start_to_close_timeout,)
         duration_timeout = kwargs.get(
-            'duration_timeout',
-            activity.task_schedule_to_close_timeout,
+            "duration_timeout", activity.task_schedule_to_close_timeout,
         )
         schedule_timeout = kwargs.get(
-            'schedule_timeout',
-            activity.task_schedule_to_start_timeout,
+            "schedule_timeout", activity.task_schedule_to_start_timeout,
         )
         heartbeat_timeout = kwargs.get(
-            'heartbeat_timeout',
-            activity.task_heartbeat_timeout,
+            "heartbeat_timeout", activity.task_heartbeat_timeout,
         )
-        task_priority = kwargs.get('priority')
-        control = kwargs.get('control')
+        task_priority = kwargs.get("priority")
+        control = kwargs.get("control")
 
         meta = activity.meta
         if meta:
             input["meta"] = meta
 
         decision = swf.models.decision.ActivityTaskDecision(
-            'schedule',
+            "schedule",
             activity_id=self.id,
             activity_type=model,
             control=control,
@@ -97,8 +89,8 @@ class ActivityTask(task.ActivityTask, SwfTask):
 
     def get_input(self):
         input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
+            "args": self.args,
+            "kwargs": self.kwargs,
         }
         return input
 
@@ -119,9 +111,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
         key = (domain.name, name, version)
         if key not in cls.cached_models:
             cls.cached_models[key] = swf.models.ActivityType(
-                domain,
-                name,
-                version=version,
+                domain, name, version=version,
             )
         return cls.cached_models[key]
 
@@ -144,6 +134,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     """
     WorkflowTask managed on SWF.
     """
+
     cached_models = {}
 
     @classmethod
@@ -155,7 +146,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def name(self):
-        return 'workflow-{}'.format(self.workflow.name)
+        return "workflow-{}".format(self.workflow.name)
 
     @property
     def payload(self):
@@ -163,19 +154,19 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def task_list(self):
-        get_task_list = getattr(self.workflow, 'get_task_list', None)
+        get_task_list = getattr(self.workflow, "get_task_list", None)
         if get_task_list:
             return get_task_list(self.workflow, *self.args, **self.kwargs)
 
-        return getattr(self.workflow, 'task_list', None)
+        return getattr(self.workflow, "task_list", None)
 
     @property
     def tag_list(self):
-        get_tag_list = getattr(self.workflow, 'get_tag_list', None)
+        get_tag_list = getattr(self.workflow, "get_tag_list", None)
         if get_tag_list:
             return get_tag_list(self.workflow, *self.args, **self.kwargs)
 
-        return getattr(self.workflow, 'tag_list', None)
+        return getattr(self.workflow, "tag_list", None)
 
     def schedule(self, domain, task_list=None, executor=None, **kwargs):
         """
@@ -192,28 +183,28 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         """
         workflow = self.workflow
         model = self.get_workflow_type(
-            domain,
-            workflow.__module__ + '.' + workflow.__name__,
-            workflow.version
+            domain, workflow.__module__ + "." + workflow.__name__, workflow.version
         )
 
         input = self.get_input()
-        control = kwargs.get('control')
+        control = kwargs.get("control")
 
         tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
-            tag_list = executor.get_run_context()['tag_list']  # FIXME what about self.executor?
+            tag_list = executor.get_run_context()[
+                "tag_list"
+            ]  # FIXME what about self.executor?
 
-        execution_timeout = getattr(workflow, 'execution_timeout', None)
+        execution_timeout = getattr(workflow, "execution_timeout", None)
         decision = swf.models.decision.ChildWorkflowExecutionDecision(
-            'start',
+            "start",
             workflow_id=self.id,
             workflow_type=model,
             task_list=task_list or self.task_list,
             control=control,
             input=input,
             tag_list=tag_list,
-            child_policy=getattr(workflow, 'child_policy', None),
+            child_policy=getattr(workflow, "child_policy", None),
             execution_timeout=str(execution_timeout) if execution_timeout else None,
         )
 
@@ -221,8 +212,8 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     def get_input(self):
         input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
+            "args": self.args,
+            "kwargs": self.kwargs,
         }
         return input
 
@@ -243,9 +234,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         key = (domain.name, name, version)
         if key not in cls.cached_models:
             cls.cached_models[key] = swf.models.WorkflowType(
-                domain,
-                name,
-                version=version,
+                domain, name, version=version,
             )
         return cls.cached_models[key]
 
@@ -254,13 +243,24 @@ class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
     """
+
     idempotent = True
 
     @classmethod
     def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
-        return cls(a_task.name, workflow_id, run_id, control, extra_input, *a_task.args, **a_task.kwargs)
+        return cls(
+            a_task.name,
+            workflow_id,
+            run_id,
+            control,
+            extra_input,
+            *a_task.args,
+            **a_task.kwargs
+        )
 
-    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+    def __init__(
+        self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs
+    ):
         super(SignalTask, self).__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
@@ -272,7 +272,7 @@ class SignalTask(task.SignalTask, SwfTask):
         return self._name
 
     def __repr__(self):
-        return '{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})'.format(
+        return "{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})".format(
             self.__class__.__name__,
             self.name,
             self.workflow_id,
@@ -284,14 +284,14 @@ class SignalTask(task.SignalTask, SwfTask):
 
     def schedule(self, *args, **kwargs):
         input = {
-            'args': self.args,
-            'kwargs': self.kwargs,
+            "args": self.args,
+            "kwargs": self.kwargs,
         }
         if self.extra_input:
             input.update(self.extra_input)
         logger.debug(
-            'scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}, '
-            'extra_input={extra_input}'.format(
+            "scheduling signal name={name}, workflow_id={workflow_id}, run_id={run_id}, control={control}, "
+            "extra_input={extra_input}".format(
                 name=self.name,
                 workflow_id=self.workflow_id,
                 run_id=self.run_id,
@@ -327,8 +327,7 @@ class MarkerTask(task.MarkerTask, SwfTask):
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.MarkerDecision()
         decision.record(
-            self.name,
-            self.details,
+            self.name, self.details,
         )
         return [decision]
 
@@ -346,10 +345,10 @@ class TimerTask(task.TimerTask, SwfTask):
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.TimerDecision(
-            'start',
+            "start",
             id=self.timer_id,
             start_to_fire_timeout=str(self.timeout),
-            control=self.control
+            control=self.control,
         )
         return [decision]
 
@@ -366,8 +365,5 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
         super(CancelTimerTask, self).__init__(timer_id)
 
     def schedule(self, *args, **kwargs):
-        decision = swf.models.decision.TimerDecision(
-            'cancel',
-            id=self.timer_id,
-        )
+        decision = swf.models.decision.TimerDecision("cancel", id=self.timer_id,)
         return [decision]

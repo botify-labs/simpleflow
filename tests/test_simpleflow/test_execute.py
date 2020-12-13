@@ -18,7 +18,7 @@ from simpleflow import execute
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 
 
-@execute.program(path='ls')
+@execute.program(path="ls")
 def ls_nokwargs(*args):
     """
     Only accepts a variable number of positional arguments.
@@ -32,11 +32,10 @@ def test_execute_program_no_kwargs():
         with pytest.raises(TypeError) as exc_info:
             ls_nokwargs(hide=f.name)
 
-        assert (exc_info.value.args[0] ==
-                'command does not take keyword arguments')
+        assert exc_info.value.args[0] == "command does not take keyword arguments"
 
 
-@execute.program(path='ls')
+@execute.program(path="ls")
 def ls_noargs(**kwargs):
     """
     Only accepts a variable number of keyword arguments.
@@ -50,11 +49,10 @@ def test_execute_program_no_args():
         with pytest.raises(TypeError) as exc_info:
             ls_noargs(f.name)
 
-        assert (exc_info.value.args[0] ==
-                'command does not take varargs')
+        assert exc_info.value.args[0] == "command does not take varargs"
 
 
-@execute.program(path='ls')
+@execute.program(path="ls")
 def ls_restrict_named_arguments(hide=execute.RequiredArgument, *args):
     pass
 
@@ -64,19 +62,19 @@ def test_execute_program_restrict_named_arguments():
         with pytest.raises(TypeError) as exc_info:
             ls_restrict_named_arguments(f.name)
 
-        assert (exc_info.value.args[0] ==
-                'argument "hide" not found')
+        assert exc_info.value.args[0] == 'argument "hide" not found'
 
 
-@execute.program(path='ls')
-def ls_optional_named_arguments(hide='', *args):
+@execute.program(path="ls")
+def ls_optional_named_arguments(hide="", *args):
     pass
 
 
-@pytest.mark.xfail(platform.system() == 'Darwin',
-                   reason="ls doesn't have a --hide option on MacOSX")
+@pytest.mark.xfail(
+    platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX"
+)
 def test_execute_program_optional_named_arguments():
-    with tempfile.NamedTemporaryFile(suffix='\xe9') as f:
+    with tempfile.NamedTemporaryFile(suffix="\xe9") as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
         assert f.name not in ls_optional_named_arguments(hide=f.name)
 
@@ -91,13 +89,12 @@ def test_execute_program_with_positional_arguments():
         assert ls(f.name).strip() == f.name
 
 
-@pytest.mark.xfail(platform.system() == 'Darwin',
-                   reason="ls doesn't have a --hide option on MacOSX")
+@pytest.mark.xfail(
+    platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX"
+)
 def test_execute_program_with_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
-        assert f.name not in (ls(
-            os.path.dirname(f.name),
-            hide=f.name).strip())
+        assert f.name not in (ls(os.path.dirname(f.name), hide=f.name).strip())
 
 
 @execute.program()
@@ -109,8 +106,7 @@ def test_ls_2args():
     with pytest.raises(TypeError) as exc_info:
         ls_2args(1, 2, 3)
 
-    assert (exc_info.value.args[0] ==
-            'command takes 2 arguments: 3 passed')
+    assert exc_info.value.args[0] == "command takes 2 arguments: 3 passed"
 
 
 @execute.python()
@@ -149,16 +145,16 @@ def test_function_as_program_with_kwargs():
 
 def test_function_as_program_raises_builtin_exception():
     with pytest.raises(ExecutionError) as excinfo:
-        add('1')
+        add("1")
     assert '"error":"TypeError"' in str(excinfo.value)
     with pytest.raises(ExecutionError) as excinfo:
-        Add('1')
+        Add("1")
     assert '"error":"TypeError"' in str(excinfo.value)
 
 
 @execute.python()
 def print_string(s, retval):
-    print(s, end='')
+    print(s, end="")
     return retval
 
 
@@ -221,7 +217,8 @@ def test_function_as_program_raises_custom_exception():
 @execute.python()
 def raise_timeout_error():
     from simpleflow.exceptions import TimeoutError
-    raise TimeoutError('timeout', 1)
+
+    raise TimeoutError("timeout", 1)
 
 
 def test_function_as_program_raises_module_exception():
@@ -233,10 +230,14 @@ def test_function_as_program_raises_module_exception():
 @execute.python()
 def warn():
     import warnings
-    warnings.warn("The _posixsubprocess module is not being used. "
-                  "Child process reliability may suffer if your "
-                  "program uses threads.", RuntimeWarning)
-    raise Exception('Fake Exception')
+
+    warnings.warn(
+        "The _posixsubprocess module is not being used. "
+        "Child process reliability may suffer if your "
+        "program uses threads.",
+        RuntimeWarning,
+    )
+    raise Exception("Fake Exception")
 
 
 def test_function_with_warning():
@@ -249,12 +250,12 @@ def test_function_with_warning():
 
 
 def test_function_returning_unicode():
-    assert print_string('', 'ʘ‿ʘ') == u'ʘ‿ʘ'
+    assert print_string("", "ʘ‿ʘ") == u"ʘ‿ʘ"
 
 
 @execute.python()
 def raise_dummy_exception_with_unicode():
-    raise DummyException('ʘ‿ʘ')
+    raise DummyException("ʘ‿ʘ")
 
 
 def test_exception_with_unicode():
@@ -262,7 +263,7 @@ def test_exception_with_unicode():
         raise_dummy_exception_with_unicode()
     assert '"error":"DummyException"' in str(excinfo.value)
     error = json.loads(excinfo.value.args[0])
-    assert error['message'] == u'ʘ‿ʘ'
+    assert error["message"] == u"ʘ‿ʘ"
 
 
 def sleep_and_return(seconds):
@@ -283,7 +284,7 @@ def test_timeout_execute():
     with pytest.raises(ExecutionTimeoutError) as e:
         func(10)
     assert (time.time() - t) < 10.0
-    assert 'ExecutionTimeoutError after {} seconds'.format(timeout) in str(e.value)
+    assert "ExecutionTimeoutError after {} seconds".format(timeout) in str(e.value)
 
 
 def test_timeout_execute_from_thread():
@@ -294,17 +295,18 @@ def test_timeout_execute_from_thread():
 
 
 def create_sleeper_subprocess():
-    pid = subprocess.Popen(['sleep', '600']).pid
+    pid = subprocess.Popen(["sleep", "600"]).pid
     return pid
 
 
 @pytest.mark.xfail(
-    platform.system() == 'Darwin' or "PyPy" in sys.version,
-    reason="psutil process statuses are buggy on OSX, and test randomly fails on PyPy")
+    platform.system() == "Darwin" or "PyPy" in sys.version,
+    reason="psutil process statuses are buggy on OSX, and test randomly fails on PyPy",
+)
 def test_execute_dont_kill_children():
     pid = execute.python()(create_sleeper_subprocess)()
     subprocess = psutil.Process(pid)
-    assert subprocess.status() == 'sleeping'
+    assert subprocess.status() == "sleeping"
     subprocess.terminate()  # cleanup
 
 
@@ -334,4 +336,4 @@ def test_large_command_line_utf8():
     UTF-8 bytes must be handled as Unicode, both in Python 2 and Python 3.
     """
     x = u"ä" * 1024 * 1024
-    assert length(x.encode('utf-8')) == len(x)
+    assert length(x.encode("utf-8")) == len(x)

@@ -7,8 +7,7 @@ from swf.models import Domain
 from swf.actors import Actor
 
 
-swf.settings.set(aws_access_key_id='fakeaccesskey',
-                 aws_secret_access_key='fakesecret')
+swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 
 
 class TestActor(unittest.TestCase):

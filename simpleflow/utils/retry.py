@@ -31,11 +31,12 @@ def exponential(value):
 
 
 def with_delay(
-        nb_times=1,
-        delay=constant(1),
-        on_exceptions=Exception,
-        except_on=None,
-        log_with=None):
+    nb_times=1,
+    delay=constant(1),
+    on_exceptions=Exception,
+    except_on=None,
+    log_with=None,
+):
     """
     Retry the *decorated* function *nb_times* with a *delay*.
 
@@ -70,9 +71,7 @@ def with_delay(
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
-                        'error "%r": retrying in %.2f seconds',
-                        error,
-                        wait_delay,
+                        'error "%r": retrying in %.2f seconds', error, wait_delay,
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1

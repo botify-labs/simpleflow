@@ -5,6 +5,7 @@ class Response(object):
     things afterwards when you return, for instance, a tuple. Adding a value to the
     returned ones breaks the method signature and potential methods using it.
     """
+
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             self.__setattr__(k, v)

@@ -34,7 +34,7 @@ class Workflow(Submittable):
     retry = 0
     raises_on_failure = True
 
-    INHERIT_TAG_LIST = 'INHERIT_TAG_LIST'
+    INHERIT_TAG_LIST = "INHERIT_TAG_LIST"
 
     def __init__(self, executor):
         self._executor = executor
@@ -69,10 +69,9 @@ class Workflow(Submittable):
         elif isinstance(submittable, SubmittableContainer):
             return submittable.submit(self._executor)
         else:
-            raise TypeError('Bad type for {} activity ({})'.format(
-                submittable,
-                type(submittable)
-            ))
+            raise TypeError(
+                "Bad type for {} activity ({})".format(submittable, type(submittable))
+            )
 
     def map(self, activity, iterable):
         """
@@ -247,9 +246,9 @@ class Workflow(Submittable):
         """
         return True
 
-    def on_task_failure(self,
-                        failure_context,  # type: TaskFailureContext
-                        ):
+    def on_task_failure(
+        self, failure_context,  # type: TaskFailureContext
+    ):
         """
         Called by the executor if a task or workflow failed.
         :param failure_context:

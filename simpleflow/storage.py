@@ -33,11 +33,13 @@ def sanitize_bucket_and_host(bucket):
     """
     # first case: we got a "<host>/<bucket_name>" input
     if "/" in bucket:
-        host, bucket = bucket.split('/', 1)
+        host, bucket = bucket.split("/", 1)
         if "/" in bucket:
-            raise ValueError('{} should contains only one slash separator'.format(bucket))
-        if not host.endswith('amazonaws.com'):
-            raise ValueError('host should be a *.amazonaws.com URL')
+            raise ValueError(
+                "{} should contains only one slash separator".format(bucket)
+            )
+        if not host.endswith("amazonaws.com"):
+            raise ValueError("host should be a *.amazonaws.com URL")
         return bucket, host
 
     # return location from cache is possible, so we don't issue "GetBucketLocation"
@@ -61,7 +63,9 @@ def sanitize_bucket_and_host(bucket):
     except S3ResponseError as e:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
-            logger.warning("Access denied while trying to get location of bucket {}".format(bucket))
+            logger.warning(
+                "Access denied while trying to get location of bucket {}".format(bucket)
+            )
             location = ""
         else:
             raise
@@ -94,7 +98,7 @@ def pull_content(bucket, path):
     # type: (str, str) -> str
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
-    return key.get_contents_as_string(encoding='utf-8')
+    return key.get_contents_as_string(encoding="utf-8")
 
 
 def push(bucket, path, src_file, content_type=None):
@@ -104,7 +108,9 @@ def push(bucket, path, src_file, content_type=None):
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_filename(src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
+    key.set_contents_from_filename(
+        src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
+    )
 
 
 def push_content(bucket, path, content, content_type=None):
@@ -114,7 +120,9 @@ def push_content(bucket, path, content, content_type=None):
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_string(content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
+    key.set_contents_from_string(
+        content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
+    )
 
 
 def list_keys(bucket, path=None):

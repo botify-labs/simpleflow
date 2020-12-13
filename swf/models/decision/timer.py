@@ -10,7 +10,7 @@ from swf.models.decision.base import Decision, decision_action
 
 
 class TimerDecision(Decision):
-    _base_type = 'Timer'
+    _base_type = "Timer"
 
     @decision_action
     def start(self, id, start_to_fire_timeout, control=None):
@@ -29,11 +29,13 @@ class TimerDecision(Decision):
         if control is not None:
             control = format.control(control)
 
-        self.update_attributes({
-            'timerId': id,
-            'startToFireTimeout': start_to_fire_timeout,
-            'control': control,
-        })
+        self.update_attributes(
+            {
+                "timerId": id,
+                "startToFireTimeout": start_to_fire_timeout,
+                "control": control,
+            }
+        )
 
     @decision_action
     def cancel(self, id):
@@ -42,4 +44,4 @@ class TimerDecision(Decision):
         :param  id: The unique Id of the timer to cancel
         :type   id: str
         """
-        self.update_attributes({'timerId': id})
+        self.update_attributes({"timerId": id})
