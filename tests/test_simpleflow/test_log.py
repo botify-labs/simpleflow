@@ -1,4 +1,5 @@
 import unittest
+
 from sure import expect
 
 from simpleflow.log import SimpleflowFormatter

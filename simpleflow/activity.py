@@ -1,6 +1,4 @@
-from . import settings
-from . import registry
-
+from . import registry, settings
 
 __all__ = [
     "with_attributes",

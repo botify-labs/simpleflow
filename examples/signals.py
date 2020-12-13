@@ -2,12 +2,8 @@ from __future__ import print_function
 
 import time
 
-from simpleflow import (
-    activity,
-    futures,
-    Workflow,
-)
-from simpleflow.canvas import Group, Chain
+from simpleflow import Workflow, activity, futures
+from simpleflow.canvas import Chain, Group
 from simpleflow.task import ActivityTask
 
 

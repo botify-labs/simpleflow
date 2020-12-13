@@ -1,5 +1,6 @@
 from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
+
 from . import futures
 from .activity import Activity
 from .base import Submittable, SubmittableContainer

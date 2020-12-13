@@ -5,7 +5,7 @@
 # impossible for simpleflow to implement *default* priorities on SWF objects.
 # But it's still possible to schedule tasks with a given priority as this is not
 # dependent on arguments on a boto call, but rather passed as data in decisions.
-from simpleflow import activity, Workflow
+from simpleflow import Workflow, activity
 
 
 @activity.with_attributes(task_list="quickstart", version="example")

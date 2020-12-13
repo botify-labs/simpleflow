@@ -1,15 +1,16 @@
 import copy
-from .tasks import MarkStepDoneTask
 
-from simpleflow.base import SubmittableContainer
 from simpleflow import activity
+from simpleflow.base import SubmittableContainer
 from simpleflow.canvas import Chain, FuncGroup
+
+from .tasks import MarkStepDoneTask
 from .utils import (
     get_step_force_reasons,
     get_step_skip_reasons,
-    step_will_run,
     step_is_forced,
     step_is_skipped_by_force,
+    step_will_run,
 )
 
 

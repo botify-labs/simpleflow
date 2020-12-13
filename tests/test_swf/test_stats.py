@@ -1,14 +1,10 @@
 from __future__ import absolute_import
 
+from simpleflow import Workflow, activity
 from simpleflow.constants import HOUR, MINUTE
-from swf.models.history import builder
-
-from simpleflow import (
-    Workflow,
-    activity,
-)
 from simpleflow.history import History
 from simpleflow.swf.stats import WorkflowStats
+from swf.models.history import builder
 
 
 @activity.with_attributes(version="test")

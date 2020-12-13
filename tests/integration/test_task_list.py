@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import signal
 import time
+
 from sure import expect
 
 from simpleflow.command import start_workflow

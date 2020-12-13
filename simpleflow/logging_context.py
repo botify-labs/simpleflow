@@ -1,6 +1,5 @@
 import os
 
-
 ENV_KEYS = {
     "activity_id": "_SWF_CONTEXT_ACTIVITY_ID",
     "domain": "_SWF_CONTEXT_DOMAIN",

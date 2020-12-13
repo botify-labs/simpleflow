@@ -7,7 +7,6 @@ from simpleflow import logger
 from simpleflow._decorators import deprecated
 from simpleflow.utils import retry
 
-
 __all__ = ["Heartbeater", "HeartbeatProcess"]
 
 

@@ -6,13 +6,14 @@ from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
 
-import simpleflow.command  # NOQA
+from simpleflow.utils import json_dumps
 from tests.utils import IntegrationTestCase
 
-from simpleflow.utils import json_dumps
+import simpleflow.command  # NOQA
 
 if False:
     from typing import List, Union
+
     from click.testing import Result
 
 

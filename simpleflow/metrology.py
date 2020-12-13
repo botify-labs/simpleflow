@@ -10,7 +10,7 @@ try:
 except ImportError:
     from urllib import quote_plus  # py 2.x
 
-from . import storage, settings
+from . import settings, storage
 from .swf.stats.pretty import dump_history_to_json
 from .workflow import Workflow
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from simpleflow._decorators import deprecated
 from simpleflow import exceptions
-
+from simpleflow._decorators import deprecated
 
 __all__ = ["Future", "get_result_or_raise", "wait"]
 

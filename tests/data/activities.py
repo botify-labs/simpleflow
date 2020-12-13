@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from simpleflow import activity
+
 from .constants import DEFAULT_VERSION
 
 

@@ -1,9 +1,8 @@
-from datetime import datetime
 import logging.config
 import sys
+from datetime import datetime
 
 from . import logging_context, settings
-
 
 RED = "\033[91m"
 GREEN = "\033[92m"

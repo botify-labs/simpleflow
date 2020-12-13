@@ -3,8 +3,8 @@
 from datetime import datetime
 
 from swf.constants import REGISTERED
-from swf.utils import datetime_timestamp
 from swf.models.workflow import CHILD_POLICIES, WorkflowExecution
+from swf.utils import datetime_timestamp
 
 
 def mock_list_workflow_types(*args, **kwargs):

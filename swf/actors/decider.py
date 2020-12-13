@@ -4,7 +4,7 @@ import boto.exception
 from simpleflow import compat, format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
-from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
+from swf.exceptions import DoesNotExistError, PollTimeout, ResponseError
 from swf.models.history import History
 from swf.models.workflow import WorkflowExecution, WorkflowType
 from swf.responses import Response

@@ -3,12 +3,10 @@ from __future__ import absolute_import
 import multiprocessing
 import os
 
-from simpleflow import format
 import swf.actors
 import swf.exceptions
 import swf.models.decision
-
-from simpleflow import logger
+from simpleflow import format, logger
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
 from simpleflow.swf.utils import DecisionsAndContext

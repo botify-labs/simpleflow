@@ -2,12 +2,7 @@ from __future__ import print_function
 
 import time
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-    logger,
-)
+from simpleflow import Workflow, activity, futures, logger
 
 
 @activity.with_attributes(task_list="quickstart", version="example")

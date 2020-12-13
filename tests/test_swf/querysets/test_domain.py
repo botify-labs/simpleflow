@@ -2,18 +2,16 @@
 
 import unittest
 
-from mock import patch
-
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
+from mock import patch
 
 import swf.settings
-from swf.exceptions import ResponseError, DoesNotExistError, InvalidCredentialsError
+from swf.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
 from swf.models.domain import Domain
 from swf.querysets.domain import DomainQuerySet
 
 from ..mocks.domain import mock_describe_domain, mock_list_domains
-
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 

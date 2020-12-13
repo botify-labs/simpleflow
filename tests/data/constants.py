@@ -1,5 +1,6 @@
-import swf.models
 from mock import patch
+
+import swf.models
 
 with patch("boto.swf.connect_to_region"):
     DOMAIN = swf.models.Domain("TestDomain")

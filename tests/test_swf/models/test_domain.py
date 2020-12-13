@@ -2,11 +2,12 @@
 
 import unittest
 
-import swf.settings
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from boto.swf.layer1 import Layer1
 from mock import Mock, patch
+
+import swf.settings
 from swf.constants import DEPRECATED
 from swf.exceptions import AlreadyExistsError, ResponseError
 from swf.models.domain import Domain, DomainDoesNotExist
@@ -15,7 +16,6 @@ from swf.querysets.workflow import WorkflowTypeQuerySet
 
 from ..mocks import MiniMock
 from ..mocks.domain import mock_describe_domain
-
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 

@@ -2,6 +2,7 @@
 
 from simpleflow.activity import Activity
 from simpleflow.utils import import_object_from_module
+
 from .exceptions import DispatchError
 
 

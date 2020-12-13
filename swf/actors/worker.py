@@ -1,15 +1,16 @@
 # -*- coding:utf-8 -*-
 
 import boto.exception
+
 from simpleflow import format, logging_context
 from swf.actors import Actor
-from swf.models import ActivityTask
 from swf.exceptions import (
-    PollTimeout,
-    ResponseError,
     DoesNotExistError,
+    PollTimeout,
     RateLimitExceededError,
+    ResponseError,
 )
+from swf.models import ActivityTask
 from swf.responses import Response
 
 

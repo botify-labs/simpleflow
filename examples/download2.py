@@ -2,10 +2,7 @@ from __future__ import print_function
 
 import subprocess
 
-from simpleflow import (
-    activity,
-    Workflow,
-)
+from simpleflow import Workflow, activity
 from simpleflow.log import colorize
 
 

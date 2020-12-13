@@ -6,8 +6,9 @@ PY26 = PY2 and int(sys.version_info[1]) < 7
 
 if PY2:
     from itertools import imap, izip
-    import urllib2 as request  # NOQA
+
     from urllib import quote as urlquote  # NOQA
+    import urllib2 as request  # NOQA
 
     text_type = unicode  # NOQA
     binary_type = str

@@ -8,10 +8,9 @@
 from boto.swf.exceptions import SWFResponseError
 
 from swf.constants import REGISTERED
-from swf.querysets.base import BaseQuerySet
+from swf.exceptions import DoesNotExistError, ResponseError
 from swf.models.activity import ActivityType
-from swf.exceptions import ResponseError, DoesNotExistError
-
+from swf.querysets.base import BaseQuerySet
 from swf.utils import get_subkey
 
 

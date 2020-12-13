@@ -1,11 +1,8 @@
 import swf.models
-
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
-from . import (
-    Decider,
-    DeciderPoller,
-)
+
+from . import Decider, DeciderPoller
 
 
 def load_workflow_executor(

@@ -1,7 +1,4 @@
-from simpleflow import (
-    activity,
-    Workflow,
-)
+from simpleflow import Workflow, activity
 
 from . import basic
 

@@ -1,8 +1,7 @@
-from uuid import UUID
-
 import datetime
 import json
 import types
+from uuid import UUID
 
 import lazy_object_proxy
 from future.utils import iteritems

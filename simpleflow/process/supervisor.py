@@ -8,6 +8,7 @@ import types
 import psutil
 
 from simpleflow import logger
+
 from .named_mixin import NamedMixin, with_state
 
 

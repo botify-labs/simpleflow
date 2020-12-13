@@ -3,6 +3,7 @@ import json
 import unittest
 
 import pytz
+
 from simpleflow.exceptions import ExecutionBlocked
 from simpleflow.futures import Future
 from simpleflow.utils import json_dumps

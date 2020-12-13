@@ -1,5 +1,5 @@
-import time
 import random
+import time
 
 
 def sleep_random(min_s, max_s, unit=1):

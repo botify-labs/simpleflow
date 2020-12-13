@@ -1,14 +1,13 @@
 # -*- coding:utf-8 -*-
 
 import unittest
-
 from datetime import datetime
 
 import pytz
 
+import swf.constants
 from swf.models.event import Event
 from swf.models.history import History
-import swf.constants
 
 from ..mocks.event import mock_get_workflow_execution_history
 

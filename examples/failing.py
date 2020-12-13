@@ -1,16 +1,11 @@
 import time
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
+from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Group
 from simpleflow.constants import MINUTE
-from simpleflow.log import GREEN, YELLOW, END, RED, ORANGE
+from simpleflow.log import END, GREEN, ORANGE, RED, YELLOW
 from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
-
 
 if False:
     from typing import Optional  # NOQA

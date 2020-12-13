@@ -1,16 +1,12 @@
-import unittest
+import multiprocessing as mp
 import os
 import signal
 import time
+import unittest
 from uuid import uuid4
-import multiprocessing as mp
 
 import swf.exceptions
-
-from simpleflow.swf.process.worker.heartbeat import (
-    HeartbeatProcess,
-    Heartbeater,
-)
+from simpleflow.swf.process.worker.heartbeat import Heartbeater, HeartbeatProcess
 
 
 class FakeHeartbeat(object):

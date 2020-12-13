@@ -6,10 +6,11 @@
 # See the file LICENSE for copying permission.
 
 import collections
-from functools import wraps, partial
 import re
+from functools import partial, wraps
 
 import boto.swf.exceptions
+
 from simpleflow import compat, logger
 
 

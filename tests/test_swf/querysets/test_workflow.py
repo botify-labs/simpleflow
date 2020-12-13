@@ -4,23 +4,24 @@ import unittest
 
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
-from mock import patch, Mock
+from mock import Mock, patch
+
 from swf.constants import REGISTERED
 from swf.exceptions import DoesNotExistError, ResponseError
 from swf.models.domain import Domain
-from swf.models.workflow import WorkflowType, WorkflowExecution
+from swf.models.workflow import WorkflowExecution, WorkflowType
 from swf.querysets.workflow import (
     BaseWorkflowQuerySet,
-    WorkflowTypeQuerySet,
     WorkflowExecutionQuerySet,
+    WorkflowTypeQuerySet,
 )
 from swf.utils import datetime_timestamp, past_day
 
 from ..mocks.workflow import (
     mock_describe_workflow_type,
-    mock_list_workflow_types,
-    mock_list_open_workflow_executions,
     mock_list_closed_workflow_executions,
+    mock_list_open_workflow_executions,
+    mock_list_workflow_types,
 )
 
 

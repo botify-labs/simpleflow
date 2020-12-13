@@ -1,12 +1,9 @@
 from __future__ import print_function
+
 import time
 import uuid
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
+from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.swf.utils import get_workflow_execution

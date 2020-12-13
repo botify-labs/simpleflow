@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
 import copy
-import inspect
 import hashlib
+import inspect
 import json
 import multiprocessing
 import re
@@ -12,44 +12,31 @@ import simpleflow.task as base_task
 import swf.exceptions
 import swf.models
 import swf.models.decision
-from simpleflow import (
-    exceptions,
-    executor,
-    format,
-    futures,
-    logger,
-    task,
-    compat,
-)
-from simpleflow.activity import Activity, PRIORITY_NOT_SET
+from simpleflow import compat, exceptions, executor, format, futures, logger, task
+from simpleflow.activity import PRIORITY_NOT_SET, Activity
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.swf.task import (
-    SwfTask,
     ActivityTask,
-    WorkflowTask,
-    SignalTask,
-    MarkerTask,
-    TimerTask,
     CancelTimerTask,
+    MarkerTask,
+    SignalTask,
+    SwfTask,
+    TimerTask,
+    WorkflowTask,
 )
-from simpleflow.utils import (
-    hex_hash,
-    issubclass_,
-    json_dumps,
-    retry,
-)
+from simpleflow.swf.utils import DecisionsAndContext
+from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
 # noinspection PyUnreachableCode
 if False:
-    from typing import Optional, Type, Union, Tuple  # NOQA
+    from typing import Optional, Tuple, Type, Union  # NOQA
 
 __all__ = ["Executor"]
 

@@ -2,16 +2,15 @@ from __future__ import absolute_import
 
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
-from simpleflow.task import TimerTask, CancelTimerTask, TaskFailureContext
-from . import canvas
-from . import task
+from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
+
+from . import canvas, task
 from ._decorators import deprecated
 from .activity import Activity
 from .utils import issubclass_
 
-
 if False:
-    from typing import List, Any, Optional  # NOQA
+    from typing import Any, List, Optional  # NOQA
     from .marker import Marker  # NOQA
 
 

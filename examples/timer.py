@@ -1,5 +1,4 @@
-from simpleflow import Workflow
-from simpleflow import futures
+from simpleflow import Workflow, futures
 from simpleflow.canvas import Chain, Group
 
 MY_TIMER = "my timer"

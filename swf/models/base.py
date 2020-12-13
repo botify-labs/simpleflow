@@ -5,12 +5,12 @@
 #
 # See the file LICENSE for copying permission.
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 
 from future.utils import iteritems, listitems
+
 from swf.core import ConnectedSWFObject
 from swf.exceptions import DoesNotExistError
-
 
 Difference = namedtuple("Difference", ("attr", "local", "upstream"))
 

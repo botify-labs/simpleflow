@@ -1,6 +1,6 @@
 import unittest
 
-from swf.models import Domain, ActivityType
+from swf.models import ActivityType, Domain
 from swf.models.decision import ActivityTaskDecision
 
 

@@ -5,19 +5,14 @@
 #
 # See the file LICENSE for copying permission.
 
-from boto.swf.exceptions import SWFTypeAlreadyExistsError, SWFResponseError
+from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 
+from swf import exceptions
 from swf.constants import REGISTERED
-from swf.utils import immutable
+from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
 from swf.models import BaseModel
 from swf.models.base import ModelDiff
-from swf import exceptions
-from swf.exceptions import (
-    AlreadyExistsError,
-    DoesNotExistError,
-    ResponseError,
-    raises,
-)
+from swf.utils import immutable
 
 
 class ActivityTypeDoesNotExist(Exception):

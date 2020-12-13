@@ -1,18 +1,14 @@
-from builtins import range
 import unittest
+from builtins import range
 
 from jsonpickle import json
 
-from simpleflow import futures, workflow, exceptions, Workflow
-from simpleflow.canvas import (
-    FuncGroup,
-    Group,
-    Chain,
-)
-from simpleflow.exceptions import AggregateException, TaskFailed
-from simpleflow.constants import HOUR, MINUTE
-from simpleflow.local.executor import Executor
+from simpleflow import Workflow, exceptions, futures, workflow
 from simpleflow.activity import with_attributes
+from simpleflow.canvas import Chain, FuncGroup, Group
+from simpleflow.constants import HOUR, MINUTE
+from simpleflow.exceptions import AggregateException, TaskFailed
+from simpleflow.local.executor import Executor
 from simpleflow.task import ActivityTask, ChildWorkflowTask
 
 

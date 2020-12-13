@@ -3,9 +3,8 @@
 import unittest
 
 import swf.settings
-from swf.models import Domain
 from swf.actors import Actor
-
+from swf.models import Domain
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 

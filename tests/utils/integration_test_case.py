@@ -3,7 +3,7 @@ import re
 import signal
 import unittest
 
-from psutil import Process, NoSuchProcess
+from psutil import NoSuchProcess, Process
 
 
 class IntegrationTestCase(unittest.TestCase):

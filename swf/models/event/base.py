@@ -11,7 +11,7 @@ import pytz
 from future.utils import iteritems
 
 from simpleflow import format
-from swf.utils import camel_to_underscore, cached_property
+from swf.utils import cached_property, camel_to_underscore
 
 
 class Event(object):

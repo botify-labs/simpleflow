@@ -1,9 +1,9 @@
 import json
 import unittest
 
-from swf.models import History as BasicHistory
 from simpleflow.history import History
 from simpleflow.swf.stats.pretty import dump_history_to_json
+from swf.models import History as BasicHistory
 
 
 def fake_history():

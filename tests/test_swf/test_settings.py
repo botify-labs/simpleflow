@@ -2,7 +2,7 @@ import os
 import unittest
 
 from swf.core import ConnectedSWFObject
-from swf.settings import from_env, clear
+from swf.settings import clear, from_env
 
 AWS_ENV_KEYS = (
     "AWS_ACCESS_KEY_ID",

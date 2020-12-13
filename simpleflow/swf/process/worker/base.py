@@ -1,30 +1,28 @@
-from base64 import b64decode
 import json
 import multiprocessing
 import os
 import sys
 import traceback
 import uuid
+from base64 import b64decode
 
 import psutil
 
-from simpleflow import format, logger
-from simpleflow.exceptions import ExecutionError
 import swf.actors
 import swf.exceptions
-from swf.models import ActivityTask as BaseActivityTask
-from swf.responses import Response
-from simpleflow import settings
+from simpleflow import format, logger, settings
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
+from simpleflow.exceptions import ExecutionError
 from simpleflow.job import KubernetesJob
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import Poller
-
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, format_exc_type, json_dumps, to_k8s_identifier
+from swf.models import ActivityTask as BaseActivityTask
+from swf.responses import Response
 
 
 class Worker(Supervisor):

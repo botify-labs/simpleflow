@@ -6,16 +6,17 @@ from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import six
 import attr
+import six
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
+
 from . import futures
 from .activity import Activity
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Dict, Union, Type  # NOQA
+    from typing import Any, Dict, Optional, Type, Union  # NOQA
 
 
 def get_actual_value(value):

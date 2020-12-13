@@ -6,10 +6,9 @@
 # See the file LICENSE for copying permission.
 
 from datetime import datetime, timedelta
-from time import mktime
-from itertools import chain, islice
-
 from functools import wraps
+from itertools import chain, islice
+from time import mktime
 
 from simpleflow import compat
 

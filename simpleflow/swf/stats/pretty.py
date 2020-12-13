@@ -4,11 +4,11 @@ from functools import partial, wraps
 from itertools import chain
 
 from future.utils import iteritems
+from tabulate import tabulate
 
 from simpleflow import compat
 from simpleflow.history import History
 from simpleflow.utils import json_dumps
-from tabulate import tabulate
 
 from . import WorkflowStats
 

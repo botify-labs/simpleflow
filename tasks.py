@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
-from invoke import task, run
+
+from invoke import run, task
 
 
 @task

@@ -1,6 +1,6 @@
-import time
 import collections
 import functools
+import time
 
 from simpleflow import logger
 

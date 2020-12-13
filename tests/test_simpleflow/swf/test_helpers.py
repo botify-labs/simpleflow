@@ -1,7 +1,7 @@
 import json
-from mock import patch
 import unittest
 
+from mock import patch
 from sure import expect
 
 from simpleflow.swf.helpers import swf_identity

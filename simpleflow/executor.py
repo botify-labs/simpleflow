@@ -1,5 +1,4 @@
 import abc
-
 from typing import TYPE_CHECKING
 
 from future.utils import with_metaclass
@@ -8,6 +7,7 @@ from ._decorators import deprecated
 
 if TYPE_CHECKING:
     from typing import Optional, Type
+
     from simpleflow import Workflow
     from simpleflow.history import History
 

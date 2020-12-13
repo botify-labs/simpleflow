@@ -1,6 +1,6 @@
 import swf.models
 import swf.models.decision
-from simpleflow import logger, task, Workflow
+from simpleflow import Workflow, logger, task
 
 
 class SwfTask(object):

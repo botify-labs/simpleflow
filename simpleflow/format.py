@@ -1,14 +1,13 @@
 import os
+from sqlite3 import OperationalError
 from uuid import uuid4
 
-from diskcache import Cache
 import lazy_object_proxy
-from sqlite3 import OperationalError
+from diskcache import Cache
 
 from simpleflow import constants, logger, storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
 from simpleflow.utils import json_dumps, json_loads_or_raw
-
 
 JUMBO_FIELDS_MEMORY_CACHE = {}
 

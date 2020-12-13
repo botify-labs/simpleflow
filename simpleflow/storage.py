@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
+from boto.exception import S3ResponseError
 from boto.s3 import connect_to_region, connection
 from boto.s3.key import Key
-from boto.exception import S3ResponseError
 
 from . import logger, settings
 

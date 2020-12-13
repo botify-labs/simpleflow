@@ -14,6 +14,7 @@ import swf.models
 import swf.querysets
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.utils import json_dumps
+
 from .stats import pretty
 
 __all__ = [

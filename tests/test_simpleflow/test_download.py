@@ -1,11 +1,11 @@
 import os
-import unittest
-from mock import patch
 import shutil
+import unittest
+
+from mock import patch
 from sure import expect
 
 from simpleflow.download import RemoteBinary, with_binaries
-
 
 # example binary remote/local location
 remote_location = "s3://a.bucket/v1.2.3/custom-bin"

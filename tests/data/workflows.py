@@ -1,5 +1,5 @@
 from simpleflow import Workflow
-from simpleflow.constants import MINUTE, HOUR
+from simpleflow.constants import HOUR, MINUTE
 
 
 class BaseTestWorkflow(Workflow):

@@ -7,8 +7,8 @@ from psutil import Process
 from pytest import mark
 from sure import expect
 
-from swf.models import Domain
 from simpleflow.swf.process import Poller
+from swf.models import Domain
 from tests.utils import IntegrationTestCase
 
 

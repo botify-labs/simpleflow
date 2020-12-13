@@ -1,7 +1,6 @@
 import logging  # NOQA
 import os
 
-
 WORKFLOW_DEFAULT_TASK_LIST = "default"
 WORKFLOW_DEFAULT_VERSION = "default"
 WORKFLOW_DEFAULT_EXECUTION_TIME = str(60 * 60)  # 1 hour.

@@ -1,14 +1,9 @@
 from __future__ import print_function
 
-from simpleflow import activity, Workflow
+from simpleflow import Workflow, activity
 from simpleflow.exceptions import ExecutionBlocked
-from .worker import (
-    find_or_steal_money,
-    build_boat,
-    steal_boat,
-    find_crew,
-    find_parrot,
-)
+
+from .worker import build_boat, find_crew, find_or_steal_money, find_parrot, steal_boat
 
 
 # decorator for all activities

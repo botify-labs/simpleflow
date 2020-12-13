@@ -18,6 +18,7 @@ from simpleflow.step.utils import (
 )
 from simpleflow.step.workflow import WorkflowStepMixin
 from tests.moto_compat import mock_s3, mock_swf
+
 from .base import TestWorkflowMixin
 
 BUCKET = "perfect_day"

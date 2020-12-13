@@ -8,9 +8,9 @@
 from boto.swf.exceptions import SWFResponseError
 
 from swf.constants import REGISTERED
-from swf.querysets.base import BaseQuerySet
+from swf.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
 from swf.models.domain import Domain
-from swf.exceptions import ResponseError, DoesNotExistError, InvalidCredentialsError
+from swf.querysets.base import BaseQuerySet
 
 
 class DomainQuerySet(BaseQuerySet):

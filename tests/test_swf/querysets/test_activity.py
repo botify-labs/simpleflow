@@ -2,19 +2,17 @@
 
 import unittest
 
+from boto.exception import SWFResponseError
+from boto.swf.layer1 import Layer1
 from mock import patch
 
-from boto.swf.layer1 import Layer1
-from boto.exception import SWFResponseError
-
-from swf.exceptions import ResponseError, DoesNotExistError
-from swf.models.domain import Domain
+import swf.settings
+from swf.exceptions import DoesNotExistError, ResponseError
 from swf.models.activity import ActivityType
+from swf.models.domain import Domain
 from swf.querysets.activity import ActivityTypeQuerySet
 
-from ..mocks.activity import mock_list_activity_types, mock_describe_activity_type
-
-import swf.settings
+from ..mocks.activity import mock_describe_activity_type, mock_list_activity_types
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 

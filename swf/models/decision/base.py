@@ -8,6 +8,7 @@
 from functools import wraps
 
 from future.utils import iteritems
+
 from swf.utils import decapitalize, underscore_to_camel
 
 

@@ -1,9 +1,8 @@
-from multiprocessing import Process, Value, Lock
-
 import os
 import signal
 import sys
 import time
+from multiprocessing import Lock, Process, Value
 
 import psutil
 import pytest

@@ -1,10 +1,9 @@
 from __future__ import absolute_import, print_function
 
 import errno
+import json
 import os
 import sys
-import json
-
 import time
 from typing import TYPE_CHECKING
 
@@ -14,6 +13,7 @@ try:
     import subprocess32 as subprocess
 except ImportError:
     import subprocess
+
 import functools
 import logging
 import tempfile
@@ -30,8 +30,8 @@ from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable  # NOQA
     import inspect  # NOQA
+    from typing import Any, Iterable  # NOQA
 
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536

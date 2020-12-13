@@ -2,12 +2,7 @@ from __future__ import print_function
 
 from random import randrange
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
-
+from simpleflow import Workflow, activity, futures
 
 # This file demonstrates handling Child Workflows with simpleflow.
 # It launches a ParentWorkflow that runs a ChildWorkflow, "two" IdempotentChildWorkflow

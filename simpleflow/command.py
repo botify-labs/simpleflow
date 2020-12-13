@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 
-from contextlib import contextmanager
 import multiprocessing
 import os
 import platform
 import signal
 import sys
 import time
+from contextlib import contextmanager
 from uuid import uuid4
 
 import boto.connection
 import click
 
-from simpleflow import format
 import swf.exceptions
 import swf.models
 import swf.querysets
-
-from simpleflow import log, logger, Workflow, __version__
+from simpleflow import Workflow, __version__, format, log, logger
 from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
-from simpleflow.swf.stats import pretty
 from simpleflow.swf import helpers
 from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import decider, worker
+from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.utils import json_dumps

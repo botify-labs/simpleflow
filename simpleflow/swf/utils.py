@@ -5,9 +5,9 @@ import swf.models
 import swf.querysets
 from simpleflow.history import History
 
-
 if False:
-    from typing import Any, List, Dict  # NOQA
+    from typing import Any, Dict, List  # NOQA
+
     from swf.models.decision.base import Decision  # NOQA
 
 

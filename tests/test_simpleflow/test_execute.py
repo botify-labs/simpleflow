@@ -2,17 +2,16 @@
 from __future__ import print_function
 
 import json
-import sys
-import tempfile
 import os.path
 import platform
+import subprocess
+import sys
+import tempfile
 import threading
+import time
 
 import psutil
 import pytest
-import time
-
-import subprocess
 
 from simpleflow import execute
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError

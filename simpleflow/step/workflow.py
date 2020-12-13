@@ -1,11 +1,12 @@
-import os
 import copy
+import os
 from collections import defaultdict
+
+from simpleflow import activity, settings, task
 
 from .constants import STEP_ACTIVITY_PARAMS_DEFAULT
 from .submittable import Step
 from .tasks import GetStepsDoneTask
-from simpleflow import activity, settings, task
 
 
 class WorkflowStepMixin(object):

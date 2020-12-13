@@ -2,11 +2,11 @@
 
 import unittest
 
-from mock import patch
-from boto.swf.layer1 import Layer1
 import boto.swf.exceptions
+from boto.swf.layer1 import Layer1
+from mock import patch
 
-from swf.models import Domain, ActivityType
+from swf.models import ActivityType, Domain
 
 from ..mocks.activity import mock_describe_activity_type
 

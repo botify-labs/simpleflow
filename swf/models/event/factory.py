@@ -7,28 +7,23 @@
 
 import collections
 
-from swf.models.event.workflow import (
-    WorkflowExecutionEvent,
-    CompiledWorkflowExecutionEvent,
-    ChildWorkflowExecutionEvent,
-    CompiledChildWorkflowExecutionEvent,
-    ExternalWorkflowExecutionEvent,
-    CompiledExternalWorkflowExecutionEvent,
-)
-
+from swf.models.event.marker import CompiledMarkerEvent, MarkerEvent
 from swf.models.event.task import (
-    DecisionTaskEvent,
-    CompiledDecisionTaskEvent,
     ActivityTaskEvent,
     CompiledActivityTaskEvent,
+    CompiledDecisionTaskEvent,
+    DecisionTaskEvent,
 )
-
-from swf.models.event.timer import TimerEvent, CompiledTimerEvent
-
-from swf.models.event.marker import MarkerEvent, CompiledMarkerEvent
-
+from swf.models.event.timer import CompiledTimerEvent, TimerEvent
+from swf.models.event.workflow import (
+    ChildWorkflowExecutionEvent,
+    CompiledChildWorkflowExecutionEvent,
+    CompiledExternalWorkflowExecutionEvent,
+    CompiledWorkflowExecutionEvent,
+    ExternalWorkflowExecutionEvent,
+    WorkflowExecutionEvent,
+)
 from swf.utils import camel_to_underscore, decapitalize
-
 
 EVENTS = collections.OrderedDict(
     [

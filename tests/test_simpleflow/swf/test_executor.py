@@ -1,17 +1,13 @@
-import mock
 import unittest
 
+import mock
 from sure import expect
 
 from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import (
-    BaseTestWorkflow,
-    DOMAIN,
-    increment,
-)
+from tests.data import DOMAIN, BaseTestWorkflow, increment
 from tests.utils import MockSWFTestCase
 
 

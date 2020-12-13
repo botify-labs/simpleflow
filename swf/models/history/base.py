@@ -5,11 +5,12 @@
 #
 # See the file LICENSE for copying permission.
 
-from itertools import groupby
 from builtins import object, range
+from itertools import groupby
 
 from future.utils import iteritems
-from swf.models.event import EventFactory, CompiledEventFactory
+
+from swf.models.event import CompiledEventFactory, EventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
 

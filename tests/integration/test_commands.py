@@ -5,7 +5,8 @@ from flaky import flaky
 from sure import expect
 
 import simpleflow.command
-from . import vcr, VCRIntegrationTest
+
+from . import VCRIntegrationTest, vcr
 
 
 class TestSimpleflowCommand(VCRIntegrationTest):

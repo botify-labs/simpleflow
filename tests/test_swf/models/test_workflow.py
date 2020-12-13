@@ -2,21 +2,21 @@
 
 import unittest
 
-from mock import patch
-from boto.swf.layer1 import Layer1
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFTypeAlreadyExistsError
+from boto.swf.layer1 import Layer1
+from mock import patch
 
 from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError
-from swf.models.history import History
 from swf.models.domain import Domain
-from swf.models.workflow import WorkflowType, WorkflowExecution
+from swf.models.history import History
+from swf.models.workflow import WorkflowExecution, WorkflowType
 
-from ..mocks.workflow import (
-    mock_describe_workflow_type,
-    mock_describe_workflow_execution,
-)
 from ..mocks.event import mock_get_workflow_execution_history
+from ..mocks.workflow import (
+    mock_describe_workflow_execution,
+    mock_describe_workflow_type,
+)
 
 
 class CustomAssertions(object):

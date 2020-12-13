@@ -1,11 +1,10 @@
-import mock
 import unittest
 from time import time
 
+import mock
 from flaky import flaky
 
-from simpleflow.utils.retry import with_delay, constant, exponential
-
+from simpleflow.utils.retry import constant, exponential, with_delay
 
 error_epsilon = 0.01  # tolerate an error of 0.01%
 RETRY_WAIT_TIME = 0.1  # time between retries

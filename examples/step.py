@@ -1,14 +1,11 @@
 from __future__ import print_function
 
 import os
-from simpleflow import (
-    activity,
-    futures,
-    Workflow,
-)
+
+from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Group
-from simpleflow.step.workflow import WorkflowStepMixin
 from simpleflow.step.submittable import Step
+from simpleflow.step.workflow import WorkflowStepMixin
 
 
 @activity.with_attributes(task_list="example", version="example", idempotent=True)

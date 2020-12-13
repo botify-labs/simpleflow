@@ -16,8 +16,8 @@ LATEST_TIMESTAMP = None
 
 
 def new_timestamp_string():
-    from time import time
     import random
+    from time import time
 
     global FIRST_TIMESTAMP
     global LATEST_TIMESTAMP

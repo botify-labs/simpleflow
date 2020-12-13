@@ -2,10 +2,7 @@ from __future__ import absolute_import
 
 import swf.models
 
-from .base import (
-    Worker,
-    ActivityPoller,
-)
+from .base import ActivityPoller, Worker
 
 
 def make_worker_poller(domain, task_list, heartbeat, process_mode, poll_data):

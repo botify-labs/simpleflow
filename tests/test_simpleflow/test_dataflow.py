@@ -21,8 +21,8 @@ from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
 from tests.data import (
-    BaseTestWorkflow,
     DOMAIN,
+    BaseTestWorkflow,
     Tetra,
     double,
     increment,
