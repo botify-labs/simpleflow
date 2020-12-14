@@ -1,14 +1,16 @@
 from __future__ import absolute_import
 
+from typing import TYPE_CHECKING
+
 import swf.exceptions
 import swf.models
 import swf.querysets
 from simpleflow.history import History
 
-if False:
-    from typing import Any, Dict, List  # NOQA
+if TYPE_CHECKING:
+    from typing import Any, Dict, List
 
-    from swf.models.decision.base import Decision  # NOQA
+    from swf.models.decision.base import Decision
 
 
 # TODO: move this function inside a QuerySet object when we merge the

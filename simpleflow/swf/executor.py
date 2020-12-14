@@ -7,6 +7,7 @@ import json
 import multiprocessing
 import re
 import traceback
+from typing import TYPE_CHECKING
 
 import simpleflow.task as base_task
 import swf.exceptions
@@ -34,9 +35,8 @@ from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
-# noinspection PyUnreachableCode
-if False:
-    from typing import Optional, Tuple, Type, Union  # NOQA
+if TYPE_CHECKING:
+    from typing import Optional, Tuple, Type, Union
 
 __all__ = ["Executor"]
 

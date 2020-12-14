@@ -6,7 +6,6 @@ from uuid import UUID
 import lazy_object_proxy
 from future.utils import iteritems
 
-from simpleflow.compat import PY2
 from simpleflow.futures import Future
 
 
