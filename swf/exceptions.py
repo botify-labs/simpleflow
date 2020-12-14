@@ -5,8 +5,13 @@
 #
 # See the file LICENSE for copying permission.
 
-import collections
 import re
+
+try:
+    from collections.abc import Sequence  # noqa
+except ImportError:
+    from collections import Sequence
+
 from functools import partial, wraps
 
 import boto.swf.exceptions
@@ -144,9 +149,7 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if isinstance(values, compat.basestring) and not isinstance(
-        values, collections.Sequence
-    ):
+    if isinstance(values, compat.basestring) and not isinstance(values, Sequence):
         values = (values,)
     return matched[0] in values
 
@@ -373,7 +376,7 @@ def catch(exceptions, handle_with=None, log=False):
 
         return decorated
 
-    if not isinstance(exceptions, collections.Sequence):
+    if not isinstance(exceptions, Sequence):
         exceptions = tuple([exceptions])
     elif not isinstance(exceptions, tuple):
         exceptions = tuple(exceptions)

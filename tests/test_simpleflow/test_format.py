@@ -4,6 +4,7 @@ import random
 import unittest
 
 import boto
+from future.utils import PY2
 
 from simpleflow import constants, format
 from simpleflow.storage import push_content
@@ -11,6 +12,9 @@ from tests.moto_compat import mock_s3
 
 
 class TestFormat(unittest.TestCase):
+    if PY2:
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
     def setUp(self):
         pass
 
@@ -39,14 +43,14 @@ class TestFormat(unittest.TestCase):
     def test_encode_longer(self):
         MAX_LENGTH = random.randint(10, 1000)
         message = "A" * (MAX_LENGTH + 1)
-        with self.assertRaisesRegexp(ValueError, "Message too long"):
+        with self.assertRaisesRegex(ValueError, "Message too long"):
             format.encode(message, MAX_LENGTH)
 
     @mock_s3
     def test_identity_doesnt_use_jumbo_fields(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = "A" * (constants.MAX_RESULT_LENGTH * 2)
-        with self.assertRaisesRegexp(ValueError, "Message too long"):
+        with self.assertRaisesRegex(ValueError, "Message too long"):
             format.identity(message)
 
     @mock_s3
@@ -99,9 +103,7 @@ class TestFormat(unittest.TestCase):
         self.setup_jumbo_fields("jumbo-bucket/with/a/very/long/name/" + "a" * 256)
 
         message = "A" * 500
-        with self.assertRaisesRegexp(
-            ValueError, "Jumbo field signature is longer than"
-        ):
+        with self.assertRaisesRegex(ValueError, "Jumbo field signature is longer than"):
             format.reason(message)
 
     @mock_s3

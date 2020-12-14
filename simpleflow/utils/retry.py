@@ -1,12 +1,16 @@
-import collections
 import functools
 import time
+
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 from simpleflow import logger
 
 
 def _to_tuple(exceptions):
-    if not isinstance(exceptions, collections.Sequence):
+    if not isinstance(exceptions, Sequence):
         return tuple([exceptions])
     elif not isinstance(exceptions, tuple):
         return tuple(exceptions)
