@@ -7,41 +7,9 @@ import sys
 from io import open
 
 from setuptools import find_packages, setup
-from setuptools.command.test import test as TestCommand
 
 REQUIRES = []
 PUBLISH_CMD = "python setup.py sdist bdist_wheel upload"
-TEST_PUBLISH_CMD = "python setup.py sdist bdist_wheel upload -r test"
-
-
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        with open("script/test") as fd:
-            for line in fd:
-                m = re.match(r"\s*unset\s+(.*)\s*#?", line)
-                if m:
-                    for var in m.group(1).split():
-                        print("unset {}".format(var))
-                        os.environ.pop(var, None)
-                m = re.match(r"\s*export\s+(.*)\s*#?", line)
-                if m:
-                    for var in m.group(1).split():
-                        k, v = var.split("=", 1)
-                        print("export {}={}".format(k, v))
-                        if k[:1] in "'\"":
-                            k = k[1:-1]
-                        if v[:1] in "'\"":
-                            v = v[1:-1]
-                        os.environ[k] = v
-        import pytest
-
-        errcode = pytest.main(self.test_args)
-        sys.exit(errcode)
 
 
 def find_version(fname):
@@ -71,15 +39,6 @@ if "publish" in sys.argv:
         sys.exit(1)
     status = subprocess.call(PUBLISH_CMD, shell=True)
     sys.exit(status)
-
-if "publish_test" in sys.argv:
-    try:
-        __import__("wheel")
-    except ImportError:
-        print("wheel required. Run `pip install wheel`.")
-        sys.exit(1)
-    status = subprocess.call(TEST_PUBLISH_CMD, shell=True)
-    sys.exit()
 
 
 def read(fname):
@@ -148,8 +107,5 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    test_suite="tests",
-    tests_require=tests_require,
-    cmdclass={"test": PyTest},
     entry_points={"console_scripts": ["simpleflow = simpleflow.command:cli",]},
 )
