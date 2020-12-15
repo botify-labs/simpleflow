@@ -1,3 +1,5 @@
+black==19.10b0; python_version > "3.5" and python_implementation == "CPython"
+isort==5.6.4; python_version > "3.5" and python_implementation == "CPython"
 flaky  # py.test plugin for rerunning flaky tests
 invoke
 mock
