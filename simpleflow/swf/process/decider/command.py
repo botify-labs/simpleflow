@@ -1,13 +1,22 @@
 from __future__ import absolute_import
 
 from simpleflow import logger
+
 from . import helpers
 
 
-def start(workflows, domain, task_list, log_level=None, nb_processes=None,
-          repair_with=None, force_activities=None, is_standalone=False,
-          repair_workflow_id=None, repair_run_id=None,
-          ):
+def start(
+    workflows,
+    domain,
+    task_list,
+    log_level=None,
+    nb_processes=None,
+    repair_with=None,
+    force_activities=None,
+    is_standalone=False,
+    repair_workflow_id=None,
+    repair_run_id=None,
+):
     """
     Start a decider.
     :param workflows:
@@ -36,7 +45,10 @@ def start(workflows, domain, task_list, log_level=None, nb_processes=None,
             "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
         )
     decider = helpers.make_decider(
-        workflows, domain, task_list, nb_processes,
+        workflows,
+        domain,
+        task_list,
+        nb_processes,
         repair_with=repair_with,
         force_activities=force_activities,
         is_standalone=is_standalone,

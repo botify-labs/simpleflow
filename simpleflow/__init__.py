@@ -5,5 +5,5 @@ from .signal import WaitForSignal  # NOQA
 from .workflow import Workflow  # NOQA
 
 __version__ = "0.21.15"
-__author__ = 'Greg Leclercq'
+__author__ = "Greg Leclercq"
 __license__ = "MIT"

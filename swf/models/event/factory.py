@@ -7,66 +7,60 @@
 
 import collections
 
+from swf.models.event.marker import CompiledMarkerEvent, MarkerEvent
+from swf.models.event.task import (
+    ActivityTaskEvent,
+    CompiledActivityTaskEvent,
+    CompiledDecisionTaskEvent,
+    DecisionTaskEvent,
+)
+from swf.models.event.timer import CompiledTimerEvent, TimerEvent
 from swf.models.event.workflow import (
-    WorkflowExecutionEvent,
-    CompiledWorkflowExecutionEvent,
     ChildWorkflowExecutionEvent,
     CompiledChildWorkflowExecutionEvent,
+    CompiledExternalWorkflowExecutionEvent,
+    CompiledWorkflowExecutionEvent,
     ExternalWorkflowExecutionEvent,
-    CompiledExternalWorkflowExecutionEvent
+    WorkflowExecutionEvent,
 )
-
-from swf.models.event.task import (
-    DecisionTaskEvent,
-    CompiledDecisionTaskEvent,
-    ActivityTaskEvent,
-    CompiledActivityTaskEvent
-)
-
-from swf.models.event.timer import (
-    TimerEvent,
-    CompiledTimerEvent
-)
-
-from swf.models.event.marker import (
-    MarkerEvent,
-    CompiledMarkerEvent
-)
-
 from swf.utils import camel_to_underscore, decapitalize
 
-
-EVENTS = collections.OrderedDict([
-    # At top-level to override 'WorkflowExecution'
-    ('ChildWorkflowExecution', {
-        'event': ChildWorkflowExecutionEvent,
-        'compiled': CompiledChildWorkflowExecutionEvent,
-    }),
-    ('ExternalWorkflow', {
-        'event': ExternalWorkflowExecutionEvent,
-        'compiled': CompiledExternalWorkflowExecutionEvent,
-    }),
-    ('WorkflowExecution', {
-        'event': WorkflowExecutionEvent,
-        'compiled_event': CompiledWorkflowExecutionEvent,
-    }),
-    ('DecisionTask', {
-        'event': DecisionTaskEvent,
-        'compiled_event': CompiledDecisionTaskEvent,
-    }),
-    ('ActivityTask', {
-        'event': ActivityTaskEvent,
-        'compiled_event': CompiledActivityTaskEvent,
-    }),
-    ('Marker', {
-        'event': MarkerEvent,
-        'compiled': CompiledMarkerEvent,
-    }),
-    ('Timer', {
-        'event': TimerEvent,
-        'compiled': CompiledTimerEvent,
-    }),
-])
+EVENTS = collections.OrderedDict(
+    [
+        # At top-level to override 'WorkflowExecution'
+        (
+            "ChildWorkflowExecution",
+            {
+                "event": ChildWorkflowExecutionEvent,
+                "compiled": CompiledChildWorkflowExecutionEvent,
+            },
+        ),
+        (
+            "ExternalWorkflow",
+            {
+                "event": ExternalWorkflowExecutionEvent,
+                "compiled": CompiledExternalWorkflowExecutionEvent,
+            },
+        ),
+        (
+            "WorkflowExecution",
+            {
+                "event": WorkflowExecutionEvent,
+                "compiled_event": CompiledWorkflowExecutionEvent,
+            },
+        ),
+        (
+            "DecisionTask",
+            {"event": DecisionTaskEvent, "compiled_event": CompiledDecisionTaskEvent,},
+        ),
+        (
+            "ActivityTask",
+            {"event": ActivityTaskEvent, "compiled_event": CompiledActivityTaskEvent,},
+        ),
+        ("Marker", {"event": MarkerEvent, "compiled": CompiledMarkerEvent,}),
+        ("Timer", {"event": TimerEvent, "compiled": CompiledTimerEvent,}),
+    ]
+)
 
 
 class EventFactory(object):
@@ -103,17 +97,17 @@ class EventFactory(object):
     events = EVENTS
 
     def __new__(klass, raw_event):
-        event_id = raw_event['eventId']
-        event_name = raw_event['eventType']
-        event_timestamp = raw_event['eventTimestamp']
+        event_id = raw_event["eventId"]
+        event_name = raw_event["eventType"]
+        event_timestamp = raw_event["eventTimestamp"]
 
         event_type = klass._extract_event_type(event_name)
         event_state = klass._extract_event_state(event_type, event_name)
         # amazon swf format is not very normalized and event attributes
         # response field is non-capitalized...
-        event_attributes_key = decapitalize(event_name) + 'EventAttributes'
+        event_attributes_key = decapitalize(event_name) + "EventAttributes"
 
-        klass = EventFactory.events[event_type]['event']
+        klass = EventFactory.events[event_type]["event"]
         klass._name = event_name
         klass._attributes_key = event_attributes_key
 
@@ -121,7 +115,7 @@ class EventFactory(object):
             id=event_id,
             state=event_state,
             timestamp=event_timestamp,
-            raw_data=raw_event
+            raw_data=raw_event,
         )
 
         return instance
@@ -170,12 +164,13 @@ class CompiledEventFactory(object):
     Process an Event object and instantiates the corresponding
     swf.models.event.compiler.CompiledEvent.
     """
+
     events = EVENTS
 
     def __new__(cls, event):
         event_type = event.type
 
-        klass = cls.events[event_type]['compiled_event']
+        klass = cls.events[event_type]["compiled_event"]
         instance = klass(event)
 
         return instance

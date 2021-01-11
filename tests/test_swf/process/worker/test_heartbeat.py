@@ -1,16 +1,12 @@
-import unittest
+import multiprocessing as mp
 import os
 import signal
 import time
+import unittest
 from uuid import uuid4
-import multiprocessing as mp
 
 import swf.exceptions
-
-from simpleflow.swf.process.worker.heartbeat import (
-    HeartbeatProcess,
-    Heartbeater,
-)
+from simpleflow.swf.process.worker.heartbeat import Heartbeater, HeartbeatProcess
 
 
 class FakeHeartbeat(object):
@@ -31,7 +27,7 @@ class FakeHeartbeat(object):
 class FakeHeartbeatCancel(FakeHeartbeat):
     def __call__(self, token):
         super(FakeHeartbeatCancel, self).__call__(token)
-        return {'cancelRequested': True}
+        return {"cancelRequested": True}
 
 
 class FakeHeartbeatRaises(FakeHeartbeat):
@@ -62,9 +58,9 @@ class FakeTaskHandler(object):
         self._result_queue = result_queue
 
     def __call__(self):
-        process = mp.Process(target=self._callable,
-                             args=self._args,
-                             kwargs=self._kwargs)
+        process = mp.Process(
+            target=self._callable, args=self._args, kwargs=self._kwargs
+        )
 
         process.start()
         self._result_queue.put(process.pid)
@@ -77,7 +73,7 @@ class TestHeartbeatProcess(unittest.TestCase):
 
     def test_heartbeat_non_int(self):
         with self.assertRaises(ValueError):
-            HeartbeatProcess(lambda *args: None, interval='NOT_AN_INTEGER')
+            HeartbeatProcess(lambda *args: None, interval="NOT_AN_INTEGER")
 
     def test_fake_heartbeat_count(self):
         heartbeat = FakeHeartbeat(max_count=10)
@@ -103,32 +99,29 @@ class TestHeartbeatProcess(unittest.TestCase):
         heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
         try:
-            heartbeater.run(token, FakeTask('test_task'))
+            heartbeater.run(token, FakeTask("test_task"))
         except StopIteration:
             pass
-        self.assertEqual(heartbeat._token,
-                          token)
+        self.assertEqual(heartbeat._token, token)
 
     def test_heartbeat_cancel(self):
         heartbeat = FakeHeartbeatCancel(max_count=10)
         heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
 
-        heartbeater.run(token, FakeTask('test_task'))
-        self.assertEqual(heartbeat._token,
-                          token)
+        heartbeater.run(token, FakeTask("test_task"))
+        self.assertEqual(heartbeat._token, token)
 
     def test_heartbeat_doesnotexist_error(self):
-        error_type = 'Unknown execution: blah'
+        error_type = "Unknown execution: blah"
         heartbeat = FakeHeartbeatRaises(
-            swf.exceptions.DoesNotExistError('error', error_type),
-            10)
+            swf.exceptions.DoesNotExistError("error", error_type), 10
+        )
         heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
 
-        heartbeater.run(token, FakeTask('test_task'))
-        self.assertEqual(heartbeat._token,
-                          token)
+        heartbeater.run(token, FakeTask("test_task"))
+        self.assertEqual(heartbeat._token, token)
 
     def test_heartbeat_running(self):
         max_count = 3
@@ -136,12 +129,11 @@ class TestHeartbeatProcess(unittest.TestCase):
         heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
         token = uuid4()
         try:
-            heartbeater.run(token, FakeTask('test_task'))
+            heartbeater.run(token, FakeTask("test_task"))
         except StopIteration:
             pass
         self.assertEqual(heartbeat._max_count, max_count)
-        self.assertEqual(heartbeat._token,
-                          token)
+        self.assertEqual(heartbeat._token, token)
 
     # TODO: fix test not working in containers
     @unittest.skip("Doesn't work in containers for now")
@@ -150,13 +142,10 @@ class TestHeartbeatProcess(unittest.TestCase):
         heartbeater = HeartbeatProcess(heartbeat, interval=0.1)
 
         token = uuid4()
-        task = FakeTask('test_task')
+        task = FakeTask("test_task")
 
         result_queue = mp.Queue()
-        handler = FakeTaskHandler(heartbeater.run,
-                                  (token, task),
-                                  {},
-                                  result_queue)
+        handler = FakeTaskHandler(heartbeater.run, (token, task), {}, result_queue)
         handler_process = mp.Process(target=handler)
 
         handler_process.start()
@@ -182,17 +171,15 @@ class Toggler(object):
 class TestHeartbeater(unittest.TestCase):
     def test_heartbeater_start(self):
         heartbeater = Heartbeater(lambda *args: None, interval=0.1)
-        heartbeater.start(uuid4(), FakeTask('test_task'))
+        heartbeater.start(uuid4(), FakeTask("test_task"))
         heartbeater.stop()
         heartbeater._heartbeater.join()
         self.assertFalse(heartbeater._heartbeater.is_alive())
 
     def test_heartbeater_stop(self):
         toggler = Toggler(True)
-        heartbeater = Heartbeater(lambda *args: None,
-                                  interval=0.1,
-                                  on_exit=toggler)
-        heartbeater.start(uuid4(), FakeTask('test_task'))
+        heartbeater = Heartbeater(lambda *args: None, interval=0.1, on_exit=toggler)
+        heartbeater.start(uuid4(), FakeTask("test_task"))
         heartbeater.stop()
         heartbeater._heartbeater.join()
         self.assertTrue(toggler.value)

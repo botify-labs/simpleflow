@@ -11,7 +11,7 @@ import pytz
 from future.utils import iteritems
 
 from simpleflow import format
-from swf.utils import camel_to_underscore, cached_property
+from swf.utils import cached_property, camel_to_underscore
 
 
 class Event(object):
@@ -43,16 +43,13 @@ class Event(object):
     :param  raw_data: raw_event representation provided by amazon service
     :type   raw_data: dict
     """
+
     _type = None
     _name = None
     _attributes_key = None
     _attributes = None
 
-    excluded_attributes = (
-        'eventId',
-        'eventType',
-        'eventTimestamp'
-    )
+    excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
     def __init__(self, id, state, timestamp, raw_data):
         """
@@ -67,7 +64,7 @@ class Event(object):
         self.process_attributes()
 
     def __repr__(self):
-        return '<Event %s %s : %s >' % (self.id, self.type, self.state)
+        return "<Event %s %s : %s >" % (self.id, self.type, self.state)
 
     @property
     def id(self):

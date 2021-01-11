@@ -13,8 +13,11 @@ class TestActor(unittest.TestCase):
         conn = boto.connect_swf()
         conn.register_domain("TestDomain", "50")
         conn.register_workflow_type(
-            "TestDomain", "test-workflow", "v1.2",
-            task_list="test-task-list", default_child_policy="TERMINATE",
+            "TestDomain",
+            "test-workflow",
+            "v1.2",
+            task_list="test-task-list",
+            default_child_policy="TERMINATE",
             default_execution_start_to_close_timeout="6",
             default_task_start_to_close_timeout="3",
         )
@@ -43,7 +46,7 @@ class TestActor(unittest.TestCase):
         self.assertIsNotNone(response.token)
         self.assertEqual(
             [evt.type for evt in response.history],
-            ['WorkflowExecution', 'DecisionTask', 'DecisionTask']
+            ["WorkflowExecution", "DecisionTask", "DecisionTask"],
         )
-        self.assertEqual(response.execution.workflow_id, 'wfe-1234')
+        self.assertEqual(response.execution.workflow_id, "wfe-1234")
         self.assertIsNotNone(response.execution.run_id)

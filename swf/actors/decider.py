@@ -4,7 +4,7 @@ import boto.exception
 from simpleflow import compat, format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
-from swf.exceptions import PollTimeout, ResponseError, DoesNotExistError
+from swf.exceptions import DoesNotExistError, PollTimeout, ResponseError
 from swf.models.history import History
 from swf.models.workflow import WorkflowExecution, WorkflowType
 from swf.responses import Response
@@ -19,14 +19,11 @@ class Decider(Actor):
     :param  task_list: task list the Actor should watch for tasks on
     :type   task_list: str
     """
-    def __init__(self, domain, task_list):
-        super(Decider, self).__init__(
-            domain,
-            task_list
-        )
 
-    def complete(self, task_token,
-                 decisions=None, execution_context=None):
+    def __init__(self, domain, task_list):
+        super(Decider, self).__init__(domain, task_list)
+
+    def complete(self, task_token, decisions=None, execution_context=None):
         """Responds to ``swf`` decisions have been made about
         the task with `task_token``
 
@@ -39,17 +36,17 @@ class Decider(Actor):
         :param execution_context: User-defined context to add to workflow execution.
         :type execution_context: str
         """
-        if execution_context is not None and not isinstance(execution_context, compat.string_types):
+        if execution_context is not None and not isinstance(
+            execution_context, compat.string_types
+        ):
             execution_context = json_dumps(execution_context)
         try:
             self.connection.respond_decision_task_completed(
-                task_token,
-                decisions,
-                format.execution_context(execution_context),
+                task_token, decisions, format.execution_context(execution_context),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
-            if e.error_code == 'UnknownResourceFault':
+            if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to complete decision task with token={}".format(task_token),
                     message,
@@ -58,9 +55,7 @@ class Decider(Actor):
         finally:
             logging_context.reset()
 
-    def poll(self, task_list=None,
-             identity=None,
-             **kwargs):
+    def poll(self, task_list=None, identity=None, **kwargs):
         """
         Polls a decision task and returns the token and the full history of the
         workflow's events.
@@ -86,16 +81,16 @@ class Decider(Actor):
             identity=format.identity(identity),
             **kwargs
         )
-        token = task.get('taskToken')
+        token = task.get("taskToken")
         if not token:
             raise PollTimeout("Decider poll timed out")
 
-        events = task['events']
+        events = task["events"]
         logging_context.set("workflow_id", task["workflowExecution"]["workflowId"])
         logging_context.set("task_type", "decision")
         logging_context.set("event_id", task["startedEventId"])
 
-        next_page = task.get('nextPageToken')
+        next_page = task.get("nextPageToken")
         while next_page:
             try:
                 task = self.connection.poll_for_decision_task(
@@ -107,32 +102,31 @@ class Decider(Actor):
                 )
             except boto.exception.SWFResponseError as e:
                 message = self.get_error_message(e)
-                if e.error_code == 'UnknownResourceFault':
+                if e.error_code == "UnknownResourceFault":
                     raise DoesNotExistError(
-                        "Unable to poll decision task",
-                        message,
+                        "Unable to poll decision task", message,
                     )
 
                 raise ResponseError(message)
 
-            token = task.get('taskToken')
+            token = task.get("taskToken")
             if not token:
                 raise PollTimeout("Decider poll timed out")
 
-            events.extend(task['events'])
-            next_page = task.get('nextPageToken')
+            events.extend(task["events"])
+            next_page = task.get("nextPageToken")
 
         history = History.from_event_list(events)
 
         workflow_type = WorkflowType(
             domain=self.domain,
-            name=task['workflowType']['name'],
-            version=task['workflowType']['version'],
+            name=task["workflowType"]["name"],
+            version=task["workflowType"]["version"],
         )
         execution = WorkflowExecution(
             domain=self.domain,
-            workflow_id=task['workflowExecution']['workflowId'],
-            run_id=task['workflowExecution']['runId'],
+            workflow_id=task["workflowExecution"]["workflowId"],
+            run_id=task["workflowExecution"]["runId"],
             workflow_type=workflow_type,
         )
 

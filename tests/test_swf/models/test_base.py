@@ -6,7 +6,6 @@ from swf.models import BaseModel
 
 
 class TestBaseModel(unittest.TestCase):
-
     def setUp(self):
         self.obj = BaseModel()
 

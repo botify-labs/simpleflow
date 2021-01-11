@@ -1,7 +1,8 @@
-import os
 import json
+import os
 
 from simpleflow import storage
+
 from .constants import UNKNOWN_CONTEXT
 
 
@@ -18,7 +19,7 @@ class GetStepsDoneTask(object):
     def execute(self):
         steps = []
         for f in storage.list_keys(self.bucket, self.path):
-            steps.append(f.key[len(self.path) + 1:])
+            steps.append(f.key[len(self.path) + 1 :])
         return steps
 
 
@@ -34,12 +35,12 @@ class MarkStepDoneTask(object):
 
     def execute(self):
         path = os.path.join(self.path, self.step_name)
-        if hasattr(self, 'context'):
+        if hasattr(self, "context"):
             context = self.context
             content = {
                 "run_id": context["run_id"],
                 "workflow_id": context["workflow_id"],
-                "version": context["version"]
+                "version": context["version"],
             }
         else:
             content = UNKNOWN_CONTEXT

@@ -1,11 +1,9 @@
-from . import settings
-from . import registry
-
+from . import registry, settings
 
 __all__ = [
-    'with_attributes',
-    'Activity',
-    'PRIORITY_NOT_SET',
+    "with_attributes",
+    "Activity",
+    "PRIORITY_NOT_SET",
 ]
 
 
@@ -13,22 +11,23 @@ class NotSet(object):
     def __repr__(self):
         return "<Priority Not Set>"
 
+
 PRIORITY_NOT_SET = NotSet()
 
 
 def with_attributes(
-        name=None,
-        version=settings.ACTIVITY_DEFAULT_VERSION,
-        task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
-        task_priority=PRIORITY_NOT_SET,
-        retry=0,
-        raises_on_failure=False,
-        start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
-        schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
-        schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
-        heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
-        idempotent=None,
-        meta=None,
+    name=None,
+    version=settings.ACTIVITY_DEFAULT_VERSION,
+    task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
+    task_priority=PRIORITY_NOT_SET,
+    retry=0,
+    raises_on_failure=False,
+    start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
+    schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
+    schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
+    heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
+    idempotent=None,
+    meta=None,
 ):
     """
     Decorator: wrap a function/class into an Activity.
@@ -58,9 +57,13 @@ def with_attributes(
     :rtype: () -> Activity[()]
 
     """
+
     def wrap(func):
         return Activity(
-            func, name, version, task_list,
+            func,
+            name,
+            version,
+            task_list,
             retry,
             raises_on_failure,
             start_to_close_timeout,
@@ -76,19 +79,22 @@ def with_attributes(
 
 
 class Activity(object):
-    def __init__(self, callable,
-                 name=None,
-                 version=None,
-                 task_list=None,
-                 retry=0,
-                 raises_on_failure=False,
-                 start_to_close_timeout=None,
-                 schedule_to_close_timeout=None,
-                 schedule_to_start_timeout=None,
-                 heartbeat_timeout=None,
-                 task_priority=PRIORITY_NOT_SET,
-                 idempotent=None,
-                 meta=None):
+    def __init__(
+        self,
+        callable,
+        name=None,
+        version=None,
+        task_list=None,
+        retry=0,
+        raises_on_failure=False,
+        start_to_close_timeout=None,
+        schedule_to_close_timeout=None,
+        schedule_to_start_timeout=None,
+        heartbeat_timeout=None,
+        task_priority=PRIORITY_NOT_SET,
+        idempotent=None,
+        meta=None,
+    ):
         self._callable = callable
 
         self._name = name
@@ -125,20 +131,19 @@ class Activity(object):
         callable = self._callable
         prefix = self._callable.__module__
 
-        if hasattr(callable, 'name'):
+        if hasattr(callable, "name"):
             name = callable.name
-        elif hasattr(callable, '__name__'):
+        elif hasattr(callable, "__name__"):
             name = callable.__name__
         else:
             name = callable.__class__.__name__
 
-        return '.'.join([prefix, name])
+        return ".".join([prefix, name])
 
     def __repr__(self):
-        return 'Activity(name={}, version={}, task_list={})'.format(
-            self.name,
-            self.version,
-            self.task_list)
+        return "Activity(name={}, version={}, task_list={})".format(
+            self.name, self.version, self.task_list
+        )
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)

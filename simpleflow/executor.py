@@ -1,5 +1,4 @@
 import abc
-
 from typing import TYPE_CHECKING
 
 from future.utils import with_metaclass
@@ -8,10 +7,11 @@ from ._decorators import deprecated
 
 if TYPE_CHECKING:
     from typing import Optional, Type
+
     from simpleflow import Workflow
     from simpleflow.history import History
 
-__all__ = ['Executor']
+__all__ = ["Executor"]
 
 
 class Executor(with_metaclass(abc.ABCMeta, object)):
@@ -33,6 +33,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
     - asynchronous with full replay
 
     """
+
     def __init__(self, workflow_class):
         # type: (Type[Workflow]) -> None
         """
@@ -94,12 +95,10 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
         All items in ``*iterable`` must be serializable in JSON.
 
         """
-        return [self.submit(callable, argument) for
-                argument in iterable]
+        return [self.submit(callable, argument) for argument in iterable]
 
     def starmap(self, callable, iterable):
-        return [self.submit(callable, *arguments) for
-                arguments in iterable]
+        return [self.submit(callable, *arguments) for arguments in iterable]
 
     @abc.abstractmethod
     def run(self, *args, **kwargs):

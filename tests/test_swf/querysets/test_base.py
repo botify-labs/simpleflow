@@ -6,7 +6,6 @@ from swf.querysets.base import BaseQuerySet
 
 
 class TestBaseQuerySet(unittest.TestCase):
-
     def setUp(self):
         self.base_qs = BaseQuerySet()
 

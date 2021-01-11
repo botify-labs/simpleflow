@@ -19,7 +19,6 @@ storage.BUCKET_LOCATIONS_CACHE = DevNullCache()
 
 
 class TestGroup(unittest.TestCase):
-
     def create(self):
         self.bucket = "bucket"
         self.conn = boto.connect_s3()
@@ -40,9 +39,8 @@ class TestGroup(unittest.TestCase):
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         bucket = self.conn.get_bucket(self.bucket)
         self.assertEqual(
-            bucket.get_key("mykey.txt").get_contents_as_string(
-                encoding='utf-8'),
-            "42")
+            bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"), "42"
+        )
 
     @mock_s3
     def test_push_content(self):
@@ -50,9 +48,9 @@ class TestGroup(unittest.TestCase):
         storage.push_content(self.bucket, "mykey.txt", "Hey Jude")
         bucket = self.conn.get_bucket(self.bucket)
         self.assertEqual(
-            bucket.get_key("mykey.txt").get_contents_as_string(
-                encoding='utf-8'),
-            "Hey Jude")
+            bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"),
+            "Hey Jude",
+        )
 
     @mock_s3
     def test_pull(self):
@@ -67,9 +65,7 @@ class TestGroup(unittest.TestCase):
     def test_pull_content(self):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
-        self.assertEqual(
-            storage.pull_content(self.bucket, "mykey.txt"),
-            "42")
+        self.assertEqual(storage.pull_content(self.bucket, "mykey.txt"), "42")
 
     @mock_s3
     def test_list(self):
@@ -84,12 +80,13 @@ class TestGroup(unittest.TestCase):
 
         # bucket where "get_location" works: return bucket+region
         self.assertEqual(
-            storage.sanitize_bucket_and_host(self.bucket),
-            (self.bucket, 'us-east-1'))
+            storage.sanitize_bucket_and_host(self.bucket), (self.bucket, "us-east-1")
+        )
 
         # bucket where "get_location" doesn't work: return bucket + default region setting
         def _access_denied():
             from boto.exception import S3ResponseError
+
             err = S3ResponseError("reason", "resp")
             err.error_code = "AccessDenied"
             raise err
@@ -98,17 +95,21 @@ class TestGroup(unittest.TestCase):
             with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
                 self.assertEqual(
                     storage.sanitize_bucket_and_host(self.bucket),
-                    (self.bucket, default))
+                    (self.bucket, default),
+                )
 
         # bucket where we provided a host/bucket: return bucket+host
         self.assertEqual(
-            storage.sanitize_bucket_and_host('s3.amazonaws.com/{}'.format(self.bucket)),
-            (self.bucket, 's3.amazonaws.com'))
+            storage.sanitize_bucket_and_host("s3.amazonaws.com/{}".format(self.bucket)),
+            (self.bucket, "s3.amazonaws.com"),
+        )
 
         # bucket trivially invalid: raise
         with self.assertRaises(ValueError):
-            storage.sanitize_bucket_and_host('any/mybucket')
+            storage.sanitize_bucket_and_host("any/mybucket")
 
         # bucket with too many "/": raise
         with self.assertRaises(ValueError):
-            storage.sanitize_bucket_and_host('s3-eu-west-1.amazonaws.com/mybucket/subpath')
+            storage.sanitize_bucket_and_host(
+                "s3-eu-west-1.amazonaws.com/mybucket/subpath"
+            )

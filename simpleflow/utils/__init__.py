@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from zlib import adler32
 
 from simpleflow.compat import PY2
+
 from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
@@ -28,9 +29,9 @@ def hex_hash(s):
     :return:
     """
     if not s:
-        return '0'
-    s = s.encode('utf-8')
-    return '{:x}'.format(adler32(s) & 0xffffffff)
+        return "0"
+    s = s.encode("utf-8")
+    return "{:x}".format(adler32(s) & 0xFFFFFFFF)
 
 
 def format_exc(exc):
@@ -56,7 +57,7 @@ def _some_str(value):
     try:
         return str(value)
     except Exception:
-        return '<unprintable %s object>' % type(value).__name__
+        return "<unprintable %s object>" % type(value).__name__
 
 
 def format_exc_type(exc_type):
@@ -64,7 +65,7 @@ def format_exc_type(exc_type):
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
-        type_str = '%s.%s' % (type_mod, type_str)
+        type_str = "%s.%s" % (type_mod, type_str)
     return type_str
 
 

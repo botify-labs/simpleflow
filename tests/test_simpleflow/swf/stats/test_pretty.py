@@ -1,9 +1,9 @@
 import json
 import unittest
 
-from swf.models import History as BasicHistory
 from simpleflow.history import History
 from simpleflow.swf.stats.pretty import dump_history_to_json
+from swf.models import History as BasicHistory
 
 
 def fake_history():
@@ -24,11 +24,17 @@ class TestSimpleflowSwfStatsPretty(unittest.TestCase):
         parsed = json.loads(dump)
 
         self.assertEqual(
-            3, len(parsed),
-            "we should get only one activity in the dump, got {}:\n{}".format(len(parsed), parsed)
+            3,
+            len(parsed),
+            "we should get only one activity in the dump, got {}:\n{}".format(
+                len(parsed), parsed
+            ),
         )
         self.assertEqual(
-            ["activity-examples.basic.increment-1", "activity-examples.basic.Delay-1",
-             "activity-examples.basic.double-1"],
+            [
+                "activity-examples.basic.increment-1",
+                "activity-examples.basic.Delay-1",
+                "activity-examples.basic.double-1",
+            ],
             [t[0] for t in parsed],
         )

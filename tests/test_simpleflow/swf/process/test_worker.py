@@ -33,5 +33,5 @@ class TestActivityWorker(unittest.TestCase):
         self.assertIn("unable to import ", mock.call_args[1]["reason"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

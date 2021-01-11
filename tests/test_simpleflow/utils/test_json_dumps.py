@@ -3,6 +3,7 @@ import json
 import unittest
 
 import pytz
+
 from simpleflow.exceptions import ExecutionBlocked
 from simpleflow.futures import Future
 from simpleflow.utils import json_dumps
@@ -12,18 +13,17 @@ class TestJsonDumps(unittest.TestCase):
     def test_json_dumps_basics(self):
         d = datetime.datetime(1970, 1, 1, tzinfo=pytz.UTC)
         cases = [
-            [None,         'null'],
-            [1,            '1'],
-            ["a",          '"a"'],
-            [[1, 2],       '[1,2]'],
-            [(1, 2),       '[1,2]'],
-            [{'a': 'b'},   '{"a":"b"}'],
-            [{'start': d}, '{"start":"1970-01-01T00:00:00Z"}'],
+            [None, "null"],
+            [1, "1"],
+            ["a", '"a"'],
+            [[1, 2], "[1,2]"],
+            [(1, 2), "[1,2]"],
+            [{"a": "b"}, '{"a":"b"}'],
+            [{"start": d}, '{"start":"1970-01-01T00:00:00Z"}'],
         ]
         for case in cases:
             self.assertEqual(
-                json_dumps(case[0]),
-                case[1],
+                json_dumps(case[0]), case[1],
             )
 
     def test_json_dumps_futures(self):
@@ -43,21 +43,20 @@ class TestJsonDumps(unittest.TestCase):
 
     def test_json_non_compact(self):
         cases = [
-            [None,       'null'],
-            [1,          '1'],
-            ["a",        '"a"'],
-            [[1, 2],     '[1, 2]'],
-            [(1, 2),     '[1, 2]'],
-            [{'a': 'b'}, '{"a": "b"}'],
+            [None, "null"],
+            [1, "1"],
+            ["a", '"a"'],
+            [[1, 2], "[1, 2]"],
+            [(1, 2), "[1, 2]"],
+            [{"a": "b"}, '{"a": "b"}'],
         ]
         for case in cases:
             self.assertEqual(
-                json_dumps(case[0], compact=False),
-                case[1],
+                json_dumps(case[0], compact=False), case[1],
             )
 
     def test_bugfix_154_default(self):
-        actual = json_dumps(datetime.datetime(1970, 1, 1), default=lambda _: 'foo')
+        actual = json_dumps(datetime.datetime(1970, 1, 1), default=lambda _: "foo")
         expected = '"foo"'
         self.assertEqual(expected, actual)
 
@@ -72,9 +71,7 @@ class TestJsonDumps(unittest.TestCase):
         def unwrap():
             return "foo"
 
-        data = {
-            "args": [Proxy(unwrap)]
-        }
+        data = {"args": [Proxy(unwrap)]}
         expected = '{"args":["foo"]}'
         actual = json_dumps(data)
         self.assertEqual(expected, actual)
@@ -94,5 +91,5 @@ class TestJsonDumps(unittest.TestCase):
         self.assertEqual(sorted(expected[1]), sorted(actual[1]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

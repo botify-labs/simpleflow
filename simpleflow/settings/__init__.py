@@ -1,5 +1,5 @@
-from pprint import pformat
 import sys
+from pprint import pformat
 
 from future.utils import iteritems
 

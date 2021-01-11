@@ -1,9 +1,8 @@
-from multiprocessing import Process, Value, Lock
-
 import os
 import signal
 import sys
 import time
+from multiprocessing import Lock, Process, Value
 
 import psutil
 import pytest
@@ -20,10 +19,9 @@ def noop_target(handler):
         time.sleep(1)
 
 
-@pytest.mark.parametrize("handler", [
-    lambda signum, frame: sys.exit(),
-    lambda signum, frame: None,
-])
+@pytest.mark.parametrize(
+    "handler", [lambda signum, frame: sys.exit(), lambda signum, frame: None,]
+)
 def test_reap_process_tree_plain(handler):
     """
     Tests that process is killed when handling SIGTERM, times out, or ignores.
@@ -41,7 +39,7 @@ def test_reap_process_tree_plain(handler):
         # Clean up any potentially danging processp
         if psutil.pid_exists(proc.pid):
             os.kill(proc.pid, signal.SIGKILL)
-            assert False, 'KILLed process with pid={}'.format(proc.pid)
+            assert False, "KILLed process with pid={}".format(proc.pid)
 
 
 def nested_target(handler, child_pid, lock):
@@ -66,16 +64,19 @@ def nested_target(handler, child_pid, lock):
         time.sleep(1)
 
 
-@pytest.mark.parametrize("handler", [
-    lambda signum, frame: sys.exit(),
-    lambda signum, frame: None,
-    lambda signum, frame: base.reap_process_tree(os.getpid()) or sys.exit(),
-])
+@pytest.mark.parametrize(
+    "handler",
+    [
+        lambda signum, frame: sys.exit(),
+        lambda signum, frame: None,
+        lambda signum, frame: base.reap_process_tree(os.getpid()) or sys.exit(),
+    ],
+)
 def test_reap_process_tree_children(handler):
     """
     Tests recursive termination children with SIGTERM handlers.
     """
-    child_pid = Value('i', 0)
+    child_pid = Value("i", 0)
     lock = Lock()
     proc = Process(target=nested_target, args=[handler, child_pid, lock])
     try:
@@ -90,4 +91,4 @@ def test_reap_process_tree_children(handler):
         for pid in pids:
             if psutil.pid_exists(proc.pid):
                 os.kill(proc.pid, signal.SIGKILL)
-                assert False, 'KILLed process with pid={}'.format(proc.pid)
+                assert False, "KILLed process with pid={}".format(proc.pid)

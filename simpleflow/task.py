@@ -6,16 +6,17 @@ from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING
 
-import six
 import attr
+import six
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
+
 from . import futures
 from .activity import Activity
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Dict, Union, Type  # NOQA
+    from typing import Any, Dict, Optional, Type, Union  # NOQA
 
 
 def get_actual_value(value):
@@ -32,6 +33,7 @@ class Task(Submittable):
     """A Task represents a work that can be scheduled for execution.
 
     """
+
     @property
     @abc.abstractmethod
     def name(self):
@@ -43,8 +45,7 @@ class Task(Submittable):
 
     @staticmethod
     def resolve_kwargs(**kwargs):
-        return {key: get_actual_value(val) for
-                key, val in kwargs.items()}
+        return {key: get_actual_value(val) for key, val in kwargs.items()}
 
 
 class ActivityTask(Task):
@@ -55,9 +56,12 @@ class ActivityTask(Task):
     :type idempotent: Optional[bool]
     :type id: Optional[str]
     """
+
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
-            raise TypeError('Wrong value for `activity`, got {} instead'.format(type(activity)))
+            raise TypeError(
+                "Wrong value for `activity`, got {} instead".format(type(activity))
+            )
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.ActivityTask.from_generic_task() factory
@@ -73,27 +77,24 @@ class ActivityTask(Task):
 
     @property
     def name(self):
-        return 'activity-{}'.format(self.activity.name)
+        return "activity-{}".format(self.activity.name)
 
     def __repr__(self):
-        return '{}(activity={}, args={}, kwargs={}, id={})'.format(
-            self.__class__.__name__,
-            self.activity,
-            self.args,
-            self.kwargs,
-            self.id)
+        return "{}(activity={}, args={}, kwargs={}, id={})".format(
+            self.__class__.__name__, self.activity, self.args, self.kwargs, self.id
+        )
 
     def execute(self):
         method = self.activity.callable
 
-        if getattr(method, 'add_context_in_kwargs', False):
+        if getattr(method, "add_context_in_kwargs", False):
             self.kwargs["context"] = self.context
 
-        if hasattr(method, 'execute'):
+        if hasattr(method, "execute"):
             task = method(*self.args, **self.kwargs)
             task.context = self.context
             result = task.execute()
-            if hasattr(task, 'post_execute'):
+            if hasattr(task, "post_execute"):
                 task.post_execute()
             return result
         else:
@@ -118,6 +119,7 @@ class WorkflowTask(Task):
     :type workflow: type(simpleflow.workflow.Workflow)
     :type id: Optional[str]
     """
+
     def __init__(self, executor, workflow, *args, **kwargs):
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
@@ -127,8 +129,8 @@ class WorkflowTask(Task):
 
         self.executor = executor
         self.workflow = workflow
-        self.idempotent = getattr(workflow, 'idempotent', False)
-        get_workflow_id = getattr(workflow, 'get_workflow_id', None)
+        self.idempotent = getattr(workflow, "idempotent", False)
+        get_workflow_id = getattr(workflow, "get_workflow_id", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
 
@@ -139,15 +141,16 @@ class WorkflowTask(Task):
 
     @property
     def name(self):
-        return 'workflow-{}'.format(self.workflow.name)
+        return "workflow-{}".format(self.workflow.name)
 
     def __repr__(self):
-        return '{}(workflow={}, args={}, kwargs={}, id={})'.format(
+        return "{}(workflow={}, args={}, kwargs={}, id={})".format(
             self.__class__.__name__,
-            self.workflow.__module__ + '.' + self.workflow.__name__,
+            self.workflow.__module__ + "." + self.workflow.__name__,
             self.args,
             self.kwargs,
-            self.id)
+            self.id,
+        )
 
     def execute(self):
         workflow = self.workflow(self.executor)
@@ -165,6 +168,7 @@ class ChildWorkflowTask(WorkflowTask):
     WorkflowTask subclass for cases where the executor isn't needed
     (yet).
     """
+
     def __init__(self, workflow, *args, **kwargs):
         super(ChildWorkflowTask, self).__init__(None, workflow, *args, **kwargs)
 
@@ -240,7 +244,9 @@ class TimerTask(Task):
         return self.timer_id
 
     def __repr__(self):
-        return '<{} timer_id="{}" timeout={}>'.format(self.__class__.__name__, self.timer_id, self.timeout)
+        return '<{} timer_id="{}" timeout={}>'.format(
+            self.__class__.__name__, self.timer_id, self.timeout
+        )
 
     def execute(self):
         # Local execution
@@ -278,6 +284,7 @@ class TaskFailureContext(object):
     """
     Some context for a task/workflow failure.
     """
+
     class Decision(Enum):
         none = 0
         abort = 1
@@ -300,19 +307,19 @@ class TaskFailureContext(object):
     @property
     def retry_count(self):
         # type: () -> Optional[int]
-        return self.event.get('retry')
+        return self.event.get("retry")
 
     @property
     def attempt_number(self):
         # type: () -> int
-        return self.event.get('retry', 0) + 1
+        return self.event.get("retry", 0) + 1
 
     @property
     def task_name(self):
         # type: () -> Optional[str]
-        if hasattr(self.a_task, 'payload'):
+        if hasattr(self.a_task, "payload"):
             return self.a_task.payload.name
-        if hasattr(self.a_task, 'name'):
+        if hasattr(self.a_task, "name"):
             return self.a_task.name
         return None
 
@@ -348,15 +355,18 @@ class TaskFailureContext(object):
     def _cache_error(self):
         from simpleflow.exceptions import TaskFailed
         from simpleflow.utils import import_from_module, json_loads_or_raw
+
         self._task_error = ""  # falsy value different from None
         if isinstance(self.exception, TaskFailed) and self.exception.details:
             details = json_loads_or_raw(self.exception.details)
             if isinstance(details, dict):
-                if 'error' in details:
-                    self._task_error = details['error']
-                if 'error_type' in details:
+                if "error" in details:
+                    self._task_error = details["error"]
+                if "error_type" in details:
                     try:
-                        self._task_error_type = import_from_module(details['error_type'])
+                        self._task_error_type = import_from_module(
+                            details["error_type"]
+                        )
                     except Exception:
                         pass
 
@@ -383,7 +393,11 @@ class TaskFailureContext(object):
 
     def decide_retry(self, retry_wait_timeout=0):
         # type: (Optional[int]) -> TaskFailureContext
-        self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
+        self.decision = (
+            self.Decision.retry_now
+            if not retry_wait_timeout
+            else self.Decision.retry_later
+        )
         self.retry_wait_timeout = retry_wait_timeout
         return self
 

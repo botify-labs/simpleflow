@@ -2,16 +2,15 @@ from __future__ import absolute_import
 
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
-from simpleflow.task import TimerTask, CancelTimerTask, TaskFailureContext
-from . import canvas
-from . import task
+from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
+
+from . import canvas, task
 from ._decorators import deprecated
 from .activity import Activity
 from .utils import issubclass_
 
-
 if False:
-    from typing import List, Any, Optional  # NOQA
+    from typing import Any, List, Optional  # NOQA
     from .marker import Marker  # NOQA
 
 
@@ -34,7 +33,7 @@ class Workflow(Submittable):
     retry = 0
     raises_on_failure = True
 
-    INHERIT_TAG_LIST = 'INHERIT_TAG_LIST'
+    INHERIT_TAG_LIST = "INHERIT_TAG_LIST"
 
     def __init__(self, executor):
         self._executor = executor
@@ -69,10 +68,9 @@ class Workflow(Submittable):
         elif isinstance(submittable, SubmittableContainer):
             return submittable.submit(self._executor)
         else:
-            raise TypeError('Bad type for {} activity ({})'.format(
-                submittable,
-                type(submittable)
-            ))
+            raise TypeError(
+                "Bad type for {} activity ({})".format(submittable, type(submittable))
+            )
 
     def map(self, activity, iterable):
         """
@@ -247,9 +245,9 @@ class Workflow(Submittable):
         """
         return True
 
-    def on_task_failure(self,
-                        failure_context,  # type: TaskFailureContext
-                        ):
+    def on_task_failure(
+        self, failure_context,  # type: TaskFailureContext
+    ):
         """
         Called by the executor if a task or workflow failed.
         :param failure_context:

@@ -1,21 +1,22 @@
 from __future__ import print_function
+
 import time
 import uuid
 
-from simpleflow import (
-    activity,
-    Workflow,
-    futures,
-)
+from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.task import ActivityTask
 
 
-@activity.with_attributes(task_list='quickstart', version='example',
-                          start_to_close_timeout=60, heartbeat_timeout=15,
-                          raises_on_failure=True)
+@activity.with_attributes(
+    task_list="quickstart",
+    version="example",
+    start_to_close_timeout=60,
+    heartbeat_timeout=15,
+    raises_on_failure=True,
+)
 def sleep(seconds):
     print("will sleep {}s".format(seconds))
     time.sleep(seconds)
@@ -26,51 +27,53 @@ def sleep(seconds):
     return {"result": "slept {}s".format(seconds)}
 
 
-@activity.with_attributes(task_list='quickstart', version='example', idempotent=True)
+@activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
 def get_uuid(unused=None):
     return str(uuid.uuid4())
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def increment(x):
     print("increment: %d" % x)
     return x + 1
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def double(y):
     print("double: %d" % y)
     return y * 2
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def send_unrequested_signal():
     context = send_unrequested_signal.context
-    ex = get_workflow_execution(context['domain_name'], context['workflow_id'], context['run_id'])
+    ex = get_workflow_execution(
+        context["domain_name"], context["workflow_id"], context["run_id"]
+    )
     ex.connection.signal_workflow_execution(
         ex.domain.name,
-        'unexpected',
+        "unexpected",
         ex.workflow_id,
-        input='Hi there!',  # not JSON-formatted
+        input="Hi there!",  # not JSON-formatted
         run_id=ex.run_id,
     )
-    return 'signal sent!'
+    return "signal sent!"
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def cancel_workflow():
     context = cancel_workflow.context
-    workflow_id = context['workflow_id']
-    run_id = context['run_id']
-    domain_name = context['domain_name']
+    workflow_id = context["workflow_id"]
+    run_id = context["run_id"]
+    domain_name = context["domain_name"]
     workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     workflow_execution.request_cancel()
 
 
 class SleepWorkflow(Workflow):
-    name = 'basic'
-    version = 'example'
-    task_list = 'example'
+    name = "basic"
+    version = "example"
+    task_list = "example"
 
     def run(self, seconds):
         x = self.submit(sleep, seconds)
@@ -78,9 +81,9 @@ class SleepWorkflow(Workflow):
 
 
 class ATestDefinitionWithIdempotentTask(Workflow):
-    name = 'test_idempotent_workflow'
-    version = 'example'
-    task_list = 'example'
+    name = "test_idempotent_workflow"
+    version = "example"
+    task_list = "example"
     decision_tasks_timeout = 5 * MINUTE
     execution_timeout = 1 * HOUR
 
@@ -95,21 +98,19 @@ class ATestDefinitionWithIdempotentTask(Workflow):
 
 
 class MarkerWorkflow(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
     decision_tasks_timeout = 5 * MINUTE
     execution_timeout = 1 * HOUR
 
     def run(self, use_chain):
-        m1 = (self.record_marker('marker 1'))
-        m2 = (self.record_marker('marker 1', 'some details'))
-        m3 = self.record_marker('marker 2', "2nd marker's details")
+        m1 = self.record_marker("marker 1")
+        m2 = self.record_marker("marker 1", "some details")
+        m3 = self.record_marker("marker 2", "2nd marker's details")
         if use_chain:
             # Markers will be submitted in 3 replays
-            future = self.submit(Chain(
-                m1, m2, m3
-            ))
+            future = self.submit(Chain(m1, m2, m3))
         else:
             # Markers will be submitted as one decision
             future = self.submit(m1)
@@ -119,21 +120,17 @@ class MarkerWorkflow(Workflow):
 
 
 class ChainTestWorkflow(Workflow):
-    name = 'chaintest'
-    version = 'example'
-    task_list = 'example'
+    name = "chaintest"
+    version = "example"
+    task_list = "example"
 
     def run(self, x=5):
         future = self.submit(
-            Chain(
-                ActivityTask(increment, x),
-                ActivityTask(double),
-                send_result=True
-            )
+            Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True)
         )
-        print('Future: {}'.format(future))
+        print("Future: {}".format(future))
         futures.wait(future)
-        print('Result: {}'.format(future.result))  # future.result == [6, 12]
+        print("Result: {}".format(future.result))  # future.result == [6, 12]
 
         return future.result
 
@@ -142,22 +139,23 @@ class TestRunChild(Workflow):
     """
     Test the deciders' task list doesn't override the workers' one.
     """
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+
+    name = "example"
+    version = "example"
+    task_list = "example"
     decision_tasks_timeout = 5 * MINUTE
     execution_timeout = 1 * HOUR
 
     def run(self):
         future = self.submit(ChainTestWorkflow)
-        print('Result: {}'.format(future.result))
+        print("Result: {}".format(future.result))
         return future.result
 
 
 class TimerWorkflow(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
 
     def run(self, t1=2, t2=120):
         """
@@ -166,22 +164,19 @@ class TimerWorkflow(Workflow):
         future = self.submit(
             Group(
                 self.start_timer("timer 2", t2),
-                Chain(
-                    self.start_timer("timer 1", t1),
-                    self.cancel_timer("timer 2"),
-                ),
+                Chain(self.start_timer("timer 1", t1), self.cancel_timer("timer 2"),),
             )
         )
         if future.pending:
-            print('Starting timers')
+            print("Starting timers")
         futures.wait(future)
-        print('Timer fired, exiting')
+        print("Timer fired, exiting")
 
 
 class SignaledWorkflow(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
     decision_tasks_timeout = 5 * MINUTE
     execution_timeout = 1 * HOUR
 
@@ -191,9 +186,9 @@ class SignaledWorkflow(Workflow):
 
 
 class WorkflowToCancel(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
 
     def run(self, *args, **kwargs):
         future = self.submit(cancel_workflow)
@@ -201,31 +196,30 @@ class WorkflowToCancel(Workflow):
 
     def should_cancel(self, history):
         input = history.events[0].input or {}
-        if input.get('args'):
-            agree = input['args'][0]
+        if input.get("args"):
+            agree = input["args"][0]
         else:
-            agree = input.get('kwargs', {}).get('agree', True)
-        print('should_cancel called! agree? {}'.format(agree))
+            agree = input.get("kwargs", {}).get("agree", True)
+        print("should_cancel called! agree? {}".format(agree))
         return agree
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
-def wait_and_signal(name='signal'):
+@activity.with_attributes(task_list="quickstart", version="example")
+def wait_and_signal(name="signal"):
     time.sleep(1 + len(name))  # Hoping to be deterministic
     context = wait_and_signal.context
-    ex = get_workflow_execution(context['domain_name'], context['workflow_id'], context['run_id'])
+    ex = get_workflow_execution(
+        context["domain_name"], context["workflow_id"], context["run_id"]
+    )
     ex.connection.signal_workflow_execution(
-        ex.domain.name,
-        name,
-        ex.workflow_id,
-        run_id=ex.run_id,
+        ex.domain.name, name, ex.workflow_id, run_id=ex.run_id,
     )
 
 
 class GroupTestWorkflowWithChild(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
 
     def run(self):
         g = Group()
@@ -235,18 +229,18 @@ class GroupTestWorkflowWithChild(Workflow):
 
 
 class WorkflowWithWaitSignal(Workflow):
-    name = 'example'
-    version = 'example'
-    task_list = 'example'
+    name = "example"
+    version = "example"
+    task_list = "example"
 
     def run(self, *args, **kwargs):
         future = self.submit(
             Chain(
                 Group(
-                    (self.wait_signal('signal 2'),),
-                    (self.wait_signal('signal'),),
+                    (self.wait_signal("signal 2"),),
+                    (self.wait_signal("signal"),),
                     (wait_and_signal,),
-                    (wait_and_signal, 'signal 2'),
+                    (wait_and_signal, "signal 2"),
                 ),
                 (increment, 1),
             )

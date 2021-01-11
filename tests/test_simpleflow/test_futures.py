@@ -15,8 +15,7 @@ def test_future_init_result():
 
 def test_future_init_repr():
     future = Future()
-    assert repr(future) == '<Future at {} state=pending>'.format(
-        hex(id(future)))
+    assert repr(future) == "<Future at {} state=pending>".format(hex(id(future)))
 
 
 def test_future_init_cancelled():

@@ -1,12 +1,16 @@
-import time
-import collections
 import functools
+import time
+
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 from simpleflow import logger
 
 
 def _to_tuple(exceptions):
-    if not isinstance(exceptions, collections.Sequence):
+    if not isinstance(exceptions, Sequence):
         return tuple([exceptions])
     elif not isinstance(exceptions, tuple):
         return tuple(exceptions)
@@ -31,11 +35,12 @@ def exponential(value):
 
 
 def with_delay(
-        nb_times=1,
-        delay=constant(1),
-        on_exceptions=Exception,
-        except_on=None,
-        log_with=None):
+    nb_times=1,
+    delay=constant(1),
+    on_exceptions=Exception,
+    except_on=None,
+    log_with=None,
+):
     """
     Retry the *decorated* function *nb_times* with a *delay*.
 
@@ -70,9 +75,7 @@ def with_delay(
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
-                        'error "%r": retrying in %.2f seconds',
-                        error,
-                        wait_delay,
+                        'error "%r": retrying in %.2f seconds', error, wait_delay,
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1

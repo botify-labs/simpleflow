@@ -1,17 +1,13 @@
-import mock
 import unittest
 
+import mock
 from sure import expect
 
 from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import (
-    BaseTestWorkflow,
-    DOMAIN,
-    increment,
-)
+from tests.data import DOMAIN, BaseTestWorkflow, increment
 from tests.utils import MockSWFTestCase
 
 
@@ -24,6 +20,7 @@ class ExampleWorkflow(BaseTestWorkflow):
     """
     Example workflow definition used in tests below.
     """
+
     @property
     def task_priority(self):
         """
@@ -49,7 +46,9 @@ class TestSimpleflowSwfExecutor(MockSWFTestCase):
         expect(decisions).to.have.length_of(5)
 
         def get_task_priority(decision):
-            return decision["scheduleActivityTaskDecisionAttributes"].get("taskPriority")
+            return decision["scheduleActivityTaskDecisionAttributes"].get(
+                "taskPriority"
+            )
 
         # default priority for the whole workflow
         expect(get_task_priority(decisions[0])).to.equal("12")
@@ -70,58 +69,64 @@ class TestSimpleflowSwfExecutor(MockSWFTestCase):
 class TestCaseNotNeedingDomain(unittest.TestCase):
     def test_get_event_details(self):
         history = builder.History(ExampleWorkflow, input={})
-        signal_input = {'x': 42, 'foo': 'bar', '__propagate': False}
-        marker_details = {'baz': 'bae'}
-        history.add_signal('a_signal', signal_input)
-        history.add_marker('a_marker', marker_details)
-        history.add_timer_started('a_timer', 1, decision_id=2)
-        history.add_timer_fired('a_timer')
+        signal_input = {"x": 42, "foo": "bar", "__propagate": False}
+        marker_details = {"baz": "bae"}
+        history.add_signal("a_signal", signal_input)
+        history.add_marker("a_marker", marker_details)
+        history.add_timer_started("a_timer", 1, decision_id=2)
+        history.add_timer_fired("a_timer")
 
         executor = Executor(DOMAIN, ExampleWorkflow)
         executor.replay(Response(history=history, execution=None))
 
-        details = executor.get_event_details('signal', 'a_signal')
-        del details['timestamp']
-        expect(details).to.equal({
-            'type': 'signal',
-            'state': 'signaled',
-            'name': 'a_signal',
-            'input': signal_input,
-            'event_id': 4,
-            'external_initiated_event_id': 0,
-            'external_run_id': None,
-            'external_workflow_id': None,
-        })
+        details = executor.get_event_details("signal", "a_signal")
+        del details["timestamp"]
+        expect(details).to.equal(
+            {
+                "type": "signal",
+                "state": "signaled",
+                "name": "a_signal",
+                "input": signal_input,
+                "event_id": 4,
+                "external_initiated_event_id": 0,
+                "external_run_id": None,
+                "external_workflow_id": None,
+            }
+        )
 
-        details = executor.get_event_details('signal', 'another_signal')
+        details = executor.get_event_details("signal", "another_signal")
         expect(details).to.be.none
 
-        details = executor.get_event_details('marker', 'a_marker')
-        del details['timestamp']
-        expect(details).to.equal({
-            'type': 'marker',
-            'state': 'recorded',
-            'name': 'a_marker',
-            'details': marker_details,
-            'event_id': 5,
-        })
-        details = executor.get_event_details('marker', 'another_marker')
+        details = executor.get_event_details("marker", "a_marker")
+        del details["timestamp"]
+        expect(details).to.equal(
+            {
+                "type": "marker",
+                "state": "recorded",
+                "name": "a_marker",
+                "details": marker_details,
+                "event_id": 5,
+            }
+        )
+        details = executor.get_event_details("marker", "another_marker")
         expect(details).to.be.none
 
-        details = executor.get_event_details('timer', 'a_timer')
-        del details['started_event_timestamp']
-        del details['fired_event_timestamp']
-        expect(details).to.equal({
-            'type': 'timer',
-            'state': 'fired',
-            'id': 'a_timer',
-            'decision_task_completed_event_id': 2,
-            'start_to_fire_timeout': 1,
-            'started_event_id': 6,
-            'fired_event_id': 7,
-            'control': None,
-        })
-        details = executor.get_event_details('timer', 'another_timer')
+        details = executor.get_event_details("timer", "a_timer")
+        del details["started_event_timestamp"]
+        del details["fired_event_timestamp"]
+        expect(details).to.equal(
+            {
+                "type": "timer",
+                "state": "fired",
+                "id": "a_timer",
+                "decision_task_completed_event_id": 2,
+                "start_to_fire_timeout": 1,
+                "started_event_id": 6,
+                "fired_event_id": 7,
+                "control": None,
+            }
+        )
+        details = executor.get_event_details("timer", "another_timer")
         expect(details).to.be.none
 
 
@@ -136,6 +141,7 @@ class ExampleJumboWorkflow(BaseTestWorkflow):
     """
     Example workflow definition used in tests below.
     """
+
     def run(self, s, n, raises=False):
         a = self.submit(print_me_n_times, s, n, raises=raises)
         futures.wait(a)
@@ -147,8 +153,7 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     def test_jumbo_fields_are_replaced_correctly(self):
         # prepare
         self.register_activity_type(
-            "tests.test_simpleflow.swf.test_executor.print_me_n_times",
-            "default"
+            "tests.test_simpleflow.swf.test_executor.print_me_n_times", "default"
         )
 
         # start execution
@@ -175,8 +180,7 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     def test_jumbo_fields_in_task_failed_is_decoded(self):
         # prepare execution
         self.register_activity_type(
-            "tests.test_simpleflow.swf.test_executor.print_me_n_times",
-            "default"
+            "tests.test_simpleflow.swf.test_executor.print_me_n_times", "default"
         )
 
         # start execution
@@ -198,11 +202,15 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskFailed"
         attrs = activity_result_evt["activityTaskFailedEventAttributes"]
-        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
-        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
+        expect(attrs["reason"]).to.match(
+            r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}"
+        )
+        expect(attrs["details"]).to.match(
+            r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}"
+        )
         details = format.decode(attrs["details"])
         expect(details["error"]).to.equal("ValueError")
-        expect(len(details["message"])).to.be.greater_than(9*10000)
+        expect(len(details["message"])).to.be.greater_than(9 * 10000)
 
         # decide again (should lead to workflow failure)
         result = self.build_decisions(ExampleJumboWorkflow)
@@ -223,6 +231,6 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
 
         reason = format.decode(attrs["reason"], use_proxy=False)
         expect(reason).to.match(
-            r'^Workflow execution error in activity-tests.test_simpleflow.swf.'
+            r"^Workflow execution error in activity-tests.test_simpleflow.swf."
             r'test_executor.print_me_n_times: "ValueError: Number: 012345679\d+"$'
         )

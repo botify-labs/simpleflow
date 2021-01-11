@@ -1,12 +1,12 @@
 from simpleflow import activity, registry, task
 
 
-@activity.with_attributes(task_list='test')
+@activity.with_attributes(task_list="test")
 def double(x):
     return x * 2
 
 
-@activity.with_attributes(task_list='test')
+@activity.with_attributes(task_list="test")
 class Double(object):
     def __init__(self, val):
         self.val = val
@@ -29,5 +29,5 @@ def test_context_is_empty_for_non_swf_tasks():
 
 def test_task_register():
     _registry = registry.registry[None]
-    assert _registry['tests.test_simpleflow.test_task.double'] == double
-    assert _registry['tests.test_simpleflow.test_task.Double'] == Double
+    assert _registry["tests.test_simpleflow.test_task.double"] == double
+    assert _registry["tests.test_simpleflow.test_task.Double"] == Double

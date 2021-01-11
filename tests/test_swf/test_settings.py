@@ -2,7 +2,7 @@ import os
 import unittest
 
 from swf.core import ConnectedSWFObject
-from swf.settings import from_env, clear
+from swf.settings import clear, from_env
 
 AWS_ENV_KEYS = (
     "AWS_ACCESS_KEY_ID",
@@ -31,9 +31,7 @@ class TestSettings(unittest.TestCase):
         """
         os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
         _settings = from_env()
-        self.assertEqual(_settings, {
-            "region": "eu-west-1"
-        })
+        self.assertEqual(_settings, {"region": "eu-west-1"})
 
     def test_get_aws_settings_with_access_key_id(self):
         """
@@ -43,9 +41,7 @@ class TestSettings(unittest.TestCase):
         os.environ["AWS_SECRET_ACCESS_KEY"] = "bar"
         os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
         _settings = from_env()
-        self.assertEqual(_settings, {
-            "region": "eu-west-1"
-        })
+        self.assertEqual(_settings, {"region": "eu-west-1"})
 
     def test_get_aws_settings_without_access_key_id(self):
         """
@@ -54,9 +50,7 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(from_env(), {})
 
         os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
-        self.assertEqual(from_env(), {
-            "region": "eu-west-1",
-        })
+        self.assertEqual(from_env(), {"region": "eu-west-1",})
 
     def test_get_aws_connection_with_key(self):
         """

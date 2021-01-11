@@ -7,8 +7,8 @@ from psutil import Process
 from pytest import mark
 from sure import expect
 
-from swf.models import Domain
 from simpleflow.swf.process import Poller
+from swf.models import Domain
 from tests.utils import IntegrationTestCase
 
 
@@ -16,6 +16,7 @@ class FakePoller(Poller):
     """
     This poller only waits 2 seconds then exits.
     """
+
     def poll_with_retry(self):
         # NB: time.sleep gets interrupted by any signal, so the following lines
         # are not actually as dumb as they seem to be...

@@ -6,9 +6,11 @@ import os
 import re
 import subprocess
 import sys
-from builtins import input, str  # noqa
 
 from packaging.version import InvalidVersion, Version
+
+from builtins import input, str  # noqa
+
 
 try:
     from shlex import quote

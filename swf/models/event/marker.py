@@ -10,14 +10,12 @@ from swf.models.event.compiler import CompiledEvent
 
 
 class MarkerEvent(Event):
-    _type = 'Marker'
+    _type = "Marker"
 
 
 class CompiledMarkerEvent(CompiledEvent):
-    _type = 'Marker'
-    states = (
-        'recorded',
-    )
+    _type = "Marker"
+    states = ("recorded",)
 
     transitions = {}
-    initial_state = 'recorded'
+    initial_state = "recorded"

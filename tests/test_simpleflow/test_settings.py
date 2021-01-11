@@ -1,4 +1,5 @@
 import unittest
+
 from sure import expect
 
 from simpleflow import settings
@@ -12,7 +13,7 @@ class TestSettings(unittest.TestCase):
         expect(settings.METROLOGY_PATH_PREFIX).to.equal("123")
 
     def test_change_multiple_settings(self):
-        dct = { "FOO": "foo", "BAR": "bar" }
+        dct = {"FOO": "foo", "BAR": "bar"}
         settings.configure(dct)
 
         expect(settings.FOO).to.equal("foo")

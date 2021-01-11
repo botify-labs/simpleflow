@@ -5,11 +5,12 @@
 #
 # See the file LICENSE for copying permission.
 
-from itertools import groupby
 from builtins import object, range
+from itertools import groupby
 
 from future.utils import iteritems
-from swf.models.event import EventFactory, CompiledEventFactory
+
+from swf.models.event import CompiledEventFactory, EventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
 
@@ -67,8 +68,8 @@ class History(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.events = kwargs.pop('events', [])
-        self.raw = kwargs.pop('raw', None)
+        self.events = kwargs.pop("events", [])
+        self.raw = kwargs.pop("raw", None)
         self.it_pos = 0
 
     def __len__(self):
@@ -83,10 +84,8 @@ class History(object):
         raise TypeError("Unknown slice format: %s" % type(val))
 
     def __repr__(self):
-        events_repr = '\n\t'.join(
-            map(lambda e: e.__repr__(), self.events)
-        )
-        repr_str = '<History\n\t%s\n>' % events_repr
+        events_repr = "\n\t".join(map(lambda e: e.__repr__(), self.events))
+        repr_str = "<History\n\t%s\n>" % events_repr
 
         return repr_str
 
@@ -147,14 +146,12 @@ class History(object):
         """Checks if the History matches with a finished Workflow
         Execution history state.
         """
-        completion_states = (
-            'completed',
-            'failed',
-            'canceled',
-            'terminated'
-        )
+        completion_states = ("completed", "failed", "canceled", "terminated")
 
-        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
+        if (
+            isinstance(self.last, WorkflowExecutionEvent)
+            and self.last.state in completion_states
+        ):
             return True
 
         return False
@@ -191,8 +188,7 @@ class History(object):
         :rtype: swf.models.history.History
         """
         return filter(
-            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)),
-            self.events
+            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)), self.events
         )
 
     @property
@@ -212,7 +208,11 @@ class History(object):
             g = list(group)
 
             # Merge every WorkflowExecution events into same group
-            if len(g) == 1 and len(distinct_events) >= 1 and g[0].type == "WorkflowExecution":
+            if (
+                len(g) == 1
+                and len(distinct_events) >= 1
+                and g[0].type == "WorkflowExecution"
+            ):
                 # WorkflowExecution group will always be in first position
                 distinct_events[0].extend(g)
             else:

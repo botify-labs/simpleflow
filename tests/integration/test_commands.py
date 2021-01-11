@@ -5,7 +5,8 @@ from flaky import flaky
 from sure import expect
 
 import simpleflow.command
-from . import vcr, VCRIntegrationTest
+
+from . import VCRIntegrationTest, vcr
 
 
 class TestSimpleflowCommand(VCRIntegrationTest):
@@ -29,7 +30,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id)
+            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
         )
 
         # check response form: "<workflow id> <run-id>"
@@ -58,7 +59,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id)
+            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
         )
 
         # now try to terminate it
@@ -80,12 +81,15 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # run a very short workflow
         result = self.invoke(
             simpleflow.command.cli,
-            "standalone --workflow-id %s --input {\"args\":[0]} --nb-workers 1 " \
-            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id
+            'standalone --workflow-id %s --input {"args":[0]} --nb-workers 1 '
+            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow"
+            % self.workflow_id,
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
-        start_line = [line for line in lines if line.startswith("test-simpleflow-workflow")][0]
+        start_line = [
+            line for line in lines if line.startswith("test-simpleflow-workflow")
+        ][0]
         _, run_id = start_line.split(" ", 1)
 
         # this workflow has executed a single activity, activity-tests.integration.workflow.sleep-1
@@ -93,9 +97,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # => let's rerun it locally and check the result
         result = self.invoke(
             simpleflow.command.cli,
-            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5" % (
-                self.workflow_id, run_id
-            )
+            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5"
+            % (self.workflow_id, run_id),
         )
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.contain("will sleep 0s")
@@ -107,7 +110,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             simpleflow.command.cli,
             "standalone --workflow-id %s --input {}"
             " --nb-deciders 2 --nb-workers 2"
-            " tests.integration.workflow.ATestDefinitionWithIdempotentTask" % self.workflow_id
+            " tests.integration.workflow.ATestDefinitionWithIdempotentTask"
+            % self.workflow_id,
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
@@ -117,21 +121,25 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         events = self.get_events(run_id)
 
         activities = [
-            e['activityTaskScheduledEventAttributes']['activityId']
+            e["activityTaskScheduledEventAttributes"]["activityId"]
             for e in events
             if (
-                e['eventType'] == 'ActivityTaskScheduled' and
-                e['activityTaskScheduledEventAttributes']['activityType']['name'] == 'tests.integration.workflow'
-                                                                                     '.get_uuid')
+                e["eventType"] == "ActivityTaskScheduled"
+                and e["activityTaskScheduledEventAttributes"]["activityType"]["name"]
+                == "tests.integration.workflow"
+                ".get_uuid"
+            )
         ]
         expect(activities).should.have.length_of(2)
         expect(activities[0]).should.be.different_of(activities[1])
 
         failures = [
-            e['scheduleActivityTaskFailedEventAttributes']['cause'] for e in events if
-            e['eventType'] == 'ScheduleActivityTaskFailed'
+            e["scheduleActivityTaskFailedEventAttributes"]["cause"]
+            for e in events
+            if e["eventType"] == "ScheduleActivityTaskFailed"
         ]
-        expect(failures).should_not.contain('ACTIVITY_ID_ALREADY_IN_USE')
+        expect(failures).should_not.contain("ACTIVITY_ID_ALREADY_IN_USE")
+
 
 # TODO: simpleflow decider.start
 # TODO: simpleflow standalone

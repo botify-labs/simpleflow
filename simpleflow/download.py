@@ -17,6 +17,7 @@ class RemoteBinary(object):
     put it in a dedicated folder so it can be used. It will also prepend this
     folder to $PATH before forking to the real activity worker.
     """
+
     def __init__(self, name, remote_location):
         """
         :param name: name of the binary to be downloaded
@@ -50,7 +51,9 @@ class RemoteBinary(object):
 
     def _compute_local_directory(self):
         suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
-        return os.path.join(SIMPLEFLOW_BINARIES_DIRECTORY, "{}-{}".format(self.name, suffix))
+        return os.path.join(
+            SIMPLEFLOW_BINARIES_DIRECTORY, "{}-{}".format(self.name, suffix)
+        )
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)
@@ -62,7 +65,11 @@ class RemoteBinary(object):
         return os.access(self.local_location, os.X_OK)
 
     def _download_binary(self):
-        logger.info("Downloading binary: {} -> {}".format(self.remote_location, self.local_location))
+        logger.info(
+            "Downloading binary: {} -> {}".format(
+                self.remote_location, self.local_location
+            )
+        )
         bucket, path = self.remote_location.replace("s3://", "", 1).split("/", 1)
         # with FileLock(dest):
         pull(bucket, path, self.local_location)
@@ -83,6 +90,8 @@ def with_binaries(binaries_map):
         def wrapped(*args, **kwargs):
             download_binaries(binaries_map)
             return func(*args, **kwargs)
+
         wrapped.__wrapped__ = func
         return wrapped
+
     return decorator

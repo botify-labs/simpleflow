@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from simpleflow import activity
+
 from .constants import DEFAULT_VERSION
 
 
@@ -40,12 +41,12 @@ def print_message(msg):
 
 @activity.with_attributes(version=DEFAULT_VERSION, raises_on_failure=True)
 def raise_on_failure():
-    raise Exception('error')
+    raise Exception("error")
 
 
 @activity.with_attributes(version=DEFAULT_VERSION)
 def raise_error():
-    raise Exception('error')
+    raise Exception("error")
 
 
 @activity.with_attributes(version=DEFAULT_VERSION)

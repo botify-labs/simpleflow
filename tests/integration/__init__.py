@@ -6,13 +6,14 @@ from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
 
-import simpleflow.command  # NOQA
+from simpleflow.utils import json_dumps
 from tests.utils import IntegrationTestCase
 
-from simpleflow.utils import json_dumps
+import simpleflow.command  # NOQA
 
 if False:
     from typing import List, Union
+
     from click.testing import Result
 
 
@@ -31,7 +32,10 @@ def test_name_to_cassette_path(function):
 vcr = VCR(
     func_path_generator=test_name_to_cassette_path,
     filter_headers=[
-        ("Authorization", "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar"),  # noqa
+        (
+            "Authorization",
+            "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar",
+        ),  # noqa
     ],
     record_mode=os.getenv("SIMPLEFLOW_VCR_RECORD_MODE", "once"),
 )
@@ -62,22 +66,17 @@ class VCRIntegrationTest(IntegrationTestCase):
 
     def get_events(self, run_id):
         response = self.conn.get_workflow_execution_history(
-            self.domain,
-            run_id,
-            self.workflow_id,
+            self.domain, run_id, self.workflow_id,
         )
-        events = response['events']
-        next_page = response.get('nextPageToken')
+        events = response["events"]
+        next_page = response.get("nextPageToken")
         while next_page is not None:
             response = self.conn.get_workflow_execution_history(
-                self.domain,
-                run_id,
-                self.workflow_id,
-                next_page_token=next_page,
+                self.domain, run_id, self.workflow_id, next_page_token=next_page,
             )
 
-            events.extend(response['events'])
-            next_page = response.get('nextPageToken')
+            events.extend(response["events"])
+            next_page = response.get("nextPageToken")
         return events
 
     def invoke(self, command, arguments):
@@ -86,7 +85,7 @@ class VCRIntegrationTest(IntegrationTestCase):
             self.runner = CliRunner()
         if isinstance(arguments, str):
             arguments = arguments.split(" ")
-        print('simpleflow {} {}'.format(command, ' '.join(arguments)))
+        print("simpleflow {} {}".format(command, " ".join(arguments)))
         return self.runner.invoke(command, arguments, catch_exceptions=False)
 
     def run_standalone(self, workflow_name, *args, **kwargs):

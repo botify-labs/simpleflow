@@ -1,11 +1,11 @@
-from base64 import b64encode
-import jinja2
 import json
 import os
-import yaml
+from base64 import b64encode
 
-import kubernetes.config
+import jinja2
 import kubernetes.client
+import kubernetes.config
+import yaml
 
 from simpleflow.utils import json_dumps
 
@@ -49,7 +49,7 @@ class KubernetesJob(object):
         # render the job template with those context variables
         path, filename = os.path.split(job_template)
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(path or './'),
+            loader=jinja2.FileSystemLoader(path or "./"),
             undefined=jinja2.StrictUndefined,
         )
         rendered = env.get_template(filename).render(variables)
