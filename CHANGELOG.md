@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.21.16
+-------
+
+- Add middleware (#380)
+- Enhancement/386/seasonal cleanups (#385)
+- Fix #378 (#379)
+- Add executable path to swf identity (#384)
+- Add __main__.py (#382)
+
 0.21.15
 -------
 
