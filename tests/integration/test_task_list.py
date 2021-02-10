@@ -51,6 +51,8 @@ class TestTaskLists(VCRIntegrationTest):
             input="[]",
             input_file=None,
             local=False,
+            middleware_pre_execution=None,
+            middleware_post_execution=None,
         )
         while True:
             time.sleep(1)

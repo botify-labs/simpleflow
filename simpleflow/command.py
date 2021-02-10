@@ -138,7 +138,14 @@ def transform_input(wf_input):
         }
     return wf_input
 
+def run_workflow_locally(workflow_class, wf_input, middlewares):
+    from .local import Executor
 
+    Executor(workflow_class, middlewares=middlewares).run(wf_input)
+
+
+@click.option("--middleware-pre-execution", required=False, multiple=True)
+@click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
     "--local",
     default=False,
@@ -187,6 +194,8 @@ def start_workflow(
     input,
     input_file,
     local,
+    middleware_pre_execution,
+    middleware_post_execution,
 ):
     workflow_class = get_workflow(workflow)
 
@@ -195,14 +204,18 @@ def start_workflow(
         wf_input = get_or_load_input(input_file, input)
 
     if local:
-        from .local import Executor
-
-        Executor(workflow_class).run(wf_input)
-
+        middlewares = {
+                "pre": middleware_pre_execution,
+                "post": middleware_post_execution
+        }
+        run_workflow_locally(workflow_class, wf_input, middlewares)
         return
 
     if not domain:
         raise ValueError("*domain* must be set when not running in local mode")
+
+    if middleware_pre_execution or middleware_post_execution:
+        raise ValueError("middlewares can only be set in local mode")
 
     workflow_type = get_workflow_type(domain, workflow_class)
     execution = workflow_type.start_execution(
@@ -430,6 +443,8 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     )
 
 
+@click.option("--middleware-pre-execution", required=False, multiple=True)
+@click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
     "--poll-data",
     help="Provide a base64 encoded json dump of the SWF poll response, instead of polling SWF",
@@ -464,6 +479,8 @@ def start_worker(
     one_task,
     process_mode,
     poll_data,
+    middleware_pre_execution,
+    middleware_post_execution,
 ):
     if log_level:
         logger.warning(
@@ -480,8 +497,13 @@ def start_worker(
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
 
+    middlewares = {
+            "pre": middleware_pre_execution,
+            "post": middleware_post_execution
+    }
+
     worker.command.start(
-        domain, task_list, nb_processes, heartbeat, one_task, process_mode, poll_data,
+        domain, task_list, middlewares, nb_processes, heartbeat, one_task, process_mode, poll_data,
     )
 
 
@@ -496,6 +518,8 @@ def create_unique_task_list(workflow_id=""):
     return task_list
 
 
+@click.option("--middleware-pre-execution", required=False, multiple=True)
+@click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
     "--heartbeat",
     type=int,
@@ -574,6 +598,8 @@ def standalone(
     display_status,
     repair,
     force_activities,
+    middleware_pre_execution,
+    middleware_post_execution,
 ):
     """
     This command spawn a decider and an activity worker to execute a workflow
@@ -649,7 +675,11 @@ def standalone(
     worker_proc = multiprocessing.Process(
         target=worker.command.start,
         args=(domain, task_list,),
-        kwargs={"nb_processes": nb_workers, "heartbeat": heartbeat,},
+        kwargs={
+            "nb_processes": nb_workers, 
+            "heartbeat": heartbeat,
+            "middlewares": {"pre": middleware_pre_execution, "post": middleware_post_execution}
+        },
     )
     worker_proc.start()
 
@@ -665,6 +695,8 @@ def standalone(
         format.input(wf_input),
         None,
         local=False,
+        middleware_pre_execution=None,
+        middleware_post_execution=None,
     )
     while True:
         time.sleep(2)

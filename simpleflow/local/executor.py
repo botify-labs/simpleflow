@@ -27,7 +27,7 @@ class Executor(executor.Executor):
 
     """
 
-    def __init__(self, workflow_class):
+    def __init__(self, workflow_class, **kwargs):
         super(Executor, self).__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
@@ -37,6 +37,8 @@ class Executor(executor.Executor):
         self.wf_run_id = []
         self.wf_id = []
         self._history = None  # type: Optional[Union[builder.History, History]]
+
+        self.middlewares = kwargs.pop("middlewares", None)
 
     @property
     def history(self):
@@ -106,6 +108,7 @@ class Executor(executor.Executor):
             task.context = context
             func = getattr(task, "activity", None)
         elif isinstance(func, Activity):
+            kwargs["simpleflow_middlewares"] = self.middlewares
             task = ActivityTask(func, context=context, *args, **kwargs)
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)

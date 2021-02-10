@@ -2,16 +2,16 @@
   content: "code";
 }
 .md-typeset {
-  font-size: 1.5rem;
+  font-size: 0.75rem;
 }
 .md-typeset h1 {
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
 }
 .md-typeset h2 {
-  margin-top: 3rem;
+  margin-top: 1.5rem;
 }
 .md-main__inner {
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 }
 .badges {
   display: none;

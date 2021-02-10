@@ -3,7 +3,7 @@ docs_dir: src/
 
 # Project information
 site_name: "Simpleflow documentation"
-copyright: "Copyright &copy; 2017‒2018 — Botify"
+copyright: "Copyright &copy; 2017‒2021 — Botify"
 
 # Code
 repo_name: botify-labs/simpleflow
@@ -11,19 +11,17 @@ repo_url: https://github.com/botify-labs/simpleflow
 edit_uri: edit/master/docs/src/
 
 # Theme / design
-theme: material
-extra:
+theme:
+  name: material
   palette:
-    primary: deep-purple
-    accent: deep-purple
-  feature:
-    tabs: false
+    primary: deep purple
+    accent: deep purple
   social:
-    - type: globe
+    - icon: fontawesome/solid/globe
       link: https://www.botify.com/
-    - type: github-alt
+    - icon: fontawesome/brands/github-alt
       link: https://github.com/botify-labs
-    - type: twitter
+    - icon: fontawesome/brands/twitter
       link: https://twitter.com/botify
 extra_css:
   - stylesheets/extra.css
@@ -31,14 +29,17 @@ extra_css:
 # Extensions
 markdown_extensions:
   - markdown.extensions.admonition
-  - markdown.extensions.codehilite(guess_lang=false)
+  - markdown.extensions.codehilite:
+      guess_lang: False
   - markdown.extensions.def_list
   - markdown.extensions.footnotes
   - markdown.extensions.meta
-  - markdown.extensions.toc(permalink=true)
+  - markdown.extensions.toc:
+      permalink: True
   - markdown_include.include
   - pymdownx.arithmatex
-  - pymdownx.betterem(smart_enable=all)
+  - pymdownx.betterem:
+      smart_enable: all
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.emoji:
@@ -48,11 +49,12 @@ markdown_extensions:
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.superfences
-  - pymdownx.tasklist(custom_checkbox=true)
+  - pymdownx.tasklist:
+      custom_checkbox: True
   - pymdownx.tilde
 
 # Pages tree
-pages:
+nav:
   - Intro: index.md
   - Installation: installation.md
   - Architecture:
@@ -71,6 +73,7 @@ pages:
       - Task Lists: features/task_lists.md
       - Tags: features/tags.md
       - Error Handling: features/error_handling.md
+      - Middleware: features/middleware.md
   - Development: development.md
   - Contributing: contributing.md
   - License: license.md
