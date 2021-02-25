@@ -17,8 +17,8 @@ You can clone the public repo:
 
 Or download one of the following:
 
-* [tarball](https://github.com/botify-labs/simpleflow/tarball/master)
-* [zipball](https://github.com/botify-labs/simpleflow/zipball/master)
+* [tarball](https://github.com/botify-labs/simpleflow/tarball/main)
+* [zipball](https://github.com/botify-labs/simpleflow/zipball/main)
 
 Once you have the source, you can install it into your site-packages with ::
 
