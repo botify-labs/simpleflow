@@ -59,7 +59,7 @@ class KubernetesJob(object):
     def schedule(self):
         """
         Schedule a job from the given job template. See example of it here:
-        https://github.com/kubernetes-incubator/client-python/blob/master/examples/create_deployment.py
+        https://github.com/kubernetes-client/python/blob/master/examples/deployment_create.py
         """
         # build job definition
         job_definition = self.compute_job_definition()

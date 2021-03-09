@@ -2,7 +2,7 @@ Simpleflow
 ==========
 
 <p class=badges>
-[![Pypi Status](https://badge.fury.io/py/simpleflow.png)](http://badge.fury.io/py/simpleflow) [![Build Status](https://travis-ci.org/botify-labs/simpleflow.svg?branch=master)](https://travis-ci.org/botify-labs/simpleflow)
+[![Pypi Status](https://badge.fury.io/py/simpleflow.png)](http://badge.fury.io/py/simpleflow) [![Build Status](https://travis-ci.org/botify-labs/simpleflow.svg?branch=main)](https://travis-ci.org/botify-labs/simpleflow)
 </p>
 
 Simpleflow is a Python library that provides abstractions to write programs in

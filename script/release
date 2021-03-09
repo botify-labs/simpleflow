@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from typing import Iterator, List
 
 VERSION_FILE = "simpleflow/__init__.py"
-MAIN_BRANCH = "master"
+MAIN_BRANCH = "main"
 CHANGELOG_FILE = "CHANGELOG.md"
 
 

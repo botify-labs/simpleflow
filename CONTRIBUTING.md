@@ -39,7 +39,7 @@ In Particular
 **Git Branch Structure**
 
 simpleflow used to have a separated `devel` branch but is now using only one,
-main branch `master`, that contains what will be released in the next version.
+main branch `main`, that contains what will be released in the next version.
 This branch is (hopefully) always stable.
 
 **Pull Requests**
@@ -58,7 +58,7 @@ This branch is (hopefully) always stable.
    - If the pull request adds functionality, it should be tested and the docs should be updated.
    - The pull request should work on Python 2.7 and PyPy. Use `tox` to verify that it does.
 
-4. Submit a pull request to the `master` branch.
+4. Submit a pull request to the `main` branch.
 
 **Running tests**
 
