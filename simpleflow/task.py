@@ -121,6 +121,7 @@ class ActivityTask(Task):
         for func in self.pre_execute_funcs:
             func(self.context)
 
+        task = None
         if hasattr(method, "execute"):
             task = method(*self.args, **self.kwargs)
             task.context = self.context
@@ -137,7 +138,7 @@ class ActivityTask(Task):
             result =  method(*self.args, **self.kwargs)
 
         for func in self.post_execute_funcs:
-            func(self.context, result=result)
+            func(self.context, result=result, meta=getattr(task, "meta", None))
 
         return result
 
