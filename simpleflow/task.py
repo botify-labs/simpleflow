@@ -17,7 +17,7 @@ from . import futures
 from .activity import Activity
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type, Union  # NOQA
+    from typing import Any, Dict, List, Optional, Type, Union  # NOQA
 
 
 def get_actual_value(value):
@@ -85,7 +85,7 @@ class ActivityTask(Task):
     def load_middlewares(self, middlewares):
         if not middlewares:
             return
-            
+
         for pre in middlewares["pre"]:
             try:
                 func = import_from_module(pre)
@@ -101,7 +101,6 @@ class ActivityTask(Task):
                 logger.exception("Cannot import a post middleware from %r", post)
             else:
                 self.post_execute_funcs.append(func)
-
 
     @property
     def name(self):
@@ -134,7 +133,7 @@ class ActivityTask(Task):
             # can be used directly for advanced usage. This works well because we
             # don't do multithreading, but if we ever do, DANGER!
             method.context = self.context
-            result =  method(*self.args, **self.kwargs)
+            result = method(*self.args, **self.kwargs)
 
         for func in self.post_execute_funcs:
             func(self.context, result=result)
@@ -146,6 +145,20 @@ class ActivityTask(Task):
         Propagate to the activity.
         """
         setattr(self.activity, attr, val)
+
+
+class MultipleActivityTask(Task):
+    @property
+    def name(self):
+        return "multiple-activity-group"
+
+    def __init__(self, activity_tasks):
+        # type: (List[ActivityTask]) -> None
+        self.activity_tasks = activity_tasks
+
+    def execute(self):
+        for activity in self.activity_tasks:
+            activity.execute()
 
 
 class WorkflowTask(Task):

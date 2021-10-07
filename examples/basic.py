@@ -2,7 +2,9 @@ from __future__ import print_function
 
 import time
 
-from simpleflow import Workflow, activity, futures, logger
+from simpleflow import Activity, Workflow, activity, futures, logger
+from simpleflow.canvas import ChainDynamicActivitiesBuilder, Group
+from simpleflow.task import ActivityTask
 
 
 @activity.with_attributes(task_list="quickstart", version="example")
@@ -42,12 +44,21 @@ class BasicWorkflow(Workflow):
     def run(self, x, t=30):
         execution = self.get_run_context()
         logger.warning("execution context from decider: {}".format(execution))
-        y = self.submit(increment, x)
-        yy = self.submit(Delay, t, y)
-        z = self.submit(double, y)
 
-        logger.warning(
-            "result of ({x} + 1) * 2 = {result}".format(x=x, result=z.result)
+        metrology = {
+            "examples.basic.increment": 2 * 60,
+            "examples.basic.Delay": 10,
+            "examples.basic.double": 60,
+        }
+        future = self.submit(
+            ChainDynamicActivitiesBuilder(
+                metrology,
+                (increment, x),
+                (double, t),
+                (increment, x),
+                (increment, x),
+                (increment, x),
+                raises_on_failure=False,
+            )
         )
-        futures.wait(yy, z)
-        return z.result
+        return future.result
