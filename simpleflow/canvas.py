@@ -4,7 +4,7 @@ from simpleflow.utils import issubclass_
 from . import futures, logger
 from .activity import Activity, with_attributes
 from .base import Submittable, SubmittableContainer
-from .constants import MINUTE
+from .constants import MINUTE, HOUR
 from .snippets.multiple import execute_multiple_activities
 from .task import ActivityTask, Task, WorkflowTask
 
@@ -238,7 +238,7 @@ class DynamicActivitiesBuilder(SubmittableContainer):
             {"name": activity.name, "args": activity.args, "kwargs": activity.kwargs}
             for activity in activity_tasks
         ]
-        fn = with_attributes(task_list=self.task_list)(execute_multiple_activities)
+        fn = with_attributes(task_list=self.task_list, schedule_to_close=6 * HOUR)(execute_multiple_activities)
         return ActivityTask(fn, args)
 
     def submit(self, executor):

@@ -17,7 +17,7 @@ def execute_multiple_activities(*args, **kwargs):
         elif isinstance(func, ActivityTask):
             result = func(*activity["args"], **activity["kwargs"]).execute()
         else:
-            raise ValueError
+            result = func(*activity["args"], **activity["kwargs"])
         results.append(result)
 
     return results
