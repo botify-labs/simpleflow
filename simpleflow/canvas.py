@@ -280,15 +280,17 @@ class DynamicActivitiesBuilder(SubmittableContainer):
                 if previous_is_activity_task:
                     merge_activities(multiple_activities)
 
-                if isinstance(activity_task, (Chain, Group)):
-                    submittable.append(DynamicActivitiesBuilder(self.metrology, activity_task))
-                else:
-                    submittable.append(activity_task)
+                #if isinstance(activity_task, (Chain, Group)):
+                #    submittable.append(DynamicActivitiesBuilder(self.metrology, activity_task))
+                #else:
+                submittable.append(activity_task)
 
             previous_is_activity_task = isinstance(activity_task, ActivityTask)
 
+        # Commit missing buffered activities
+        if curr_activities_batch:
+            multiple_activities.append(self.create_workflow_task(curr_activities_batch))
         merge_activities(multiple_activities)
-        print("new submittable is", submittable.activities)
         return submittable.submit(executor)
 
 
