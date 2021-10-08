@@ -60,7 +60,8 @@ class BasicWorkflow(Workflow):
                     (increment, x),
                     (increment, x),
                     raises_on_failure=False,
-                )
+                ),
+                task_list="example"
             )
         )
         print("Result is", future.result)

@@ -2,10 +2,11 @@ from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
 
 from . import futures, logger
-from .activity import Activity
+from .activity import Activity, with_attributes
 from .base import Submittable, SubmittableContainer
 from .constants import MINUTE
-from .task import ActivityTask, MultipleActivityTask, Task, WorkflowTask
+from .snippets.multiple import execute_multiple_activities
+from .task import ActivityTask, Task, WorkflowTask
 
 # noinspection PyUnreachableCode
 if False:
@@ -218,11 +219,12 @@ class GroupFuture(futures.Future):
 
 
 class DynamicActivitiesBuilder(SubmittableContainer):
-    def __init__(self, metrology, chain_or_group, **options):
+    def __init__(self, metrology, chain_or_group, task_list, **options):
         self.metrology = metrology
         self.max_activity_time = options.pop("max_activity_time", 5 * MINUTE)
-        self.raises_on_failure = options.pop("raises_on_failure", None)
         self.chain_or_group = chain_or_group
+        self.task_list = task_list
+        self.raises_on_failure = options.pop("raises_on_failure", None)
 
     def get_expected_time_for_task(self, activity_task):
         # type: (ActivityTask) -> int
@@ -231,9 +233,13 @@ class DynamicActivitiesBuilder(SubmittableContainer):
         print("get time for", activity_task_name, type(activity_task), "==>", expected_time)
         return expected_time
 
-    @staticmethod
-    def create_workflow_task(activity_tasks):
-        return Chain(MultipleActivityTask([at.activity for at in activity_tasks]))
+    def create_workflow_task(self, activity_tasks):
+        args = [
+            {"name": activity.name, "args": activity.args, "kwargs": activity.kwargs}
+            for activity in activity_tasks
+        ]
+        fn = with_attributes(task_list=self.task_list)(execute_multiple_activities)
+        return ActivityTask(fn, args)
 
     def submit(self, executor):
         submittable = type(self.chain_or_group)()
@@ -246,7 +252,7 @@ class DynamicActivitiesBuilder(SubmittableContainer):
 
         def merge_activities(multiple_activities):
             if multiple_activities:
-                submittable.append(Group(*multiple_activities))
+                submittable.extend(multiple_activities)
                 # reinit activities
                 multiple_activities = []
 
