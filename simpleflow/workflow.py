@@ -7,6 +7,7 @@ from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
 from . import canvas, task
 from ._decorators import deprecated
 from .activity import Activity
+from .canvas import ChainDynamicActivitiesBuilder
 from .utils import issubclass_
 
 if False:
@@ -63,6 +64,8 @@ class Workflow(Submittable):
             return self._executor.submit(submittable, *args, **kwargs)
         elif isinstance(submittable, (Activity, Workflow)):
             return self._executor.submit(submittable, *args, **kwargs)
+        elif isinstance(submittable, ChainDynamicActivitiesBuilder):
+            return submittable.submit(self._executor)
         elif isinstance(submittable, (task.Task, WaitForSignal)):
             return self._executor.submit(submittable)
         elif isinstance(submittable, SubmittableContainer):

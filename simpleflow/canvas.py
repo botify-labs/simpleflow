@@ -222,7 +222,11 @@ class ChainDynamicActivitiesBuilder(SubmittableContainer):
         self.list_of_multiple_activity_task = []  # type: List[MultipleActivityTask]
         self.metrology = metrology
         self.max_activity_time = options.pop("max_activity_time", 5 * MINUTE)
+        self.max_parallel = options.pop("max_parallel", None)
         self.raises_on_failure = options.pop("raises_on_failure", None)
+        self.bubbles_exception_on_failure = options.pop(
+            "bubbles_exception_on_failure", True
+        )
         self.curr_activities_batch = []
         self.curr_batch_time = 0
         self.extend(activities)
@@ -299,7 +303,8 @@ class ChainDynamicActivitiesBuilder(SubmittableContainer):
         return GroupFuture(
             self.list_of_multiple_activity_task,
             executor.workflow,
-            max_parallel=1,
+            self.max_parallel,
+            self.bubbles_exception_on_failure,
         )
 
 

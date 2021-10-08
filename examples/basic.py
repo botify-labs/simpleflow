@@ -61,4 +61,5 @@ class BasicWorkflow(Workflow):
                 raises_on_failure=False,
             )
         )
+        logger.info("result is {}".format(future.result))
         return future.result
