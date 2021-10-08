@@ -233,39 +233,58 @@ class DynamicActivitiesBuilder(SubmittableContainer):
 
     @staticmethod
     def create_workflow_task(activity_tasks):
-        return MultipleActivityTask(activity_tasks)
+        return Chain(MultipleActivityTask([at.activity for at in activity_tasks]))
 
-    def get_new_activities(self, curr_activities_batch=None, curr_batch_time=None):
-        from simpleflow import Workflow
-
-        if not curr_activities_batch:
-            curr_activities_batch = []
-        if not curr_batch_time:
-            curr_batch_time = 0
-
+    def submit(self, executor):
         submittable = type(self.chain_or_group)()
-        for activity_task in self.chain_or_group.activities:
-            if isinstance(activity_task, Workflow):
-                submittable.append(activity_task)
-            if isinstance(activity_task, (Group, Chain)):
-                submittable.activities += DynamicActivitiesBuilder(self.metrology, activity_task).get_new_activities(curr_activities_batch, curr_batch_time)
-            else:
 
+        previous_is_activity_task = True
+
+        multiple_activities = []
+        curr_activities_batch = []
+        curr_batch_time = 0
+
+        def merge_activities(multiple_activities):
+            if multiple_activities:
+                submittable.append(Group(*multiple_activities))
+                # reinit activities
+                multiple_activities = []
+
+        for activity_task in self.chain_or_group.activities:
+            """
+            Merge all consecutive activies which are not : 
+            - Workflows
+            - Chains
+            - Groups
+            """
+            if isinstance(activity_task, ActivityTask):
                 expected_time = self.get_expected_time_for_task(activity_task)
                 if expected_time:
                     if curr_batch_time + expected_time > self.max_activity_time:
-                        submittable.append(self.create_workflow_task(curr_activities_batch))
-                        curr_activities_batch = []
-                        curr_batch_time = 0
+                        multiple_activities.append(self.create_workflow_task(curr_activities_batch))
+                        curr_activities_batch = [activity_task]
+                        curr_batch_time = expected_time
                     else:
                         curr_activities_batch.append(activity_task)
                         curr_batch_time += expected_time
                 else:
                     submittable.append(activity_task)
-        return submittable
+            else:
+                # It's not an ActivityType instance, let's merge activities into MultipleActivityTask if needed
+                if previous_is_activity_task:
+                    merge_activities(multiple_activities)
 
-    def submit(self, executor):
-        return self.get_new_activities().submit(executor)
+                if isinstance(activity_task, (Chain, Group)):
+                    submittable.append(DynamicActivitiesBuilder(self.metrology, activity_task))
+                else:
+                    submittable.append(activity_task)
+
+            previous_is_activity_task = isinstance(activity_task, ActivityTask)
+
+        merge_activities(multiple_activities)
+        print("new submittable is", submittable.activities)
+        return submittable.submit(executor)
+
 
 
 class Chain(Group):

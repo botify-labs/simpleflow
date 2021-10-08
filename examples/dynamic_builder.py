@@ -63,4 +63,5 @@ class BasicWorkflow(Workflow):
                 )
             )
         )
+        print("Result is", future.result)
         return future.result

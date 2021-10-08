@@ -160,6 +160,20 @@ class MultipleActivityTask(Task):
         for activity in self.activity_tasks:
             activity.execute()
 
+    def submit(self, executor):
+        if self.curr_activities_batch:
+            self.list_of_multiple_activity_task.append(self.create_workflow_task(self.curr_activities_batch))
+        self.curr_activities_batch = []
+        self.curr_batch_time = 0
+        logger.info("--------------------------------------------------------------------")
+        logger.info("distributed into {} tasks!".format(len(self.list_of_multiple_activity_task)))
+        logger.info("--------------------------------------------------------------------")
+        return GroupFuture(
+            self.list_of_multiple_activity_task,
+            executor.workflow,
+            max_parallel=1,
+        )
+
 
 class WorkflowTask(Task):
     """
