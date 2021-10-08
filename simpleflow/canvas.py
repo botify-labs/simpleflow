@@ -238,7 +238,7 @@ class DynamicActivitiesBuilder(SubmittableContainer):
             {"name": activity.name, "args": activity.args, "kwargs": activity.kwargs}
             for activity in activity_tasks
         ]
-        fn = with_attributes(task_list=self.task_list, schedule_to_close=6 * HOUR)(execute_multiple_activities)
+        fn = with_attributes(task_list=self.task_list, schedule_to_close_timeout=6 * HOUR)(execute_multiple_activities)
         return ActivityTask(fn, args)
 
     def submit(self, executor):
