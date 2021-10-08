@@ -217,90 +217,55 @@ class GroupFuture(futures.Future):
         )
 
 
-class ChainDynamicActivitiesBuilder(SubmittableContainer):
-    def __init__(self, metrology, *activities, **options):
-        self.list_of_multiple_activity_task = []  # type: List[MultipleActivityTask]
+class DynamicActivitiesBuilder(SubmittableContainer):
+    def __init__(self, metrology, chain_or_group, **options):
         self.metrology = metrology
         self.max_activity_time = options.pop("max_activity_time", 5 * MINUTE)
         self.raises_on_failure = options.pop("raises_on_failure", None)
-        self.curr_activities_batch = []
-        self.curr_batch_time = 0
-        self.extend(activities)
+        self.chain_or_group = chain_or_group
 
-    def extend(self, iterable):
-        """
-        Check the expected execution time and group functions into activities, then append the activities.
-        :param iterable: list of Submittables/Groups/tuples
-        Tuples are (activity, args).
-        """
-        for it in iterable:
-            if not isinstance(it, tuple):
-                self.append(it)
-            else:
-                self.append(*it)
-
-    def append(self, submittable, *args, **kwargs):
-        from simpleflow import Workflow
-
-        if issubclass_(submittable, Workflow):
-            raise ValueError(
-                "args, {} is not supported yet in ChainDynamicActivitiesBuilder".format(
-                    type(submittable)
-                )
-            )
-        elif isinstance(submittable, Chain):
-            self.extend(submittable.activities)
-            if self.raises_on_failure is not None:
-                submittable.propagate_attribute("raises_on_failure", self.raises_on_failure)
-            return
-        elif isinstance(submittable, ActivityTask):
-            self.append_activity_task(submittable)
-
-        elif isinstance(submittable, Activity):
-            self.append_activity_task(ActivityTask(submittable, *args, **kwargs))
-        else:
-            raise ValueError(
-                "{} should be a Submittable, Chain or Activity".format(submittable)
-            )
-
-        if self.raises_on_failure is not None:
-            submittable.propagate_attribute("raises_on_failure", self.raises_on_failure)
-
-    def append_activity_task(self, activity_task):
-        # type: (ActivityTask) -> None
+    def get_expected_time_for_task(self, activity_task):
+        # type: (ActivityTask) -> int
         activity_task_name = activity_task.activity.name
         expected_time = self.metrology.get(str(activity_task_name))
-        if expected_time:
-            if self.curr_batch_time + expected_time > self.max_activity_time:
-                self.list_of_multiple_activity_task.append(self.create_workflow_task(self.curr_activities_batch))
-                self.curr_activities_batch = [activity_task]
-                self.curr_batch_time = expected_time
-            else:
-                self.curr_activities_batch.append(activity_task)
-                self.curr_batch_time += expected_time
-        else:
-            self.list_of_multiple_activity_task.append(self.create_workflow_task(self.curr_activities_batch))
-            self.list_of_multiple_activity_task.append(self.create_workflow_task([activity_task]))
-            self.curr_activities_batch = []
-            self.curr_batch_time = 0
+        print("get time for", activity_task_name, type(activity_task), "==>", expected_time)
+        return expected_time
 
     @staticmethod
     def create_workflow_task(activity_tasks):
         return MultipleActivityTask(activity_tasks)
 
+    def get_new_activities(self, curr_activities_batch=None, curr_batch_time=None):
+        from simpleflow import Workflow
+
+        if not curr_activities_batch:
+            curr_activities_batch = []
+        if not curr_batch_time:
+            curr_batch_time = 0
+
+        submittable = type(self.chain_or_group)()
+        for activity_task in self.chain_or_group.activities:
+            if isinstance(activity_task, Workflow):
+                submittable.append(activity_task)
+            if isinstance(activity_task, (Group, Chain)):
+                submittable.activities += DynamicActivitiesBuilder(self.metrology, activity_task).get_new_activities(curr_activities_batch, curr_batch_time)
+            else:
+
+                expected_time = self.get_expected_time_for_task(activity_task)
+                if expected_time:
+                    if curr_batch_time + expected_time > self.max_activity_time:
+                        submittable.append(self.create_workflow_task(curr_activities_batch))
+                        curr_activities_batch = []
+                        curr_batch_time = 0
+                    else:
+                        curr_activities_batch.append(activity_task)
+                        curr_batch_time += expected_time
+                else:
+                    submittable.append(activity_task)
+        return submittable
+
     def submit(self, executor):
-        if self.curr_activities_batch:
-            self.list_of_multiple_activity_task.append(self.create_workflow_task(self.curr_activities_batch))
-        self.curr_activities_batch = []
-        self.curr_batch_time = 0
-        logger.info("--------------------------------------------------------------------")
-        logger.info("distributed into {} tasks!".format(len(self.list_of_multiple_activity_task)))
-        logger.info("--------------------------------------------------------------------")
-        return GroupFuture(
-            self.list_of_multiple_activity_task,
-            executor.workflow,
-            max_parallel=1,
-        )
+        return self.get_new_activities().submit(executor)
 
 
 class Chain(Group):
