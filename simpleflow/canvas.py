@@ -242,7 +242,8 @@ class DynamicActivitiesBuilder(SubmittableContainer):
             task_list=self.task_list,
             schedule_to_start_timeout=6 * HOUR,
             schedule_to_close_timeout=12 * HOUR,
-            start_to_close_timeout=6 * HOUR)(execute_multiple_activities)
+            start_to_close_timeout=6 * HOUR,
+            heartbeat_timeout=3 * HOUR)(execute_multiple_activities)
         return ActivityTask(fn, args)
 
     def submit(self, executor):
