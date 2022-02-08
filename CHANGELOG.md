@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.21.17
+-------
+
+-  (#394)
+- Replace `master` with `main` in release script (#389)
+
 0.21.16
 -------
 
