@@ -35,7 +35,7 @@ def serialize_complex_object(obj):
     elif isinstance(obj, UUID):
         return str(obj)
     elif isinstance(obj, lazy_object_proxy.Proxy):
-        return str(obj)
+        return obj.__wrapped__
     elif isinstance(obj, (set, frozenset)):
         return list(obj)
     raise TypeError(

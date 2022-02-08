@@ -76,6 +76,17 @@ class TestJsonDumps(unittest.TestCase):
         actual = json_dumps(data)
         self.assertEqual(expected, actual)
 
+    def test_proxy_dict(self):
+        from lazy_object_proxy import Proxy
+
+        def unwrap():
+            return {"foo": 3}
+
+        data = {"args": [Proxy(unwrap)]}
+        expected = '{"args":[{"foo":3}]}'
+        actual = json_dumps(data)
+        self.assertEqual(expected, actual)
+
     def test_set(self):
         data = [
             {1, 2, 3},
