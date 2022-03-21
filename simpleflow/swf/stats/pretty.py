@@ -2,7 +2,9 @@ import operator
 from datetime import datetime
 from functools import partial, wraps
 from itertools import chain
+from typing import TYPE_CHECKING
 
+import pytz
 from future.utils import iteritems
 from tabulate import tabulate
 
@@ -11,6 +13,12 @@ from simpleflow.history import History
 from simpleflow.utils import json_dumps
 
 from . import WorkflowStats
+
+if TYPE_CHECKING:
+    from typing import List
+
+    from swf.models import WorkflowExecution
+
 
 TEMPLATE = """
 Workflow Execution {workflow_id}
@@ -37,7 +45,12 @@ def _to_timestamp(date):
 
 
 def tabular(values, headers, tablefmt, floatfmt):
-    return tabulate(values, headers=headers, tablefmt=tablefmt, floatfmt=floatfmt,)
+    return tabulate(
+        values,
+        headers=headers,
+        tablefmt=tablefmt,
+        floatfmt=floatfmt,
+    )
 
 
 def csv(values, headers, delimiter=","):
@@ -53,7 +66,8 @@ def csv(values, headers, delimiter=","):
 
 def human(values, headers):
     return tabulate(
-        [(str(k), str(v)) for k, v in zip(headers, values[0])], tablefmt="plain",
+        [(str(k), str(v)) for k, v in zip(headers, values[0])],
+        tablefmt="plain",
     )
 
 
@@ -161,7 +175,11 @@ def profile(workflow_execution, nb_tasks=None):
             row for row in stats.get_timings_with_percentage() if row is not None
         )
     )
-    rows = sorted(values, key=operator.itemgetter(5), reverse=True,)
+    rows = sorted(
+        values,
+        key=operator.itemgetter(5),
+        reverse=True,
+    )
 
     if nb_tasks:
         rows = rows[:nb_tasks]
@@ -186,7 +204,10 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
         @wraps(func)
         def wrapped(*args, **kwargs):
             header, rows = func(*args, **kwargs)
-            return fmt(rows, headers=header if (with_header or fmt == human) else [],)
+            return fmt(
+                rows,
+                headers=header if (with_header or fmt == human) else [],
+            )
 
         wrapped.__wrapped__ = wrapped
         return wrapped
@@ -200,7 +221,11 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
 def list_executions(workflow_executions):
     header = "Workflow ID", "Workflow Type", "Status"
     rows = (
-        (execution.workflow_id, execution.workflow_type.name, execution.status,)
+        (
+            execution.workflow_id,
+            execution.workflow_type.name,
+            execution.status,
+        )
         for execution in workflow_executions
     )
 
@@ -208,6 +233,7 @@ def list_executions(workflow_executions):
 
 
 def list_details(workflow_executions):
+    # type: (List[WorkflowExecution]) -> tuple
     header = (
         "Workflow ID",
         "Workflow Type",
@@ -217,6 +243,9 @@ def list_details(workflow_executions):
         "Task List",
         "Child Policy",
         "Close Status",
+        "Start Timestamp",
+        "Close Timestamp",
+        "Cancel Requested",
         "Execution Timeout",
         "Input",
         "Tags",
@@ -232,6 +261,9 @@ def list_details(workflow_executions):
             execution.task_list,
             execution.child_policy,
             execution.close_status,
+            datetime.fromtimestamp(execution.start_timestamp, tz=pytz.utc),
+            datetime.fromtimestamp(execution.close_timestamp, tz=pytz.utc),
+            execution.cancel_requested,
             execution.execution_timeout,
             execution.input,
             execution.tag_list,
@@ -261,7 +293,6 @@ def get_task(workflow_execution, task_id, details=False):
     # TODO...
     if details:
         header.append("details")
-    # print >>sys.stderr, task
     state = task["state"]
     rows = [
         [
@@ -284,6 +315,9 @@ def get_task(workflow_execution, task_id, details=False):
 def dump_history_to_json(history):
     history.parse()
     events = list(
-        chain(iteritems(history.activities), iteritems(history.child_workflows),)
+        chain(
+            iteritems(history.activities),
+            iteritems(history.child_workflows),
+        )
     )
     return jsonify(events, headers=None)
