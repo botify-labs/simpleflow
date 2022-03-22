@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 from typing import TYPE_CHECKING
 
@@ -6,6 +6,7 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 from simpleflow.history import History
+from simpleflow.utils import full_class_name, full_object_name
 
 if TYPE_CHECKING:
     from typing import Any, Dict, List
@@ -39,7 +40,8 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
             )
 
     return swf.querysets.WorkflowExecutionQuerySet(domain).get(
-        workflow_id=workflow_id, run_id=run_id or found_run_id,
+        workflow_id=workflow_id,
+        run_id=run_id or found_run_id,
     )
 
 
@@ -121,3 +123,26 @@ class DecisionsAndContext(object):
         if key not in self.execution_context:
             self.execution_context[key] = set()
         self.execution_context[key].add(value)
+
+
+def get_name_from_event(event):
+    if isinstance(event.input, dict) and "__extra" in event.input:
+        return event.input["__extra"]["class"]
+    workflow_name = event.workflow_type["name"]
+    return workflow_name
+
+
+def set_workflow_class_name(wf_input, workflow_or_class):
+    # type: (dict, type) -> None
+    qualified_name = full_object_name(workflow_or_class)
+    wf_input.setdefault("__extra", {})["class"] = qualified_name
+
+
+def add_workflow_class_name(wf_input, workflow_or_class):
+    # type: (dict, type) -> dict
+    """
+    Add the fully-qualified workflow class name to the WF input.
+    """
+    rc = wf_input.copy()
+    set_workflow_class_name(rc, workflow_or_class)
+    return rc
