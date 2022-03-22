@@ -1,6 +1,7 @@
 import swf.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
+from simpleflow.utils import import_from_module
 
 from . import Decider, DeciderPoller
 
@@ -35,10 +36,7 @@ def load_workflow_executor(
     :rtype: Executor
     """
     logger.debug('load_workflow_executor(workflow_name="{}")'.format(workflow_name))
-    module_name, object_name = workflow_name.rsplit(".", 1)
-    module = __import__(module_name, fromlist=["*"])
-
-    workflow = getattr(module, object_name)
+    workflow = import_from_module(workflow_name)
 
     if not isinstance(domain, swf.models.Domain):
         raise ValueError("domain is a {}, not a Domain".format(type(domain).__name__))

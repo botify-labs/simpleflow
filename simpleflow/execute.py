@@ -27,7 +27,7 @@ from future.utils import iteritems
 from simpleflow import compat, format
 from simpleflow import logger as simpleflow_logger
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
-from simpleflow.utils import json_dumps
+from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
     import inspect  # NOQA
@@ -123,7 +123,12 @@ def check_keyword_arguments(argspec, kwargs):
 
 
 def format_arguments_json(*args, **kwargs):
-    dump = json_dumps({"args": args, "kwargs": kwargs,})
+    dump = json_dumps(
+        {
+            "args": args,
+            "kwargs": kwargs,
+        }
+    )
     return dump
 
 
@@ -249,7 +254,10 @@ def python(
                     if arg_file:
                         pass_fds.append(arg_fd)
                 process = subprocess.Popen(
-                    full_command, bufsize=-1, close_fds=close_fds, pass_fds=pass_fds,
+                    full_command,
+                    bufsize=-1,
+                    close_fds=close_fds,
+                    pass_fds=pass_fds,
                 )
                 rc = wait_subprocess(
                     process, timeout=timeout, command_info=full_command
@@ -370,52 +378,6 @@ def program(path=None, argument_format=format_arguments):
     return wrap_callable
 
 
-def make_callable(funcname):
-    """
-    Return a callable object from a string.
-
-    This function resolves a name into a callable object. It automatically
-    loads the required modules. If there is no module path, it considers the
-    callable is a builtin.
-
-    :param funcname: name of the callable.
-    :type  funcname: str.
-
-    :returns:
-        :rtype: callable.
-
-    Examples
-    --------
-
-    Loading a function from a library:
-
-    >>> func = make_callable('itertools.chain')
-    >>> list(func(range(3), range(4)))
-    [0, 1, 2, 0, 1, 2, 3]
-
-    Loading a builtin:
-
-    >>> func = make_callable('map')
-    >>> list(func(lambda x: x + 1, range(4)))
-    [1, 2, 3, 4]
-
-    """
-    if "." not in funcname:
-        module_name = "builtins"
-        object_name = funcname
-    else:
-        module_name, object_name = funcname.rsplit(".", 1)
-
-    module = __import__(module_name, fromlist=["*"])
-    try:
-        callable_ = getattr(module, object_name)
-    except AttributeError:
-        raise AttributeError(
-            "module {} has no attribute {}".format(module.__name__, object_name,)
-        )
-    return callable_
-
-
 def main():
     """
     When executed as a script, this module expects the name of a callable as
@@ -458,22 +420,34 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "funcname", help="name of the callable to execute",
+        "funcname",
+        help="name of the callable to execute",
     )
     parser.add_argument(
-        "funcargs", help="callable arguments in JSON",
+        "funcargs",
+        help="callable arguments in JSON",
     )
     parser.add_argument(
-        "--context", help="Activity Context",
+        "--context",
+        help="Activity Context",
     )
     parser.add_argument(
-        "--logger-name", help="logger name",
+        "--logger-name",
+        help="logger name",
     )
     parser.add_argument(
-        "--result-fd", type=int, default=1, metavar="N", help="result file descriptor",
+        "--result-fd",
+        type=int,
+        default=1,
+        metavar="N",
+        help="result file descriptor",
     )
     parser.add_argument(
-        "--error-fd", type=int, default=2, metavar="N", help="error file descriptor",
+        "--error-fd",
+        type=int,
+        default=2,
+        metavar="N",
+        help="error file descriptor",
     )
     parser.add_argument(
         "--arguments-json-fd",
@@ -483,7 +457,9 @@ def main():
         help="JSON input file descriptor",
     )
     parser.add_argument(
-        "--kill-children", action="store_true", help="kill child processes on exit",
+        "--kill-children",
+        action="store_true",
+        help="kill child processes on exit",
     )
     cmd_arguments = parser.parse_args()
 
@@ -519,7 +495,7 @@ def main():
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
         logger = simpleflow_logger
-    callable_ = make_callable(funcname)
+    callable_ = import_from_module(funcname)
     if hasattr(callable_, "__wrapped__"):
         callable_ = callable_.__wrapped__
     args = arguments.get("args", ())
@@ -544,7 +520,11 @@ def main():
         exc_type, exc_value, exc_traceback = sys.exc_info()
         tb = traceback.format_tb(exc_traceback)
         details = json_dumps(
-            {"error": exc_type.__name__, "message": str(exc_value), "traceback": tb,},
+            {
+                "error": exc_type.__name__,
+                "message": str(exc_value),
+                "traceback": tb,
+            },
             default=repr,
         )
         if cmd_arguments.error_fd == 2:

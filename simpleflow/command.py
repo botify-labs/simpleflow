@@ -27,26 +27,12 @@ from simpleflow.swf.process import decider, worker
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
-from simpleflow.utils import json_dumps
+from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
     from typing import Any, AnyStr, Dict, Text, Type
 
     from swf.models import WorkflowType
-
-
-def get_workflow(clspath):
-    # type: (Text) -> Type[Workflow]
-    """
-    Import a workflow class.
-    :param clspath: class path
-    :return:
-    """
-    # FIXME why don't we use import_from_module?
-    modname, clsname = clspath.rsplit(".", 1)
-    module = __import__(modname, fromlist=["*"])
-    cls = getattr(module, clsname)
-    return cls
 
 
 def disable_boto_connection_pooling():
@@ -201,7 +187,7 @@ def start_workflow(
     middleware_pre_execution,
     middleware_post_execution,
 ):
-    workflow_class = get_workflow(workflow)
+    workflow_class = import_from_module(workflow)
 
     wf_input = {}  # type: Dict[AnyStr, Any]
     if input or input_file:
@@ -649,7 +635,7 @@ def standalone(
     if force_activities and not repair:
         raise ValueError("You should only use --force-activities with --repair.")
 
-    workflow_class = get_workflow(workflow)
+    workflow_class = import_from_module(workflow)
     if not workflow_id:
         workflow_id = workflow_class.name
 
