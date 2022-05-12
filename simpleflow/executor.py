@@ -45,7 +45,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
         """
         self._workflow_class = workflow_class
-        self._workflow = None
+        self._workflow = None  # type: Optional[Workflow]
 
     @property
     def workflow_class(self):

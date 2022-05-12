@@ -1,10 +1,14 @@
 """
 Default values for GetStepsDoneTask and MarkStepDoneTask.
 """
+from typing import TYPE_CHECKING
 
 from simpleflow.constants import HOUR, MINUTE
 
-STEP_ACTIVITY_PARAMS_DEFAULT = {
+if TYPE_CHECKING:
+    from typing import Any, AnyStr, Dict
+
+STEP_ACTIVITY_PARAMS_DEFAULT = {  # type: Dict[AnyStr, Any]
     "schedule_to_start_timeout": 4 * HOUR,
     "start_to_close_timeout": 1 * MINUTE,
     "schedule_to_close_timeout": 4 * HOUR + MINUTE,

@@ -1,4 +1,10 @@
+from typing import TYPE_CHECKING
+
 from . import registry, settings
+
+if TYPE_CHECKING:
+    from typing import Callable
+
 
 __all__ = [
     "with_attributes",
@@ -29,6 +35,7 @@ def with_attributes(
     idempotent=None,
     meta=None,
 ):
+    # type: (...) -> Callable[[Callable], Activity]
     """
     Decorator: wrap a function/class into an Activity.
 
@@ -59,6 +66,7 @@ def with_attributes(
     """
 
     def wrap(func):
+        # type: (Callable) -> Activity
         return Activity(
             func,
             name,

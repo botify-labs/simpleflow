@@ -1,4 +1,5 @@
 import copy
+from typing import TYPE_CHECKING
 
 from simpleflow import activity
 from simpleflow.base import SubmittableContainer
@@ -13,27 +14,34 @@ from .utils import (
     step_will_run,
 )
 
+if TYPE_CHECKING:
+    from typing import AnyStr, Optional, Sequence, Union
+
+    from simpleflow.base import Submittable
+    from simpleflow.executor import Executor
+    from simpleflow.futures import Future
+
 
 class Step(SubmittableContainer):
     def __init__(
         self,
-        step_name,
-        activities,
-        force=False,
-        activities_if_step_already_done=None,
-        emit_signal=False,
-        force_steps_if_executed=None,
-        bubbles_exception_on_failure=False,
+        step_name,  # type: AnyStr
+        activities,  # type: Union[Submittable, SubmittableContainer]
+        force=False,  # type: bool
+        activities_if_step_already_done=None,  # type: Optional[Union[Submittable, SubmittableContainer]]
+        emit_signal=False,  # type: bool
+        force_steps_if_executed=None,  # type: Optional[Sequence[AnyStr]]
+        bubbles_exception_on_failure=False,  # type: bool
     ):
+        # type: (...) -> None
         """
-        :param step_name : Name of the step
-        :param activities : submittable entity, not a list.
-        :type activities : Submittable | SubmittableContainer
-        :param force : Force the step even if already executed
-        :param activities_if_step_already_done : Activities to run even step already executed
-        :param emit_signal : Emit a signal when the step is executed
-        :param force_steps_if_executed : list of steps names to force in the next phases of the workflow
-        :param bubbles_exception_on_failure : propagate potential exceptions to the caller
+        :param step_name: Name of the step
+        :param activities: submittable entity; not a list
+        :param force: Force the step even if already executed
+        :param activities_if_step_already_done: submittable to run even step already executed
+        :param emit_signal: Emit a signal when the step is executed
+        :param force_steps_if_executed: list of steps names to force in the next phases of the workflow
+        :param bubbles_exception_on_failure: propagate potential exceptions to the caller
         """
         self.step_name = step_name
         self.activities = activities
@@ -44,7 +52,10 @@ class Step(SubmittableContainer):
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
     def submit(self, executor):
+        # type: (Executor) -> Future
         workflow = executor.workflow
+        if workflow is None:
+            raise ValueError("Executor has no associated workflow")
 
         def fn_steps_done(steps_done):
             marker = {

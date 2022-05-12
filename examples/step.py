@@ -20,7 +20,7 @@ class StepWorkflow(Workflow, WorkflowStepMixin):
     # This workflow demonstrates the use of simpleflow's Step submittable
     #
     # The second execution time of the workflow will skip the step 'my_step'
-    # Because it waw already computed before, thanks to a file put on S3
+    # Because it was already computed before, as indicated by a file put on S3
 
     name = "step"
     version = "example"
@@ -28,7 +28,14 @@ class StepWorkflow(Workflow, WorkflowStepMixin):
 
     def run(self):
         future = self.submit(
-            Step("my_step", Group((multiply, 1), (multiply, 2), (multiply, 3),))
+            Step(
+                "my_step",
+                Group(
+                    (multiply, 1),
+                    (multiply, 2),
+                    (multiply, 3),
+                ),
+            )
         )
         futures.wait(future)
 
@@ -75,7 +82,7 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
         # 1/ GetStepsDoneTask -> list the steps which are done
         # 2/ MarkStepDoneTask -> mark a step as done
         # By default the params of those activities are simpleflow.step.constants.STEP_ACTIVITY_PARAMS_DEFAULT
-        # and the default workflows's task list
+        # and the default workflow's task list
         # But you can return a dict that will update this default dict
         # (you don't need to provide all the keys)
         return {"task_list": "specific_task_list"}
@@ -85,7 +92,7 @@ class CustomizedStepWorkflow(Workflow, WorkflowStepMixin):
 
         # You can declare step forcing
         # at workflow initialization
-        # it can comes from the context or the result
+        # it can come from the context or the result
         # of a specific activity result
         if force_steps:
             self.add_forced_steps(force_steps, reason="workflow_init")
