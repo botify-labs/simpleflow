@@ -70,6 +70,7 @@ nav:
     - Jumbo Fields: features/jumbo_fields.md
     - Advanced Features:
       - Signals: features/signals.md
+      - Steps: features/steps.md
       - Task Lists: features/task_lists.md
       - Tags: features/tags.md
       - Error Handling: features/error_handling.md
