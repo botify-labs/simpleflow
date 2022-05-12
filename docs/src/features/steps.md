@@ -47,13 +47,13 @@ class AWorkflow(Workflow, WorkflowStepMixin):
         futures.wait(self.submit(self.step("something", do_something)))
 ```
 
-The first time `AWorkflow` is executed, the step "something" is run; the
-next times the workflow is executed, the step is skipped.
+The first time `AWorkflow` is executed, the step "something" is run;
+next time the workflow is executed, the step is skipped.
 
 
 ### Creating a Step
 
-The `Step.__init__` methods is called with:
+The `Step.__init__` method is called with:
 * `step_name: str`: step name
 * `activities: Submittable | SubmittableContainer`: what to execute (generally a chain or a group, thus the plural)
 * `force: bool=False`: whether to force a step even if previously played
