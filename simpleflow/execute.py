@@ -30,8 +30,8 @@ from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import json_dumps
 
 if TYPE_CHECKING:
-    import inspect  # NOQA
-    from typing import Any, Iterable  # NOQA
+    import inspect
+    from typing import Any, AnyStr, Iterable, Optional
 
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536
@@ -123,7 +123,12 @@ def check_keyword_arguments(argspec, kwargs):
 
 
 def format_arguments_json(*args, **kwargs):
-    dump = json_dumps({"args": args, "kwargs": kwargs,})
+    dump = json_dumps(
+        {
+            "args": args,
+            "kwargs": kwargs,
+        }
+    )
     return dump
 
 
@@ -187,7 +192,11 @@ def wait_subprocess(process, timeout=None, command_info=None):
 
 
 def python(
-    interpreter="python", logger_name=__name__, timeout=None, kill_children=False
+    interpreter="python",  # type: AnyStr
+    logger_name=__name__,  # type: AnyStr
+    timeout=None,  # type: Optional[int]
+    kill_children=False,  # type: bool
+    env=None,  # type: Optional[dict]
 ):
     """
     Execute a callable as an external Python program.
@@ -208,7 +217,15 @@ def python(
             sys.stderr.flush()
             result_str = None  # useless
             context = kwargs.pop("context", {})
-            with tempfile.TemporaryFile() as result_fd, tempfile.TemporaryFile() as error_fd:
+            tmp_dir = None
+            if env:
+                for envname in "TMPDIR", "TEMP", "TMP":
+                    tmp_dir = env.get(envname)
+                    if tmp_dir:
+                        break
+            with tempfile.TemporaryFile(
+                dir=tmp_dir
+            ) as result_fd, tempfile.TemporaryFile(dir=tmp_dir) as error_fd:
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)
@@ -229,7 +246,7 @@ def python(
                     arg_file = None
                     arg_fd = None
                 else:
-                    arg_file = tempfile.TemporaryFile()
+                    arg_file = tempfile.TemporaryFile(dir=tmp_dir)
                     arg_file.write(arguments_json.encode("utf-8"))
                     arg_file.flush()
                     arg_file.seek(0)
@@ -249,7 +266,11 @@ def python(
                     if arg_file:
                         pass_fds.append(arg_fd)
                 process = subprocess.Popen(
-                    full_command, bufsize=-1, close_fds=close_fds, pass_fds=pass_fds,
+                    full_command,
+                    bufsize=-1,
+                    close_fds=close_fds,
+                    pass_fds=pass_fds,
+                    env=env,
                 )
                 rc = wait_subprocess(
                     process, timeout=timeout, command_info=full_command
@@ -357,7 +378,9 @@ def program(path=None, argument_format=format_arguments):
                 kwonlyargs,
                 kwonlydefaults,
                 ann,
-            ) = inspect.getfullargspec(func)
+            ) = inspect.getfullargspec(  # noqa
+                func
+            )
             argspec = inspect.ArgSpec(args, varargs, varkw, defaults)
         except AttributeError:
             # noinspection PyDeprecation
@@ -411,7 +434,10 @@ def make_callable(funcname):
         callable_ = getattr(module, object_name)
     except AttributeError:
         raise AttributeError(
-            "module {} has no attribute {}".format(module.__name__, object_name,)
+            "module {} has no attribute {}".format(
+                module.__name__,
+                object_name,
+            )
         )
     return callable_
 
@@ -458,22 +484,34 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "funcname", help="name of the callable to execute",
+        "funcname",
+        help="name of the callable to execute",
     )
     parser.add_argument(
-        "funcargs", help="callable arguments in JSON",
+        "funcargs",
+        help="callable arguments in JSON",
     )
     parser.add_argument(
-        "--context", help="Activity Context",
+        "--context",
+        help="Activity Context",
     )
     parser.add_argument(
-        "--logger-name", help="logger name",
+        "--logger-name",
+        help="logger name",
     )
     parser.add_argument(
-        "--result-fd", type=int, default=1, metavar="N", help="result file descriptor",
+        "--result-fd",
+        type=int,
+        default=1,
+        metavar="N",
+        help="result file descriptor",
     )
     parser.add_argument(
-        "--error-fd", type=int, default=2, metavar="N", help="error file descriptor",
+        "--error-fd",
+        type=int,
+        default=2,
+        metavar="N",
+        help="error file descriptor",
     )
     parser.add_argument(
         "--arguments-json-fd",
@@ -483,7 +521,9 @@ def main():
         help="JSON input file descriptor",
     )
     parser.add_argument(
-        "--kill-children", action="store_true", help="kill child processes on exit",
+        "--kill-children",
+        action="store_true",
+        help="kill child processes on exit",
     )
     cmd_arguments = parser.parse_args()
 
@@ -544,7 +584,11 @@ def main():
         exc_type, exc_value, exc_traceback = sys.exc_info()
         tb = traceback.format_tb(exc_traceback)
         details = json_dumps(
-            {"error": exc_type.__name__, "message": str(exc_value), "traceback": tb,},
+            {
+                "error": exc_type.__name__,
+                "message": str(exc_value),
+                "traceback": tb,
+            },
             default=repr,
         )
         if cmd_arguments.error_fd == 2:
