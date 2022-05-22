@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+
+from typing import TYPE_CHECKING
+
 from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
 
@@ -6,9 +10,8 @@ from .activity import Activity
 from .base import Submittable, SubmittableContainer
 from .task import ActivityTask, WorkflowTask
 
-# noinspection PyUnreachableCode
-if False:
-    from typing import List  # NOQA
+if TYPE_CHECKING:
+    from typing import List
 
 
 class FuncGroup(SubmittableContainer):
