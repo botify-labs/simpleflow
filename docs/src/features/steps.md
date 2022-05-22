@@ -90,3 +90,11 @@ The chain is then submitted to the workflow.
 Done steps are tracked by S3 objects. We only list them, their content is not used.
 
 ## Customization
+
+The `WorkflowStepMixin` class supports several customizations; see for instance `examples.step.CustomizedStepWorkflow`.
+
+* `get_step_bucket()`: return the bucket name, potentially with the region endpoint.
+  Default: `{SIMPLEFLOW_S3_HOST}/{STEP_BUCKET}`
+* `get_step_path_prefix()`: return the steps path prefix. Default: `{workflow_id}/steps`
+* `get_step_activity_params()`: return supplemental activity parameters for `GetStepsDoneTask` and `MarkStepDoneTask`.
+  A typical use is forcing a separate task list.
