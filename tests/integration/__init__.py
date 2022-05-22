@@ -1,17 +1,20 @@
 import inspect
 import os
+from typing import TYPE_CHECKING
 
-import boto.swf
 from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
 
+import simpleflow.command
 from simpleflow.utils import json_dumps
 from tests.utils import IntegrationTestCase
 
-import simpleflow.command  # NOQA
+import boto.swf  # noqa
 
-if False:
+
+
+if TYPE_CHECKING:
     from typing import List, Union
 
     from click.testing import Result
@@ -66,32 +69,37 @@ class VCRIntegrationTest(IntegrationTestCase):
 
     def get_events(self, run_id):
         response = self.conn.get_workflow_execution_history(
-            self.domain, run_id, self.workflow_id,
+            self.domain,
+            run_id,
+            self.workflow_id,
         )
         events = response["events"]
         next_page = response.get("nextPageToken")
         while next_page is not None:
             response = self.conn.get_workflow_execution_history(
-                self.domain, run_id, self.workflow_id, next_page_token=next_page,
+                self.domain,
+                run_id,
+                self.workflow_id,
+                next_page_token=next_page,
             )
 
             events.extend(response["events"])
             next_page = response.get("nextPageToken")
         return events
 
-    def invoke(self, command, arguments):
-        # type: (str, Union(str, List[str])) -> Result
+    def invoke(self, arguments, catch_exceptions=True):
+        # type: (Union[str, List[str]], bool) -> Result
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):
             arguments = arguments.split(" ")
-        print("simpleflow {} {}".format(command, " ".join(arguments)))
-        return self.runner.invoke(command, arguments, catch_exceptions=False)
+        return self.runner.invoke(
+            simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions
+        )
 
     def run_standalone(self, workflow_name, *args, **kwargs):
         input = json_dumps(dict(args=args, kwargs=kwargs))
         result = self.invoke(
-            simpleflow.command.cli,
             [
                 "standalone",
                 "--workflow-id",

@@ -1,4 +1,5 @@
-# See README for more informations about integration tests
+# See README for more information about integration tests
+from typing import TYPE_CHECKING
 
 from click.testing import CliRunner
 from flaky import flaky
@@ -8,12 +9,16 @@ import simpleflow.command
 
 from . import VCRIntegrationTest, vcr
 
+if TYPE_CHECKING:
+    from typing import Any, AnyStr, Callable
+
 
 class TestSimpleflowCommand(VCRIntegrationTest):
-    def invoke(self, command, arguments):
-        if not hasattr(self, "runner"):
-            self.runner = CliRunner()
-        return self.runner.invoke(command, arguments.split(" "))
+    # def invoke(self, command, arguments):
+    #     # type: (Callable, AnyStr) -> Any
+    #     if not hasattr(self, "runner"):
+    #         self.runner = CliRunner()
+    #     return self.runner.invoke(simpleflow.command.cli, arguments.split(" "))
 
     def cleanup_sleep_workflow(self):
         # ideally this should be in a tearDown() or setUp() call, but those
@@ -27,7 +32,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # start a workflow
         result = self.invoke(
-            simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
             "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
@@ -56,7 +60,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # start a workflow
         self.invoke(
-            simpleflow.command.cli,
             "workflow.start --workflow-id {} --task-list test --input null "
             "--execution-timeout 300 --decision-tasks-timeout 30 "
             "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
@@ -64,7 +67,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
 
         # now try to terminate it
         result = self.invoke(
-            simpleflow.command.cli,
             "workflow.terminate {} {}".format(self.domain, self.workflow_id),
         )
 
@@ -80,7 +82,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # run a very short workflow
         result = self.invoke(
-            simpleflow.command.cli,
             'standalone --workflow-id %s --input {"args":[0]} --nb-workers 1 '
             "--nb-deciders 1 tests.integration.workflow.SleepWorkflow"
             % self.workflow_id,
@@ -96,7 +97,6 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # for which scheduledEventId is 5
         # => let's rerun it locally and check the result
         result = self.invoke(
-            simpleflow.command.cli,
             "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5"
             % (self.workflow_id, run_id),
         )
@@ -106,19 +106,9 @@ class TestSimpleflowCommand(VCRIntegrationTest):
     @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_idempotent(self):
-        result = self.invoke(
-            simpleflow.command.cli,
-            "standalone --workflow-id %s --input {}"
-            " --nb-deciders 2 --nb-workers 2"
-            " tests.integration.workflow.ATestDefinitionWithIdempotentTask"
-            % self.workflow_id,
+        events = self.run_standalone(
+            "tests.integration.workflow.ATestDefinitionWithIdempotentTask"
         )
-        expect(result.exit_code).to.equal(0)
-        lines = result.output.split("\n")
-        start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
-        _, run_id = start_line.split(" ", 1)
-
-        events = self.get_events(run_id)
 
         activities = [
             e["activityTaskScheduledEventAttributes"]["activityId"]
