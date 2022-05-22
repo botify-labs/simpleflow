@@ -26,15 +26,19 @@ class FuncGroup(SubmittableContainer):
         self.kwargs = kwargs
         self.activities = None
         self.raises_on_failure = kwargs.pop("raises_on_failure", None)
+        self.allow_none = kwargs.pop("_allow_none", False)
 
     def submit(self, executor):
         inst = self.instantiate_task()
-        return executor.workflow.submit(inst)
+        if inst is not None:
+            return executor.workflow.submit(inst)
 
     def instantiate_task(self):
         self.activities = self.func(
             *self.args, **self.kwargs
         )  # ivar for testing/debugging ease
+        if self.activities is None and self.allow_none:
+            return None
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError(
                 "FuncGroup submission should return a Group or Submittable,"
