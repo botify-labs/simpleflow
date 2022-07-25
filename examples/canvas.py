@@ -3,7 +3,7 @@ from __future__ import print_function
 import time
 
 from simpleflow import Workflow, activity, futures
-from simpleflow.canvas import Chain, Group
+from simpleflow.canvas import Chain, ChainFuture, Group, GroupFuture
 
 
 @activity.with_attributes(task_list="example", version="example")
@@ -47,7 +47,9 @@ class CanvasWorkflow(Workflow):
         future = self.submit(
             Chain(
                 Group(
-                    (increment_slowly, x), (increment_slowly, y), (increment_slowly, z),
+                    (increment_slowly, x),
+                    (increment_slowly, y),
+                    (increment_slowly, z),
                 ),
                 multiply,
                 send_result=True,
@@ -90,7 +92,10 @@ class CanvasWorkflow(Workflow):
         # Failing inside a chain by default don't stop an upper chain
         future = self.submit(
             Chain(
-                Chain((fail_incrementing, x), raises_on_failure=False,),
+                Chain(
+                    (fail_incrementing, x),
+                    raises_on_failure=False,
+                ),
                 (increment_slowly, 1),  # executed
                 (multiply, [3, 2]),
             )
@@ -123,3 +128,66 @@ class CanvasWorkflow(Workflow):
         print("Chain with failure in sub-subchain: {}".format(future.result))
 
         print("Finished!")
+
+
+class CustomGroupFuture(GroupFuture):
+    def __init__(self, *args, **kwargs):
+        print("CustomGroupFuture.__init__({}, {})".format(args, kwargs))
+        super(CustomGroupFuture, self).__init__(*args, **kwargs)
+
+    @property
+    def result(self):
+        print("CustomGroupFuture.result: start")
+        try:
+            result = super(CustomGroupFuture, self).result
+        except Exception as ex:
+            print("CustomGroupFuture.result: exception {!r}".format(ex))
+            raise
+        print("CustomGroupFuture.result: returning {!r}".format(result))
+        return result
+
+
+class CustomGroup(Group):
+    default_future_class = CustomGroupFuture
+
+
+class CustomChainFuture(ChainFuture):
+    def __init__(self, *args, **kwargs):
+        print("CustomChainFuture.__init__({}, {})".format(args, kwargs))
+        super(CustomChainFuture, self).__init__(*args, **kwargs)
+
+    @property
+    def result(self):
+        print("CustomChainFuture.result: start")
+        try:
+            result = super(CustomChainFuture, self).result
+        except Exception as ex:
+            print("CustomChainFuture.result: exception {!r}".format(ex))
+            raise
+        print("CustomChainFuture.result: returning {!r}".format(result))
+        return result
+
+
+class CustomChain(Chain):
+    default_future_class = CustomChainFuture
+
+
+class CustomCanvasWorkflow(Workflow):
+    name = "canvas"
+    version = "example"
+    task_list = "example"
+
+    def run(self):
+        x, y, z = 1, 2, 3
+        fut = self.submit(
+            CustomGroup(
+                (increment_slowly, x),
+                (increment_slowly, y),
+                (increment_slowly, z),
+                CustomChain(
+                    (fail_incrementing, x),
+                    raises_on_failure=False,
+                ),
+            )
+        )
+        print("Result: {}".format(fut.result))
