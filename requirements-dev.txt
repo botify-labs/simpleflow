@@ -5,14 +5,14 @@ functools32==3.2.3.post2; python_version == "2.7"
 futures; python_version == "2.7"
 invoke
 mock
-moto>=1.3.14,!=1.3.15,!=1.3.16  # see https://github.com/spulec/moto/issues/3535
+moto>=1.3.14,!=1.3.15,!=1.3.16,<=2.1.0  # see https://github.com/spulec/moto/issues/3535
 packaging
 pytest==4.6.11
 pytest-xdist==1.34.0
 sphinx
 sphinx_rtd_theme
-sure
+sure==1.4.0
 vcrpy==3.0.0
 wheel
-setuptools
+setuptools==44.0.0; python_version < "3"  # for moto 2.1.0
 twine
