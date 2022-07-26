@@ -4,12 +4,10 @@ Changelog
 0.21.18rc1
 ----------
 
--  (Merge branch 'enhancement/403/Canvas_misc_enhancements' into main)
-- # Conflicts:
-#	simpleflow/execute.py
- (Merge branch 'enhancement/399/execute.python_add_env_argument' into main)
--  (Merge branch 'enhancement/397/decider.start_work_without_workflows' into main)
--  (Merge branch 'enhancement/395/workflow.filter_add_start_close_timestamps' into main)
+- (Merge branch 'enhancement/403/Canvas_misc_enhancements' into main)
+- (Merge branch 'enhancement/399/execute.python_add_env_argument' into main)
+- (Merge branch 'enhancement/397/decider.start_work_without_workflows' into main)
+- (Merge branch 'enhancement/395/workflow.filter_add_start_close_timestamps' into main)
 
 0.21.17.post1
 -------------
