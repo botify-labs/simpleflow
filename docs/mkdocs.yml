@@ -68,6 +68,7 @@ nav:
     - Command Line: features/command_line.md
     - Program Tasks: features/program_tasks.md
     - Jumbo Fields: features/jumbo_fields.md
+    - Canvas: features/canvas.md
     - Advanced Features:
       - Signals: features/signals.md
       - Steps: features/steps.md

@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+
+from typing import TYPE_CHECKING
+
 from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
 
@@ -6,9 +10,8 @@ from .activity import Activity
 from .base import Submittable, SubmittableContainer
 from .task import ActivityTask, WorkflowTask
 
-# noinspection PyUnreachableCode
-if False:
-    from typing import List  # NOQA
+if TYPE_CHECKING:
+    from typing import List
 
 
 class FuncGroup(SubmittableContainer):
@@ -23,15 +26,19 @@ class FuncGroup(SubmittableContainer):
         self.kwargs = kwargs
         self.activities = None
         self.raises_on_failure = kwargs.pop("raises_on_failure", None)
+        self.allow_none = kwargs.pop("_allow_none", False)
 
     def submit(self, executor):
         inst = self.instantiate_task()
-        return executor.workflow.submit(inst)
+        if inst is not None:
+            return executor.workflow.submit(inst)
 
     def instantiate_task(self):
         self.activities = self.func(
             *self.args, **self.kwargs
         )  # ivar for testing/debugging ease
+        if self.activities is None and self.allow_none:
+            return None
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError(
                 "FuncGroup submission should return a Group or Submittable,"
@@ -47,100 +54,6 @@ class FuncGroup(SubmittableContainer):
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)
-
-
-class Group(SubmittableContainer):
-    """
-    List of activities running in parallel.
-    """
-
-    def __init__(self, *activities, **options):
-        self.activities = []
-        self.workflow_tasks = []  # type: List[WorkflowTask]
-        self.max_parallel = options.pop("max_parallel", None)
-        self.raises_on_failure = options.pop("raises_on_failure", None)
-        self.bubbles_exception_on_failure = options.pop(
-            "bubbles_exception_on_failure", True
-        )
-        self.extend(activities)
-
-    def append(self, submittable, *args, **kwargs):
-        from simpleflow import Workflow
-
-        if isinstance(submittable, (Submittable, SubmittableContainer)):
-            if args or kwargs:
-                raise ValueError(
-                    "args, kwargs not supported for Submittable or SubmittableContainer"
-                )
-            if isinstance(submittable, WorkflowTask):
-                self.workflow_tasks.append(submittable)
-        elif isinstance(submittable, Activity):
-            submittable = ActivityTask(submittable, *args, **kwargs)
-        elif issubclass_(submittable, Workflow):
-            # We can't set the executor yet, so use None and remember it.
-            submittable = WorkflowTask(None, submittable, *args, **kwargs)
-            self.workflow_tasks.append(submittable)
-        else:
-            raise ValueError(
-                "{} should be a Submittable, Group, or Activity".format(submittable)
-            )
-
-        if self.raises_on_failure is not None:
-            submittable.propagate_attribute("raises_on_failure", self.raises_on_failure)
-        self.activities.append(submittable)
-
-    def extend(self, iterable):
-        """
-        Append the specified activities.
-        :param iterable: list of Submittables/Groups/tuples
-        Tuples are (activity, args).
-        """
-        for it in iterable:
-            if not isinstance(it, tuple):
-                self.append(it)
-            else:
-                self.append(*it)
-
-    def __iadd__(self, iterable):
-        """
-        += shortcut for self.extend.
-        :param iterable:
-        :return: self
-        """
-        self.extend(iterable)
-        return self
-
-    def submit(self, executor):
-        self.set_workflow_tasks_executor(executor)
-        return GroupFuture(
-            self.activities,
-            executor.workflow,
-            self.max_parallel,
-            self.bubbles_exception_on_failure,
-        )
-
-    def __repr__(self):
-        return "<{} at {:#x}, activities={!r}>".format(
-            self.__class__.__name__, id(self), self.activities
-        )
-
-    def propagate_attribute(self, attr, val):
-        """
-        Propagate attribute to all activities of the Group.
-        """
-        for activities in self.activities:
-            activities.propagate_attribute(attr, val)
-
-    def set_workflow_tasks_executor(self, executor):
-        """
-        Set the workflow tasks executor.
-        :param executor:
-        :return:
-        """
-        for wt in self.workflow_tasks:
-            assert not wt.executor
-            wt.executor = executor
-        self.workflow_tasks = []
 
 
 class GroupFuture(futures.Future):
@@ -216,41 +129,101 @@ class GroupFuture(futures.Future):
         )
 
 
-class Chain(Group):
+class Group(SubmittableContainer):
     """
-    Chain a list of `ActivityTask` or callables returning Group/Chain
-    Ex :
-    >> chain = Chain(Task(int, 2), Task(sum, [1, 2]))
-    >> chain = Chain(Task(int, 2), custom_func, Task(sum, [1, 2]))
-    if `send_result` is set to True, `task.result` will be sent to
-        the next task as last argument
+    List of activities running in parallel.
     """
 
+    default_future_class = GroupFuture
+
     def __init__(self, *activities, **options):
-        self.send_result = options.pop("send_result", False)
-        self.break_on_failure = options.pop("break_on_failure", True)
-        if self.send_result and not self.break_on_failure:
+        self.activities = []
+        self.workflow_tasks = []  # type: List[WorkflowTask]
+        self.max_parallel = options.pop("max_parallel", None)
+        self.raises_on_failure = options.pop("raises_on_failure", None)
+        self.bubbles_exception_on_failure = options.pop(
+            "bubbles_exception_on_failure", True
+        )
+        self.future_class = options.pop("future_class", self.default_future_class)
+        self.extend(activities)
+
+    def append(self, submittable, *args, **kwargs):
+        from simpleflow import Workflow
+
+        if isinstance(submittable, (Submittable, SubmittableContainer)):
+            if args or kwargs:
+                raise ValueError(
+                    "args, kwargs not supported for Submittable or SubmittableContainer"
+                )
+            if isinstance(submittable, WorkflowTask):
+                self.workflow_tasks.append(submittable)
+        elif isinstance(submittable, Activity):
+            submittable = ActivityTask(submittable, *args, **kwargs)
+        elif issubclass_(submittable, Workflow):
+            # We can't set the executor yet, so use None and remember it.
+            submittable = WorkflowTask(None, submittable, *args, **kwargs)
+            self.workflow_tasks.append(submittable)
+        else:
             raise ValueError(
-                "Cannot combine send_result=True with break_on_failure=False"
+                "{} should be a Submittable, Group, or Activity".format(submittable)
             )
-        if (
-            options.get("raises_on_failure") is False
-            and "bubbles_exception_on_failure" not in options
-        ):
-            options[
-                "bubbles_exception_on_failure"
-            ] = False  # Compatible with 10cd67f: don't break upper chains
-        super(Chain, self).__init__(*activities, **options)
+
+        if self.raises_on_failure is not None:
+            submittable.propagate_attribute("raises_on_failure", self.raises_on_failure)
+        self.activities.append(submittable)
+
+    def extend(self, iterable):
+        """
+        Append the specified activities.
+        :param iterable: list of Submittables/Groups/tuples
+        Tuples are (activity, args).
+        """
+        for it in iterable:
+            if not isinstance(it, tuple):
+                self.append(it)
+            else:
+                self.append(*it)
+
+    def __iadd__(self, iterable):
+        """
+        += shortcut for self.extend.
+        :param iterable:
+        :return: self
+        """
+        self.extend(iterable)
+        return self
 
     def submit(self, executor):
         self.set_workflow_tasks_executor(executor)
-        return ChainFuture(
+        return self.future_class(
             self.activities,
             executor.workflow,
-            bubbles_exception_on_failure=self.bubbles_exception_on_failure,
-            send_result=self.send_result,
-            break_on_failure=self.break_on_failure,
+            self.max_parallel,
+            self.bubbles_exception_on_failure,
         )
+
+    def __repr__(self):
+        return "<{} at {:#x}, activities={!r}>".format(
+            self.__class__.__name__, id(self), self.activities
+        )
+
+    def propagate_attribute(self, attr, val):
+        """
+        Propagate attribute to all activities of the Group.
+        """
+        for activities in self.activities:
+            activities.propagate_attribute(attr, val)
+
+    def set_workflow_tasks_executor(self, executor):
+        """
+        Set the workflow tasks executor.
+        :param executor:
+        :return:
+        """
+        for wt in self.workflow_tasks:
+            assert not wt.executor
+            wt.executor = executor
+        self.workflow_tasks = []
 
 
 class ChainFuture(GroupFuture):
@@ -305,3 +278,42 @@ class ChainFuture(GroupFuture):
             self._state = futures.CANCELLED
         elif any(a.running for a in self.futures):
             self._state = futures.RUNNING
+
+
+class Chain(Group):
+    """
+    Chain a list of `ActivityTask` or callables returning Group/Chain
+    Ex :
+    >> chain = Chain(Task(int, 2), Task(sum, [1, 2]))
+    >> chain = Chain(Task(int, 2), custom_func, Task(sum, [1, 2]))
+    if `send_result` is set to True, `task.result` will be sent to
+        the next task as last argument
+    """
+
+    default_future_class = ChainFuture
+
+    def __init__(self, *activities, **options):
+        self.send_result = options.pop("send_result", False)
+        self.break_on_failure = options.pop("break_on_failure", True)
+        if self.send_result and not self.break_on_failure:
+            raise ValueError(
+                "Cannot combine send_result=True with break_on_failure=False"
+            )
+        if (
+            options.get("raises_on_failure") is False
+            and "bubbles_exception_on_failure" not in options
+        ):
+            options[
+                "bubbles_exception_on_failure"
+            ] = False  # Compatible with 10cd67f: don't break upper chains
+        super(Chain, self).__init__(*activities, **options)
+
+    def submit(self, executor):
+        self.set_workflow_tasks_executor(executor)
+        return self.future_class(
+            self.activities,
+            executor.workflow,
+            bubbles_exception_on_failure=self.bubbles_exception_on_failure,
+            send_result=self.send_result,
+            break_on_failure=self.break_on_failure,
+        )

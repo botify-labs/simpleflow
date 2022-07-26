@@ -7,6 +7,8 @@ will find this example in `examples/basic.py`.
 We need to declare the functions as activities to make them available:
 
 ```python
+import time
+
 from simpleflow import (
     activity,
     Workflow,
