@@ -77,7 +77,11 @@ def execute(command, ignore=False, log=False, dry_run=False):
     env = os.environ.copy()
     env["LANG"] = "C.UTF-8"
     pr = subprocess.Popen(
-        command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        command,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
     )
 
     (out, error) = pr.communicate()
@@ -321,7 +325,8 @@ def main():
         help="upload to TestPyPI",
     )
     group.add_argument(
-        "--repository", help="repository (package index) to upload the package to",
+        "--repository",
+        help="repository (package index) to upload the package to",
     )
     group.add_argument(
         "--repository-url",
@@ -372,7 +377,7 @@ def main():
     )
     execute(["python", "setup.py", "bdist_wheel"], log=True)
     wheel = "dist/simpleflow-{version}-py2.py3-none-any.whl".format(version=new_version)
-    cmd = ["twine", "upload", wheel, "--non-interactive"]
+    cmd = ["twine", "upload", wheel]
     if args.repository:
         cmd += ["--repository", args.repository]
     elif args.repository_url:
