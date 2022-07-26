@@ -1,6 +1,7 @@
 import swf.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
+from simpleflow.utils import import_from_module
 
 from . import Decider, DeciderPoller
 
@@ -18,7 +19,7 @@ def load_workflow_executor(
     Load a workflow executor.
 
     :param domain:
-    :type domain: str | swf.models.Domain
+    :type domain: swf.models.Domain
     :param workflow_name:
     :type workflow_name: str
     :param task_list:
@@ -35,14 +36,10 @@ def load_workflow_executor(
     :rtype: Executor
     """
     logger.debug('load_workflow_executor(workflow_name="{}")'.format(workflow_name))
-    module_name, object_name = workflow_name.rsplit(".", 1)
-    module = __import__(module_name, fromlist=["*"])
+    workflow = import_from_module(workflow_name)
 
-    workflow = getattr(module, object_name)
-
-    # TODO: find the cause of this differentiated behaviour
     if not isinstance(domain, swf.models.Domain):
-        domain = swf.models.Domain(domain)
+        raise ValueError("domain is a {}, not a Domain".format(type(domain).__name__))
 
     return Executor(
         domain,
@@ -92,6 +89,7 @@ def make_decider_poller(
         # definition, seems like good practice (?)
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
+    domain = swf.models.Domain(domain)
     executors = [
         load_workflow_executor(
             domain,
@@ -104,7 +102,6 @@ def make_decider_poller(
         )
         for workflow in workflows
     ]
-    domain = swf.models.Domain(domain)
     return DeciderPoller(executors, domain, task_list, is_standalone)
 
 

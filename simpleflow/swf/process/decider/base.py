@@ -10,7 +10,7 @@ import swf.models.decision
 from simpleflow import format, logger
 from simpleflow.process import Supervisor, with_state
 from simpleflow.swf.process import Poller
-from simpleflow.swf.utils import DecisionsAndContext
+from simpleflow.swf.utils import DecisionsAndContext, get_name_from_event
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional, Union
@@ -30,7 +30,8 @@ class Decider(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
         super(Decider, self).__init__(
-            payload=self._poller.start, nb_children=nb_children,
+            payload=self._poller.start,
+            nb_children=nb_children,
         )
 
 
@@ -90,6 +91,8 @@ class DeciderPoller(Poller, swf.actors.Decider):
         if task_list:
             self.task_list = task_list
         else:
+            if not workflow_executors:
+                raise ValueError("A task list is needed if no workflows are specified")
             self.task_list = workflow_executors[0].workflow_class.task_list
             # If not passed explicitly, all executors must use the same task list
             # else it's probably a mistake so we raise an error.
@@ -222,14 +225,16 @@ class DeciderWorker(object):
         :rtype: list[swf.models.decision.base.Decision]
         """
         history = decision_response.history
-        workflow_name = history[0].workflow_type["name"]
+        workflow_name = get_name_from_event(history[0])
         workflow_executor = self._workflow_executors.get(workflow_name)
         if not workflow_executor:
-            # Child workflow from another module
+            # Child workflow from another module or dynamic decider
             from . import helpers
 
             workflow_executor = helpers.load_workflow_executor(
-                self._domain, workflow_name, task_list=task_list,
+                self._domain,
+                workflow_name,
+                task_list=task_list,
             )
             self._workflow_executors[workflow_name] = workflow_executor
         try:
@@ -265,7 +270,8 @@ def process_decision(poller, decision_response):
 def spawn(poller, decision_response):
     logger.debug("spawn() pid={}".format(os.getpid()))
     worker = multiprocessing.Process(
-        target=process_decision, args=(poller, decision_response),
+        target=process_decision,
+        args=(poller, decision_response),
     )
     worker.start()
     worker.join()

@@ -8,7 +8,7 @@ from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Union
+    from typing import Any, AnyStr, Type, Union
 
 
 def issubclass_(arg1, arg2):
@@ -35,7 +35,7 @@ def hex_hash(s):
 
 
 def format_exc(exc):
-    # type: (Exception) -> str
+    # type: (Exception) -> AnyStr
     """
     Copy-pasted from traceback._format_final_exc_line.
     :param exc: Exception value
@@ -50,7 +50,7 @@ def format_exc(exc):
 
 
 def _some_str(value):
-    # type: (Any) -> str
+    # type: (Any) -> AnyStr
     """
     Copy-pasted from traceback.
     """
@@ -61,7 +61,7 @@ def _some_str(value):
 
 
 def format_exc_type(exc_type):
-    # (Type) -> str
+    # type: (Type) -> AnyStr
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
@@ -79,7 +79,7 @@ def to_k8s_identifier(string):
 
 
 def import_from_module(path):
-    # type: (str) -> Any
+    # type: (AnyStr) -> Any
     """
     Import a class or other object: either module.Foo or (builtin) Foo.
     :param path: object name
@@ -91,7 +91,7 @@ def import_from_module(path):
 
 
 def import_object_from_module(module_name, *object_names):
-    # type: (str, *str) -> Any
+    # type: (AnyStr, *AnyStr) -> Any
     if not module_name:
         module_name = "builtins" if not PY2 else "__builtin__"
     from importlib import import_module
@@ -100,3 +100,20 @@ def import_object_from_module(module_name, *object_names):
     for object_name in object_names:
         obj = getattr(obj, object_name)
     return obj
+
+
+def full_object_name(obj):
+    # type: (Any) -> AnyStr
+    # Adapted from https://stackoverflow.com/questions/2020014/get-fully-qualified-class-name-of-an-object-in-python
+    if isinstance(obj, type):
+        return full_class_name(obj)
+    return full_class_name(obj.__class__)
+
+
+def full_class_name(klass):
+    # type: (Type) -> AnyStr
+    module = klass.__module__
+    name = klass.__name__ if PY2 else klass.__qualname__
+    if module is None:
+        return name
+    return module + "." + name

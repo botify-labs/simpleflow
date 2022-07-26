@@ -30,4 +30,4 @@ To sum up:
 
 Note that `./script/test` positions a specific environment variable that totally DISABLES
 the recording of new cassette files, e.g. it disables HTTP requests to the outside world.
-If a HTTP request doesn't match anything in its cassette file, it will then raise an error.
+If an HTTP request doesn't match anything in its cassette file, it will then raise an error.
