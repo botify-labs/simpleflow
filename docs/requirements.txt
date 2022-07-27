@@ -38,7 +38,7 @@ mkdocs==1.1.2
     # via
     #   -r requirements.human
     #   mkdocs-material
-nltk==3.5
+nltk==3.6.6
     # via lunr
 pygments==2.5.2
     # via
