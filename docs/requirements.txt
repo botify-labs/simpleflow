@@ -34,7 +34,7 @@ mkdocs-material==6.2.8
     # via
     #   -r requirements.human
     #   mkdocs-material-extensions
-mkdocs==1.1.2
+mkdocs==1.2.3
     # via
     #   -r requirements.human
     #   mkdocs-material
