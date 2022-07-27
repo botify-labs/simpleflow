@@ -22,16 +22,20 @@ In Particular
 
 **Setting Up for Local Development**
 
-1. Fork `simpleflow`_ on Github.
-2. Clone your fork::
-
+1. Fork `simpleflow` on Github.
+2. Clone your fork:
+    ```shell
     $ git clone git@github.com/botify-labs/simpleflow.git
+    ```
 
-3. Make your virtualenv and install dependencies. If you have virtualenv and virtualenvwrapper_, run::
+3. Make your virtualenv and install dependencies. If you have virtualenv and virtualenvwrapper, run:
 
+    ```shell
     $ mkvirtualenv simpleflow
     $ cd simpleflow
+    $ pip install -e .
     $ pip install -r requirements-dev.txt
+    ```
 
 - If you don't have virtualenv and virtualenvwrapper, you can install both using `virtualenv-burrito`.
 
@@ -44,34 +48,45 @@ This branch is (hopefully) always stable.
 
 **Pull Requests**
 
-1. Create a new local branch. ::
+1. Create a new local branch.
 
-    $ git checkout -b name-of-feature
+     ```shell
+     $ git checkout -b name-of-feature
+     ```
 
 2. Commit your changes. Write [good commit messages](http://chris.beams.io/posts/git-commit/).
 
+    ```shell
     $ git commit -m "Detailed commit message"
     $ git push origin name-of-feature
+    ```
 
 3. Before submitting a pull request, check the following:
 
    - If the pull request adds functionality, it should be tested and the docs should be updated.
-   - The pull request should work on Python 2.7 and PyPy. Use `tox` to verify that it does.
+   - The pull request should work on Python 2.7, Python 3.8 and PyPy. Use `tox` to verify that it does.
 
 4. Submit a pull request to the `main` branch.
 
 **Running tests**
 
-To run all the tests in your current virtual environment: ::
+To run all the tests in your current virtual environment:
 
-    $ ./script/test
+```shell
+$ ./script/test
+```
 
 This is what Travis CI does on each environment.
 
 If you want to simulate what Travis CI does, you can approach that by running a container
 from them:
 
-    $ ./script/test-travis python2.7
-    $ ./script/test-travis pypy
+```shell
+$ ./script/test-travis python2.7
+$ ./script/test-travis python3.8
+$ ./script/test-travis pypy
+```
 
-This can help you simulate locally what Travis CI would do. Be aware though that tests may fail depending on your OS, so Travis CI is the reference gate for the project. For instance, installing `subprocess32` in a Pypy environment doesn't work on Mac OSX.
+This can help you simulate locally what Travis CI would do. Be aware though that tests may fail depending on your OS, 
+so Travis CI is the reference gate for the project. For instance, installing `subprocess32` in a PyPy environment
+doesn't necessarily work on Mac OSX.
