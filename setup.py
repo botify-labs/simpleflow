@@ -51,8 +51,9 @@ DEPS = [
     "attrs",
     "future",
     "boto>=2.49.0",
-    "diskcache>=2.4.1,<3.0.0",
-    "Jinja2>=2.8,<3.0",
+    "diskcache>=4.1.0",
+    "Jinja2>=2.11.1",
+    "markupsafe<2.0.0",
     "kubernetes>=3.0.0",
     "lazy_object_proxy",
     "lockfile>=0.9.1",
@@ -87,7 +88,10 @@ setup(
     author_email="tech@botify.com",
     url="https://github.com/botify-labs/simpleflow",
     packages=find_packages(exclude=("test*",)),
-    package_dir={"simpleflow": "simpleflow", "swf": "swf",},
+    package_dir={
+        "simpleflow": "simpleflow",
+        "swf": "swf",
+    },
     include_package_data=True,
     install_requires=DEPS,
     license="MIT License",
@@ -107,5 +111,9 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    entry_points={"console_scripts": ["simpleflow = simpleflow.command:cli",]},
+    entry_points={
+        "console_scripts": [
+            "simpleflow = simpleflow.command:cli",
+        ]
+    },
 )

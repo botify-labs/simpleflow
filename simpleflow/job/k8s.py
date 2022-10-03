@@ -2,10 +2,8 @@ import json
 import os
 from base64 import b64encode
 
-import jinja2
 import kubernetes.client
 import kubernetes.config
-import yaml
 
 from simpleflow.utils import json_dumps
 
@@ -30,6 +28,9 @@ class KubernetesJob(object):
         """
         Compute a job definition from the SWF response
         """
+        import jinja2
+        from yaml import CLoader, load
+
         # extract job template location
         input = self.response.get("input")
         if not input:
@@ -44,17 +45,18 @@ class KubernetesJob(object):
         for key, value in meta.get("k8s_job_data", {}):
             variables[key] = value
         variables["JOB_NAME"] = self.job_name
-        variables["PAYLOAD"] = b64encode(json_dumps(self.response))
+        variables["PAYLOAD"] = b64encode(json_dumps(self.response).encode("utf-8"))
 
         # render the job template with those context variables
         path, filename = os.path.split(job_template)
+
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(path or "./"),
             undefined=jinja2.StrictUndefined,
         )
         rendered = env.get_template(filename).render(variables)
 
-        return yaml.load(rendered)
+        return load(rendered, Loader=CLoader)
 
     def schedule(self):
         """
