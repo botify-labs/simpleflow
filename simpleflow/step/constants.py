@@ -8,7 +8,7 @@ from simpleflow.constants import HOUR, MINUTE
 if TYPE_CHECKING:
     from typing import Any, AnyStr, Dict
 
-STEP_ACTIVITY_PARAMS_DEFAULT = {  # type: Dict[AnyStr, Any]
+STEP_ACTIVITY_PARAMS_DEFAULT: Dict[AnyStr, Any] = {
     "schedule_to_start_timeout": 4 * HOUR,
     "start_to_close_timeout": 1 * MINUTE,
     "schedule_to_close_timeout": 4 * HOUR + MINUTE,

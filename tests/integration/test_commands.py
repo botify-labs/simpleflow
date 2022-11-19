@@ -10,7 +10,7 @@ import simpleflow.command
 from . import VCRIntegrationTest, vcr
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, Callable
+    pass
 
 
 class TestSimpleflowCommand(VCRIntegrationTest):
