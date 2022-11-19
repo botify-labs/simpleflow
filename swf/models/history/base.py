@@ -84,7 +84,7 @@ class History(object):
         raise TypeError("Unknown slice format: %s" % type(val))
 
     def __repr__(self):
-        events_repr = "\n\t".join(map(lambda e: e.__repr__(), self.events))
+        events_repr = "\n\t".join([e.__repr__() for e in self.events])
         repr_str = "<History\n\t%s\n>" % events_repr
 
         return repr_str
@@ -92,7 +92,7 @@ class History(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """
         Iterate.
         :rtype: swf.models.event.Event
@@ -111,7 +111,7 @@ class History(object):
         :return:
         :rtype: swf.models.event.Event
         """
-        return self.next()
+        return next(self)
 
     @property
     def last(self):
@@ -187,9 +187,7 @@ class History(object):
 
         :rtype: swf.models.history.History
         """
-        return filter(
-            lambda e: all(getattr(e, k) == v for k, v in iteritems(kwargs)), self.events
-        )
+        return [e for e in self.events if all(getattr(e, k) == v for k, v in iteritems(kwargs))]
 
     @property
     def reversed(self):

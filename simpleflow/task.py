@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import abc
 import time
@@ -44,7 +44,7 @@ class Task(Submittable):
 
     @staticmethod
     def resolve_kwargs(**kwargs):
-        return {key: get_actual_value(val) for key, val in kwargs.items()}
+        return {key: get_actual_value(val) for key, val in list(kwargs.items())}
 
 
 class ActivityTask(Task):

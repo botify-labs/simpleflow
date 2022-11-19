@@ -13,7 +13,7 @@ from tests.moto_compat import mock_s3
 
 class TestFormat(unittest.TestCase):
     if PY2:
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegex
 
     def setUp(self):
         pass

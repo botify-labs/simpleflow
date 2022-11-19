@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import hashlib
@@ -220,7 +220,7 @@ class Executor(executor.Executor):
             arguments = json_dumps({"args": args, "kwargs": kwargs})
             suffix = hashlib.md5(arguments.encode("utf-8")).hexdigest()
 
-        if isinstance(a_task, (WorkflowTask,)):
+        if isinstance(a_task, WorkflowTask):
             # Some task types must have globally unique names.
             suffix = "{}--{}--{}".format(workflow_id, hex_hash(run_id), suffix)
 
@@ -1386,7 +1386,7 @@ class Executor(executor.Executor):
             )
         known_workflows_ids.extend(
             (w["workflow_id"], w["run_id"])
-            for w in history.child_workflows.values()
+            for w in list(history.child_workflows.values())
             if w["state"] == "started"
         )
 
@@ -1394,7 +1394,7 @@ class Executor(executor.Executor):
 
         signals_scheduled = False
 
-        for signal in history.signals.values():
+        for signal in list(history.signals.values()):
             input = signal["input"]
             if not isinstance(input, dict):  # foreign signal: don't try processing it
                 continue
@@ -1431,11 +1431,11 @@ class Executor(executor.Executor):
         if all:
             return [
                 Marker(m["name"], format.decode(m["details"]))
-                for ml in self._history.markers.values()
+                for ml in list(self._history.markers.values())
                 for m in ml
             ]
         rc = []
-        for ml in self._history.markers.values():
+        for ml in list(self._history.markers.values()):
             m = ml[-1]
             if m["state"] == "recorded":
                 rc.append(Marker(m["name"], format.decode(m["details"])))
@@ -1448,7 +1448,7 @@ class Executor(executor.Executor):
             marker_list = self._history.markers.get(event_name)
             if not marker_list:
                 return None
-            marker_list = list(filter(lambda m: m["state"] == "recorded", marker_list))
+            marker_list = list([m for m in marker_list if m["state"] == "recorded"])
             if not marker_list:
                 return None
             # Make pleasing details

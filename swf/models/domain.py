@@ -75,7 +75,7 @@ class Domain(BaseModel):
         if (
             not isinstance(domain, cls)
             or not hasattr(domain, "name")
-            or not isinstance(domain.name, compat.basestring)
+            or not isinstance(domain.name, compat.str)
         ):
             raise TypeError("invalid type {} for domain".format(type(domain)))
 

@@ -149,7 +149,7 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if isinstance(values, compat.basestring) and not isinstance(values, Sequence):
+    if isinstance(values, compat.str) and not isinstance(values, Sequence):
         values = (values,)
     return matched[0] in values
 

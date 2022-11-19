@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 import datetime
 import functools
@@ -674,7 +674,7 @@ class ATestDefinitionMap(BaseTestWorkflow):
     nb_parts = 3
 
     def run(self, *args, **kwargs):
-        xs = self.map(increment, range(self.nb_parts))
+        xs = self.map(increment, list(range(self.nb_parts)))
         values = futures.wait(*xs)
 
         return values
@@ -1020,7 +1020,7 @@ class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
     """
 
     def run(self):
-        results = self.map(increment, range(constants.MAX_DECISIONS + 5))
+        results = self.map(increment, list(range(constants.MAX_DECISIONS + 5)))
         futures.wait(*results)
 
 
@@ -1417,7 +1417,7 @@ class ATestDefinitionMoreThanMaxOpenActivities(BaseTestWorkflow):
     """
 
     def run(self):
-        results = self.map(increment, range(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
+        results = self.map(increment, list(range(constants.MAX_OPEN_ACTIVITY_COUNT + 5)))
         futures.wait(*results)
 
 

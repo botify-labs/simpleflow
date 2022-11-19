@@ -508,7 +508,7 @@ class WorkflowExecution(BaseModel):
         :rtype: swf.models.event.History
         """
         domain = kwargs.pop("domain", self.domain)
-        if not isinstance(domain, compat.basestring):
+        if not isinstance(domain, compat.str):
             domain = domain.name
 
         response = self.connection.get_workflow_execution_history(

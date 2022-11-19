@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import multiprocessing
 import os
 from typing import TYPE_CHECKING

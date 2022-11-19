@@ -73,7 +73,7 @@ def human(values, headers):
 
 def jsonify(values, headers):
     if headers:
-        return json_dumps([dict(zip(headers, value)) for value in values])
+        return json_dumps([dict(list(zip(headers, value))) for value in values])
     else:
         return json_dumps(values)
 
@@ -212,7 +212,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
         wrapped.__wrapped__ = wrapped
         return wrapped
 
-    if isinstance(fmt, compat.basestring):
+    if isinstance(fmt, compat.str):
         fmt = FORMATS[fmt]
 
     return formatter

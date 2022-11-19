@@ -7,7 +7,5 @@ from urllib.parse import quote as urlquote  # NOQA
 text_type = str
 binary_type = bytes
 string_types = (str,)
-unicode = str
-basestring = (str, bytes)
 imap = map
 izip = zip

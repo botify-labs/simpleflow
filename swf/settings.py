@@ -4,12 +4,12 @@
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
-from __future__ import unicode_literals
+
 
 import os
 
 try:
-    from ConfigParser import ConfigParser
+    from configparser import ConfigParser
 except ImportError:
     from configparser import ConfigParser
 
@@ -152,7 +152,7 @@ def set(**settings):
     """Set settings"""
     from swf.core import SETTINGS
 
-    SETTINGS.update({k: v for k, v in settings.items() if v is not None})
+    SETTINGS.update({k: v for k, v in list(settings.items()) if v is not None})
 
 
 def clear():

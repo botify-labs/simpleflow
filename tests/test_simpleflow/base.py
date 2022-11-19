@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from simpleflow.swf.executor import Executor
 from swf.models import Domain

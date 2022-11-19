@@ -162,7 +162,7 @@ def immutable(mutableclass):
     immutableclass.__module__ = mutableclass.__module__
 
     # Make read-only:
-    for name, member in mutableclass.__dict__.items():
+    for name, member in list(mutableclass.__dict__.items()):
         if hasattr(member, "__set__"):
             setattr(immutableclass, name, property(member.__get__))
 

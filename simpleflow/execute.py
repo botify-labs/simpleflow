@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+
 
 import errno
 import json
@@ -86,7 +86,7 @@ def zip_arguments_defaults(argspec):
     if not argspec.defaults:
         return []
 
-    return zip(argspec.args[-len(argspec.defaults) :], argspec.defaults)
+    return list(zip(argspec.args[-len(argspec.defaults) :], argspec.defaults))
 
 
 def check_arguments(argspec, args):

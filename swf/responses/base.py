@@ -7,5 +7,5 @@ class Response(object):
     """
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             self.__setattr__(k, v)

@@ -8,7 +8,7 @@ from collections import OrderedDict
 try:
     from urllib.parse import quote_plus  # py 3.x
 except ImportError:
-    from urllib import quote_plus  # py 2.x
+    from urllib.parse import quote_plus  # py 2.x
 
 from . import settings, storage
 from .swf.stats.pretty import dump_history_to_json

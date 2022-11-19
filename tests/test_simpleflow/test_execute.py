@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import print_function
+
 
 import json
 import os.path
@@ -249,7 +249,7 @@ def test_function_with_warning():
 
 
 def test_function_returning_unicode():
-    assert print_string("", "ʘ‿ʘ") == u"ʘ‿ʘ"
+    assert print_string("", "ʘ‿ʘ") == "ʘ‿ʘ"
 
 
 @execute.python()
@@ -262,7 +262,7 @@ def test_exception_with_unicode():
         raise_dummy_exception_with_unicode()
     assert '"error":"DummyException"' in str(excinfo.value)
     error = json.loads(excinfo.value.args[0])
-    assert error["message"] == u"ʘ‿ʘ"
+    assert error["message"] == "ʘ‿ʘ"
 
 
 def sleep_and_return(seconds):
@@ -326,7 +326,7 @@ def test_large_command_line():
 
 
 def test_large_command_line_unicode():
-    x = u"ä" * 1024 * 1024
+    x = "ä" * 1024 * 1024
     assert length(x) == len(x)
 
 
@@ -334,5 +334,5 @@ def test_large_command_line_utf8():
     """
     UTF-8 bytes must be handled as Unicode, both in Python 2 and Python 3.
     """
-    x = u"ä" * 1024 * 1024
+    x = "ä" * 1024 * 1024
     assert length(x.encode("utf-8")) == len(x)

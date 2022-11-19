@@ -1,3 +1,5 @@
+
+
 import time
 
 from simpleflow import Workflow, activity, futures
@@ -119,7 +121,8 @@ class NotFailingWorkflow(Workflow):
                 colorize(
                     ORANGE,
                     "===> unhandled: {}, {!r}".format(
-                        failure_context.task_name, failure_context.exception,
+                        failure_context.task_name,
+                        failure_context.exception,
                     ),
                 )
             )
