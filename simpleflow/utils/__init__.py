@@ -8,7 +8,7 @@ from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, Type, Union
+    from typing import Any
 
 
 def issubclass_(arg1: type | Any, arg2: type) -> bool:
@@ -33,7 +33,7 @@ def hex_hash(s):
     return f"{adler32(s) & 0xFFFFFFFF:x}"
 
 
-def format_exc(exc: Exception) -> AnyStr:
+def format_exc(exc: Exception) -> str:
     """
     Copy-pasted from traceback._format_final_exc_line.
     :param exc: Exception value
@@ -47,7 +47,7 @@ def format_exc(exc: Exception) -> AnyStr:
     return line
 
 
-def _some_str(value: Any) -> AnyStr:
+def _some_str(value: Any) -> str:
     """
     Copy-pasted from traceback.
     """
@@ -57,7 +57,7 @@ def _some_str(value: Any) -> AnyStr:
         return "<unprintable %s object>" % type(value).__name__
 
 
-def format_exc_type(exc_type: type) -> AnyStr:
+def format_exc_type(exc_type: type) -> str:
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
@@ -74,7 +74,7 @@ def to_k8s_identifier(string):
     return string
 
 
-def import_from_module(path: AnyStr) -> Any:
+def import_from_module(path: str) -> Any:
     """
     Import a class or other object: either module.Foo or (builtin) Foo.
     :param path: object name
@@ -85,7 +85,7 @@ def import_from_module(path: AnyStr) -> Any:
     return import_object_from_module(module_path, obj_name)
 
 
-def import_object_from_module(module_name: AnyStr, *object_names: AnyStr) -> Any:
+def import_object_from_module(module_name: str, *object_names: str) -> Any:
     if not module_name:
         module_name = "builtins"
     from importlib import import_module
@@ -96,14 +96,14 @@ def import_object_from_module(module_name: AnyStr, *object_names: AnyStr) -> Any
     return obj
 
 
-def full_object_name(obj: Any) -> AnyStr:
+def full_object_name(obj: Any) -> str:
     # Adapted from https://stackoverflow.com/questions/2020014/get-fully-qualified-class-name-of-an-object-in-python
     if isinstance(obj, type):
         return full_class_name(obj)
     return full_class_name(obj.__class__)
 
 
-def full_class_name(klass: type) -> AnyStr:
+def full_class_name(klass: type) -> str:
     module = klass.__module__
     name = klass.__qualname__
     if module is None:

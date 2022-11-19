@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import AnyStr, Sequence
+    from typing import Sequence
 
 
-def should_force_step(step_name: AnyStr, force_steps: Sequence[AnyStr]) -> bool:
+def should_force_step(step_name: str, force_steps: Sequence[str]) -> bool:
     """
     Check if step_name is in force_steps.
     We support multi-level flags, ex for step_name = "a.b.c",
@@ -19,15 +19,15 @@ def should_force_step(step_name: AnyStr, force_steps: Sequence[AnyStr]) -> bool:
     return False
 
 
-def should_skip_step(step_name: AnyStr, skipped_steps: Sequence[AnyStr]) -> bool:
+def should_skip_step(step_name: str, skipped_steps: Sequence[str]) -> bool:
     return should_force_step(step_name, skipped_steps)
 
 
 def step_will_run(
-    step_name: AnyStr,
-    force_steps: Sequence[AnyStr],
-    skipped_steps: Sequence[AnyStr],
-    steps_done: Sequence[AnyStr],
+    step_name: str,
+    force_steps: Sequence[str],
+    skipped_steps: Sequence[str],
+    steps_done: Sequence[str],
     force: bool = False,
 ) -> bool:
     """
@@ -46,16 +46,14 @@ def step_will_run(
         return step_name not in steps_done
 
 
-def step_is_forced(
-    step_name: AnyStr, force_steps: Sequence[AnyStr], force: bool
-) -> bool:
+def step_is_forced(step_name: str, force_steps: Sequence[str], force: bool) -> bool:
     return force or should_force_step(step_name, force_steps)
 
 
 def _get_step_reasons(
-    step_name: AnyStr, step_reasons: dict[AnyStr, Sequence[AnyStr]]
-) -> list[AnyStr]:
-    reasons: list[AnyStr] = []
+    step_name: str, step_reasons: dict[str, Sequence[str]]
+) -> list[str]:
+    reasons: list[str] = []
     for step, step_reasons in step_reasons.items():
         if step == "*" or step == step_name or step_name.startswith(step + "."):
             reasons += step_reasons
@@ -63,18 +61,16 @@ def _get_step_reasons(
 
 
 def get_step_force_reasons(
-    step_name: AnyStr, step_force_reasons: dict[AnyStr, Sequence[AnyStr]]
-) -> list[AnyStr]:
+    step_name: str, step_force_reasons: dict[str, Sequence[str]]
+) -> list[str]:
     return _get_step_reasons(step_name, step_force_reasons)
 
 
-def step_is_skipped_by_force(
-    step_name: AnyStr, skipped_steps: Sequence[AnyStr]
-) -> bool:
+def step_is_skipped_by_force(step_name: str, skipped_steps: Sequence[str]) -> bool:
     return should_skip_step(step_name, skipped_steps)
 
 
 def get_step_skip_reasons(
-    step_name: AnyStr, step_skip_reasons: dict[AnyStr, Sequence[AnyStr]]
-) -> list[AnyStr]:
+    step_name: str, step_skip_reasons: dict[str, Sequence[str]]
+) -> list[str]:
     return _get_step_reasons(step_name, step_skip_reasons)

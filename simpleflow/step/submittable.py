@@ -17,7 +17,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from typing import AnyStr, Sequence
+    from typing import Sequence
 
     from simpleflow.base import Submittable
     from simpleflow.executor import Executor
@@ -27,14 +27,14 @@ if TYPE_CHECKING:
 class Step(SubmittableContainer):
     def __init__(
         self,
-        step_name: AnyStr,
+        step_name: str,
         activities: Submittable | SubmittableContainer,
         force: bool = False,
         activities_if_step_already_done: Submittable
         | SubmittableContainer
         | None = None,
         emit_signal: bool = False,
-        force_steps_if_executed: Sequence[AnyStr] | None = None,
+        force_steps_if_executed: Sequence[str] | None = None,
         bubbles_exception_on_failure: bool = False,
     ) -> None:
         """

@@ -1,21 +1,18 @@
 from __future__ import annotations
 
 import errno
+import functools
 import json
+import logging
 import os
+import subprocess
 import sys
+import tempfile
 import time
+import traceback
 from typing import TYPE_CHECKING
 
 import psutil
-
-import subprocess
-
-import functools
-import logging
-import tempfile
-import traceback
-
 from future.utils import iteritems
 
 from simpleflow import format
@@ -25,7 +22,7 @@ from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
     import inspect
-    from typing import Any, AnyStr, Iterable
+    from typing import Any, Iterable
 
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536
@@ -181,8 +178,8 @@ def wait_subprocess(process, timeout=None, command_info=None):
 
 
 def python(
-    interpreter: AnyStr = "python",
-    logger_name: AnyStr = __name__,
+    interpreter: str = "python",
+    logger_name: str = __name__,
     timeout: int | None = None,
     kill_children: bool = False,
     env: dict | None = None,

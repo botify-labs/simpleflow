@@ -29,7 +29,7 @@ from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr
+    from typing import Any
 
     from swf.models import WorkflowType
 
@@ -187,7 +187,7 @@ def start_workflow(
 ):
     workflow_class = import_from_module(workflow)
 
-    wf_input: dict[AnyStr, Any] = {}
+    wf_input: dict[str, Any] = {}
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
 

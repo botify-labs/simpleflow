@@ -9,7 +9,7 @@ from simpleflow import storage
 from .constants import UNKNOWN_CONTEXT
 
 if TYPE_CHECKING:
-    from typing import AnyStr
+    pass
 
 
 class GetStepsDoneTask:
@@ -18,13 +18,13 @@ class GetStepsDoneTask:
     S3 bucket + path.
     """
 
-    def __init__(self, bucket: AnyStr, path: AnyStr) -> None:
+    def __init__(self, bucket: str, path: str) -> None:
         self.bucket = bucket
         self.path = path
         self.path_len = len(path) + (1 if not path.endswith("/") else 0)
 
-    def execute(self) -> list[AnyStr]:
-        steps: list[AnyStr] = []
+    def execute(self) -> list[str]:
+        steps: list[str] = []
         for f in storage.list_keys(self.bucket, self.path):
             steps.append(f.key[self.path_len :])
         return steps
@@ -35,7 +35,7 @@ class MarkStepDoneTask:
     Push a file called `step_name` into bucket/path.
     """
 
-    def __init__(self, bucket: AnyStr, path: AnyStr, step_name: AnyStr) -> None:
+    def __init__(self, bucket: str, path: str, step_name: str) -> None:
         self.bucket = bucket
         self.path = path
         self.step_name = step_name
