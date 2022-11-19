@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 import abc
 import time
 from copy import deepcopy
@@ -328,29 +329,26 @@ class TaskFailureContext(object):
         cancel = 5
         handled = 6
 
-    a_task = attr.ib()  # type: Union[ActivityTask, WorkflowTask]
-    event = attr.ib()  # type: Dict[str, Any]
-    future = attr.ib()  # type: Optional[futures.Future]
-    exception_class = attr.ib()  # type: Type[Exception]
-    history = attr.ib(default=None)  # type: Optional[History]
-    decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
-    retry_wait_timeout = attr.ib(default=None)  # type: Optional[int]
-    _task_error = attr.ib(default=None)  # type: Optional[str]
-    _task_error_type = attr.ib(default=None)  # type: Optional[Type[Exception]]
+    a_task: Union[ActivityTask, WorkflowTask] = attr.ib()
+    event: Dict[str, Any] = attr.ib()
+    future: Optional[futures.Future] = attr.ib()
+    exception_class: Type[Exception] = attr.ib()
+    history: Optional[History] = attr.ib(default=None)
+    decision: Optional[Decision] = attr.ib(default=Decision.none)
+    retry_wait_timeout: Optional[int] = attr.ib(default=None)
+    _task_error: Optional[str] = attr.ib(default=None)
+    _task_error_type: Optional[Type[Exception]] = attr.ib(default=None)
 
     @property
-    def retry_count(self):
-        # type: () -> Optional[int]
+    def retry_count(self) -> Optional[int]:
         return self.event.get("retry")
 
     @property
-    def attempt_number(self):
-        # type: () -> int
+    def attempt_number(self) -> int:
         return self.event.get("retry", 0) + 1
 
     @property
-    def task_name(self):
-        # type: () -> Optional[str]
+    def task_name(self) -> Optional[str]:
         if hasattr(self.a_task, "payload"):
             return self.a_task.payload.name
         if hasattr(self.a_task, "name"):
@@ -358,30 +356,25 @@ class TaskFailureContext(object):
         return None
 
     @property
-    def exception(self):
-        # type: () -> Optional[Exception]
+    def exception(self) -> Optional[Exception]:
         return self.future.exception
 
     @property
-    def current_started_decision_id(self):
-        # type: () -> Optional[int]
+    def current_started_decision_id(self) -> Optional[int]:
         return self.history.started_decision_id if self.history else None
 
     @property
-    def last_completed_decision_id(self):
-        # type: () -> Optional[int]
+    def last_completed_decision_id(self) -> Optional[int]:
         return self.history.completed_decision_id if self.history else None
 
     @property
-    def task_error(self):
-        # type: () -> str
+    def task_error(self) -> str:
         if self._task_error is None:
             self._cache_error()
         return self._task_error
 
     @property
-    def task_error_type(self):
-        # type: () -> Optional[Type[Exception]]
+    def task_error_type(self) -> Optional[Type[Exception]]:
         if self._task_error is None:
             self._cache_error()
         return self._task_error_type
@@ -405,28 +398,23 @@ class TaskFailureContext(object):
                         pass
 
     @property
-    def id(self):
-        # type: () -> Optional[int]
+    def id(self) -> Optional[int]:
         event = self.event
         return History.get_event_id(event)
 
-    def decide_abort(self):
-        # type: () -> TaskFailureContext
+    def decide_abort(self) -> TaskFailureContext:
         self.decision = self.Decision.abort
         return self
 
-    def decide_ignore(self):
-        # type: () -> TaskFailureContext
+    def decide_ignore(self) -> TaskFailureContext:
         self.decision = self.Decision.ignore
         return self
 
-    def decide_cancel(self):
-        # type: () -> TaskFailureContext
+    def decide_cancel(self) -> TaskFailureContext:
         self.decision = self.Decision.cancel
         return self
 
-    def decide_retry(self, retry_wait_timeout=0):
-        # type: (Optional[int]) -> TaskFailureContext
+    def decide_retry(self, retry_wait_timeout: Optional[int] = 0) -> TaskFailureContext:
         self.decision = (
             self.Decision.retry_now
             if not retry_wait_timeout
@@ -435,8 +423,7 @@ class TaskFailureContext(object):
         self.retry_wait_timeout = retry_wait_timeout
         return self
 
-    def decide_handled(self, a_task, future=None):
-        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> TaskFailureContext
+    def decide_handled(self, a_task: Union[ActivityTask, WorkflowTask], future: Optional[futures.Future] = None) -> TaskFailureContext:
         self.a_task = a_task
         self.future = future
         self.decision = self.Decision.handled

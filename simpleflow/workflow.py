@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
 from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
@@ -210,16 +211,13 @@ class Workflow(Submittable):
     def wait_signal(self, name):
         return self.executor.wait_signal(name)
 
-    def record_marker(self, name, details=None):
-        # type: (str, Any) -> Submittable
+    def record_marker(self, name: str, details: Any = None) -> Submittable:
         return self.executor.record_marker(name, details)
 
-    def list_markers(self, all=False):
-        # type: (bool) -> List[Marker]
+    def list_markers(self, all: bool = False) -> List[Marker]:
         return self.executor.list_markers(all)
 
-    def get_event_details(self, event_type, event_name):
-        # type: (str, str) -> Optional[dict]
+    def get_event_details(self, event_type: str, event_name: str) -> Optional[dict]:
         """
         Get details about an event.
         Backend-dependent.
@@ -246,7 +244,7 @@ class Workflow(Submittable):
         return True
 
     def on_task_failure(
-        self, failure_context,  # type: TaskFailureContext
+        self, failure_context: TaskFailureContext,
     ):
         """
         Called by the executor if a task or workflow failed.

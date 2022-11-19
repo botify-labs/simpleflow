@@ -1,6 +1,7 @@
-
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Group
@@ -9,8 +10,8 @@ from simpleflow.log import END, GREEN, ORANGE, RED, YELLOW
 from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
 
-if False:
-    from typing import Optional  # NOQA
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 @activity.with_attributes(
@@ -58,8 +59,9 @@ class FailingWorkflow(Workflow):
         else:
             futures.wait(x)
 
-    def on_task_failure(self, failure_context):
-        # type: (TaskFailureContext) -> Optional[TaskFailureContext]
+    def on_task_failure(
+        self, failure_context: TaskFailureContext
+    ) -> Optional[TaskFailureContext]:
         print(
             colorize(
                 YELLOW,
@@ -93,8 +95,9 @@ class NotFailingWorkflow(Workflow):
     def on_completed(self, history):
         print(colorize(GREEN, "NotFailingWorkflow: workflow completed!"))
 
-    def on_task_failure(self, failure_context):
-        # type: (TaskFailureContext) -> Optional[TaskFailureContext]
+    def on_task_failure(
+        self, failure_context: TaskFailureContext
+    ) -> Optional[TaskFailureContext]:
         # print(failure_context)
         if (
             isinstance(failure_context.a_task, WorkflowTask)

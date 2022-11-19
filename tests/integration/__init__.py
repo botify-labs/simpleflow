@@ -1,3 +1,4 @@
+from __future__ import annotations
 import inspect
 import os
 from typing import TYPE_CHECKING
@@ -87,8 +88,7 @@ class VCRIntegrationTest(IntegrationTestCase):
             next_page = response.get("nextPageToken")
         return events
 
-    def invoke(self, arguments, catch_exceptions=True):
-        # type: (Union[str, List[str]], bool) -> Result
+    def invoke(self, arguments: Union[str, List[str]], catch_exceptions: bool = True) -> Result:
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):

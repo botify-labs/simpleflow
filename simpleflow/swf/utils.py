@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import swf.exceptions
@@ -71,30 +72,27 @@ class DecisionsAndContext(object):
     """
 
     def __init__(self, decisions=None, execution_context=None):
-        self.decisions = decisions or []  # type: List[Decision]
-        self.execution_context = execution_context  # type: Dict[str, Any]
+        self.decisions: List[Decision] = decisions or []
+        self.execution_context: Dict[str, Any] = execution_context
 
     def __repr__(self):
         return "<{} decisions={}, execution_context={}>".format(
             self.__class__.__name__, self.decisions, self.execution_context
         )
 
-    def append_decision(self, decision):
-        # type: (Decision) -> None
+    def append_decision(self, decision: Decision) -> None:
         """
         Append a decision.
         """
         self.decisions.append(decision)
 
-    def extend_decision(self, decisions):
-        # type: (List[Decision]) -> None
+    def extend_decision(self, decisions: List[Decision]) -> None:
         """
         Append a list of decisions.
         """
         self.decisions += decisions
 
-    def append_kv_to_context(self, key, value):
-        # type: (str, Any) -> None
+    def append_kv_to_context(self, key: str, value: Any) -> None:
         """
         Set a (key, value) in the execution context.
         """
@@ -102,8 +100,7 @@ class DecisionsAndContext(object):
             self.execution_context = {}
         self.execution_context[key] = value
 
-    def append_kv_to_list_context(self, key, value):
-        # type: (str, Any) -> None
+    def append_kv_to_list_context(self, key: str, value: Any) -> None:
         """
         Append a value to a list in the execution context.
         """
@@ -113,8 +110,7 @@ class DecisionsAndContext(object):
             self.execution_context[key] = []
         self.execution_context[key].append(value)
 
-    def append_kv_to_set_context(self, key, value):
-        # type: (str, Any) -> None
+    def append_kv_to_set_context(self, key: str, value: Any) -> None:
         """
         Add a value to a set in the execution context.
         """
@@ -132,14 +128,12 @@ def get_name_from_event(event):
     return workflow_name
 
 
-def set_workflow_class_name(wf_input, workflow_or_class):
-    # type: (dict, type) -> None
+def set_workflow_class_name(wf_input: dict, workflow_or_class: type) -> None:
     qualified_name = full_object_name(workflow_or_class)
     wf_input.setdefault("__extra", {})["class"] = qualified_name
 
 
-def add_workflow_class_name(wf_input, workflow_or_class):
-    # type: (dict, type) -> dict
+def add_workflow_class_name(wf_input: dict, workflow_or_class: type) -> dict:
     """
     Add the fully-qualified workflow class name to the WF input.
     """

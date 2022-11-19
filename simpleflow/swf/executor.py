@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 import copy
 import hashlib
 import inspect
@@ -145,7 +146,7 @@ class Executor(executor.Executor):
         repair_run_id=None,
     ):
         super(Executor, self).__init__(workflow_class)
-        self._history = None  # type: Optional[History]
+        self._history: Optional[History] = None
         self._run_context = {}
         self.domain = domain
         self.task_list = task_list
@@ -186,8 +187,7 @@ class Executor(executor.Executor):
         self.create_workflow()
 
     @property
-    def history(self):
-        # type: () -> Optional[History]
+    def history(self) -> Optional[History]:
         return self._history
 
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
@@ -643,12 +643,11 @@ class Executor(executor.Executor):
 
     def handle_failure(
         self,
-        event,  # type: dict
-        future,  # type: futures.Future
-        swf_task,  # type: Union[ActivityTask, WorkflowTask]
-        exception_class,  # type: Type[Exception]
-    ):
-        # type: (...) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]
+        event: dict,
+        future: futures.Future,
+        swf_task: Union[ActivityTask, WorkflowTask],
+        exception_class: Type[Exception],
+    ) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]:
         """
         Call the workflow's on_task_failure method if it exists.
         If no retry/abort/ignore decision, use the default strategy (using retry count and raises_on_failure).
@@ -679,12 +678,11 @@ class Executor(executor.Executor):
 
     def do_handle_failure(
         self,
-        event,  # type: dict
-        future,  # type: futures.Future
-        swf_task,  # type: Union[ActivityTask, WorkflowTask]
-        exception_class,  # type: Type[Exception]
-    ):
-        # type: (...) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]
+        event: dict,
+        future: futures.Future,
+        swf_task: Union[ActivityTask, WorkflowTask],
+        exception_class: Type[Exception],
+    ) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]:
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
             if isinstance(
@@ -724,9 +722,9 @@ class Executor(executor.Executor):
             swf_task, event, future, exception_class, self._history
         )
         if hasattr(self.workflow, "on_task_failure"):
-            new_failure_context = self.workflow.on_task_failure(
+            new_failure_context: base_task.TaskFailureContext = self.workflow.on_task_failure(
                 failure_context
-            )  # type: base_task.TaskFailureContext
+            )
             if new_failure_context:
                 failure_context = new_failure_context
             future, swf_task, event = (
@@ -786,8 +784,7 @@ class Executor(executor.Executor):
         return new_failure_context.future
 
     @staticmethod
-    def default_failure_handling(failure_context):
-        # type: (base_task.TaskFailureContext) -> base_task.TaskFailureContext
+    def default_failure_handling(failure_context: base_task.TaskFailureContext) -> base_task.TaskFailureContext:
 
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
@@ -808,8 +805,7 @@ class Executor(executor.Executor):
         failure_context.decision = base_task.TaskFailureContext.Decision.handled
         return failure_context
 
-    def find_timer_associated_with(self, event, swf_task):
-        # type: (dict, Union[ActivityTask, WorkflowTask]) -> Optional[dict]
+    def find_timer_associated_with(self, event: dict, swf_task: Union[ActivityTask, WorkflowTask]) -> Optional[dict]:
         """
         Return a potential timer "associated with" an event, i.e.
         * with a related name
@@ -1100,8 +1096,7 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super(Executor, self).starmap(callable, iterable)
 
-    def replay(self, decision_response, decref_workflow=True):
-        # type: (swf.responses.Response, bool) -> DecisionsAndContext
+    def replay(self, decision_response: swf.responses.Response, decref_workflow: bool = True) -> DecisionsAndContext:
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 

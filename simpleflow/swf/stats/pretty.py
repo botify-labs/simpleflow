@@ -1,3 +1,4 @@
+from __future__ import annotations
 import operator
 from datetime import datetime
 from functools import partial, wraps
@@ -232,8 +233,7 @@ def list_executions(workflow_executions):
     return header, rows
 
 
-def list_details(workflow_executions):
-    # type: (List[WorkflowExecution]) -> tuple
+def list_details(workflow_executions: List[WorkflowExecution]) -> tuple:
     header = (
         "Workflow ID",
         "Workflow Type",

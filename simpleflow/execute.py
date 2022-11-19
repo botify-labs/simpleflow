@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 import errno
 import json
 import os
@@ -81,16 +82,14 @@ def format_arguments(*args, **kwargs):
     )
 
 
-def zip_arguments_defaults(argspec):
-    # type: (inspect.ArgSpec) -> Iterable
+def zip_arguments_defaults(argspec: inspect.ArgSpec) -> Iterable:
     if not argspec.defaults:
         return []
 
     return list(zip(argspec.args[-len(argspec.defaults) :], argspec.defaults))
 
 
-def check_arguments(argspec, args):
-    # type: (inspect.ArgSpec, Any) -> None
+def check_arguments(argspec: inspect.ArgSpec, args: Any) -> None:
     """Validates there is the right number of arguments"""
     # func() or func(**kwargs) or func(a=1, b=2)
     if not argspec.varargs and not argspec.args and args:
@@ -103,8 +102,7 @@ def check_arguments(argspec, args):
         )
 
 
-def check_keyword_arguments(argspec, kwargs):
-    # type: (inspect.ArgSpec, dict) -> None
+def check_keyword_arguments(argspec: inspect.ArgSpec, kwargs: dict) -> None:
     # func() or func(*args) or func(a, b)
     if not argspec.keywords and not argspec.defaults and kwargs:
         raise TypeError("command does not take keyword arguments")
@@ -192,11 +190,11 @@ def wait_subprocess(process, timeout=None, command_info=None):
 
 
 def python(
-    interpreter="python",  # type: AnyStr
-    logger_name=__name__,  # type: AnyStr
-    timeout=None,  # type: Optional[int]
-    kill_children=False,  # type: bool
-    env=None,  # type: Optional[dict]
+    interpreter: AnyStr = "python",
+    logger_name: AnyStr = __name__,
+    timeout: Optional[int] = None,
+    kill_children: bool = False,
+    env: Optional[dict] = None,
 ):
     """
     Execute a callable as an external Python program.

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import annotations
 import multiprocessing
 import os
 import platform
@@ -78,8 +79,7 @@ def cli(ctx, header, format, color):
     log.color_mode = color
 
 
-def get_workflow_type(domain_name, workflow_class):
-    # type: (Text, Type[Workflow]) -> WorkflowType
+def get_workflow_type(domain_name: Text, workflow_class: Type[Workflow]) -> WorkflowType:
     """
     Get or create the given workflow on SWF.
     :param domain_name:
@@ -189,7 +189,7 @@ def start_workflow(
 ):
     workflow_class = import_from_module(workflow)
 
-    wf_input = {}  # type: Dict[AnyStr, Any]
+    wf_input: Dict[AnyStr, Any] = {}
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
 

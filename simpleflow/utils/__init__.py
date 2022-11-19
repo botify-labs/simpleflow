@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 from zlib import adler32
@@ -11,8 +12,7 @@ if TYPE_CHECKING:
     from typing import Any, AnyStr, Type, Union
 
 
-def issubclass_(arg1, arg2):
-    # type: (Union[Type, Any], Type) -> bool
+def issubclass_(arg1: Union[Type, Any], arg2: Type) -> bool:
     """
     Like issubclass but without exception.
     """
@@ -34,8 +34,7 @@ def hex_hash(s):
     return "{:x}".format(adler32(s) & 0xFFFFFFFF)
 
 
-def format_exc(exc):
-    # type: (Exception) -> AnyStr
+def format_exc(exc: Exception) -> AnyStr:
     """
     Copy-pasted from traceback._format_final_exc_line.
     :param exc: Exception value
@@ -49,8 +48,7 @@ def format_exc(exc):
     return line
 
 
-def _some_str(value):
-    # type: (Any) -> AnyStr
+def _some_str(value: Any) -> AnyStr:
     """
     Copy-pasted from traceback.
     """
@@ -60,8 +58,7 @@ def _some_str(value):
         return "<unprintable %s object>" % type(value).__name__
 
 
-def format_exc_type(exc_type):
-    # type: (Type) -> AnyStr
+def format_exc_type(exc_type: Type) -> AnyStr:
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
@@ -78,8 +75,7 @@ def to_k8s_identifier(string):
     return string
 
 
-def import_from_module(path):
-    # type: (AnyStr) -> Any
+def import_from_module(path: AnyStr) -> Any:
     """
     Import a class or other object: either module.Foo or (builtin) Foo.
     :param path: object name
@@ -90,8 +86,7 @@ def import_from_module(path):
     return import_object_from_module(module_path, obj_name)
 
 
-def import_object_from_module(module_name, *object_names):
-    # type: (AnyStr, *AnyStr) -> Any
+def import_object_from_module(module_name: AnyStr, *object_names: AnyStr) -> Any:
     if not module_name:
         module_name = "builtins" if not PY2 else "__builtin__"
     from importlib import import_module
@@ -102,16 +97,14 @@ def import_object_from_module(module_name, *object_names):
     return obj
 
 
-def full_object_name(obj):
-    # type: (Any) -> AnyStr
+def full_object_name(obj: Any) -> AnyStr:
     # Adapted from https://stackoverflow.com/questions/2020014/get-fully-qualified-class-name-of-an-object-in-python
     if isinstance(obj, type):
         return full_class_name(obj)
     return full_class_name(obj.__class__)
 
 
-def full_class_name(klass):
-    # type: (Type) -> AnyStr
+def full_class_name(klass: Type) -> AnyStr:
     module = klass.__module__
     name = klass.__name__ if PY2 else klass.__qualname__
     if module is None:

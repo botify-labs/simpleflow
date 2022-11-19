@@ -1,5 +1,6 @@
 
 
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from simpleflow.exceptions import AggregateException
@@ -138,7 +139,7 @@ class Group(SubmittableContainer):
 
     def __init__(self, *activities, **options):
         self.activities = []
-        self.workflow_tasks = []  # type: List[WorkflowTask]
+        self.workflow_tasks: List[WorkflowTask] = []
         self.max_parallel = options.pop("max_parallel", None)
         self.raises_on_failure = options.pop("raises_on_failure", None)
         self.bubbles_exception_on_failure = options.pop(

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import swf.models
 import swf.models.decision
 from simpleflow import Workflow, logger, task
@@ -95,8 +96,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return input
 
     @classmethod
-    def get_activity_type(cls, domain, name, version):
-        # type: (swf.models.Domain, str, str) -> swf.models.ActivityType
+    def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.
         :param domain:
@@ -218,8 +218,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return input
 
     @classmethod
-    def get_workflow_type(cls, domain, name, version):
-        # type: (swf.models.Domain, str, str) -> swf.models.WorkflowType
+    def get_workflow_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.WorkflowType:
         """
         Cache known WorkflowType's to remove useless latency.
         :param domain:
@@ -316,8 +315,7 @@ class MarkerTask(task.MarkerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.MarkerTask) -> MarkerTask
+    def from_generic_task(cls, a_task: task.MarkerTask) -> MarkerTask:
         return cls(a_task.name, *a_task.args, **a_task.kwargs)
 
     def __init__(self, name, details=None):
@@ -336,8 +334,7 @@ class TimerTask(task.TimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.TimerTask) -> TimerTask
+    def from_generic_task(cls, a_task: task.TimerTask) -> TimerTask:
         return cls(a_task.timer_id, a_task.timeout, a_task.control)
 
     def __init__(self, timer_id, timeout, control):
@@ -357,8 +354,7 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.CancelTimerTask) -> CancelTimerTask
+    def from_generic_task(cls, a_task: task.CancelTimerTask) -> CancelTimerTask:
         return cls(a_task.timer_id)
 
     def __init__(self, timer_id):

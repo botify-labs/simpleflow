@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from . import registry, settings
@@ -34,8 +35,7 @@ def with_attributes(
     heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
     idempotent=None,
     meta=None,
-):
-    # type: (...) -> Callable[[Callable], Activity]
+) -> Callable[[Callable], Activity]:
     """
     Decorator: wrap a function/class into an Activity.
 
@@ -65,8 +65,7 @@ def with_attributes(
 
     """
 
-    def wrap(func):
-        # type: (Callable) -> Activity
+    def wrap(func: Callable) -> Activity:
         return Activity(
             func,
             name,

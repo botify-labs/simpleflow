@@ -1,3 +1,4 @@
+from __future__ import annotations
 import collections
 
 from simpleflow import logger
@@ -139,8 +140,7 @@ class History(object):
         return self._markers
 
     @property
-    def timers(self):
-        # type: () -> Dict[str, Dict[str, Any]]
+    def timers(self) -> Dict[str, Dict[str, Any]]:
         return self._timers
 
     @property

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
@@ -25,15 +26,14 @@ if TYPE_CHECKING:
 class Step(SubmittableContainer):
     def __init__(
         self,
-        step_name,  # type: AnyStr
-        activities,  # type: Union[Submittable, SubmittableContainer]
-        force=False,  # type: bool
-        activities_if_step_already_done=None,  # type: Optional[Union[Submittable, SubmittableContainer]]
-        emit_signal=False,  # type: bool
-        force_steps_if_executed=None,  # type: Optional[Sequence[AnyStr]]
-        bubbles_exception_on_failure=False,  # type: bool
-    ):
-        # type: (...) -> None
+        step_name: AnyStr,
+        activities: Union[Submittable, SubmittableContainer],
+        force: bool = False,
+        activities_if_step_already_done: Optional[Union[Submittable, SubmittableContainer]] = None,
+        emit_signal: bool = False,
+        force_steps_if_executed: Optional[Sequence[AnyStr]] = None,
+        bubbles_exception_on_failure: bool = False,
+    ) -> None:
         """
         :param step_name: Name of the step
         :param activities: submittable entity; not a list
@@ -51,8 +51,7 @@ class Step(SubmittableContainer):
         self.force_steps_if_executed = force_steps_if_executed or []
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
-    def submit(self, executor):
-        # type: (Executor) -> Future
+    def submit(self, executor: Executor) -> Future:
         workflow = executor.workflow
         if workflow is None:
             raise ValueError("Executor has no associated workflow")

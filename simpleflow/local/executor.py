@@ -1,3 +1,4 @@
+from __future__ import annotations
 import collections
 import sys
 import traceback
@@ -36,13 +37,12 @@ class Executor(executor.Executor):
 
         self.wf_run_id = []
         self.wf_id = []
-        self._history = None  # type: Optional[Union[builder.History, History]]
+        self._history: Optional[Union[builder.History, History]] = None
 
         self.middlewares = kwargs.pop("middlewares", None)
 
     @property
-    def history(self):
-        # type: () -> Optional[History]
+    def history(self) -> Optional[History]:
         if not isinstance(self._history, History):
             history = History(self._history)
             history.parse()

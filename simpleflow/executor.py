@@ -1,3 +1,4 @@
+from __future__ import annotations
 import abc
 from typing import TYPE_CHECKING
 
@@ -34,8 +35,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     """
 
-    def __init__(self, workflow_class):
-        # type: (Type[Workflow]) -> None
+    def __init__(self, workflow_class: Type[Workflow]) -> None:
         """
         Binds the workflow's definition.
 
@@ -45,11 +45,10 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
         """
         self._workflow_class = workflow_class
-        self._workflow = None  # type: Optional[Workflow]
+        self._workflow: Optional[Workflow] = None
 
     @property
-    def workflow_class(self):
-        # type: () -> Type[Workflow]
+    def workflow_class(self) -> Type[Workflow]:
         return self._workflow_class
 
     @property
@@ -58,8 +57,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     @property
     @abc.abstractmethod
-    def history(self):
-        # type: () -> Optional[History]
+    def history(self) -> Optional[History]:
         pass
 
     def create_workflow(self):

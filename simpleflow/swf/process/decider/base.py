@@ -1,3 +1,4 @@
+from __future__ import annotations
 import multiprocessing
 import os
 from typing import TYPE_CHECKING
@@ -47,15 +48,14 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     def __init__(
         self,
-        workflow_executors,  # type: List[Executor]
-        domain,  # type: swf.models.Domain
-        task_list,  # type: str
-        is_standalone,  # type: bool
-        nb_retries=3,  # type: int
+        workflow_executors: List[Executor],
+        domain: swf.models.Domain,
+        task_list: str,
+        is_standalone: bool,
+        nb_retries: int = 3,
         *args,
         **kwargs
-    ):
-        # type: (...) -> None
+    ) -> None:
         """
         The decider is an actor that reads the full history of the workflow
         execution and decides what happens next. The :class:`DeciderPoller`
@@ -149,8 +149,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         return swf.actors.Decider.poll(self, task_list, identity, **kwargs)
 
     @with_state("completing")
-    def complete(self, token, decisions=None, execution_context=None):
-        # type: (str, Optional[List], Union[Optional[Any], DecisionsAndContext]) -> None
+    def complete(self, token: str, decisions: Optional[List] = None, execution_context: Union[Optional[Any], DecisionsAndContext] = None) -> None:
         """
         DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
         :param token: task token.
@@ -250,8 +249,7 @@ class DeciderWorker(object):
         return decisions
 
 
-def process_decision(poller, decision_response):
-    # type: (DeciderPoller, Response) -> None
+def process_decision(poller: DeciderPoller, decision_response: Response) -> None:
     workflow_id = decision_response.execution.workflow_id
     workflow_str = "workflow {} ({})".format(workflow_id, poller.workflow_name)
     logger.debug("process_decision() pid={}".format(os.getpid()))
