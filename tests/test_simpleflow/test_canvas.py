@@ -1,6 +1,5 @@
 import json
 import unittest
-from builtins import range
 
 from simpleflow import Workflow, exceptions, futures, workflow
 from simpleflow.activity import with_attributes
@@ -55,7 +54,7 @@ class CustomExecutor(Executor):
             f = futures.Future()
             f.set_running()
             return f
-        return super(CustomExecutor, self).submit(func, *args, **kwargs)
+        return super().submit(func, *args, **kwargs)
 
 
 class MyWorkflow(workflow.Workflow):

@@ -11,13 +11,13 @@ def get_start_to_close_timing(event):
         end = None
         duration = None
     else:
-        end = event["{}_timestamp".format(last_state)]
+        end = event[f"{last_state}_timestamp"]
         duration = (end - start).total_seconds()
 
     return last_state, scheduled, start, end, duration
 
 
-class WorkflowStats(object):
+class WorkflowStats:
     def __init__(self, history):
         self._history = history
 

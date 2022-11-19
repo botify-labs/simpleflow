@@ -1,10 +1,8 @@
-# -*- coding:utf-8 -*-
-
 import unittest
 
 import boto.swf.exceptions
 from boto.swf.layer1 import Layer1
-from mock import patch
+from unittest.mock import patch
 
 from swf.models import ActivityType, Domain
 

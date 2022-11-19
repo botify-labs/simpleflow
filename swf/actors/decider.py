@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import boto.exception
 
 from simpleflow import compat, format, logging_context
@@ -21,7 +20,7 @@ class Decider(Actor):
     """
 
     def __init__(self, domain, task_list):
-        super(Decider, self).__init__(domain, task_list)
+        super().__init__(domain, task_list)
 
     def complete(self, task_token, decisions=None, execution_context=None):
         """Responds to ``swf`` decisions have been made about
@@ -48,7 +47,7 @@ class Decider(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to complete decision task with token={}".format(task_token),
+                    f"Unable to complete decision task with token={task_token}",
                     message,
                 )
             raise ResponseError(message)

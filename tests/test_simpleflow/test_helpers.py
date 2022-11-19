@@ -7,7 +7,7 @@ from simpleflow.swf.helpers import find_activity
 
 
 # some fake objects to test find_activity()
-class FakeHistory(object):
+class FakeHistory:
     def __init__(self):
         self.activities = {
             "activity-tests.integration.workflow.sleep-1": {

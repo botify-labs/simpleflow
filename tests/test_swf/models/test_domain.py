@@ -1,11 +1,9 @@
-# -*- coding:utf-8 -*-
-
 import unittest
 
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from boto.swf.layer1 import Layer1
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 import swf.settings
 from swf.constants import DEPRECATED

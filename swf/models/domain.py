@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -77,7 +75,7 @@ class Domain(BaseModel):
             or not hasattr(domain, "name")
             or not isinstance(domain.name, compat.str)
         ):
-            raise TypeError("invalid type {} for domain".format(type(domain)))
+            raise TypeError(f"invalid type {type(domain)} for domain")
 
     def _diff(self):
         """Checks for differences between Domain instance

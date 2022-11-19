@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -79,7 +77,7 @@ class SWFError(Exception):
         msg = self.message.strip()
 
         if self.kind and self.details:
-            msg += "\nReason: {}, {}".format(self.kind, self.details)
+            msg += f"\nReason: {self.kind}, {self.details}"
 
         return msg
 
@@ -87,7 +85,7 @@ class SWFError(Exception):
         msg = self.message
 
         if self.kind and self.details:
-            msg += "\nReason: {}, {}".format(self.kind, self.details)
+            msg += f"\nReason: {self.kind}, {self.details}"
 
         return msg
 
@@ -195,7 +193,7 @@ def is_unknown(resource):
         if not is_unknown_resource_raised(error, *args, **kwargs):
             return False
         if getattr(error, "error_code", None) != "UnknownResourceFault":
-            raise ValueError("cannot extract resource from {}".format(error))
+            raise ValueError(f"cannot extract resource from {error}")
 
         message = error.body.get("message")
         if match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution")):
@@ -234,7 +232,7 @@ def always(value):
 
 def extract_resource(error):
     if getattr(error, "error_code", None) != "UnknownResourceFault":
-        raise ValueError("cannot extract resource from {}".format(error))
+        raise ValueError(f"cannot extract resource from {error}")
 
     message = error.body.get("message")
     resource = REGEX_UNKNOWN_RESOURCE.findall(message) if message else None
@@ -367,7 +365,7 @@ def catch(exceptions, handle_with=None, log=False):
                 return func(*args, **kwargs)
             except exceptions as err:
                 if log is True:
-                    logger.error("call to {} raised: {}".format(func.__name__, err))
+                    logger.error(f"call to {func.__name__} raised: {err}")
 
                 if handle_with is None:
                     raise

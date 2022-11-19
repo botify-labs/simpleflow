@@ -11,7 +11,7 @@ __all__ = ["Heartbeater", "HeartbeatProcess"]
 
 
 @deprecated
-class HeartbeatProcess(object):  # Are people using it?
+class HeartbeatProcess:  # Are people using it?
     def __init__(self, heartbeat_callable, interval):
         if not isinstance(interval, int) and not isinstance(interval, float):
             raise ValueError("heartbeat interval must be an integer or a float")
@@ -72,7 +72,7 @@ class HeartbeatProcess(object):  # Are people using it?
 
 
 @deprecated
-class Heartbeater(object):  # Are people using it?
+class Heartbeater:  # Are people using it?
     """Manages the heartbeat in a subprocess.
 
     """

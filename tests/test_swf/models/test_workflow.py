@@ -1,11 +1,9 @@
-# -*- coding:utf-8 -*-
-
 import unittest
 
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFTypeAlreadyExistsError
 from boto.swf.layer1 import Layer1
-from mock import patch
+from unittest.mock import patch
 
 from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError
 from swf.models.domain import Domain
@@ -19,7 +17,7 @@ from ..mocks.workflow import (
 )
 
 
-class CustomAssertions(object):
+class CustomAssertions:
     def assertLength(self, a_list, count):
         self.assertEqual(
             len(a_list),

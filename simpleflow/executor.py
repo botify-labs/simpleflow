@@ -36,7 +36,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     """
 
-    def __init__(self, workflow_class: Type[Workflow]) -> None:
+    def __init__(self, workflow_class: type[Workflow]) -> None:
         """
         Binds the workflow's definition.
 
@@ -46,10 +46,10 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
         """
         self._workflow_class = workflow_class
-        self._workflow: Optional[Workflow] = None
+        self._workflow: Workflow | None = None
 
     @property
-    def workflow_class(self) -> Type[Workflow]:
+    def workflow_class(self) -> type[Workflow]:
         return self._workflow_class
 
     @property
@@ -58,7 +58,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     @property
     @abc.abstractmethod
-    def history(self) -> Optional[History]:
+    def history(self) -> History | None:
         pass
 
     def create_workflow(self):

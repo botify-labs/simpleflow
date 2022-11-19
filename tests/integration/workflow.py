@@ -1,5 +1,3 @@
-
-
 import time
 import uuid
 
@@ -18,13 +16,13 @@ from simpleflow.task import ActivityTask
     raises_on_failure=True,
 )
 def sleep(seconds):
-    print("will sleep {}s".format(seconds))
+    print(f"will sleep {seconds}s")
     time.sleep(seconds)
     print("good sleep")
     # return a complex object so we can visually test the json-ified version of
     # it is displayed in "simpleflow activity.rerun" ; unfortunately hard to
     # include in a unit or integration test...
-    return {"result": "slept {}s".format(seconds)}
+    return {"result": f"slept {seconds}s"}
 
 
 @activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
@@ -128,9 +126,9 @@ class ChainTestWorkflow(Workflow):
         future = self.submit(
             Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True)
         )
-        print("Future: {}".format(future))
+        print(f"Future: {future}")
         futures.wait(future)
-        print("Result: {}".format(future.result))  # future.result == [6, 12]
+        print(f"Result: {future.result}")  # future.result == [6, 12]
 
         return future.result
 
@@ -148,7 +146,7 @@ class TestRunChild(Workflow):
 
     def run(self):
         future = self.submit(ChainTestWorkflow)
-        print("Result: {}".format(future.result))
+        print(f"Result: {future.result}")
         return future.result
 
 
@@ -200,7 +198,7 @@ class WorkflowToCancel(Workflow):
             agree = input["args"][0]
         else:
             agree = input.get("kwargs", {}).get("agree", True)
-        print("should_cancel called! agree? {}".format(agree))
+        print(f"should_cancel called! agree? {agree}")
         return agree
 
 

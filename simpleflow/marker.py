@@ -1,4 +1,4 @@
-class Marker(object):
+class Marker:
     def __init__(self, name, details):
         self.name = name
         self.details = details

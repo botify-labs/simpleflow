@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -62,7 +60,7 @@ class GroupFuture(futures.Future):
     def __init__(
         self, activities, workflow, max_parallel=None, bubbles_exception_on_failure=True
     ):
-        super(GroupFuture, self).__init__()
+        super().__init__()
         self.activities = activities
         self.futures = []
         self.workflow = workflow
@@ -140,7 +138,7 @@ class Group(SubmittableContainer):
 
     def __init__(self, *activities, **options):
         self.activities = []
-        self.workflow_tasks: List[WorkflowTask] = []
+        self.workflow_tasks: list[WorkflowTask] = []
         self.max_parallel = options.pop("max_parallel", None)
         self.raises_on_failure = options.pop("raises_on_failure", None)
         self.bubbles_exception_on_failure = options.pop(
@@ -167,7 +165,7 @@ class Group(SubmittableContainer):
             self.workflow_tasks.append(submittable)
         else:
             raise ValueError(
-                "{} should be a Submittable, Group, or Activity".format(submittable)
+                f"{submittable} should be a Submittable, Group, or Activity"
             )
 
         if self.raises_on_failure is not None:
@@ -308,7 +306,7 @@ class Chain(Group):
             options[
                 "bubbles_exception_on_failure"
             ] = False  # Compatible with 10cd67f: don't break upper chains
-        super(Chain, self).__init__(*activities, **options)
+        super().__init__(*activities, **options)
 
     def submit(self, executor):
         self.set_workflow_tasks_executor(executor)

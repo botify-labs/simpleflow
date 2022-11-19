@@ -1,5 +1,3 @@
-
-
 import copy
 import getpass
 import json

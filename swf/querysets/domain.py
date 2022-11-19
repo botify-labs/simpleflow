@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -134,8 +132,7 @@ class DomainQuerySet(BaseQuerySet):
                     registration_status, next_page_token=response["nextPageToken"]
                 )
 
-                for domain_info in response["domainInfos"]:
-                    yield domain_info
+                yield from response["domainInfos"]
 
         return [
             Domain(d["name"], d["status"], d.get("description")) for d in get_domains()

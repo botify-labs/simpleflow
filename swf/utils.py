@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -93,7 +91,7 @@ class _CachedProperty(property):
 
     def __init__(self, fget, fset=None, fdel=None, doc=None):
         """Initializes the cached property."""
-        self._cache_name = "_{name}_cache".format(name=fget.__name__,)
+        self._cache_name = f"_{fget.__name__}_cache"
         # Wrap the accessors.
         fget = self._wrap_fget(fget)
         if callable(fset):
@@ -101,7 +99,7 @@ class _CachedProperty(property):
         if callable(fdel):
             fdel = self._wrap_fdel(fdel)
         # Create the property.
-        super(_CachedProperty, self).__init__(fget, fset, fdel, doc)
+        super().__init__(fget, fset, fdel, doc)
 
     def _wrap_fget(self, fget):
         @wraps(fget)

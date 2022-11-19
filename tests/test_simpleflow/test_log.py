@@ -5,7 +5,7 @@ from sure import expect
 from simpleflow.log import SimpleflowFormatter
 
 
-class FakeRecord(object):
+class FakeRecord:
     def __init__(self, msg, args):
         self.msg = msg
         self.args = args

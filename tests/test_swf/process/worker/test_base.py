@@ -39,7 +39,7 @@ def test_reap_process_tree_plain(handler):
         # Clean up any potentially danging processp
         if psutil.pid_exists(proc.pid):
             os.kill(proc.pid, signal.SIGKILL)
-            assert False, "KILLed process with pid={}".format(proc.pid)
+            assert False, f"KILLed process with pid={proc.pid}"
 
 
 def nested_target(handler, child_pid, lock):
@@ -91,4 +91,4 @@ def test_reap_process_tree_children(handler):
         for pid in pids:
             if psutil.pid_exists(proc.pid):
                 os.kill(proc.pid, signal.SIGKILL)
-                assert False, "KILLed process with pid={}".format(proc.pid)
+                assert False, f"KILLed process with pid={proc.pid}"

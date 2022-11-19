@@ -73,10 +73,10 @@ class TaskFailed(Exception):
         self.reason = decode(reason, parse_json=False, use_proxy=False)
         self.details = decode(details, parse_json=False, use_proxy=False)
 
-        super(TaskFailed, self).__init__(name, self.reason, self.details)
+        super().__init__(name, self.reason, self.details)
 
     def __repr__(self):
-        return '{} ({}, "{}")'.format(self.__class__.__name__, self.name, self.reason,)
+        return f'{self.__class__.__name__} ({self.name}, "{self.reason}")'
 
 
 class TimeoutError(Exception):
@@ -85,7 +85,7 @@ class TimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self.timeout_type)
+        return f"{self.__class__.__name__}({self.timeout_type})"
 
 
 class TaskCanceled(Exception):
@@ -96,8 +96,8 @@ class TaskCanceled(Exception):
         if (
             self.details is None
         ):  # same repr in python 2 and 3, because test :roll_eyes:
-            return "{}()".format(self.__class__.__name__)
-        return "{}({})".format(self.__class__.__name__, self.details)
+            return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}({self.details})"
 
 
 class TaskTerminated(Exception):

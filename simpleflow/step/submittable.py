@@ -28,11 +28,11 @@ class Step(SubmittableContainer):
     def __init__(
         self,
         step_name: AnyStr,
-        activities: Union[Submittable, SubmittableContainer],
+        activities: Submittable | SubmittableContainer,
         force: bool = False,
-        activities_if_step_already_done: Optional[Union[Submittable, SubmittableContainer]] = None,
+        activities_if_step_already_done: Submittable | SubmittableContainer | None = None,
         emit_signal: bool = False,
-        force_steps_if_executed: Optional[Sequence[AnyStr]] = None,
+        force_steps_if_executed: Sequence[AnyStr] | None = None,
         bubbles_exception_on_failure: bool = False,
     ) -> None:
         """
@@ -80,7 +80,7 @@ class Step(SubmittableContainer):
                 marker_done["status"] = "completed"
 
                 workflow.add_forced_steps(
-                    self.force_steps_if_executed, "Dep of {}".format(self.step_name)
+                    self.force_steps_if_executed, f"Dep of {self.step_name}"
                 )
                 chain += (
                     workflow.record_marker("log.step", marker),
@@ -111,7 +111,7 @@ class Step(SubmittableContainer):
 
             if self.emit_signal:
                 chain.append(
-                    workflow.signal("step.{}".format(self.step_name), propagate=False)
+                    workflow.signal(f"step.{self.step_name}", propagate=False)
                 )
             chain.bubbles_exception_on_failure = self.bubbles_exception_on_failure
             return chain

@@ -1,11 +1,8 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
-from builtins import object, range
 from itertools import groupby
 
 from future.utils import iteritems
@@ -15,7 +12,7 @@ from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
 
 
-class History(object):
+class History:
     """Execution events history container
 
     History object is an Event subclass objects container

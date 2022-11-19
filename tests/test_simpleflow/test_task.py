@@ -7,7 +7,7 @@ def double(x):
 
 
 @activity.with_attributes(task_list="test")
-class Double(object):
+class Double:
     def __init__(self, val):
         self.val = val
 

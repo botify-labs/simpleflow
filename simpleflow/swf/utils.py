@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -38,7 +36,7 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
         else:
             # we would send a malformed request to SWF API, better stop directly
             raise ValueError(
-                "Couldn't find an execution with workflowId={}".format(workflow_id)
+                f"Couldn't find an execution with workflowId={workflow_id}"
             )
 
     return swf.querysets.WorkflowExecutionQuerySet(domain).get(
@@ -66,15 +64,15 @@ def sanitize_activity_context(context):
     }
 
 
-class DecisionsAndContext(object):
+class DecisionsAndContext:
     """
     Encapsulate decisions and execution context.
     The execution context contains keys with either plain values, lists or sets.
     """
 
     def __init__(self, decisions=None, execution_context=None):
-        self.decisions: List[Decision] = decisions or []
-        self.execution_context: Dict[str, Any] = execution_context
+        self.decisions: list[Decision] = decisions or []
+        self.execution_context: dict[str, Any] = execution_context
 
     def __repr__(self):
         return "<{} decisions={}, execution_context={}>".format(
@@ -87,7 +85,7 @@ class DecisionsAndContext(object):
         """
         self.decisions.append(decision)
 
-    def extend_decision(self, decisions: List[Decision]) -> None:
+    def extend_decision(self, decisions: list[Decision]) -> None:
         """
         Append a list of decisions.
         """

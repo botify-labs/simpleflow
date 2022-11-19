@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .activity import Activity  # NOQA
 from .runtime import logger  # NOQA
 from .signal import WaitForSignal  # NOQA

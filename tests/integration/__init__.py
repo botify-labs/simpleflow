@@ -89,7 +89,7 @@ class VCRIntegrationTest(IntegrationTestCase):
             next_page = response.get("nextPageToken")
         return events
 
-    def invoke(self, arguments: Union[str, List[str]], catch_exceptions: bool = True) -> Result:
+    def invoke(self, arguments: str | list[str], catch_exceptions: bool = True) -> Result:
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):

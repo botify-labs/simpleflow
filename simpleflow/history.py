@@ -6,7 +6,7 @@ from simpleflow import logger
 
 
 # noinspection PyUnresolvedReferences
-class History(object):
+class History:
     """
     History data.
 
@@ -252,7 +252,7 @@ class History(object):
                     "timeout_type": event.timeout_type,
                     "timeout_value": getattr(
                         events[activity["scheduled_id"] - 1],
-                        "{}_timeout".format(event.timeout_type.lower()),
+                        f"{event.timeout_type.lower()}_timeout",
                     ),
                     "timed_out_id": event.id,
                     "timed_out_timestamp": event.timestamp,
@@ -436,7 +436,7 @@ class History(object):
                     "timeout_type": event.timeout_type,
                     "timeout_value": getattr(
                         events[workflow["initiated_event_id"] - 1],
-                        "{}_timeout".format(event.timeout_type.lower()),
+                        f"{event.timeout_type.lower()}_timeout",
                         None,
                     ),
                     "timed_out_id": event.id,

@@ -1,7 +1,7 @@
 import unittest
 from time import time
 
-import mock
+from unittest import mock
 from flaky import flaky
 
 from simpleflow.utils.retry import constant, exponential, with_delay
@@ -10,7 +10,7 @@ error_epsilon = 0.01  # tolerate an error of 0.01%
 RETRY_WAIT_TIME = 0.1  # time between retries
 
 
-class DummyCallable(object):
+class DummyCallable:
     def __init__(self):
         self.count = 0
 
@@ -22,11 +22,11 @@ class DummyCallableRaises(DummyCallable):
     __name__ = "DummyCallableRaises"
 
     def __init__(self, exception):
-        super(DummyCallableRaises, self).__init__()
+        super().__init__()
         self._exception = exception
 
     def __call__(self, *args, **kwargs):
-        super(DummyCallableRaises, self).__call__(*args, **kwargs)
+        super().__call__(*args, **kwargs)
         raise self._exception
 
 

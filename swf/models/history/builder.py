@@ -244,7 +244,7 @@ class History(swf.models.History):
                         "activityId": (
                             activity_id
                             if activity_id is not None
-                            else "{}-{}".format(activity.name, hash(activity.name))
+                            else f"{activity.name}-{hash(activity.name)}"
                         ),
                         "scheduleToStartTimeout": activity.task_schedule_to_start_timeout,
                         "decisionTaskCompletedEventId": decision_id,
@@ -392,7 +392,7 @@ class History(swf.models.History):
                 scheduled=scheduled_id, started=started_id, timeout_type=timeout_type
             )
         else:
-            raise ValueError("last state {} is not supported".format(last_state))
+            raise ValueError(f"last state {last_state} is not supported")
 
         return self
 

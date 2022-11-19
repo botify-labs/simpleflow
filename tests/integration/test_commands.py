@@ -67,7 +67,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
 
         # now try to terminate it
         result = self.invoke(
-            "workflow.terminate {} {}".format(self.domain, self.workflow_id),
+            f"workflow.terminate {self.domain} {self.workflow_id}",
         )
 
         # check response form (empty)

@@ -6,7 +6,7 @@ class HistoryQuerySet(BaseQuerySet):
     """WorkflowExecution history queryset"""
 
     def __init__(self, domain, *args, **kwargs):
-        super(HistoryQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.domain = domain
 
     def get(self, run_id, workflow_id, max_results=None, page_size=100, reverse=False):

@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -16,7 +14,7 @@ class TransitionError(Exception):
     pass
 
 
-class Stateful(object):
+class Stateful:
     """Base stateful object implementation"""
 
     states = ()
@@ -66,15 +64,15 @@ class CompiledEvent(Event, Stateful):
         """
         if event.state != self.initial_state:
             raise InconsistentStateError(
-                "Provided event is in {0} state "
-                "when attended intial state is {1}".format(
+                "Provided event is in {} state "
+                "when attended intial state is {}".format(
                     event.state, self.initial_state
                 )
             )
         self.__dict__ = event.__dict__.copy()
 
     def __repr__(self):
-        return "<CompiledEvent %s %s>" % (self.type, self.state)
+        return "<CompiledEvent {} {}>".format(self.type, self.state)
 
     @property
     def next_states(self):

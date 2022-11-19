@@ -89,7 +89,7 @@ class Supervisor(NamedMixin):
         self._processes = {}
         self._terminating = False
 
-        super(Supervisor, self).__init__()
+        super().__init__()
 
     @with_state("running")
     def start(self):
@@ -97,7 +97,7 @@ class Supervisor(NamedMixin):
         Used to start the Supervisor process once it's configured. Has to be called
         explicitly on a Supervisor instance so it starts (no auto-start from __init__()).
         """
-        logger.info("starting {}".format(self._payload))
+        logger.info(f"starting {self._payload}")
         if self._background:
             p = multiprocessing.Process(target=self.target)
             p.start()
@@ -116,7 +116,7 @@ class Supervisor(NamedMixin):
                 "  child: name=%s pid=%d status=%s" % (name, child.pid, status)
             )
             if status in (psutil.STATUS_ZOMBIE, "unknown"):
-                logger.debug("  process {} is zombie, will cleanup".format(child.pid))
+                logger.debug(f"  process {child.pid} is zombie, will cleanup")
                 # join process to clean it up
                 child.wait()
                 # set the process to be removed from self._processes
@@ -145,7 +145,7 @@ class Supervisor(NamedMixin):
             # which shows that `pid` ultimately translates to `os.getpid()` after the
             # fork. So no big risk, but I add an assertion just in case anyway.
             pid = child.pid
-            assert pid, "Cannot add process with pid={}: {}".format(pid, child)
+            assert pid, f"Cannot add process with pid={pid}: {child}"
             self._processes[pid] = psutil.Process(pid)
 
     def target(self):
@@ -169,7 +169,7 @@ class Supervisor(NamedMixin):
             if self._terminating:
                 for proc in self._processes.values():
                     logger.info(
-                        "process: waiting for proces={} to finish.".format(proc)
+                        f"process: waiting for proces={proc} to finish."
                     )
                     proc.wait()
                 break
@@ -230,14 +230,14 @@ class Supervisor(NamedMixin):
         Sends a stop (SIGTERM) signal to all worker processes.
         """
         for process in self._processes.values():
-            logger.info("process: sending SIGTERM to pid={}".format(process.pid))
+            logger.info(f"process: sending SIGTERM to pid={process.pid}")
             process.terminate()
 
     def payload_friendly_name(self):
         payload = self._payload
         if isinstance(payload, types.MethodType):
             instance = payload.__self__
-            return "{}.{}".format(instance.__class__.__name__, payload.__name__)
+            return f"{instance.__class__.__name__}.{payload.__name__}"
         elif isinstance(payload, types.FunctionType):
             return payload.__name__
-        raise TypeError("invalid payload type {}".format(type(payload)))
+        raise TypeError(f"invalid payload type {type(payload)}")

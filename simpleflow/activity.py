@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class NotSet(object):
+class NotSet:
     def __repr__(self):
         return "<Priority Not Set>"
 
@@ -86,7 +86,7 @@ def with_attributes(
     return wrap
 
 
-class Activity(object):
+class Activity:
     def __init__(
         self,
         callable,

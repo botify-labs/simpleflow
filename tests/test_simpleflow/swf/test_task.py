@@ -10,7 +10,7 @@ def show_context_func():
 
 
 @activity.with_attributes()
-class ShowContextCls(object):
+class ShowContextCls:
     def execute(self):
         return self.context
 

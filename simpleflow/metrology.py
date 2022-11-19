@@ -17,7 +17,7 @@ from .workflow import Workflow
 ACTIVITY_KEY_RE = re.compile(r"activity\.(.+)\.json")
 
 
-class StepIO(object):
+class StepIO:
     def __init__(self):
         self.bytes = 0
         self.records = 0
@@ -41,7 +41,7 @@ class StepIO(object):
         )
 
 
-class Step(object):
+class Step:
     def __init__(self, name, task):
         self.name = name
         self.task = task
@@ -75,7 +75,7 @@ class Step(object):
             self.metadata[k] = v
 
 
-class StepExecution(object):
+class StepExecution:
     def __init__(self, step):
         self.step = step
 
@@ -86,7 +86,7 @@ class StepExecution(object):
         self.step.done()
 
 
-class MetrologyTask(object):
+class MetrologyTask:
     def can_upload(self):
         if not hasattr(self, "context"):
             return False
@@ -142,7 +142,7 @@ class MetrologyTask(object):
 
 class MetrologyWorkflow(Workflow):
     def after_closed(self, history):
-        super(MetrologyWorkflow, self).after_closed(history)
+        super().after_closed(history)
         return self.push_metrology(history)
 
     @property

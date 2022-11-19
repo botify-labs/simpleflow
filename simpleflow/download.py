@@ -10,7 +10,7 @@ from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
 
 
-class RemoteBinary(object):
+class RemoteBinary:
     """
     This class identifies if binary is available in $PATH so it can be used.
     If the binary is not available, simpleflow will try to download it and
@@ -52,14 +52,14 @@ class RemoteBinary(object):
     def _compute_local_directory(self):
         suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
         return os.path.join(
-            SIMPLEFLOW_BINARIES_DIRECTORY, "{}-{}".format(self.name, suffix)
+            SIMPLEFLOW_BINARIES_DIRECTORY, f"{self.name}-{suffix}"
         )
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)
 
     def _compute_lock_location(self):
-        return os.path.join(self.local_directory, ".{}.lock".format(self.name))
+        return os.path.join(self.local_directory, f".{self.name}.lock")
 
     def _check_binary_present(self):
         return os.access(self.local_location, os.X_OK)

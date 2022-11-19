@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -130,7 +128,7 @@ class WorkflowType(BaseModel):
 
     def set_child_policy(self, policy):
         if policy not in CHILD_POLICIES:
-            raise ValueError("invalid child policy value: {}".format(policy))
+            raise ValueError(f"invalid child policy value: {policy}")
 
         self.child_policy = policy
 
@@ -280,7 +278,7 @@ class WorkflowType(BaseModel):
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
         if child_policy not in CHILD_POLICIES:
-            raise ValueError("invalid child policy value: {}".format(child_policy))
+            raise ValueError(f"invalid child policy value: {child_policy}")
         if input is None:
             input = {}
         if tag_list is not None and not isinstance(tag_list, list):

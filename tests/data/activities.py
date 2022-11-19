@@ -1,5 +1,3 @@
-
-
 from simpleflow import activity
 
 from .constants import DEFAULT_VERSION
@@ -21,7 +19,7 @@ def triple(x):
 
 
 @activity.with_attributes(version=DEFAULT_VERSION, idempotent=False)
-class Tetra(object):
+class Tetra:
     def __init__(self, x):
         self.x = x
 
@@ -36,7 +34,7 @@ def increment_retry(x):
 
 @activity.with_attributes(version=DEFAULT_VERSION)
 def print_message(msg):
-    print("MESSAGE: {}".format(msg))
+    print(f"MESSAGE: {msg}")
 
 
 @activity.with_attributes(version=DEFAULT_VERSION, raises_on_failure=True)

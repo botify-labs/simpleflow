@@ -25,7 +25,7 @@ BUCKET = "perfect_day"
 
 
 @with_attributes(task_list="test_task_list")
-class MyTask(object):
+class MyTask:
     def __init__(self, num):
         self.num = num
 
@@ -35,7 +35,7 @@ class MyTask(object):
 
 class CustomExecutor(Executor):
     def __init__(self, workflow_class):
-        super(CustomExecutor, self).__init__(workflow_class)
+        super().__init__(workflow_class)
         self.create_workflow()
 
     def submit(self, func, *args, **kwargs):
@@ -43,7 +43,7 @@ class CustomExecutor(Executor):
             f = futures.Future()
             f.set_running()
             return f
-        return super(CustomExecutor, self).submit(func, *args, **kwargs)
+        return super().submit(func, *args, **kwargs)
 
 
 class MyWorkflow(workflow.Workflow, WorkflowStepMixin):

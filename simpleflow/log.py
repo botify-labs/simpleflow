@@ -12,7 +12,7 @@ ORANGE = "\033[38;5;214m"
 END = "\033[0m"
 
 
-class ColorModes(object):
+class ColorModes:
     AUTO = "auto"
     ALWAYS = "always"
     NEVER = "never"
@@ -147,7 +147,7 @@ class SyslogFormatter(logging.Formatter):
             )
 
         msg.append(record.levelname)
-        msg.append("pid={}".format(record.process))
+        msg.append(f"pid={record.process}")
         msg.append(record.message)
         return " ".join(msg)
 

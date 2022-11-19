@@ -1,4 +1,4 @@
-class Response(object):
+class Response:
     """
     This class wraps SWF responses so they can be passed around and examined later.
     We used to do that with raw python structures, but it's too hard to change

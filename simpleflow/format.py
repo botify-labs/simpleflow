@@ -58,7 +58,7 @@ def encode(message, max_length, allow_jumbo_fields=True):
     if len(message) > max_length:
         if not can_use_jumbo_fields:
             _log_message_too_long(message)
-            raise JumboTooLargeError("Message too long ({} chars)".format(len(message)))
+            raise JumboTooLargeError(f"Message too long ({len(message)} chars)")
 
         if len(message) > constants.JUMBO_FIELDS_MAX_SIZE:
             _log_message_too_long(message)
@@ -138,7 +138,7 @@ def _push_jumbo_field(message):
     bucket_with_dir = _jumbo_fields_bucket()
     if "/" in bucket_with_dir:
         bucket, directory = _jumbo_fields_bucket().split("/", 1)
-        path = "{}/{}".format(directory, uuid)
+        path = f"{directory}/{uuid}"
     else:
         bucket = bucket_with_dir
         path = uuid
@@ -146,7 +146,7 @@ def _push_jumbo_field(message):
     storage.push_content(bucket, path, message)
     _set_cached(path, message)
 
-    return "{}{}/{} {}".format(constants.JUMBO_FIELDS_PREFIX, bucket, path, size)
+    return f"{constants.JUMBO_FIELDS_PREFIX}{bucket}/{path} {size}"
 
 
 def _pull_jumbo_field(location):
@@ -167,7 +167,7 @@ def _log_message_too_long(message):
         message = "{} <...truncated to {} chars>".format(
             message[: constants.MAX_LOG_FIELD], constants.MAX_LOG_FIELD
         )
-    logger.error("Message too long, will raise: {}".format(message))
+    logger.error(f"Message too long, will raise: {message}")
 
 
 # A few helpers to wrap common SWF fields

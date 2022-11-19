@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -29,7 +27,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
     _infos_plural = "typeInfos"
 
     def __init__(self, domain, *args, **kwargs):
-        super(ActivityTypeQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.domain = domain
 
     @property
@@ -318,8 +316,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
                     next_page_token=response["nextPageToken"],
                 )
 
-                for activity_type_info in response[self._infos_plural]:
-                    yield activity_type_info
+                yield from response[self._infos_plural]
 
         return [
             self.to_ActivityType(self.domain, activity_info)

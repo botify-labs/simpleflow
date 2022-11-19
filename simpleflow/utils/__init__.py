@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from typing import Any, AnyStr, Type, Union
 
 
-def issubclass_(arg1: Union[Type, Any], arg2: Type) -> bool:
+def issubclass_(arg1: type | Any, arg2: type) -> bool:
     """
     Like issubclass but without exception.
     """
@@ -32,7 +32,7 @@ def hex_hash(s):
     if not s:
         return "0"
     s = s.encode("utf-8")
-    return "{:x}".format(adler32(s) & 0xFFFFFFFF)
+    return f"{adler32(s) & 0xFFFFFFFF:x}"
 
 
 def format_exc(exc: Exception) -> AnyStr:
@@ -45,7 +45,7 @@ def format_exc(exc: Exception) -> AnyStr:
     if exc is None or not valuestr:
         line = "%s" % etype
     else:
-        line = "%s: %s" % (etype, valuestr)
+        line = "{}: {}".format(etype, valuestr)
     return line
 
 
@@ -59,11 +59,11 @@ def _some_str(value: Any) -> AnyStr:
         return "<unprintable %s object>" % type(value).__name__
 
 
-def format_exc_type(exc_type: Type) -> AnyStr:
+def format_exc_type(exc_type: type) -> AnyStr:
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
-        type_str = "%s.%s" % (type_mod, type_str)
+        type_str = "{}.{}".format(type_mod, type_str)
     return type_str
 
 
@@ -105,7 +105,7 @@ def full_object_name(obj: Any) -> AnyStr:
     return full_class_name(obj.__class__)
 
 
-def full_class_name(klass: Type) -> AnyStr:
+def full_class_name(klass: type) -> AnyStr:
     module = klass.__module__
     name = klass.__name__ if PY2 else klass.__qualname__
     if module is None:

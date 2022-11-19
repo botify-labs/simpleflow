@@ -1,4 +1,4 @@
-class Submittable(object):
+class Submittable:
     """
     Object directly submittable to an executor, without wrapping:
     E.g. an ActivityTask but not an Activity.
@@ -8,7 +8,7 @@ class Submittable(object):
         pass
 
 
-class SubmittableContainer(object):
+class SubmittableContainer:
     """
     Objects where submission returns either Submittable or SubmittableContainer objects
 

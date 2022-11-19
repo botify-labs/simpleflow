@@ -1,5 +1,3 @@
-
-
 from simpleflow import Workflow, activity
 from simpleflow.exceptions import ExecutionBlocked
 

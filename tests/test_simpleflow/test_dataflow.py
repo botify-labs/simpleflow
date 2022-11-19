@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-
-
 import datetime
 import functools
-from builtins import range
 
 import boto
-from mock import patch
+from unittest.mock import patch
 
 import swf.models
 import swf.models.decision
@@ -702,7 +698,7 @@ def test_workflow_map():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             input={"args": i},
             result=i + 1,
@@ -1041,7 +1037,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             result=i + 1,
         )
@@ -1056,7 +1052,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             result=i + 1,
         )
@@ -1100,7 +1096,7 @@ def test_workflow_with_big_decision_response():
     assert decisions[1].type == "StartTimer"
 
 
-class OnFailureMixin(object):
+class OnFailureMixin:
     failed = False
 
     def on_failure(self, history, reason, details=None):
@@ -1439,7 +1435,7 @@ def test_more_than_1000_open_activities_scheduled():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="scheduled",
             result=i + 1,
         )
@@ -1473,7 +1469,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state=get_random_state(),
             result=i + 1,
         )
@@ -1495,7 +1491,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=first_decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="scheduled",
             result=i + 1,
         )
@@ -1511,7 +1507,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=history.last_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(id_),
+            activity_id=f"activity-tests.data.activities.increment-{id_}",
             last_state="scheduled",
             result=id_,
         )

@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -43,7 +41,7 @@ class Decision(dict):
     _base_type = None
 
     def __init__(self, action=None, *args, **kwargs):
-        super(Decision, self).__init__()
+        super().__init__()
 
         if action and hasattr(self, action):
             action_method = getattr(self, action)

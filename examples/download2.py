@@ -1,5 +1,3 @@
-
-
 import subprocess
 
 from simpleflow import Workflow, activity

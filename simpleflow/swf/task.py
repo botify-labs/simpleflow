@@ -5,7 +5,7 @@ import swf.models.decision
 from simpleflow import Workflow, logger, task
 
 
-class SwfTask(object):
+class SwfTask:
     """
     simpleflow.swf task; useful for type checking.
     """
@@ -147,7 +147,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def name(self):
-        return "workflow-{}".format(self.workflow.name)
+        return f"workflow-{self.workflow.name}"
 
     @property
     def payload(self):
@@ -261,7 +261,7 @@ class SignalTask(task.SignalTask, SwfTask):
     def __init__(
         self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs
     ):
-        super(SignalTask, self).__init__(name, *args, **kwargs)
+        super().__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
         self.control = control
@@ -320,7 +320,7 @@ class MarkerTask(task.MarkerTask, SwfTask):
         return cls(a_task.name, *a_task.args, **a_task.kwargs)
 
     def __init__(self, name, details=None):
-        super(MarkerTask, self).__init__(name, details)
+        super().__init__(name, details)
         self.id = None
 
     def schedule(self, *args, **kwargs):
@@ -339,7 +339,7 @@ class TimerTask(task.TimerTask, SwfTask):
         return cls(a_task.timer_id, a_task.timeout, a_task.control)
 
     def __init__(self, timer_id, timeout, control):
-        super(TimerTask, self).__init__(timer_id, timeout, control)
+        super().__init__(timer_id, timeout, control)
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.TimerDecision(
@@ -359,7 +359,7 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
         return cls(a_task.timer_id)
 
     def __init__(self, timer_id):
-        super(CancelTimerTask, self).__init__(timer_id)
+        super().__init__(timer_id)
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.TimerDecision("cancel", id=self.timer_id,)

@@ -1,5 +1,3 @@
-
-
 import swf.models
 
 from .base import ActivityPoller, Worker

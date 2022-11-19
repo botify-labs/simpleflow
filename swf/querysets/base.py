@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -10,7 +8,7 @@ from swf.core import ConnectedSWFObject
 
 class BaseQuerySet(ConnectedSWFObject):
     def __init__(self, *args, **kwargs):
-        super(BaseQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get(self, *args, **kwargs):
         raise NotImplementedError

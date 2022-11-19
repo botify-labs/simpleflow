@@ -1,10 +1,8 @@
-# -*- coding:utf-8 -*-
-
 import unittest
 
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
-from mock import patch
+from unittest.mock import patch
 
 import swf.settings
 from swf.exceptions import DoesNotExistError, ResponseError

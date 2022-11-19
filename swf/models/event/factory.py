@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -63,7 +61,7 @@ EVENTS = collections.OrderedDict(
 )
 
 
-class EventFactory(object):
+class EventFactory:
     """Processes an input json event representation, and instantiates
     an ``swf.models.event.Event`` subclass instance accordingly.
 
@@ -159,7 +157,7 @@ class EventFactory(object):
         return camel_to_underscore(left + right)
 
 
-class CompiledEventFactory(object):
+class CompiledEventFactory:
     """
     Process an Event object and instantiates the corresponding
     swf.models.event.compiler.CompiledEvent.

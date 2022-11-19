@@ -61,7 +61,7 @@ class FailingWorkflow(Workflow):
 
     def on_task_failure(
         self, failure_context: TaskFailureContext
-    ) -> Optional[TaskFailureContext]:
+    ) -> TaskFailureContext | None:
         print(
             colorize(
                 YELLOW,
@@ -81,8 +81,8 @@ class NotFailingWorkflow(Workflow):
     task_list = "example"
 
     def run(self, *args, **kwargs):
-        print(colorize(GREEN, "NotFailingWorkflow args: {}".format(args)))
-        print(colorize(GREEN, "NotFailingWorkflow kwargs: {}".format(kwargs)))
+        print(colorize(GREEN, f"NotFailingWorkflow args: {args}"))
+        print(colorize(GREEN, f"NotFailingWorkflow kwargs: {kwargs}"))
         g = Group(raises_on_failure=False)
         g.append(FailingWorkflow)
         g.append(timeout_no_raise)
@@ -97,7 +97,7 @@ class NotFailingWorkflow(Workflow):
 
     def on_task_failure(
         self, failure_context: TaskFailureContext
-    ) -> Optional[TaskFailureContext]:
+    ) -> TaskFailureContext | None:
         # print(failure_context)
         if (
             isinstance(failure_context.a_task, WorkflowTask)

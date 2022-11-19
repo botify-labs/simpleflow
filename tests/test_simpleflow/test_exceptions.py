@@ -1,7 +1,7 @@
 import unittest
 
 import boto
-from mock import patch
+from unittest.mock import patch
 from sure import expect
 
 from simpleflow.exceptions import TaskFailed

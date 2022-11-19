@@ -1,6 +1,3 @@
-# coding: utf-8
-
-
 import json
 import os.path
 import platform
@@ -123,7 +120,7 @@ def add(a, b=1):
 
 
 @execute.python()
-class Add(object):
+class Add:
     def __init__(self, a, b=1):
         self.a = a
         self.b = b
@@ -158,7 +155,7 @@ def print_string(s, retval):
 
 
 @execute.python()
-class PrintString(object):
+class PrintString:
     def __init__(self, s, retval):
         self.s = s
         self.retval = retval
@@ -195,7 +192,7 @@ def raise_dummy_exception():
 
 
 @execute.python()
-class RaiseDummyException(object):
+class RaiseDummyException:
     def __init__(self):
         pass
 
@@ -283,7 +280,7 @@ def test_timeout_execute():
     with pytest.raises(ExecutionTimeoutError) as e:
         func(10)
     assert (time.time() - t) < 10.0
-    assert "ExecutionTimeoutError after {} seconds".format(timeout) in str(e.value)
+    assert f"ExecutionTimeoutError after {timeout} seconds" in str(e.value)
 
 
 def test_timeout_execute_from_thread():

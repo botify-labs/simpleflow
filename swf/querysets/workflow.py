@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -37,7 +35,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     _infos_plural = "typeInfos"
 
     def __init__(self, domain, *args, **kwargs):
-        super(BaseWorkflowQuerySet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         Domain.check(domain)
         self.domain = domain
 
@@ -70,8 +68,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
                 *args, next_page_token=response["nextPageToken"], **kwargs
             )
 
-            for item in response[self._infos_plural]:
-                yield item
+            yield from response[self._infos_plural]
 
 
 class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
@@ -439,7 +436,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             kwargs["oldest_date"] = kwargs.pop("start_oldest_date")
 
         try:
-            method = "list_{}_workflow_executions".format(statuses[status])
+            method = f"list_{statuses[status]}_workflow_executions"
             return getattr(self.connection, method)(*args, **kwargs)
         except KeyError:
             raise ValueError("Unknown status provided: %s" % status)

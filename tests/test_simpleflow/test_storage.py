@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 import boto
-from mock import patch
+from unittest.mock import patch
 
 from simpleflow import storage
 from tests.moto_compat import mock_s3
@@ -100,7 +100,7 @@ class TestGroup(unittest.TestCase):
 
         # bucket where we provided a host/bucket: return bucket+host
         self.assertEqual(
-            storage.sanitize_bucket_and_host("s3.amazonaws.com/{}".format(self.bucket)),
+            storage.sanitize_bucket_and_host(f"s3.amazonaws.com/{self.bucket}"),
             (self.bucket, "s3.amazonaws.com"),
         )
 

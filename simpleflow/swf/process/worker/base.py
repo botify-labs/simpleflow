@@ -28,7 +28,7 @@ from swf.responses import Response
 class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        super(Worker, self).__init__(
+        super().__init__(
             payload=self._poller.start, nb_children=nb_children,
         )
 
@@ -71,14 +71,14 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         self.process_mode = process_mode or "local"
         assert (
             self.process_mode in VALID_PROCESS_MODES
-        ), 'invalid process_mode "{}"'.format(self.process_mode)
+        ), f'invalid process_mode "{self.process_mode}"'
 
         self.poll_data = poll_data
-        super(ActivityPoller, self).__init__(domain, task_list)
+        super().__init__(domain, task_list)
 
     @property
     def name(self):
-        return "{}(task_list={})".format(self.__class__.__name__, self.task_list,)
+        return f"{self.__class__.__name__}(task_list={self.task_list})"
 
     @with_state("polling")
     def poll(self, task_list=None, identity=None):
@@ -147,7 +147,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             )
         except Exception as err:
             logger.error(
-                "cannot fail task {}: {}".format(task.activity_type.name, err,)
+                f"cannot fail task {task.activity_type.name}: {err}"
             )
 
     @property
@@ -164,10 +164,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 }
             )
         else:
-            return super(ActivityPoller, self).identity
+            return super().identity
 
 
-class ActivityWorker(object):
+class ActivityWorker:
     def __init__(self, dispatcher=None):
         self._dispatcher = dispatcher or dynamic_dispatcher.Dispatcher()
 
@@ -194,7 +194,7 @@ class ActivityWorker(object):
         :param middlewares: Paths to middleware functions to execute before and after any Activity
         :type middlewares: Optional[Dict[str, str]]
         """
-        logger.debug("ActivityWorker.process() pid={}".format(os.getpid()))
+        logger.debug(f"ActivityWorker.process() pid={os.getpid()}")
         try:
             activity = self.dispatch(task)
             input = format.decode(task.input)
@@ -213,7 +213,7 @@ class ActivityWorker(object):
             ).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.exception("process error: {}".format(str(exc_value)))
+            logger.exception(f"process error: {str(exc_value)}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
                 details = exc_value.args[0]
                 reason = format_exc(exc_value)  # FIXME json.loads and rebuild?
@@ -254,14 +254,14 @@ def process_task(poller, token, task, middlewares=None):
     :param middlewares: Paths to middleware functions to execute before and after any Activity
     :type middlewares: Optional[Dict[str, str]]
     """
-    logger.debug("process_task() pid={}".format(os.getpid()))
+    logger.debug(f"process_task() pid={os.getpid()}")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
     worker.process(poller, token, task, middlewares)
 
 
 def spawn_kubernetes_job(poller, swf_response):
-    logger.info("scheduling new kubernetes job name={}".format(poller.job_name))
+    logger.info(f"scheduling new kubernetes job name={poller.job_name}")
     job = KubernetesJob(poller.job_name, poller.domain.name, swf_response)
     job.schedule()
 
@@ -279,7 +279,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     """
 
     def on_terminate(p):
-        logger.info("process: terminated pid={} retcode={}".format(p.pid, p.returncode))
+        logger.info(f"process: terminated pid={p.pid} retcode={p.returncode}")
 
     if pid == os.getpid():
         raise RuntimeError("process: cannot terminate self!")
@@ -368,13 +368,13 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
                 )
             return
         try:
-            logger.debug("heartbeating for pid={} (token={})".format(worker.pid, token))
+            logger.debug(f"heartbeating for pid={worker.pid} (token={token})")
             response = poller.heartbeat(token)
         except swf.exceptions.DoesNotExistError as error:
             # Either the task or the workflow execution no longer exists,
             # let's kill the worker process.
-            logger.warning("heartbeat failed: {}".format(error))
-            logger.warning("killing (KILL) worker with pid={}".format(worker.pid))
+            logger.warning(f"heartbeat failed: {error}")
+            logger.warning(f"killing (KILL) worker with pid={worker.pid}")
             reap_process_tree(worker.pid)
             return
         except swf.exceptions.RateLimitExceededError as error:

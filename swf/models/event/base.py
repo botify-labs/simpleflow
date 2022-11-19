@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -14,7 +12,7 @@ from simpleflow import format
 from swf.utils import cached_property, camel_to_underscore
 
 
-class Event(object):
+class Event:
     """Simple workflow execution event wrapper base class
 
     Intends to be used as a base abstraction for the multiple amazon
@@ -64,7 +62,7 @@ class Event(object):
         self.process_attributes()
 
     def __repr__(self):
-        return "<Event %s %s : %s >" % (self.id, self.type, self.state)
+        return "<Event {} {} : {} >".format(self.id, self.type, self.state)
 
     @property
     def id(self):

@@ -1,5 +1,3 @@
-
-
 from simpleflow import Workflow, futures
 from simpleflow.canvas import Chain
 
@@ -16,10 +14,10 @@ class MarkerWorkflow(Workflow):
         futures.wait(m)
         markers = self.list_markers()
         assert 2 == len(markers)
-        print("Markers: {}".format(markers))
+        print(f"Markers: {markers}")
         markers = self.list_markers(all=True)
         assert 3 == len(markers)
-        print("Markers, all: {}".format(markers))
+        print(f"Markers, all: {markers}")
 
 
 class MarkerInChainWorkflow(Workflow):
@@ -36,7 +34,7 @@ class MarkerInChainWorkflow(Workflow):
         futures.wait(self.submit(chain))
         markers = self.list_markers()
         assert 2 == len(markers)
-        print("Markers: {}".format(markers))
+        print(f"Markers: {markers}")
         markers = self.list_markers(all=True)
         assert 3 == len(markers)
-        print("Markers, all: {}".format(markers))
+        print(f"Markers, all: {markers}")

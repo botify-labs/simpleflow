@@ -19,7 +19,7 @@ def configure(dct):
 def print_settings():
     for key in sorted(_keys):
         value = getattr(sys.modules[__name__], key)
-        print("{}={}".format(key, pformat(value)))
+        print(f"{key}={pformat(value)}")
 
 
 # initialize a list of settings names

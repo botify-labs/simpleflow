@@ -8,7 +8,7 @@ import kubernetes.config
 from simpleflow.utils import json_dumps
 
 
-class KubernetesJob(object):
+class KubernetesJob:
     def __init__(self, job_name, domain, response):
         self.job_name = job_name
         self.response = response

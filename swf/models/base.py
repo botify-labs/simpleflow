@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -15,7 +13,7 @@ from swf.exceptions import DoesNotExistError
 Difference = namedtuple("Difference", ("attr", "local", "upstream"))
 
 
-class ModelDiff(object):
+class ModelDiff:
     """Holds differences between local and upstream model version.
 
     :param  input: triples (tuples) storing in order: compared attribute name,

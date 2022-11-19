@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 import boto.exception
 
 from simpleflow import format, logging_context
@@ -36,7 +34,7 @@ class ActivityWorker(Actor):
     """
 
     def __init__(self, domain, task_list, identity=None):
-        super(ActivityWorker, self).__init__(domain, task_list)
+        super().__init__(domain, task_list)
 
         self._identity = identity
 
@@ -57,7 +55,7 @@ class ActivityWorker(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to cancel activity task with token={}".format(task_token),
+                    f"Unable to cancel activity task with token={task_token}",
                     message,
                 )
             raise ResponseError(message)
@@ -81,7 +79,7 @@ class ActivityWorker(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to complete activity task with token={}".format(task_token),
+                    f"Unable to complete activity task with token={task_token}",
                     message,
                 )
 
@@ -109,7 +107,7 @@ class ActivityWorker(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to fail activity task with token={}".format(task_token),
+                    f"Unable to fail activity task with token={task_token}",
                     message,
                 )
 
@@ -132,7 +130,7 @@ class ActivityWorker(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to send heartbeat with token={}".format(task_token),
+                    f"Unable to send heartbeat with token={task_token}",
                     message,
                 )
 

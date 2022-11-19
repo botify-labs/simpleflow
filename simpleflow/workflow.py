@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from simpleflow.base import Submittable, SubmittableContainer
@@ -71,7 +69,7 @@ class Workflow(Submittable):
             return submittable.submit(self._executor)
         else:
             raise TypeError(
-                "Bad type for {} activity ({})".format(submittable, type(submittable))
+                f"Bad type for {submittable} activity ({type(submittable)})"
             )
 
     def map(self, activity, iterable):
@@ -215,10 +213,10 @@ class Workflow(Submittable):
     def record_marker(self, name: str, details: Any = None) -> Submittable:
         return self.executor.record_marker(name, details)
 
-    def list_markers(self, all: bool = False) -> List[Marker]:
+    def list_markers(self, all: bool = False) -> list[Marker]:
         return self.executor.list_markers(all)
 
-    def get_event_details(self, event_type: str, event_name: str) -> Optional[dict]:
+    def get_event_details(self, event_type: str, event_name: str) -> dict | None:
         """
         Get details about an event.
         Backend-dependent.

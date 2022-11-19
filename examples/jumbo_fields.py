@@ -1,5 +1,3 @@
-
-
 import os
 
 from simpleflow import Workflow, activity
@@ -34,4 +32,4 @@ class JumboFieldsWorkflow(Workflow):
             raise ValueError()
         long_string = self.submit(repeat50k, str(string))
         string_length = self.submit(length, long_string)
-        print("{} * 50k has a length of: {}".format(string, string_length.result))
+        print(f"{string} * 50k has a length of: {string_length.result}")

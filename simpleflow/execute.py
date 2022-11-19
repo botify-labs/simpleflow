@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 import errno
@@ -22,7 +20,6 @@ import tempfile
 import traceback
 
 # noinspection PyCompatibility
-from builtins import map
 
 from future.utils import iteritems
 
@@ -42,7 +39,7 @@ MAX_ARGUMENTS_JSON_LENGTH = 65536
 __all__ = ["program", "python"]
 
 
-class RequiredArgument(object):
+class RequiredArgument:
     pass
 
 
@@ -78,7 +75,7 @@ def format_arguments(*args, **kwargs):
             return "-" + str(key)  # short option -c
         return "--" + str(key)  # long option --val
 
-    return ['{}="{}"'.format(arg(k), v) for k, v in iteritems(kwargs)] + list(
+    return [f'{arg(k)}="{v}"' for k, v in iteritems(kwargs)] + list(
         map(str, args)
     )
 
@@ -99,7 +96,7 @@ def check_arguments(argspec: inspect.ArgSpec, args: Any) -> None:
     # Calling func(a, b) with func(1, 2, 3)
     if not argspec.varargs and argspec.args and len(args) != len(argspec.args):
         raise TypeError(
-            "command takes {} arguments: {} passed".format(len(argspec.args), len(args))
+            f"command takes {len(argspec.args)} arguments: {len(args)} passed"
         )
 
 
@@ -109,9 +106,9 @@ def check_keyword_arguments(argspec: inspect.ArgSpec, kwargs: dict) -> None:
         raise TypeError("command does not take keyword arguments")
 
     arguments_defaults = zip_arguments_defaults(argspec)
-    not_found = set(
+    not_found = {
         name for name, value in arguments_defaults if value is RequiredArgument
-    ) - set(kwargs)
+    } - set(kwargs)
     # Calling func(a=1, b) with func(2) instead of func(a=0, 2)
     if not_found:
         raise TypeError(
@@ -147,7 +144,7 @@ def get_name(func):
     prefix = func.__module__
 
     if not callable(func):
-        raise ValueError("{} is not callable".format(func))
+        raise ValueError(f"{func} is not callable")
 
     if hasattr(func, "name"):
         name = func.name
@@ -193,9 +190,9 @@ def wait_subprocess(process, timeout=None, command_info=None):
 def python(
     interpreter: AnyStr = "python",
     logger_name: AnyStr = __name__,
-    timeout: Optional[int] = None,
+    timeout: int | None = None,
     kill_children: bool = False,
-    env: Optional[dict] = None,
+    env: dict | None = None,
 ):
     """
     Execute a callable as an external Python program.
@@ -233,10 +230,10 @@ def python(
                     "-m",
                     command,  # execute module a script.
                     get_name(func),
-                    "--logger-name={}".format(logger_name),
-                    "--result-fd={}".format(dup_result_fd),
-                    "--error-fd={}".format(dup_error_fd),
-                    "--context={}".format(json_dumps(context)),
+                    f"--logger-name={logger_name}",
+                    f"--result-fd={dup_result_fd}",
+                    f"--error-fd={dup_error_fd}",
+                    f"--context={json_dumps(context)}",
                 ]
                 if (
                     len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH
@@ -250,7 +247,7 @@ def python(
                     arg_file.flush()
                     arg_file.seek(0)
                     arg_fd = os.dup(arg_file.fileno())
-                    full_command.append("--arguments-json-fd={}".format(arg_fd))
+                    full_command.append(f"--arguments-json-fd={arg_fd}")
                     full_command.append("foo")  # dummy funcarg
                 if kill_children:
                     full_command.append("--kill-children")
@@ -365,7 +362,7 @@ def program(path=None, argument_format=format_arguments):
 
             command = path or func.__name__
             return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs), universal_newlines=True
+                [command] + argument_format(*args, **kwargs), text=True
             )
 
         try:
@@ -504,7 +501,7 @@ def main():
     try:
         arguments = format.decode(content)
     except Exception:
-        raise ValueError("cannot load arguments from {}".format(content))
+        raise ValueError(f"cannot load arguments from {content}")
     if cmd_arguments.logger_name:
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
@@ -530,7 +527,7 @@ def main():
                 callable_.context = context
             result = callable_(*args, **kwargs)
     except Exception as err:
-        logger.error("Exception: {}".format(err))
+        logger.error(f"Exception: {err}")
         exc_type, exc_value, exc_traceback = sys.exc_info()
         tb = traceback.format_tb(exc_traceback)
         details = json_dumps(

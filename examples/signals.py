@@ -1,5 +1,3 @@
-
-
 import time
 
 from simpleflow import Workflow, activity, futures
@@ -9,7 +7,7 @@ from simpleflow.task import ActivityTask
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_a_1_1(*args, **kwargs):
-    print("func_a_1_1({}, {})".format(args, kwargs))
+    print(f"func_a_1_1({args}, {kwargs})")
     time.sleep(1)
     print("end func_a_1_1")
     return "func_a_1_1"
@@ -17,7 +15,7 @@ def func_a_1_1(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_a_1_2(*args, **kwargs):
-    print("func_a_1_2({}, {})".format(args, kwargs))
+    print(f"func_a_1_2({args}, {kwargs})")
     time.sleep(10)
     print("end func_a_1_2")
     return "func_a_1_2"
@@ -25,7 +23,7 @@ def func_a_1_2(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_a_2_1(*args, **kwargs):
-    print("func_a_2_1({}, {})".format(args, kwargs))
+    print(f"func_a_2_1({args}, {kwargs})")
     time.sleep(1)
     print("end func_a_2_1")
     return "func_a_2_1"
@@ -33,7 +31,7 @@ def func_a_2_1(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_a_2_2(*args, **kwargs):
-    print("func_a_2_2({}, {})".format(args, kwargs))
+    print(f"func_a_2_2({args}, {kwargs})")
     time.sleep(1)
     print("end func_a_2_2")
     return "func_a_2_2"
@@ -41,7 +39,7 @@ def func_a_2_2(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_b_1_1(*args, **kwargs):
-    print("func_b_1_1({}, {})".format(args, kwargs))
+    print(f"func_b_1_1({args}, {kwargs})")
     time.sleep(1)
     print("end func_b_1_1")
     return "func_b_1_1"
@@ -49,7 +47,7 @@ def func_b_1_1(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_b_1_2(*args, **kwargs):
-    print("func_b_1_2({}, {})".format(args, kwargs))
+    print(f"func_b_1_2({args}, {kwargs})")
     time.sleep(1)
     print("end func_b_1_2")
     return "func_b_1_2"
@@ -57,7 +55,7 @@ def func_b_1_2(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_b_2_1(*args, **kwargs):
-    print("func_b_2_1({}, {})".format(args, kwargs))
+    print(f"func_b_2_1({args}, {kwargs})")
     time.sleep(1)
     print("end func_b_2_1")
     return "func_b_2_1"
@@ -65,7 +63,7 @@ def func_b_2_1(*args, **kwargs):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def func_b_2_2(*args, **kwargs):
-    print("func_b_2_2({}, {})".format(args, kwargs))
+    print(f"func_b_2_2({args}, {kwargs})")
     time.sleep(1)
     print("end func_b_2_2")
     return "func_b_2_2"

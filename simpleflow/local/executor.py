@@ -30,7 +30,7 @@ class Executor(executor.Executor):
     """
 
     def __init__(self, workflow_class, **kwargs):
-        super(Executor, self).__init__(workflow_class)
+        super().__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
         self.signals_sent = set()
@@ -38,12 +38,12 @@ class Executor(executor.Executor):
 
         self.wf_run_id = []
         self.wf_id = []
-        self._history: Optional[Union[builder.History, History]] = None
+        self._history: builder.History | History | None = None
 
         self.middlewares = kwargs.pop("middlewares", None)
 
     @property
-    def history(self) -> Optional[History]:
+    def history(self) -> History | None:
         if not isinstance(self._history, History):
             history = History(self._history)
             history.parse()
@@ -70,9 +70,9 @@ class Executor(executor.Executor):
         self._history = builder.History(self._workflow_class, input=input)
 
     def on_new_workflow(self, task):
-        self.wf_run_id.append("{}".format(uuid.uuid4()))
+        self.wf_run_id.append(f"{uuid.uuid4()}")
         self.wf_id.append(
-            task.id if task.id else "local_{}".format(task.workflow.name.lower()),
+            task.id if task.id else f"local_{task.workflow.name.lower()}",
         )
 
     def on_completed_workflow(self):
@@ -80,7 +80,7 @@ class Executor(executor.Executor):
         self.wf_id.pop()
 
     def submit(self, func, *args, **kwargs):
-        logger.info("executing task {}(args={}, kwargs={})".format(func, args, kwargs))
+        logger.info(f"executing task {func}(args={args}, kwargs={kwargs})")
 
         future = futures.Future()
 
@@ -114,7 +114,7 @@ class Executor(executor.Executor):
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)
         else:
-            raise TypeError("invalid type {} for {}".format(type(func), func))
+            raise TypeError(f"invalid type {type(func)} for {func}")
 
         if isinstance(task, WorkflowTask):
             self.on_new_workflow(task)
@@ -141,7 +141,7 @@ class Executor(executor.Executor):
                 ),
             )
             future.set_exception(task_failed)
-            logger.exception("rescuing exception: {}".format(exc_value))
+            logger.exception(f"rescuing exception: {exc_value}")
             if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(
                 func, "raises_on_failure", None
             ):

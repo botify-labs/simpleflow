@@ -26,7 +26,7 @@ def get_connection(host_or_region: str) -> connection.S3Connection:
     return connect_to_region(host_or_region)
 
 
-def sanitize_bucket_and_host(bucket: str) -> Tuple[str, str]:
+def sanitize_bucket_and_host(bucket: str) -> tuple[str, str]:
     """
     if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
     Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
@@ -36,7 +36,7 @@ def sanitize_bucket_and_host(bucket: str) -> Tuple[str, str]:
         host, bucket = bucket.split("/", 1)
         if "/" in bucket:
             raise ValueError(
-                "{} should contains only one slash separator".format(bucket)
+                f"{bucket} should contains only one slash separator"
             )
         if not host.endswith("amazonaws.com"):
             raise ValueError("host should be a *.amazonaws.com URL")
@@ -64,7 +64,7 @@ def sanitize_bucket_and_host(bucket: str) -> Tuple[str, str]:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
             logger.warning(
-                "Access denied while trying to get location of bucket {}".format(bucket)
+                f"Access denied while trying to get location of bucket {bucket}"
             )
             location = ""
         else:
@@ -98,7 +98,7 @@ def pull_content(bucket: str, path: str) -> str:
     return key.get_contents_as_string(encoding="utf-8")
 
 
-def push(bucket: str, path: str, src_file: str, content_type: Optional[str] = None) -> None:
+def push(bucket: str, path: str, src_file: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
@@ -109,7 +109,7 @@ def push(bucket: str, path: str, src_file: str, content_type: Optional[str] = No
     )
 
 
-def push_content(bucket: str, path: str, content: str, content_type: Optional[str] = None) -> None:
+def push_content(bucket: str, path: str, content: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}

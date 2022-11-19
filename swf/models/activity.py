@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -214,7 +212,7 @@ class ActivityType(BaseModel):
                 description=self.description,
             )
         except SWFTypeAlreadyExistsError as err:
-            raise AlreadyExistsError("{} already exists".format(self))
+            raise AlreadyExistsError(f"{self} already exists")
         except SWFResponseError as err:
             if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
                 raise DoesNotExistError(err.body["message"])

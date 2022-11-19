@@ -2,6 +2,6 @@ def do_nothing(*args, **kwargs):
     return {}
 
 
-class DryRunDispatcher(object):
+class DryRunDispatcher:
     def dispatch(self, name):
         return do_nothing

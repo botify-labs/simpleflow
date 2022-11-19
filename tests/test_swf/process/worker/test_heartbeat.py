@@ -9,7 +9,7 @@ import swf.exceptions
 from simpleflow.swf.process.worker.heartbeat import Heartbeater, HeartbeatProcess
 
 
-class FakeHeartbeat(object):
+class FakeHeartbeat:
     def __init__(self, max_count=1):
         self._token = None
         self._max_count = max_count
@@ -26,31 +26,31 @@ class FakeHeartbeat(object):
 
 class FakeHeartbeatCancel(FakeHeartbeat):
     def __call__(self, token):
-        super(FakeHeartbeatCancel, self).__call__(token)
+        super().__call__(token)
         return {"cancelRequested": True}
 
 
 class FakeHeartbeatRaises(FakeHeartbeat):
     def __init__(self, raises, max_count=1):
-        super(FakeHeartbeatRaises, self).__init__(max_count)
+        super().__init__(max_count)
         self._raises = raises
 
     def __call__(self, token):
-        super(FakeHeartbeatRaises, self).__call__(token)
+        super().__call__(token)
         raise self._raises
 
 
-class FakeActivityType(object):
+class FakeActivityType:
     def __init__(self, name):
         self.name = name
 
 
-class FakeTask(object):
+class FakeTask:
     def __init__(self, name):
         self.activity_type = FakeActivityType(name)
 
 
-class FakeTaskHandler(object):
+class FakeTaskHandler:
     def __init__(self, callable, args, kwargs, result_queue):
         self._callable = callable
         self._args = args
@@ -159,7 +159,7 @@ class TestHeartbeatProcess(unittest.TestCase):
             os.kill(heartbeat_pid, signal.SIGKILL)
 
 
-class Toggler(object):
+class Toggler:
     def __init__(self, value=True):
         self.value = value
 

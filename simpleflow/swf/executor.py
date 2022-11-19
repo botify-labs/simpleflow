@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 import copy
@@ -146,8 +144,8 @@ class Executor(executor.Executor):
         repair_workflow_id=None,
         repair_run_id=None,
     ):
-        super(Executor, self).__init__(workflow_class)
-        self._history: Optional[History] = None
+        super().__init__(workflow_class)
+        self._history: History | None = None
         self._run_context = {}
         self.domain = domain
         self.task_list = task_list
@@ -188,7 +186,7 @@ class Executor(executor.Executor):
         self.create_workflow()
 
     @property
-    def history(self) -> Optional[History]:
+    def history(self) -> History | None:
         return self._history
 
     def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
@@ -223,9 +221,9 @@ class Executor(executor.Executor):
 
         if isinstance(a_task, WorkflowTask):
             # Some task types must have globally unique names.
-            suffix = "{}--{}--{}".format(workflow_id, hex_hash(run_id), suffix)
+            suffix = f"{workflow_id}--{hex_hash(run_id)}--{suffix}"
 
-        task_id = "{name}-{suffix}".format(name=a_task.name, suffix=suffix)
+        task_id = f"{a_task.name}-{suffix}"
         if len(task_id) > 256:  # Better safe than sorry...
             task_id = (
                 task_id[0:223] + "-" + hashlib.md5(task_id.encode("utf-8")).hexdigest()
@@ -591,7 +589,7 @@ class Executor(executor.Executor):
             finder = self.TASK_TYPE_TO_EVENT_FINDER.get(typ)
             if finder:
                 return finder(self, a_task, history)
-        raise TypeError("invalid type {} for task {}".format(type(a_task), a_task))
+        raise TypeError(f"invalid type {type(a_task)} for task {a_task}")
 
     def resume_activity(self, a_task, event):
         """
@@ -646,9 +644,9 @@ class Executor(executor.Executor):
         self,
         event: dict,
         future: futures.Future,
-        swf_task: Union[ActivityTask, WorkflowTask],
-        exception_class: Type[Exception],
-    ) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]:
+        swf_task: ActivityTask | WorkflowTask,
+        exception_class: type[Exception],
+    ) -> futures.Future | tuple[futures.Future | None, SwfTask] | None:
         """
         Call the workflow's on_task_failure method if it exists.
         If no retry/abort/ignore decision, use the default strategy (using retry count and raises_on_failure).
@@ -681,9 +679,9 @@ class Executor(executor.Executor):
         self,
         event: dict,
         future: futures.Future,
-        swf_task: Union[ActivityTask, WorkflowTask],
-        exception_class: Type[Exception],
-    ) -> Union[futures.Future, Tuple[Optional[futures.Future], SwfTask], None]:
+        swf_task: ActivityTask | WorkflowTask,
+        exception_class: type[Exception],
+    ) -> futures.Future | tuple[futures.Future | None, SwfTask] | None:
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
             if isinstance(
@@ -806,7 +804,7 @@ class Executor(executor.Executor):
         failure_context.decision = base_task.TaskFailureContext.Decision.handled
         return failure_context
 
-    def find_timer_associated_with(self, event: dict, swf_task: Union[ActivityTask, WorkflowTask]) -> Optional[dict]:
+    def find_timer_associated_with(self, event: dict, swf_task: ActivityTask | WorkflowTask) -> dict | None:
         """
         Return a potential timer "associated with" an event, i.e.
         * with a related name
@@ -826,7 +824,7 @@ class Executor(executor.Executor):
 
     @staticmethod
     def get_retry_task_timer_id(swf_task):
-        return "__simpleflow_task_{}".format(str(swf_task.id))
+        return f"__simpleflow_task_{str(swf_task.id)}"
 
     def schedule_task(self, a_task, task_list=None):
         """
@@ -842,7 +840,7 @@ class Executor(executor.Executor):
         if a_task.idempotent:
             task_identifier = (type(a_task), self.domain, a_task.id)
             if task_identifier in self._idempotent_tasks_to_submit:
-                logger.debug("Not resubmitting task {}".format(a_task.name))
+                logger.debug(f"Not resubmitting task {a_task.name}")
                 return
             self._idempotent_tasks_to_submit.add(task_identifier)
 
@@ -927,7 +925,7 @@ class Executor(executor.Executor):
                 workflow_id, run_id = self._workflow_id, self._run_id
             a_task.id = self._make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
         event = self.find_event(a_task, self._history)
-        logger.debug("executor: resume {}, event={}".format(a_task, event))
+        logger.debug(f"executor: resume {a_task}, event={event}")
         future = None
 
         # in repair mode, check if we absolutely want to re-execute this task
@@ -1072,7 +1070,7 @@ class Executor(executor.Executor):
                     )
                 )
             else:
-                raise TypeError("invalid type {} for {}".format(type(func), func))
+                raise TypeError(f"invalid type {type(func)} for {func}")
         except exceptions.ExecutionBlocked:
             return futures.Future()
 
@@ -1090,12 +1088,12 @@ class Executor(executor.Executor):
 
         """
         iterable = task.get_actual_value(iterable)
-        return super(Executor, self).map(callable, iterable)
+        return super().map(callable, iterable)
 
     # TODO: check if really used or remove it
     def starmap(self, callable, iterable):
         iterable = task.get_actual_value(iterable)
-        return super(Executor, self).starmap(callable, iterable)
+        return super().starmap(callable, iterable)
 
     def replay(self, decision_response: swf.responses.Response, decref_workflow: bool = True) -> DecisionsAndContext:
         """Replay the workflow from the start until it blocks.
@@ -1188,7 +1186,7 @@ class Executor(executor.Executor):
             )
 
             tb = traceback.format_exc()
-            details = "Traceback:\n{}".format(tb)
+            details = f"Traceback:\n{tb}"
             logger.exception(
                 "%s", reason + "\n" + details
             )  # Don't let logger try to interpolate the message
@@ -1272,7 +1270,7 @@ class Executor(executor.Executor):
 
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.fail(
-            reason="Workflow execution failed: {}".format(reason), details=details,
+            reason=f"Workflow execution failed: {reason}", details=details,
         )
 
         self._decisions_and_context.append_decision(decision)
@@ -1360,7 +1358,7 @@ class Executor(executor.Executor):
         )
 
     def wait_signal(self, name):
-        logger.debug("{} - wait_signal({})".format(self._workflow_id, name))
+        logger.debug(f"{self._workflow_id} - wait_signal({name})")
         return WaitForSignal(name)
 
     def propagate_signals(self):
@@ -1402,10 +1400,10 @@ class Executor(executor.Executor):
             args = input.get("args", ())
             kwargs = input.get("kwargs", {})
             sender = (signal["external_workflow_id"], signal["external_run_id"])
-            signaled_workflows_ids = set(
+            signaled_workflows_ids = {
                 (w["workflow_id"], w["run_id"])
                 for w in history.signaled_workflows[name]
-            )
+            }
             not_signaled_workflows_ids = list(
                 known_workflows_ids - signaled_workflows_ids - {sender}
             )
@@ -1444,7 +1442,7 @@ class Executor(executor.Executor):
             marker_list = self._history.markers.get(event_name)
             if not marker_list:
                 return None
-            marker_list = list([m for m in marker_list if m["state"] == "recorded"])
+            marker_list = list(m for m in marker_list if m["state"] == "recorded")
             if not marker_list:
                 return None
             # Make pleasing details
@@ -1455,7 +1453,7 @@ class Executor(executor.Executor):
             return self._history.timers.get(event_name)
         else:
             raise ValueError(
-                "Unimplemented type {!r} for get_event_details".format(event_type)
+                f"Unimplemented type {event_type!r} for get_event_details"
             )
 
     def handle_cancel_requested(self):

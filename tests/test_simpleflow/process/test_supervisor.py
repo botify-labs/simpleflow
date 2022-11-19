@@ -41,7 +41,7 @@ class TestSupervisor(IntegrationTestCase):
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
-            setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+            setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 
         # create a supervisor sub-process
@@ -97,7 +97,7 @@ class TestSupervisor(IntegrationTestCase):
         supervisor = Supervisor(foo, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "foo")
 
-        class Foo(object):
+        class Foo:
             def bar(self):
                 pass
 
@@ -109,7 +109,7 @@ class TestSupervisor(IntegrationTestCase):
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
         # dummy function used in following tests
         def sleep_long(seconds):
-            setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+            setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 
         # retrieve workers (not great; TODO: move it to Supervisor class)

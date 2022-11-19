@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 from swf.core import ConnectedSWFObject
 from swf.models import Domain
 
@@ -22,7 +20,7 @@ class Actor(ConnectedSWFObject):
     """
 
     def __init__(self, domain, task_list):
-        super(Actor, self).__init__()
+        super().__init__()
 
         self._set_domain(domain)
         self.task_list = task_list

@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from mock import patch
+from unittest.mock import patch
 from sure import expect
 
 from simpleflow.download import RemoteBinary, with_binaries

@@ -5,7 +5,7 @@ from future.utils import iteritems
 from . import default
 
 
-class Setting(object):
+class Setting:
     pass
 
 

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 from simpleflow import futures
 from simpleflow.futures import Future
 
@@ -15,7 +12,7 @@ def test_future_init_result():
 
 def test_future_init_repr():
     future = Future()
-    assert repr(future) == "<Future at {} state=pending>".format(hex(id(future)))
+    assert repr(future) == f"<Future at {hex(id(future))} state=pending>"
 
 
 def test_future_init_cancelled():

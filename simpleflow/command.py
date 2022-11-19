@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 from __future__ import annotations
 
 import multiprocessing
@@ -80,7 +77,7 @@ def cli(ctx, header, format, color):
     log.color_mode = color
 
 
-def get_workflow_type(domain_name: Text, workflow_class: Type[Workflow]) -> WorkflowType:
+def get_workflow_type(domain_name: str, workflow_class: type[Workflow]) -> WorkflowType:
     """
     Get or create the given workflow on SWF.
     :param domain_name:
@@ -190,7 +187,7 @@ def start_workflow(
 ):
     workflow_class = import_from_module(workflow)
 
-    wf_input: Dict[AnyStr, Any] = {}
+    wf_input: dict[AnyStr, Any] = {}
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
 
@@ -682,7 +679,7 @@ def standalone(
                 tags = None
 
     task_list = create_unique_task_list(workflow_id)
-    logger.info("using task list {}".format(task_list))
+    logger.info(f"using task list {task_list}")
     decider_proc = multiprocessing.Process(
         target=decider.command.start,
         args=(
@@ -718,7 +715,7 @@ def standalone(
     )
     worker_proc.start()
 
-    print("starting workflow {}".format(workflow), file=sys.stderr)
+    print(f"starting workflow {workflow}", file=sys.stderr)
     ex = start_workflow.callback(
         workflow,
         domain,
@@ -741,9 +738,9 @@ def standalone(
             ex.run_id,
         )
         if display_status:
-            print("status: {}".format(ex.status), file=sys.stderr)
+            print(f"status: {ex.status}", file=sys.stderr)
         if ex.status == ex.STATUS_CLOSED:
-            print("execution {} finished".format(ex.workflow_id), file=sys.stderr)
+            print(f"execution {ex.workflow_id} finished", file=sys.stderr)
             break
 
     os.kill(worker_proc.pid, signal.SIGTERM)
@@ -787,7 +784,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
         logger.error("Couldn't find execution, exiting.")
         sys.exit(1)
     logger.info(
-        "Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id)
+        f"Found execution: workflowId={wfe.workflow_id} runId={wfe.run_id}"
     )
 
     # now rerun the specified activity
@@ -811,7 +808,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     if input_override:
         logger.info("NB: input will be overriden with the passed one!")
     logger.info(
-        "Will re-run: {}(*{}, **{}) [+meta={}]".format(task, args, kwargs, meta)
+        f"Will re-run: {task}(*{args}, **{kwargs}) [+meta={meta}]"
     )
 
     # download binaries if needed
@@ -822,7 +819,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     result = instance.execute()
     if hasattr(instance, "post_execute"):
         instance.post_execute()
-    logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
+    logger.info(f"Result (JSON): {json_dumps(result, compact=False)}")
 
 
 @click.argument(
@@ -839,17 +836,17 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
 def info(sections):
     @contextmanager
     def section(title):
-        print(log.colorize("BLUE", "# {}".format(title)))
+        print(log.colorize("BLUE", f"# {title}"))
         yield
         print("")
 
     if "versions" in sections:
         with section("Versions"):
-            print("simpleflow: {}".format(__version__))
+            print(f"simpleflow: {__version__}")
             version, build = sys.version.split("\n", 1)
-            print("python_version: {}".format(version))
-            print("python_build: {}".format(build))
-            print("platform: {}".format(platform.platform()))
+            print(f"python_version: {version}")
+            print(f"python_build: {build}")
+            print(f"platform: {platform.platform()}")
 
     if "settings" in sections:
         with section("Settings"):
@@ -863,7 +860,7 @@ def info(sections):
                 value = os.environ[key]
                 if "SECRET" in key:
                     value = "<redacted>"
-                print("{}={}".format(key, value))
+                print(f"{key}={value}")
 
 
 @click.argument("locations", nargs=-1)

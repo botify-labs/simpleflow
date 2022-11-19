@@ -1,6 +1,6 @@
 import unittest
 
-import mock
+from unittest import mock
 from sure import expect
 
 from simpleflow import activity, format, futures
@@ -133,7 +133,7 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
 @activity.with_attributes(raises_on_failure=True)
 def print_me_n_times(s, n, raises=False):
     if raises:
-        raise ValueError("Number: {}".format(s * n))
+        raise ValueError(f"Number: {s * n}")
     return s * n
 
 

@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import re
 import subprocess
 import sys
-from io import open
 
 from setuptools import find_packages, setup
 
@@ -17,7 +15,7 @@ def find_version(fname):
     Raises RuntimeError if not found.
     """
     version = ""
-    with open(fname, "r") as fp:
+    with open(fname) as fp:
         reg = re.compile(r'__version__ = [\'"]([^\'"]*)[\'"]')
         for line in fp:
             m = reg.match(line)
@@ -75,7 +73,7 @@ try:
         line = re.sub(r"(?: +|^)#.*$", "", line).strip()
         if line:
             tests_require.append(line)
-except IOError:
+except OSError:
     pass  # absent from distribution
 
 setup(

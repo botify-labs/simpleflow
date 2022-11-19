@@ -37,7 +37,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 def _show_tag_list(tag_list):
     return "\n".join(
-        "{}:\t{}".format(key.strip(), value.strip())
+        f"{key.strip()}:\t{value.strip()}"
         for key, value in (keyval.split("=") for keyval in tag_list)
     )
 
@@ -234,7 +234,7 @@ def list_executions(workflow_executions):
     return header, rows
 
 
-def list_details(workflow_executions: List[WorkflowExecution]) -> tuple:
+def list_details(workflow_executions: list[WorkflowExecution]) -> tuple:
     header = (
         "Workflow ID",
         "Workflow Type",

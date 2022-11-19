@@ -1,12 +1,10 @@
-
-
 from simpleflow.swf.executor import Executor
 from swf.models import Domain
 from swf.models.history import builder
 from swf.responses import Response
 
 
-class TestWorkflowMixin(object):
+class TestWorkflowMixin:
     def build_history(self, workflow_input):
         domain = Domain("TestDomain")
         self.executor = Executor(domain, self.WORKFLOW)

@@ -1,7 +1,7 @@
 import collections
 
 
-class Registry(object):
+class Registry:
     """
     simpleflow.activity.Activity register.
 

@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
@@ -21,7 +19,7 @@ SETTINGS = settings.get()
 RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
 
 
-class ConnectedSWFObject(object):
+class ConnectedSWFObject:
     """Authenticated object interface
 
     Provides the instance attributes:
@@ -55,6 +53,6 @@ class ConnectedSWFObject(object):
             self.region, **creds_
         )
         if self.connection is None:
-            raise ValueError("invalid region: {}".format(self.region))
+            raise ValueError(f"invalid region: {self.region}")
 
-        logger.debug("initiated connection to region={}".format(self.region))
+        logger.debug(f"initiated connection to region={self.region}")
