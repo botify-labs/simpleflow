@@ -313,7 +313,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         executor = CustomExecutor(MyWorkflow)
         executor.initialize_history({})
 
-        activities = Chain((MyTask, 1), (MyTask, 2),)
+        activities = Chain(
+            (MyTask, 1),
+            (MyTask, 2),
+        )
         step_act = Step("test_propagate_attribute", activities)
         Chain(step_act, raises_on_failure=False).submit(executor)
 

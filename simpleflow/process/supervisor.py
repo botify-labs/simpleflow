@@ -168,9 +168,7 @@ class Supervisor(NamedMixin):
             # the supervisor process
             if self._terminating:
                 for proc in self._processes.values():
-                    logger.info(
-                        f"process: waiting for proces={proc} to finish."
-                    )
+                    logger.info(f"process: waiting for proces={proc} to finish.")
                     proc.wait()
                 break
 

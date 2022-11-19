@@ -243,7 +243,8 @@ class Workflow(Submittable):
         return True
 
     def on_task_failure(
-        self, failure_context: TaskFailureContext,
+        self,
+        failure_context: TaskFailureContext,
     ):
         """
         Called by the executor if a task or workflow failed.

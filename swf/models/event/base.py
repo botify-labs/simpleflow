@@ -50,8 +50,7 @@ class Event:
     excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
     def __init__(self, id, state, timestamp, raw_data):
-        """
-        """
+        """ """
         self._id = id
         self._state = state
         self._timestamp = timestamp

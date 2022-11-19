@@ -30,7 +30,9 @@ class Step(SubmittableContainer):
         step_name: AnyStr,
         activities: Submittable | SubmittableContainer,
         force: bool = False,
-        activities_if_step_already_done: Submittable | SubmittableContainer | None = None,
+        activities_if_step_already_done: Submittable
+        | SubmittableContainer
+        | None = None,
         emit_signal: bool = False,
         force_steps_if_executed: Sequence[AnyStr] | None = None,
         bubbles_exception_on_failure: bool = False,
@@ -110,9 +112,7 @@ class Step(SubmittableContainer):
                 chain.append(workflow.record_marker("log.step", marker))
 
             if self.emit_signal:
-                chain.append(
-                    workflow.signal(f"step.{self.step_name}", propagate=False)
-                )
+                chain.append(workflow.signal(f"step.{self.step_name}", propagate=False))
             chain.bubbles_exception_on_failure = self.bubbles_exception_on_failure
             return chain
 

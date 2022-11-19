@@ -58,7 +58,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
             description=type_info.get("description"),
             creation_date=type_info.get("creationDate"),
             deprecation_date=type_info.get("deprecationDate"),
-            **kwargs
+            **kwargs,
         )
 
     def _list(self, *args, **kwargs):
@@ -165,7 +165,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         task_schedule_to_start_timeout=0,
         task_start_to_close_timeout=0,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Fetches, or creates the ActivityType with ``name`` and ``version``
 
@@ -228,7 +228,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 task_schedule_to_start_timeout=task_schedule_to_start_timeout,
                 task_start_to_close_timeout=task_start_to_close_timeout,
                 *args,
-                **kwargs
+                **kwargs,
             )
         except DoesNotExistError:
             return self.create(
@@ -337,7 +337,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         task_schedule_to_start_timeout=0,
         task_start_to_close_timeout=0,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Creates a new remote activity type and returns the
         created ActivityType model instance.

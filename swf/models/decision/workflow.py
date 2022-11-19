@@ -19,7 +19,9 @@ class WorkflowExecutionDecision(Decision):
         :type   result: Optional[Any]
         """
         self.update_attributes(
-            {"result": format.result(result),}
+            {
+                "result": format.result(result),
+            }
         )
 
     @decision_action
@@ -30,7 +32,9 @@ class WorkflowExecutionDecision(Decision):
         :type   details: Optional[Any]
         """
         self.update_attributes(
-            {"details": format.details(details),}
+            {
+                "details": format.details(details),
+            }
         )
 
     @decision_action
@@ -44,13 +48,19 @@ class WorkflowExecutionDecision(Decision):
         :type   reason: Optional[str]
         """
         self.update_attributes(
-            {"details": format.details(details), "reason": format.reason(reason),}
+            {
+                "details": format.details(details),
+                "reason": format.reason(reason),
+            }
         )
 
     @decision_action
     def terminate(self, reason=None, details=None):
         self.update_attributes(
-            {"reason": format.reason(reason), "details": format.details(details),}
+            {
+                "reason": format.reason(reason),
+                "details": format.details(details),
+            }
         )
 
     @decision_action
@@ -164,7 +174,9 @@ class ChildWorkflowExecutionDecision(Decision):
                 "control": control,
                 "input": input,
                 "tagList": tag_list,
-                "taskList": {"name": task_list,},
+                "taskList": {
+                    "name": task_list,
+                },
                 "workflowId": workflow_id,
                 "workflowType": {
                     "name": workflow_type.name,

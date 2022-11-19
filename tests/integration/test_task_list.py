@@ -35,8 +35,14 @@ class TestTaskLists(VCRIntegrationTest):
 
         worker_proc = multiprocessing.Process(
             target=worker.command.start,
-            args=(self.domain, "quickstart",),
-            kwargs={"nb_processes": 1, "heartbeat": 10,},
+            args=(
+                self.domain,
+                "quickstart",
+            ),
+            kwargs={
+                "nb_processes": 1,
+                "heartbeat": 10,
+            },
         )
         worker_proc.start()
 
@@ -56,7 +62,11 @@ class TestTaskLists(VCRIntegrationTest):
         )
         while True:
             time.sleep(1)
-            ex = helpers.get_workflow_execution(self.domain, ex.workflow_id, ex.run_id,)
+            ex = helpers.get_workflow_execution(
+                self.domain,
+                ex.workflow_id,
+                ex.run_id,
+            )
             if ex.status == ex.STATUS_CLOSED:
                 break
 

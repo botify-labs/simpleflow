@@ -75,7 +75,10 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocked exception",
-                    {"__type": "UnknownResourceFault", "message": "Whatever",},
+                    {
+                        "__type": "UnknownResourceFault",
+                        "message": "Whatever",
+                    },
                 )
                 self.wtq.get("NonExistentWorkflowType", "0.1")
 
@@ -85,7 +88,10 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocked exception",
-                    {"__type": "Whatever Error", "message": "Whatever",},
+                    {
+                        "__type": "Whatever Error",
+                        "message": "Whatever",
+                    },
                 )
                 self.wtq.get("NonExistentWorkflowType", "0.1")
 
@@ -135,7 +141,11 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
 
     def test_create_workflow_type(self):
         with patch.object(Layer1, "register_workflow_type"):
-            new_wt = self.wtq.create(self.domain, "TestWorkflowType", "0.test",)
+            new_wt = self.wtq.create(
+                self.domain,
+                "TestWorkflowType",
+                "0.test",
+            )
 
             self.assertIsNotNone(new_wt)
             self.assertIsInstance(new_wt, WorkflowType)
@@ -153,22 +163,30 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
     def test__is_valid_open_status_param(self):
         status = WorkflowExecution.STATUS_OPEN
 
-        self.assertTrue(self.weq._is_valid_status_param(status, "oldest_date"),)
+        self.assertTrue(
+            self.weq._is_valid_status_param(status, "oldest_date"),
+        )
 
     def test__is_invalid_open_status_param(self):
         status = WorkflowExecution.STATUS_OPEN
 
-        self.assertFalse(self.weq._is_valid_status_param(status, "start_oldest_date"),)
+        self.assertFalse(
+            self.weq._is_valid_status_param(status, "start_oldest_date"),
+        )
 
     def test__is_valid_closed_status_param(self):
         status = WorkflowExecution.STATUS_CLOSED
 
-        self.assertTrue(self.weq._is_valid_status_param(status, "start_oldest_date"),)
+        self.assertTrue(
+            self.weq._is_valid_status_param(status, "start_oldest_date"),
+        )
 
     def test__is_invalid_closed_status_param(self):
         status = WorkflowExecution.STATUS_CLOSED
 
-        self.assertFalse(self.weq._is_valid_status_param(status, "oldest_date"),)
+        self.assertFalse(
+            self.weq._is_valid_status_param(status, "oldest_date"),
+        )
 
     def test_validate_valid_open_status_parameters(self):
         params = ["oldest_date", "latest_date"]
@@ -272,7 +290,10 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocked exception",
-                    {"__type": "UnknownResourceFault", "message": "Whatever",},
+                    {
+                        "__type": "UnknownResourceFault",
+                        "message": "Whatever",
+                    },
                 )
                 self.weq.get("mocked-workflow-id", "mocked-run-id")
 
@@ -282,7 +303,10 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocked exception",
-                    {"__type": "WhateverFault", "message": "Whatever",},
+                    {
+                        "__type": "WhateverFault",
+                        "message": "Whatever",
+                    },
                 )
                 self.weq.get("mocked-workflow-id", "mocked-run-id")
 

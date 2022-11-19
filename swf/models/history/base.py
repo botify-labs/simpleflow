@@ -184,7 +184,11 @@ class History:
 
         :rtype: swf.models.history.History
         """
-        return [e for e in self.events if all(getattr(e, k) == v for k, v in iteritems(kwargs))]
+        return [
+            e
+            for e in self.events
+            if all(getattr(e, k) == v for k, v in iteritems(kwargs))
+        ]
 
     @property
     def reversed(self):

@@ -134,7 +134,7 @@ cached_property = _CachedProperty
 
 
 def immutable(mutableclass):
-    """ Decorator for making a slot-based class immutable
+    """Decorator for making a slot-based class immutable
 
     Source: http://code.activestate.com/recipes/578233-immutable-class-decorator/
     """

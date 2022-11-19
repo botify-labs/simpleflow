@@ -47,9 +47,14 @@ __all__ = ["Executor"]
 @retry.with_delay(nb_times=3, delay=retry.exponential, on_exceptions=KeyError)
 def run_fake_activity_task(domain, task_list, result):
     conn = ConnectedSWFObject().connection
-    resp = conn.poll_for_activity_task(domain, task_list, identity=swf_identity(),)
+    resp = conn.poll_for_activity_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
     conn.respond_activity_task_completed(
-        resp["taskToken"], result,
+        resp["taskToken"],
+        result,
     )
 
 
@@ -57,13 +62,19 @@ def run_fake_activity_task(domain, task_list, result):
 @retry.with_delay(nb_times=3, delay=retry.exponential, on_exceptions=KeyError)
 def run_fake_child_workflow_task(domain, task_list, result=None):
     conn = ConnectedSWFObject().connection
-    resp = conn.poll_for_decision_task(domain, task_list, identity=swf_identity(),)
+    resp = conn.poll_for_decision_task(
+        domain,
+        task_list,
+        identity=swf_identity(),
+    )
     conn.respond_decision_task_completed(
         resp["taskToken"],
         decisions=[
             {
                 "decisionType": "CompleteWorkflowExecution",
-                "completeWorkflowExecutionDecisionAttributes": {"result": result,},
+                "completeWorkflowExecutionDecisionAttributes": {
+                    "result": result,
+                },
             }
         ],
     )
@@ -73,13 +84,22 @@ def run_fake_task_worker(domain, task_list, former_event):
     if former_event["type"] == "activity":
         worker_proc = multiprocessing.Process(
             target=run_fake_activity_task,
-            args=(domain, task_list, former_event["result"],),
+            args=(
+                domain,
+                task_list,
+                former_event["result"],
+            ),
         )
     elif former_event["type"] == "child_workflow":
         worker_proc = multiprocessing.Process(
             target=run_fake_child_workflow_task,
-            args=(domain, task_list,),
-            kwargs={"result": former_event["result"],},
+            args=(
+                domain,
+                task_list,
+            ),
+            kwargs={
+                "result": former_event["result"],
+            },
         )
     else:
         raise Exception("Wrong event type {}".format(former_event["type"]))
@@ -88,9 +108,7 @@ def run_fake_task_worker(domain, task_list, former_event):
 
 
 class TaskRegistry(dict):
-    """This registry tracks tasks and assign them an integer identifier.
-
-    """
+    """This registry tracks tasks and assign them an integer identifier."""
 
     def add(self, a_task):
         """
@@ -269,7 +287,12 @@ class Executor(executor.Executor):
                         )
                     )
                 return None
-            logger.info("failed to schedule {}: {}".format(name, event["cause"],))
+            logger.info(
+                "failed to schedule {}: {}".format(
+                    name,
+                    event["cause"],
+                )
+            )
             return None
         elif state == "started":
             future.set_running()
@@ -312,11 +335,14 @@ class Executor(executor.Executor):
         elif state == "start_failed":
             if event["cause"] == "WORKFLOW_TYPE_DOES_NOT_EXIST":
                 workflow_type = swf.models.WorkflowType(
-                    self.domain, name=event["name"], version=event["version"],
+                    self.domain,
+                    name=event["name"],
+                    version=event["version"],
                 )
                 logger.info(
                     "Creating workflow type {} in domain {}".format(
-                        workflow_type.name, self.domain.name,
+                        workflow_type.name,
+                        self.domain.name,
                     )
                 )
                 try:
@@ -345,9 +371,18 @@ class Executor(executor.Executor):
                 )
             )
         elif state == "timed_out":
-            future.set_exception(exceptions.TimeoutError(event["timeout_type"], None,))
+            future.set_exception(
+                exceptions.TimeoutError(
+                    event["timeout_type"],
+                    None,
+                )
+            )
         elif state == "canceled":
-            future.set_exception(exceptions.TaskCanceled(event.get("details"),))
+            future.set_exception(
+                exceptions.TaskCanceled(
+                    event.get("details"),
+                )
+            )
         elif state == "terminated":
             future.set_exception(exceptions.TaskTerminated())
         else:
@@ -377,7 +412,10 @@ class Executor(executor.Executor):
             future.set_finished(event["details"])
         elif state == "failed":
             future.set_exception(
-                exceptions.TaskFailed(name=event["name"], reason=event["cause"],)
+                exceptions.TaskFailed(
+                    name=event["name"],
+                    reason=event["cause"],
+                )
             )
 
         return future
@@ -422,7 +460,10 @@ class Executor(executor.Executor):
             future.set_finished(event["input"])
         elif state == "signal_execution_failed":
             future.set_exception(
-                exceptions.TaskFailed(name=event["name"], reason=event["cause"],)
+                exceptions.TaskFailed(
+                    name=event["name"],
+                    reason=event["cause"],
+                )
             )
 
         return future
@@ -450,7 +491,10 @@ class Executor(executor.Executor):
             future.set_cancelled()
         elif state in ("start_failed", "cancel_failed"):
             future.set_exception(
-                exceptions.TaskFailed(name=event["timer_id"], reason=event["cause"],)
+                exceptions.TaskFailed(
+                    name=event["timer_id"],
+                    reason=event["cause"],
+                )
             )
 
         return future
@@ -721,8 +765,8 @@ class Executor(executor.Executor):
             swf_task, event, future, exception_class, self._history
         )
         if hasattr(self.workflow, "on_task_failure"):
-            new_failure_context: base_task.TaskFailureContext = self.workflow.on_task_failure(
-                failure_context
+            new_failure_context: base_task.TaskFailureContext = (
+                self.workflow.on_task_failure(failure_context)
             )
             if new_failure_context:
                 failure_context = new_failure_context
@@ -783,7 +827,9 @@ class Executor(executor.Executor):
         return new_failure_context.future
 
     @staticmethod
-    def default_failure_handling(failure_context: base_task.TaskFailureContext) -> base_task.TaskFailureContext:
+    def default_failure_handling(
+        failure_context: base_task.TaskFailureContext,
+    ) -> base_task.TaskFailureContext:
 
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
@@ -804,7 +850,9 @@ class Executor(executor.Executor):
         failure_context.decision = base_task.TaskFailureContext.Decision.handled
         return failure_context
 
-    def find_timer_associated_with(self, event: dict, swf_task: ActivityTask | WorkflowTask) -> dict | None:
+    def find_timer_associated_with(
+        self, event: dict, swf_task: ActivityTask | WorkflowTask
+    ) -> dict | None:
         """
         Return a potential timer "associated with" an event, i.e.
         * with a related name
@@ -1095,7 +1143,9 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super().starmap(callable, iterable)
 
-    def replay(self, decision_response: swf.responses.Response, decref_workflow: bool = True) -> DecisionsAndContext:
+    def replay(
+        self, decision_response: swf.responses.Response, decref_workflow: bool = True
+    ) -> DecisionsAndContext:
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
@@ -1173,7 +1223,8 @@ class Executor(executor.Executor):
 
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
-                reason=reason, details=details,
+                reason=reason,
+                details=details,
             )
             self.after_closed()
             if decref_workflow:
@@ -1182,7 +1233,8 @@ class Executor(executor.Executor):
 
         except Exception as err:
             reason = "Cannot replay the workflow: {}({})".format(
-                err.__class__.__name__, err,
+                err.__class__.__name__,
+                err,
             )
 
             tb = traceback.format_exc()
@@ -1195,7 +1247,8 @@ class Executor(executor.Executor):
 
             decision = swf.models.decision.WorkflowExecutionDecision()
             decision.fail(
-                reason=reason, details=details,
+                reason=reason,
+                details=details,
             )
             self.after_closed()
             if decref_workflow:
@@ -1270,7 +1323,8 @@ class Executor(executor.Executor):
 
         decision = swf.models.decision.WorkflowExecutionDecision()
         decision.fail(
-            reason=f"Workflow execution failed: {reason}", details=details,
+            reason=f"Workflow execution failed: {reason}",
+            details=details,
         )
 
         self._decisions_and_context.append_decision(decision)
@@ -1354,7 +1408,7 @@ class Executor(executor.Executor):
             run_id=run_id if workflow_id else self._run_id,
             extra_input=extra_input,
             *args,
-            **kwargs
+            **kwargs,
         )
 
     def wait_signal(self, name):
@@ -1452,9 +1506,7 @@ class Executor(executor.Executor):
         elif event_type == "timer":
             return self._history.timers.get(event_name)
         else:
-            raise ValueError(
-                f"Unimplemented type {event_type!r} for get_event_details"
-            )
+            raise ValueError(f"Unimplemented type {event_type!r} for get_event_details")
 
     def handle_cancel_requested(self):
         decision = swf.models.decision.WorkflowExecutionDecision()

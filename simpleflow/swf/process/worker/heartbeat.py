@@ -73,9 +73,7 @@ class HeartbeatProcess:  # Are people using it?
 
 @deprecated
 class Heartbeater:  # Are people using it?
-    """Manages the heartbeat in a subprocess.
-
-    """
+    """Manages the heartbeat in a subprocess."""
 
     def __init__(self, heartbeat, interval, on_exit=None):
         """

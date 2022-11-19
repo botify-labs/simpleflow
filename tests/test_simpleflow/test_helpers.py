@@ -14,7 +14,9 @@ class FakeHistory:
                 "id": "activity-tests.integration.workflow.sleep-1",
                 "name": "tests.integration.workflow.sleep",
                 "scheduled_id": 5,
-                "input": {"args": [37],},
+                "input": {
+                    "args": [37],
+                },
             },
         }
 

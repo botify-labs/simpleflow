@@ -23,7 +23,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type__diff_with_different_activity_type(self):
         with patch.object(
-            Layer1, "describe_activity_type", mock_describe_activity_type,
+            Layer1,
+            "describe_activity_type",
+            mock_describe_activity_type,
         ):
             activity = ActivityType(
                 self.domain, "different-activity", version="different-version"
@@ -39,7 +41,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type__diff_with_identical_activity_type(self):
         with patch.object(
-            Layer1, "describe_activity_type", mock_describe_activity_type,
+            Layer1,
+            "describe_activity_type",
+            mock_describe_activity_type,
         ):
             mocked = mock_describe_activity_type()
             activity = ActivityType(
@@ -101,7 +105,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_changes_with_different_activity_type(self):
         with patch.object(
-            Layer1, "describe_activity_type", mock_describe_activity_type,
+            Layer1,
+            "describe_activity_type",
+            mock_describe_activity_type,
         ):
             activity_type = ActivityType(
                 self.domain,
@@ -119,7 +125,9 @@ class TestActivityType(unittest.TestCase):
 
     def test_activity_type_changes_with_identical_activity_type(self):
         with patch.object(
-            Layer1, "describe_activity_type", mock_describe_activity_type,
+            Layer1,
+            "describe_activity_type",
+            mock_describe_activity_type,
         ):
             mocked = mock_describe_activity_type()
             activity_type = ActivityType(

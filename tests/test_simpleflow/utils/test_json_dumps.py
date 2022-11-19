@@ -23,7 +23,8 @@ class TestJsonDumps(unittest.TestCase):
         ]
         for case in cases:
             self.assertEqual(
-                json_dumps(case[0]), case[1],
+                json_dumps(case[0]),
+                case[1],
             )
 
     def test_json_dumps_futures(self):
@@ -52,7 +53,8 @@ class TestJsonDumps(unittest.TestCase):
         ]
         for case in cases:
             self.assertEqual(
-                json_dumps(case[0], compact=False), case[1],
+                json_dumps(case[0], compact=False),
+                case[1],
             )
 
     def test_bugfix_154_default(self):

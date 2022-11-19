@@ -23,7 +23,9 @@ class TaskException(Exception):
 
     def __repr__(self):
         return "{}(task={}, exception={})".format(
-            self.__class__.__name__, self.task, self.exception,
+            self.__class__.__name__,
+            self.task,
+            self.exception,
         )
 
 
@@ -48,7 +50,9 @@ class WorkflowException(Exception):
 
     def __repr__(self):
         return "{}(workflow={}, exception={})".format(
-            self.__class__.__name__, self.workflow, self.exception,
+            self.__class__.__name__,
+            self.workflow,
+            self.exception,
         )
 
 

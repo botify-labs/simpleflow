@@ -35,9 +35,7 @@ def sanitize_bucket_and_host(bucket: str) -> tuple[str, str]:
     if "/" in bucket:
         host, bucket = bucket.split("/", 1)
         if "/" in bucket:
-            raise ValueError(
-                f"{bucket} should contains only one slash separator"
-            )
+            raise ValueError(f"{bucket} should contains only one slash separator")
         if not host.endswith("amazonaws.com"):
             raise ValueError("host should be a *.amazonaws.com URL")
         return bucket, host
@@ -98,7 +96,9 @@ def pull_content(bucket: str, path: str) -> str:
     return key.get_contents_as_string(encoding="utf-8")
 
 
-def push(bucket: str, path: str, src_file: str, content_type: str | None = None) -> None:
+def push(
+    bucket: str, path: str, src_file: str, content_type: str | None = None
+) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
@@ -109,7 +109,9 @@ def push(bucket: str, path: str, src_file: str, content_type: str | None = None)
     )
 
 
-def push_content(bucket: str, path: str, content: str, content_type: str | None = None) -> None:
+def push_content(
+    bucket: str, path: str, content: str, content_type: str | None = None
+) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}

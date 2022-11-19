@@ -66,7 +66,9 @@ class TestActivityTypeQuerySet(unittest.TestCase):
     def test_all(self):
         """Asserts .all() method returns a list of valid Activity instances"""
         with patch.object(
-            self.atq.connection, "list_activity_types", mock_list_activity_types,
+            self.atq.connection,
+            "list_activity_types",
+            mock_list_activity_types,
         ):
             activities = self.atq.all()
 

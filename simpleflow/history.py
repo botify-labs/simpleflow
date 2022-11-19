@@ -593,7 +593,10 @@ class History:
         elif event.state == "request_cancel_execution_failed":
             workflow = get_workflow(self._external_workflows_canceling)
             workflow.update(
-                {"state": event.state, "cause": event.cause,}
+                {
+                    "state": event.state,
+                    "cause": event.cause,
+                }
             )
             if event.control:
                 workflow["control"] = event.control

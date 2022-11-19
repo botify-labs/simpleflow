@@ -29,7 +29,8 @@ class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
         super().__init__(
-            payload=self._poller.start, nb_children=nb_children,
+            payload=self._poller.start,
+            nb_children=nb_children,
         )
 
 
@@ -92,7 +93,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def fake_poll(self):
         polled_activity_data = json.loads(b64decode(self.poll_data))
         activity_task = BaseActivityTask.from_poll(
-            self.domain, self.task_list, polled_activity_data,
+            self.domain,
+            self.task_list,
+            polled_activity_data,
         )
         return Response(
             task_token=activity_task.task_token,
@@ -115,7 +118,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             except Exception as err:
                 logger.exception("spawn_kubernetes_job error")
                 reason = "cannot spawn kubernetes job for task {}: {} {}".format(
-                    task.activity_id, err.__class__.__name__, err,
+                    task.activity_id,
+                    err.__class__.__name__,
+                    err,
                 )
                 self.fail_with_retry(token, task, reason)
         else:
@@ -143,12 +148,13 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         """
         try:
             return swf.actors.ActivityWorker.fail(
-                self, token, reason=reason, details=details,
+                self,
+                token,
+                reason=reason,
+                details=details,
             )
         except Exception as err:
-            logger.error(
-                f"cannot fail task {task.activity_type.name}: {err}"
-            )
+            logger.error(f"cannot fail task {task.activity_type.name}: {err}")
 
     @property
     def identity(self):
@@ -209,7 +215,7 @@ class ActivityWorker:
                 *args,
                 context=context,
                 simpleflow_middlewares=middlewares,
-                **kwargs
+                **kwargs,
             ).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -237,7 +243,9 @@ class ActivityWorker:
         except Exception as err:
             logger.exception("complete error")
             reason = "cannot complete task {}: {} {}".format(
-                task.activity_id, err.__class__.__name__, err,
+                task.activity_id,
+                err.__class__.__name__,
+                err,
             )
             poller.fail_with_retry(token, task, reason)
 

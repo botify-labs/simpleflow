@@ -42,7 +42,9 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test___diff_with_different_workflow_type(self):
         with patch.object(
-            Layer1, "describe_workflow_type", mock_describe_workflow_type,
+            Layer1,
+            "describe_workflow_type",
+            mock_describe_workflow_type,
         ):
             workflow_type = WorkflowType(
                 self.domain, "different-workflow-type", version="different-version"
@@ -58,7 +60,9 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_workflow_type__diff_with_identical_workflow_type(self):
         with patch.object(
-            Layer1, "describe_workflow_type", mock_describe_workflow_type,
+            Layer1,
+            "describe_workflow_type",
+            mock_describe_workflow_type,
         ):
             mocked = mock_describe_workflow_type()
             workflow_type = WorkflowType(
@@ -132,7 +136,9 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_changes_with_different_workflow_type(self):
         with patch.object(
-            Layer1, "describe_workflow_type", mock_describe_workflow_type,
+            Layer1,
+            "describe_workflow_type",
+            mock_describe_workflow_type,
         ):
             workflow_type = WorkflowType(
                 self.domain,
@@ -150,7 +156,9 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_workflow_type_changes_with_identical_workflow_type(self):
         with patch.object(
-            Layer1, "describe_workflow_type", mock_describe_workflow_type,
+            Layer1,
+            "describe_workflow_type",
+            mock_describe_workflow_type,
         ):
             mocked = mock_describe_workflow_type()
             workflow_type = WorkflowType(
@@ -231,7 +239,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test___diff_with_different_workflow_execution(self):
         with patch.object(
-            Layer1, "describe_workflow_execution", mock_describe_workflow_execution,
+            Layer1,
+            "describe_workflow_execution",
+            mock_describe_workflow_execution,
         ):
             workflow_execution = WorkflowExecution(
                 self.domain,
@@ -249,7 +259,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_workflow_execution__diff_with_identical_workflow_execution(self):
         with patch.object(
-            Layer1, "describe_workflow_execution", mock_describe_workflow_execution,
+            Layer1,
+            "describe_workflow_execution",
+            mock_describe_workflow_execution,
         ):
             mocked = mock_describe_workflow_execution()
             workflow_execution = WorkflowExecution(
@@ -321,7 +333,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_changes_with_different_workflow_execution(self):
         with patch.object(
-            Layer1, "describe_workflow_execution", mock_describe_workflow_execution,
+            Layer1,
+            "describe_workflow_execution",
+            mock_describe_workflow_execution,
         ):
             workflow_execution = WorkflowExecution(
                 self.domain,
@@ -339,7 +353,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_workflow_execution_changes_with_identical_workflow_execution(self):
         with patch.object(
-            Layer1, "describe_workflow_execution", mock_describe_workflow_execution,
+            Layer1,
+            "describe_workflow_execution",
+            mock_describe_workflow_execution,
         ):
             mocked = mock_describe_workflow_execution()
             workflow_execution = WorkflowExecution(

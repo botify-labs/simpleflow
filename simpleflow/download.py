@@ -51,9 +51,7 @@ class RemoteBinary:
 
     def _compute_local_directory(self):
         suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
-        return os.path.join(
-            SIMPLEFLOW_BINARIES_DIRECTORY, f"{self.name}-{suffix}"
-        )
+        return os.path.join(SIMPLEFLOW_BINARIES_DIRECTORY, f"{self.name}-{suffix}")
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)

@@ -41,7 +41,9 @@ class Decider(Actor):
             execution_context = json_dumps(execution_context)
         try:
             self.connection.respond_decision_task_completed(
-                task_token, decisions, format.execution_context(execution_context),
+                task_token,
+                decisions,
+                format.execution_context(execution_context),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -78,7 +80,7 @@ class Decider(Actor):
             self.domain.name,
             task_list=task_list,
             identity=format.identity(identity),
-            **kwargs
+            **kwargs,
         )
         token = task.get("taskToken")
         if not token:
@@ -97,13 +99,14 @@ class Decider(Actor):
                     task_list=task_list,
                     identity=format.identity(identity),
                     next_page_token=next_page,
-                    **kwargs
+                    **kwargs,
                 )
             except boto.exception.SWFResponseError as e:
                 message = self.get_error_message(e)
                 if e.error_code == "UnknownResourceFault":
                     raise DoesNotExistError(
-                        "Unable to poll decision task", message,
+                        "Unable to poll decision task",
+                        message,
                     )
 
                 raise ResponseError(message)

@@ -52,7 +52,7 @@ class Domain(BaseModel):
         description=None,
         retention_period=30,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.name = name
         self.status = status

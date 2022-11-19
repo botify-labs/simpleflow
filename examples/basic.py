@@ -44,8 +44,6 @@ class BasicWorkflow(Workflow):
         yy = self.submit(Delay, t, y)
         z = self.submit(double, y)
 
-        logger.warning(
-            f"result of ({x} + 1) * 2 = {z.result}"
-        )
+        logger.warning(f"result of ({x} + 1) * 2 = {z.result}")
         futures.wait(yy, z)
         return z.result

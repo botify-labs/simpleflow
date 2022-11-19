@@ -52,7 +52,8 @@ class WorkflowStats:
         history.parse()
 
         events = chain(
-            iteritems(history._activities), iteritems(history._child_workflows),
+            iteritems(history._activities),
+            iteritems(history._child_workflows),
         )
         return [
             (name,) + get_start_to_close_timing(attributes)

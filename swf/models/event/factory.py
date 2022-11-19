@@ -49,14 +49,32 @@ EVENTS = collections.OrderedDict(
         ),
         (
             "DecisionTask",
-            {"event": DecisionTaskEvent, "compiled_event": CompiledDecisionTaskEvent,},
+            {
+                "event": DecisionTaskEvent,
+                "compiled_event": CompiledDecisionTaskEvent,
+            },
         ),
         (
             "ActivityTask",
-            {"event": ActivityTaskEvent, "compiled_event": CompiledActivityTaskEvent,},
+            {
+                "event": ActivityTaskEvent,
+                "compiled_event": CompiledActivityTaskEvent,
+            },
         ),
-        ("Marker", {"event": MarkerEvent, "compiled": CompiledMarkerEvent,}),
-        ("Timer", {"event": TimerEvent, "compiled": CompiledTimerEvent,}),
+        (
+            "Marker",
+            {
+                "event": MarkerEvent,
+                "compiled": CompiledMarkerEvent,
+            },
+        ),
+        (
+            "Timer",
+            {
+                "event": TimerEvent,
+                "compiled": CompiledTimerEvent,
+            },
+        ),
     ]
 )
 

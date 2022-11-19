@@ -20,7 +20,11 @@ def noop_target(handler):
 
 
 @pytest.mark.parametrize(
-    "handler", [lambda signum, frame: sys.exit(), lambda signum, frame: None,]
+    "handler",
+    [
+        lambda signum, frame: sys.exit(),
+        lambda signum, frame: None,
+    ],
 )
 def test_reap_process_tree_plain(handler):
     """

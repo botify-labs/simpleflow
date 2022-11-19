@@ -67,7 +67,7 @@ class DomainQuerySet(BaseQuerySet):
         description=None,
         retention_period=30,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Fetches, or creates the Domain with `name`
 
@@ -145,7 +145,7 @@ class DomainQuerySet(BaseQuerySet):
         description=None,
         retention_period=30,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Creates a new remote domain and returns the Domain model instance
 

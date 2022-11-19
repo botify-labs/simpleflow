@@ -73,7 +73,9 @@ class MockSWFTestCase(unittest.TestCase):
 
     def get_workflow_execution_history(self):
         return self.conn.get_workflow_execution_history(
-            self.domain.name, workflow_id=self.workflow_id, run_id=self.run_id,
+            self.domain.name,
+            workflow_id=self.workflow_id,
+            run_id=self.run_id,
         )
 
     def process_activity_task(self):

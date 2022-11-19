@@ -98,7 +98,7 @@ class ActivityType(BaseModel):
         task_schedule_to_start_timeout=0,
         task_start_to_close_timeout=0,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         self.domain = domain

@@ -28,8 +28,8 @@ executor._workflow = MyWorkflow(executor)
 
 class TestRunContext(unittest.TestCase):
     def test_run_context_for_child_workflows(self):
-        """ Test that the local executor adds a different run_id for each
-            child workflows.
+        """Test that the local executor adds a different run_id for each
+        child workflows.
         """
 
         class ChildWorkflow3(Workflow):

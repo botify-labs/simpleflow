@@ -18,7 +18,9 @@ class ActivityTaskDecision(Decision):
         :type   activity_id: str
         """
         self.update_attributes(
-            {"activityId": activity_id,}
+            {
+                "activityId": activity_id,
+            }
         )
 
     @decision_action

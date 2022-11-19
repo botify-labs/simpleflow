@@ -55,7 +55,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         is_standalone: bool,
         nb_retries: int = 3,
         *args,
-        **kwargs
+        **kwargs,
     ) -> None:
         """
         The decider is an actor that reads the full history of the workflow
@@ -150,7 +150,12 @@ class DeciderPoller(Poller, swf.actors.Decider):
         return swf.actors.Decider.poll(self, task_list, identity, **kwargs)
 
     @with_state("completing")
-    def complete(self, token: str, decisions: list | None = None, execution_context: Any | None | DecisionsAndContext = None) -> None:
+    def complete(
+        self,
+        token: str,
+        decisions: list | None = None,
+        execution_context: Any | None | DecisionsAndContext = None,
+    ) -> None:
         """
         DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
         :param token: task token.

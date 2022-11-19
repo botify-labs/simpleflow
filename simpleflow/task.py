@@ -57,9 +57,7 @@ class ActivityTask(Task):
 
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
-            raise TypeError(
-                f"Wrong value for `activity`, got {type(activity)} instead"
-            )
+            raise TypeError(f"Wrong value for `activity`, got {type(activity)} instead")
 
         self.pre_execute_funcs = []
         self.post_execute_funcs = []
@@ -421,7 +419,9 @@ class TaskFailureContext:
         self.retry_wait_timeout = retry_wait_timeout
         return self
 
-    def decide_handled(self, a_task: ActivityTask | WorkflowTask, future: futures.Future | None = None) -> TaskFailureContext:
+    def decide_handled(
+        self, a_task: ActivityTask | WorkflowTask, future: futures.Future | None = None
+    ) -> TaskFailureContext:
         self.a_task = a_task
         self.future = future
         self.decision = self.Decision.handled

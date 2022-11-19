@@ -84,7 +84,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             workflow_info["workflowType"]["name"],
             workflow_info["workflowType"]["version"],
             status=workflow_info["status"],
-            **kwargs
+            **kwargs,
         )
 
     def get(self, name, version, *args, **kwargs):
@@ -177,7 +177,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         decision_tasks_timeout="300",
         description=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Fetches, or creates the WorkflowType with ``name`` and ``version``
 
@@ -342,7 +342,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         decision_tasks_timeout="300",
         description=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Creates a new remote workflow type and returns the
         created WorkflowType model instance.
@@ -445,7 +445,10 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         workflow_type = execution_info["workflowType"]
         workflow_type_qs = WorkflowTypeQuerySet(self.domain)
 
-        return workflow_type_qs.get(workflow_type["name"], workflow_type["version"],)
+        return workflow_type_qs.get(
+            workflow_type["name"],
+            workflow_type["version"],
+        )
 
     def to_WorkflowExecution(self, domain, execution_info, **kwargs):
         workflow_type = WorkflowType(
@@ -466,7 +469,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             close_timestamp=execution_info.get("closeTimestamp"),
             cancel_requested=execution_info.get("cancelRequested"),
             parent=execution_info.get("parent"),
-            **kwargs
+            **kwargs,
         )
 
     def get(self, workflow_id, run_id, *args, **kwargs):
@@ -504,7 +507,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         workflow_type_name=None,
         workflow_type_version=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Filters workflow executions based on kwargs provided criteras
 
@@ -613,7 +616,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
                 workflow_version=workflow_type_version,
                 start_oldest_date=start_oldest_date,
                 tag=tag,
-                **kwargs
+                **kwargs,
             )
         ]
 
@@ -625,7 +628,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         status=WorkflowExecution.STATUS_OPEN,
         start_oldest_date=MAX_WORKFLOW_AGE,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Fetch every workflow executions during the last `start_oldest_date`
         days, with `status`

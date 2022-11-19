@@ -50,7 +50,12 @@ class TestSettings(unittest.TestCase):
         self.assertEqual(from_env(), {})
 
         os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
-        self.assertEqual(from_env(), {"region": "eu-west-1",})
+        self.assertEqual(
+            from_env(),
+            {
+                "region": "eu-west-1",
+            },
+        )
 
     def test_get_aws_connection_with_key(self):
         """

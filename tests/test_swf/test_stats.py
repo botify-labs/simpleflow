@@ -32,7 +32,10 @@ def test_last_state_times():
     activity_id = "activity-tests.test_simpleflow.test_dataflow.increment-1"
 
     history_builder.add_activity_task(
-        increment, decision_id=0, last_state=last_state, activity_id=activity_id,
+        increment,
+        decision_id=0,
+        last_state=last_state,
+        activity_id=activity_id,
     )
 
     history = History(history_builder)

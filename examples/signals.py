@@ -207,7 +207,12 @@ class ParentSignalsWorkflow4(BaseWorkflow):
     def run(self):
         all = [
             self.submit(ChildWorkUntilSignalWorkflow),
-            self.submit(Chain(ActivityTask(func_a_1_2), self.signal("signal1"),)),
+            self.submit(
+                Chain(
+                    ActivityTask(func_a_1_2),
+                    self.signal("signal1"),
+                )
+            ),
         ]
         futures.wait(*all)
 
@@ -313,7 +318,12 @@ class ChildWorkflowWaitingSignals(Workflow):
 
     def run(self):
         return self.submit(
-            Chain(Group(self.wait_signal("signal"), self.wait_signal("signal 2"),),)
+            Chain(
+                Group(
+                    self.wait_signal("signal"),
+                    self.wait_signal("signal 2"),
+                ),
+            )
         ).result
 
 
@@ -324,5 +334,8 @@ class WorkflowWithTwoChildren(Workflow):
 
     def run(self, *args, **kwargs):
         return self.submit(
-            Group(ChildWorkflowWaitingSignals, ChildWorkflowSendingSignals,)
+            Group(
+                ChildWorkflowWaitingSignals,
+                ChildWorkflowSendingSignals,
+            )
         ).result

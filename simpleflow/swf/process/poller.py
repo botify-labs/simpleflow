@@ -12,9 +12,7 @@ __all__ = ["Poller"]
 
 
 class Poller(swf.actors.Actor, NamedMixin):
-    """Multi-processing implementation of a SWF actor.
-
-    """
+    """Multi-processing implementation of a SWF actor."""
 
     def __init__(self, domain, task_list=None):
         self.is_alive = False
@@ -50,9 +48,7 @@ class Poller(swf.actors.Actor, NamedMixin):
 
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):
-            logger.info(
-                f"process: caught signal signal=SIGTERM pid={os.getpid()}"
-            )
+            logger.info(f"process: caught signal signal=SIGTERM pid={os.getpid()}")
             self.stop_gracefully()
 
         # bind SIGTERM and SIGINT

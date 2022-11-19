@@ -162,7 +162,10 @@ class TimerWorkflow(Workflow):
         future = self.submit(
             Group(
                 self.start_timer("timer 2", t2),
-                Chain(self.start_timer("timer 1", t1), self.cancel_timer("timer 2"),),
+                Chain(
+                    self.start_timer("timer 1", t1),
+                    self.cancel_timer("timer 2"),
+                ),
             )
         )
         if future.pending:
@@ -210,7 +213,10 @@ def wait_and_signal(name="signal"):
         context["domain_name"], context["workflow_id"], context["run_id"]
     )
     ex.connection.signal_workflow_execution(
-        ex.domain.name, name, ex.workflow_id, run_id=ex.run_id,
+        ex.domain.name,
+        name,
+        ex.workflow_id,
+        run_id=ex.run_id,
     )
 
 

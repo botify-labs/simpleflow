@@ -49,7 +49,8 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.respond_activity_task_canceled(
-                task_token, details=format.details(details),
+                task_token,
+                details=format.details(details),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -73,7 +74,8 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.respond_activity_task_completed(
-                task_token, format.result(result),
+                task_token,
+                format.result(result),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -124,7 +126,8 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.record_activity_task_heartbeat(
-                task_token, format.heartbeat_details(details),
+                task_token,
+                format.heartbeat_details(details),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
@@ -172,13 +175,16 @@ class ActivityWorker(Actor):
 
         try:
             task = self.connection.poll_for_activity_task(
-                self.domain.name, task_list, identity=format.identity(identity),
+                self.domain.name,
+                task_list,
+                identity=format.identity(identity),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to poll activity task", message,
+                    "Unable to poll activity task",
+                    message,
                 )
 
             raise ResponseError(message)
@@ -191,7 +197,11 @@ class ActivityWorker(Actor):
         logging_context.set("event_id", task["startedEventId"])
         logging_context.set("activity_id", task["activityId"])
 
-        activity_task = ActivityTask.from_poll(self.domain, self.task_list, task,)
+        activity_task = ActivityTask.from_poll(
+            self.domain,
+            self.task_list,
+            task,
+        )
 
         return Response(
             task_token=activity_task.task_token,

@@ -41,7 +41,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain__diff_with_different_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             domain = Domain("different-domain", status=DEPRECATED, description="blabla")
             diffs = domain._diff()
@@ -55,7 +57,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain__diff_with_identical_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             mocked = mock_describe_domain()
             domain = Domain(
@@ -112,7 +116,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain_changes_with_different_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             domain = Domain("different-domain", status=DEPRECATED, description="blabla")
             diffs = domain.changes
@@ -126,7 +132,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain_changes_with_identical_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             mocked = mock_describe_domain()
             domain = Domain(

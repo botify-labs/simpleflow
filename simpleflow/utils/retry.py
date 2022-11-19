@@ -31,7 +31,7 @@ def exponential(value):
     """
     import random
 
-    return random.random() * (2 ** value) + 1
+    return random.random() * (2**value) + 1
 
 
 def with_delay(
@@ -75,7 +75,9 @@ def with_delay(
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
-                        'error "%r": retrying in %.2f seconds', error, wait_delay,
+                        'error "%r": retrying in %.2f seconds',
+                        error,
+                        wait_delay,
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1

@@ -55,7 +55,10 @@ class TestDomainQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocking exception",
-                    {"__type": "WhateverError", "message": "WhateverMessage",},
+                    {
+                        "__type": "WhateverError",
+                        "message": "WhateverMessage",
+                    },
                 )
                 self.qs.get("whatever")
 

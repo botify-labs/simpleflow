@@ -1413,7 +1413,9 @@ class ATestDefinitionMoreThanMaxOpenActivities(BaseTestWorkflow):
     """
 
     def run(self):
-        results = self.map(increment, list(range(constants.MAX_OPEN_ACTIVITY_COUNT + 5)))
+        results = self.map(
+            increment, list(range(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
+        )
         futures.wait(*results)
 
 
@@ -1524,7 +1526,8 @@ def test_more_than_1000_open_activities_partial_max():
         scheduled_id = first_decision_id + i + 1
         history.add_activity_task_started(scheduled_id)
         history.add_activity_task_completed(
-            scheduled_id, started=history.last_id,
+            scheduled_id,
+            started=history.last_id,
         )
 
     (history.add_decision_task_scheduled().add_decision_task_started())
@@ -1657,7 +1660,10 @@ def test_workflow_task_naming():
                     "version": "test_version",
                 },
                 "input": json_dumps(
-                    {"args": [], "kwargs": {"workflow_name": "workflow-child-one-1"},}
+                    {
+                        "args": [],
+                        "kwargs": {"workflow_name": "workflow-child-one-1"},
+                    }
                 ),
             },
         }
@@ -1698,7 +1704,12 @@ def test_workflow_idempotent_task_naming():
                     "name": "tests.test_simpleflow.test_dataflow.ATestDefinitionIdempotentChildWithIdWorkflow",
                     "version": "test_version",
                 },
-                "input": json_dumps({"args": [], "kwargs": {"a": 1},}),
+                "input": json_dumps(
+                    {
+                        "args": [],
+                        "kwargs": {"a": 1},
+                    }
+                ),
             },
         }
     ]

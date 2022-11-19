@@ -75,9 +75,7 @@ def format_arguments(*args, **kwargs):
             return "-" + str(key)  # short option -c
         return "--" + str(key)  # long option --val
 
-    return [f'{arg(k)}="{v}"' for k, v in iteritems(kwargs)] + list(
-        map(str, args)
-    )
+    return [f'{arg(k)}="{v}"' for k, v in iteritems(kwargs)] + list(map(str, args))
 
 
 def zip_arguments_defaults(argspec: inspect.ArgSpec) -> Iterable:

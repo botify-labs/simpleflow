@@ -16,7 +16,10 @@ class TimerWorkflow(Workflow):
         future = self.submit(
             Group(
                 self.start_timer("timer 2", t2),
-                Chain(self.start_timer("timer 1", t1), self.cancel_timer("timer 2"),),
+                Chain(
+                    self.start_timer("timer 1", t1),
+                    self.cancel_timer("timer 2"),
+                ),
             )
         )
         if future.pending:

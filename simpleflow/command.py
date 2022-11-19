@@ -418,7 +418,7 @@ def filter_workflows(
             workflow_id=workflow_id,
             workflow_type_name=workflow_type_name,
             workflow_type_version=workflow_type_version,
-            **kwargs
+            **kwargs,
         )
     )
 
@@ -671,7 +671,7 @@ def standalone(
                 tags = get_tag_list(
                     workflow_class,
                     *wf_input.get("args", ()),
-                    **wf_input.get("kwargs", {})
+                    **wf_input.get("kwargs", {}),
                 )
             else:
                 tags = getattr(workflow_class, "tag_list", None)
@@ -783,9 +783,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     except (swf.exceptions.DoesNotExistError, IndexError):
         logger.error("Couldn't find execution, exiting.")
         sys.exit(1)
-    logger.info(
-        f"Found execution: workflowId={wfe.workflow_id} runId={wfe.run_id}"
-    )
+    logger.info(f"Found execution: workflowId={wfe.workflow_id} runId={wfe.run_id}")
 
     # now rerun the specified activity
     history = History(wfe.history())
@@ -807,9 +805,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
         logger.debug(line)
     if input_override:
         logger.info("NB: input will be overriden with the passed one!")
-    logger.info(
-        f"Will re-run: {task}(*{args}, **{kwargs}) [+meta={meta}]"
-    )
+    logger.info(f"Will re-run: {task}(*{args}, **{kwargs}) [+meta={meta}]")
 
     # download binaries if needed
     download_binaries(meta.get("binaries", {}))

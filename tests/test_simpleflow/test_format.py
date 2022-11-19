@@ -36,7 +36,8 @@ class TestFormat(unittest.TestCase):
         MAX_LENGTH = random.randint(10, 1000)
         message = "A" * (MAX_LENGTH // 2)
         self.assertEqual(
-            format.encode(message, MAX_LENGTH), message,
+            format.encode(message, MAX_LENGTH),
+            message,
         )
 
     @mock_s3

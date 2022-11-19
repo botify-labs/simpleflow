@@ -40,15 +40,15 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
         """
         return {}
 
-    def add_forced_steps(self, steps: Sequence[AnyStr], reason: AnyStr | None = None) -> None:
+    def add_forced_steps(
+        self, steps: Sequence[AnyStr], reason: AnyStr | None = None
+    ) -> None:
         """
         Add steps to force.
         """
         if not hasattr(self, "steps_forced"):
             self.steps_forced: set[AnyStr] = set()
-            self.steps_forced_reasons: DefaultDict[AnyStr, set] = defaultdict(
-                set
-            )
+            self.steps_forced_reasons: DefaultDict[AnyStr, set] = defaultdict(set)
         steps = set(steps)
         self.steps_forced |= steps
         if reason:
@@ -61,7 +61,9 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
         """
         return list(getattr(self, "steps_forced", []))
 
-    def add_skipped_steps(self, steps: Sequence[AnyStr], reason: AnyStr | None = None) -> None:
+    def add_skipped_steps(
+        self, steps: Sequence[AnyStr], reason: AnyStr | None = None
+    ) -> None:
         """
         Add steps to skip.
         """

@@ -36,7 +36,11 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
             "continued_as_new",
             "completed",
         ),
-        "signaled": ("signaled", "started", "continued_as_new",),
+        "signaled": (
+            "signaled",
+            "started",
+            "continued_as_new",
+        ),
         "cancel_requested": ("canceled"),
     }
 

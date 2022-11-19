@@ -44,7 +44,12 @@ def load(conf_module_name=None):
     else:
         conf = None
 
-    return load_settings(sys.modules[__name__], env, conf, default,)
+    return load_settings(
+        sys.modules[__name__],
+        env,
+        conf,
+        default,
+    )
 
 
 def str_or_none(val):

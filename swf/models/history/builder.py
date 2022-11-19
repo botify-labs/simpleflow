@@ -64,7 +64,9 @@ class History(swf.models.History):
                     "eventType": "WorkflowExecutionStarted",
                     "eventTimestamp": new_timestamp_string(),
                     "workflowExecutionStartedEventAttributes": {
-                        "taskList": {"name": workflow.task_list,},
+                        "taskList": {
+                            "name": workflow.task_list,
+                        },
                         "parentInitiatedEventId": 0,
                         "taskStartToCloseTimeout": workflow.decision_tasks_timeout,
                         "childPolicy": "TERMINATE",
@@ -113,7 +115,9 @@ class History(swf.models.History):
                     "eventTimestamp": new_timestamp_string(),
                     "decisionTaskScheduledEventAttributes": {
                         "startToCloseTimeout": self._workflow.decision_tasks_timeout,
-                        "taskList": {"name": self._workflow.task_list,},
+                        "taskList": {
+                            "name": self._workflow.task_list,
+                        },
                     },
                 }
             )
@@ -234,7 +238,9 @@ class History(swf.models.History):
                         "control": (
                             json_dumps(control) if control is not None else None
                         ),
-                        "taskList": {"name": activity.task_list,},
+                        "taskList": {
+                            "name": activity.task_list,
+                        },
                         "scheduleToCloseTimeout": activity.task_schedule_to_close_timeout,
                         "activityType": {
                             "name": activity.name,
@@ -670,15 +676,19 @@ class History(swf.models.History):
             self.add_child_workflow_failed(initiated_id, started_id)
         elif last_state == "timed_out":
             self.add_child_workflow_timed_out(
-                initiated_id, started_id, "START_TO_CLOSE",
+                initiated_id,
+                started_id,
+                "START_TO_CLOSE",
             )
         elif last_state == "canceled":
             self.add_child_workflow_canceled(
-                initiated_id, started_id,
+                initiated_id,
+                started_id,
             )
         elif last_state == "terminated":
             self.add_child_workflow_terminated(
-                initiated_id, started_id,
+                initiated_id,
+                started_id,
             )
 
         return self

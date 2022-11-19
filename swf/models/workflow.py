@@ -104,7 +104,7 @@ class WorkflowType(BaseModel):
         decision_tasks_timeout="300",
         description=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.domain = domain
         self.name = name
@@ -401,7 +401,7 @@ class WorkflowExecution(BaseModel):
         open_counts=None,
         parent=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         Domain.check(domain)
         self.domain = domain
@@ -521,7 +521,7 @@ class WorkflowExecution(BaseModel):
                 self.run_id,
                 self.workflow_id,
                 next_page_token=next_page,
-                **kwargs
+                **kwargs,
             )
 
             events.extend(response["events"])
