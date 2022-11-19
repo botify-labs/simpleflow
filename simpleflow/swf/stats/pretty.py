@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import operator
 from datetime import datetime
 from functools import partial, wraps

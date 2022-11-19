@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import swf.models
 import swf.models.decision
 from simpleflow import Workflow, logger, task

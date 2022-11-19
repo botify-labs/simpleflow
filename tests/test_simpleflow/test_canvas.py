@@ -1,7 +1,6 @@
+import json
 import unittest
 from builtins import range
-
-import json
 
 from simpleflow import Workflow, exceptions, futures, workflow
 from simpleflow.activity import with_attributes
