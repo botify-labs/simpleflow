@@ -17,7 +17,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from typing import AnyStr, Optional, Sequence, Union
+    from typing import AnyStr, Sequence
 
     from simpleflow.base import Submittable
     from simpleflow.executor import Executor

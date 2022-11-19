@@ -17,7 +17,6 @@ from simpleflow.utils import json_dumps
 from . import WorkflowStats
 
 if TYPE_CHECKING:
-    from typing import List
 
     from swf.models import WorkflowExecution
 

@@ -18,7 +18,6 @@ from simpleflow.workflow import Workflow
 from swf.models.history import builder
 
 if TYPE_CHECKING:
-    from typing import Optional, Union
 
     from simpleflow.history import History
 

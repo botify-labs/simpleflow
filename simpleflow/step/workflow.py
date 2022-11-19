@@ -15,7 +15,7 @@ from .submittable import Step
 from .tasks import GetStepsDoneTask
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, DefaultDict, Dict, List, Optional, Sequence, Set
+    from typing import Any, AnyStr, DefaultDict, Sequence
 
 
 class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):

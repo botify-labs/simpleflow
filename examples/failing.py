@@ -11,7 +11,7 @@ from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 
 @activity.with_attributes(

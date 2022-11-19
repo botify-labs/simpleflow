@@ -9,7 +9,7 @@ from simpleflow import storage
 from .constants import UNKNOWN_CONTEXT
 
 if TYPE_CHECKING:
-    from typing import AnyStr, List
+    from typing import AnyStr
 
 
 class GetStepsDoneTask:

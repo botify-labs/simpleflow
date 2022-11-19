@@ -30,7 +30,7 @@ from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
     import inspect
-    from typing import Any, AnyStr, Iterable, Optional
+    from typing import Any, AnyStr, Iterable
 
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536

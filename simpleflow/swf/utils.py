@@ -9,7 +9,7 @@ from simpleflow.history import History
 from simpleflow.utils import full_class_name, full_object_name
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any
 
     from swf.models.decision.base import Decision
 

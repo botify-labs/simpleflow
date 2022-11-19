@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import AnyStr, Dict, List, Sequence
+    from typing import AnyStr, Sequence
 
 
 def should_force_step(step_name: AnyStr, force_steps: Sequence[AnyStr]) -> bool:

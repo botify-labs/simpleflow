@@ -11,7 +11,7 @@ from .base import Submittable, SubmittableContainer
 from .task import ActivityTask, WorkflowTask
 
 if TYPE_CHECKING:
-    from typing import List
+    pass
 
 
 class FuncGroup(SubmittableContainer):

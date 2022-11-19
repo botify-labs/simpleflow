@@ -13,7 +13,7 @@ from simpleflow.swf.process import Poller
 from simpleflow.swf.utils import DecisionsAndContext, get_name_from_event
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional, Union
+    from typing import Any
 
     from simpleflow.swf.executor import Executor
     from swf.responses import Response

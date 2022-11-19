@@ -29,7 +29,7 @@ from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, Dict, Text, Type
+    from typing import Any, AnyStr
 
     from swf.models import WorkflowType
 

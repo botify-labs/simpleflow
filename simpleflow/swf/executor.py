@@ -36,7 +36,7 @@ from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, Type, Union
+    pass
 
 __all__ = ["Executor"]
 
