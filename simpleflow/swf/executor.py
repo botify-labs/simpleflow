@@ -13,7 +13,7 @@ import simpleflow.task as base_task
 import swf.exceptions
 import swf.models
 import swf.models.decision
-from simpleflow import compat, exceptions, executor, format, futures, logger, task
+from simpleflow import exceptions, executor, format, futures, logger, task
 from simpleflow.activity import PRIORITY_NOT_SET, Activity
 from simpleflow.base import Submittable
 from simpleflow.history import History
@@ -728,9 +728,7 @@ class Executor(executor.Executor):
     ) -> futures.Future | tuple[futures.Future | None, SwfTask] | None:
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
-            if isinstance(
-                timer["control"], compat.string_types
-            ):  # FIXME unconditional?
+            if isinstance(timer["control"], str):  # FIXME unconditional?
                 control = format.decode(timer["control"])
             else:
                 control = timer["control"]

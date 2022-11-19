@@ -9,21 +9,16 @@ from typing import TYPE_CHECKING
 
 import psutil
 
-try:
-    import subprocess32 as subprocess
-except ImportError:
-    import subprocess
+import subprocess
 
 import functools
 import logging
 import tempfile
 import traceback
 
-# noinspection PyCompatibility
-
 from future.utils import iteritems
 
-from simpleflow import compat, format
+from simpleflow import format
 from simpleflow import logger as simpleflow_logger
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import import_from_module, json_dumps
@@ -249,16 +244,10 @@ def python(
                     full_command.append("foo")  # dummy funcarg
                 if kill_children:
                     full_command.append("--kill-children")
-                if (
-                    is_buggy_subprocess32()
-                ):  # close_fds doesn't work with subprocess32 < 3.5.0
-                    close_fds = False
-                    pass_fds = []
-                else:
-                    close_fds = True
-                    pass_fds = [dup_result_fd, dup_error_fd]
-                    if arg_file:
-                        pass_fds.append(arg_fd)
+                close_fds = True
+                pass_fds = [dup_result_fd, dup_error_fd]
+                if arg_file:
+                    pass_fds.append(arg_fd)
                 process = subprocess.Popen(
                     full_command,
                     bufsize=-1,
@@ -277,8 +266,7 @@ def python(
                     error_fd.seek(0)
                     err_output = error_fd.read()
                     if err_output:
-                        if not compat.PY2:
-                            err_output = err_output.decode("utf-8", errors="replace")
+                        err_output = err_output.decode("utf-8", errors="replace")
                     raise ExecutionError(err_output)
 
                 result_fd.seek(0)
@@ -287,8 +275,7 @@ def python(
             if not result_str:
                 return None
             try:
-                if not compat.PY2:
-                    result_str = result_str.decode("utf-8", errors="replace")
+                result_str = result_str.decode("utf-8", errors="replace")
                 result = format.decode(result_str)
                 return result
             except BaseException as ex:
@@ -305,22 +292,6 @@ def python(
         return execute
 
     return wrap_callable
-
-
-def is_buggy_subprocess32():
-    """
-    subprocess32 < 3.5.0:
-    * doesn't support close_fds
-    * has its _subprocess C helper named _subprocess (changed to
-        _posixsubprocess32 in 3.5.0rc3)
-    """
-    if not compat.PY2:
-        return False
-    return (
-        subprocess.__name__ == "subprocess32"
-        and hasattr(subprocess, "_posixsubprocess")
-        and subprocess._posixsubprocess.__name__ == "_posixsubprocess"
-    )
 
 
 def program(path=None, argument_format=format_arguments):
@@ -538,8 +509,7 @@ def main():
         )
         if cmd_arguments.error_fd == 2:
             sys.stderr.flush()
-        if not compat.PY2:
-            details = details.encode("utf-8")
+        details = details.encode("utf-8")
         os.write(cmd_arguments.error_fd, details)
         if cmd_arguments.kill_children:
             kill_child_processes()
@@ -549,8 +519,7 @@ def main():
         sys.stdout.flush()  # may have print's in flight
         os.write(cmd_arguments.result_fd, b"\n")
     result = json_dumps(result)
-    if not compat.PY2:
-        result = result.encode("utf-8")
+    result = result.encode("utf-8")
     os.write(cmd_arguments.result_fd, result)
     if cmd_arguments.kill_children:
         kill_child_processes()

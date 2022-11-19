@@ -8,8 +8,6 @@ from functools import wraps
 from itertools import chain, islice
 from time import mktime
 
-from simpleflow import compat
-
 
 def decapitalize(s):
     """
@@ -208,9 +206,7 @@ def underscore_to_camel(string):
             [string[0].upper()],
             (
                 (c.upper() if p == "_" else c) if c != "_" else ""
-                for p, c in compat.izip(
-                    islice(string, 0, None), islice(string, 1, None)
-                )
+                for p, c in zip(islice(string, 0, None), islice(string, 1, None))
             ),
         )
     )

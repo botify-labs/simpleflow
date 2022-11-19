@@ -5,7 +5,6 @@
 
 from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError
 
-from simpleflow import compat
 from swf import exceptions
 from swf.constants import REGISTERED
 from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
@@ -73,7 +72,7 @@ class Domain(BaseModel):
         if (
             not isinstance(domain, cls)
             or not hasattr(domain, "name")
-            or not isinstance(domain.name, compat.str)
+            or not isinstance(domain.name, str)
         ):
             raise TypeError(f"invalid type {type(domain)} for domain")
 

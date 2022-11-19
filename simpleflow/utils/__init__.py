@@ -4,8 +4,6 @@ import re
 from typing import TYPE_CHECKING
 from zlib import adler32
 
-from simpleflow.compat import PY2
-
 from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
@@ -89,7 +87,7 @@ def import_from_module(path: AnyStr) -> Any:
 
 def import_object_from_module(module_name: AnyStr, *object_names: AnyStr) -> Any:
     if not module_name:
-        module_name = "builtins" if not PY2 else "__builtin__"
+        module_name = "builtins"
     from importlib import import_module
 
     obj = import_module(module_name)
@@ -107,7 +105,7 @@ def full_object_name(obj: Any) -> AnyStr:
 
 def full_class_name(klass: type) -> AnyStr:
     module = klass.__module__
-    name = klass.__name__ if PY2 else klass.__qualname__
+    name = klass.__qualname__
     if module is None:
         return name
     return module + "." + name

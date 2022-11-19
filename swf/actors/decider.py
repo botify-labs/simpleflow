@@ -1,6 +1,6 @@
 import boto.exception
 
-from simpleflow import compat, format, logging_context
+from simpleflow import format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
 from swf.exceptions import DoesNotExistError, PollTimeout, ResponseError
@@ -35,9 +35,7 @@ class Decider(Actor):
         :param execution_context: User-defined context to add to workflow execution.
         :type execution_context: str
         """
-        if execution_context is not None and not isinstance(
-            execution_context, compat.string_types
-        ):
+        if execution_context is not None and not isinstance(execution_context, str):
             execution_context = json_dumps(execution_context)
         try:
             self.connection.respond_decision_task_completed(

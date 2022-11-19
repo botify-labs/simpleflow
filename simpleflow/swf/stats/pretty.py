@@ -10,7 +10,6 @@ import pytz
 from future.utils import iteritems
 from tabulate import tabulate
 
-from simpleflow import compat
 from simpleflow.history import History
 from simpleflow.utils import json_dumps
 
@@ -213,7 +212,7 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
         wrapped.__wrapped__ = wrapped
         return wrapped
 
-    if isinstance(fmt, compat.str):
+    if isinstance(fmt, str):
         fmt = FORMATS[fmt]
 
     return formatter
