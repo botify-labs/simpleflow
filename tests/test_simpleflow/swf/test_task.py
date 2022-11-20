@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sure import expect
 
 from simpleflow import activity

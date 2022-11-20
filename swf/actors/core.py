@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from swf.core import ConnectedSWFObject
 from swf.models import Domain
 

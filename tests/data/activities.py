@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from simpleflow import activity
 
 from .constants import DEFAULT_VERSION

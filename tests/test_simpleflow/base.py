@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from simpleflow.swf.executor import Executor
 from swf.models import Domain
 from swf.models.history import builder

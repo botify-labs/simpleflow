@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from simpleflow import exceptions
 from simpleflow._decorators import deprecated
 

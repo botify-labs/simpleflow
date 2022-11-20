@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging.config
 import sys
 from datetime import datetime

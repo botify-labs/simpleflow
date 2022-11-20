@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sure import expect
 
 from tests.integration import VCRIntegrationTest, vcr

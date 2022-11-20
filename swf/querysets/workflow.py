@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from boto.swf.exceptions import SWFResponseError
 
 from swf.constants import MAX_WORKFLOW_AGE, REGISTERED

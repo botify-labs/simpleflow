@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .activity import Activity  # NOQA
 from .runtime import logger  # NOQA
 from .signal import WaitForSignal  # NOQA

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import swf.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor

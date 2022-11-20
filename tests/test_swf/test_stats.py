@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from simpleflow import Workflow, activity
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.history import History

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from sqlite3 import OperationalError
 from uuid import uuid4

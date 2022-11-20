@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from swf.models import History
 from swf.querysets.base import BaseQuerySet
 

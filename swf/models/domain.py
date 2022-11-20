@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError
 
 from swf import exceptions

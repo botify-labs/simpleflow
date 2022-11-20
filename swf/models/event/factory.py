@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 import collections
 
 from swf.models.event.marker import CompiledMarkerEvent, MarkerEvent

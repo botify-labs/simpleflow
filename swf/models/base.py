@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from collections import OrderedDict, namedtuple
 
 from swf.core import ConnectedSWFObject

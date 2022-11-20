@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from functools import wraps
 from itertools import chain, islice

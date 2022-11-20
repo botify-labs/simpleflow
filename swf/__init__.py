@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 version = (0, 1, 60)
 
 __title__ = "python-simple-workflow"

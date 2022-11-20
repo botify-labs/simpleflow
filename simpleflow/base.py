@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Submittable:
     """
     Object directly submittable to an executor, without wrapping:

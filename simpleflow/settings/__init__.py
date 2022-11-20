@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pprint import pformat
 from typing import TYPE_CHECKING

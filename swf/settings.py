@@ -3,6 +3,7 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
 
 import os
 

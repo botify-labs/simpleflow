@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from swf.models.event.base import Event
 from swf.models.event.compiler import CompiledEvent
 

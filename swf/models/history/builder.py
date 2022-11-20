@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import swf.models.event.workflow
 from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory

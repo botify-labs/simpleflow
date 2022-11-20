@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Response:
     """
     This class wraps SWF responses so they can be passed around and examined later.

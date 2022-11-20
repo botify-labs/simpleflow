@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import boto.exception
 
 from simpleflow import format, logging_context

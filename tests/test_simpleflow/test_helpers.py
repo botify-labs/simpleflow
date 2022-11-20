@@ -1,4 +1,6 @@
-# See README for more informations about integration tests
+# See README for more information about integration tests
+from __future__ import annotations
+
 import unittest
 
 from sure import expect

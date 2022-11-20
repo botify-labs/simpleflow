@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from swf.querysets.base import BaseQuerySet

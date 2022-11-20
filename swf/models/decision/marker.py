@@ -3,6 +3,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
 

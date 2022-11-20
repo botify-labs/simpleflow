@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from psutil import Process

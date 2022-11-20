@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Marker:
     def __init__(self, name, details):
         self.name = name

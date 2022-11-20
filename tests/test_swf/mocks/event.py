@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def mock_get_workflow_execution_history(*args, **kwargs):
     override_data = kwargs.pop("override_data", {})
 

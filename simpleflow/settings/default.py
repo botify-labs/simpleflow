@@ -1,5 +1,8 @@
-import logging  # NOQA
+from __future__ import annotations
+
 import os
+
+import logging  # NOQA
 
 WORKFLOW_DEFAULT_TASK_LIST = "default"
 WORKFLOW_DEFAULT_VERSION = "default"

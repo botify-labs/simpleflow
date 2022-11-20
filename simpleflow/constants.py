@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 SIMPLEFLOW_ENV = os.getenv("SIMPLEFLOW_ENV", "production")
