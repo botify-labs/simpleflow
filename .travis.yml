@@ -6,9 +6,11 @@ os: linux
 dist: focal
 
 python:
-  - "2.7"
+  - "3.7"
   - "3.8"
-  - "pypy2"
+  - "3.9"
+  - "3.10"
+  - "pypy3"
 
 install:
     - pip install .
