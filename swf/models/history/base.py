@@ -102,14 +102,6 @@ class History:
             raise StopIteration
         return next_event
 
-    def __next__(self):
-        """
-        Py3 iterator.
-        :return:
-        :rtype: swf.models.event.Event
-        """
-        return next(self)
-
     @property
     def last(self):
         """Returns the last stored event
