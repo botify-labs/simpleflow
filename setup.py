@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import re
 import subprocess
@@ -47,11 +47,10 @@ def read(fname):
 
 DEPS = [
     "attrs",
-    "future",
     "boto>=2.49.0",
     "diskcache>=4.1.0",
     "Jinja2>=2.11.1",
-    "markupsafe<2.0.0",
+    "markupsafe>=2.1",
     "kubernetes>=3.0.0",
     "lazy_object_proxy",
     "lockfile>=0.9.1",
@@ -60,11 +59,6 @@ DEPS = [
     "click",
     "psutil",
     "pytz",
-    "six",
-    'typing;python_version<"3.5"',
-    # 'PyYAML',
-    'enum34;python_version<"3.4"',
-    'subprocess32>=3.5.0;python_version<"3.5"',
 ]
 
 tests_require = []
@@ -96,18 +90,16 @@ setup(
     zip_safe=False,
     keywords="simpleflow amazon swf simple workflow",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     entry_points={
         "console_scripts": [
