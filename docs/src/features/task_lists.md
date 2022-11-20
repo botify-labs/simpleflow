@@ -2,13 +2,15 @@
 
 Task lists are often used to route different tasks to specific groups 
 of workers.
-For SWF tasks, the task list is typically specified with `@activity.with_attributes`:
+The decider and activity task lists are distinct, even if they have the same name.
+
+For SWF activities, the task list is typically specified with `@activity.with_attributes`:
 
 ```python
 from simpleflow import activity
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def double(x):
     return x * 2
 ```
@@ -33,7 +35,7 @@ class MyWorkflow(Workflow):
     
     def run(self, x, task_list, *args, **kwargs):
         result = self.submit(run_on(double, task_list), x).result
-        print("Result: {}".format(result))
+        print(f"Result: {result}")
 ```
 
 ```bash

@@ -59,7 +59,7 @@ The `Step.__init__` method is called with:
 * `force: bool=False`: whether to force a step even if previously played
 * `activities_if_step_already_done: Submittable | SubmittableContainer | None=None`: what to execute if the step is skipped
 * `emit_signal: bool=False`: whether to emit a `signal.{step_name}` signal sent after the step is played/skipped
-* `force_steps_if_executed: list[str] | None=None`: dependent steps to play next if this one isn't skipped
+* `force_steps_if_executed: list[str] | None=None`: dependent steps to play next if this one isn’t skipped
 * `bubbles_exception_on_failure: bool=False`: flag applied to the chain encapsulating the step
 
 The `WorkflowStepMixin.step` method delegates to `Step`.

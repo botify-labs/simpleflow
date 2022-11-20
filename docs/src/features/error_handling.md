@@ -7,7 +7,7 @@ Error Handling
 What follows applies to the SWF executor; the local one only handles `raises_on_failure`.
 
 A workflow can declare a method to be called when a task or child workflow fails or times out.
-By default, errors are handled as follow:
+By default, errors are handled as follows:
 
 *  a`retry` attribute defines how many times the task or workflow is retried; it defaults to 0 (no retry)
 * if too many retries were attempted, the `raises_on_failure` attribute is checked. If False, a future is returned with 
@@ -33,16 +33,16 @@ The `TaskFailureContext` currently have these members:
 * decision: described below
 * retry_wait_timeout: ditto
 
-The `TaskFailureContext.decision` (nothing in common with SWF's decisions) should be set by `on_task_failure`. It can be:
+The `TaskFailureContext.decision` (nothing in common with SWF’s decisions) should be set by `on_task_failure`. It can be:
 
 * none: default value, continue with default handling (potential retries then abort)
 * abort: use default abort strategy
-* ignore: discard the exception, consider the task finished; the future's result may be user-modified
+* ignore: discard the exception, consider the task finished; the future’s result may be user-modified
 * cancel: mark the future as cancelled
 * retry: schedule the task again; its args and kwargs may be user-modified (well, the whole task)
 * retry_later: schedule the task after retry_wait_timeout seconds, with args and kwargs potentially altered
-* handled: `on_task_failure` somewhat handled the failure; use the future ans task it has possibly modified (one
-    strategy here is for `on_task_failure` to call the executor's `default_failure_handling` method, and make 
+* handled: `on_task_failure` somewhat handled the failure; use the future and task it has possibly modified (one
+    strategy here is for `on_task_failure` to call the executor’s `default_failure_handling` method, and make 
     workflow-specific processing according to its return value)
 
 The `Workflow.on_task_failure` method is guaranteed to be called only once on a given replay, but may be called

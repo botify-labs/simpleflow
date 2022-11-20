@@ -6,7 +6,7 @@ executed as a program.
 
 There are two modes:
 
-- Convert the definition of a fonction as a command line.
+- Convert the definition of a function as a command line.
 - Execute a Python function in another process.
 
 Please refer to the `simpleflow.tests.test_activity` test module for
@@ -16,7 +16,7 @@ further examples.
 Executing a function as a command line
 --------------------------------------
 
-Let's take the example of `ls`:
+Let’s take the example of `ls`:
 
 ```python
 @execute.program()
@@ -38,18 +38,18 @@ The rationale for this feature is to execute a function with another
 interpreter (such as pypy) or in another environment (virtualenv).
 
 ```python
-@execute.python(interpreter='pypy')
+@execute.python(interpreter="pypy")
 def inc(xs):
     return [x + 1 for x in xs]
 ```
 
 Calling `inc(range(10))` in Python will execute the function with the
-`pypy` interpreter found in the `$PATH`.
+`pypy` interpreter found in `$PATH`.
 
 
 Limitations
 -----------
 
 The main limitation comes from the need to serialize the arguments and the
-return values to pass them as strings. Hence all arguments and return values
+return values to pass them as strings. Hence, all arguments and return values
 must be convertible into JSON values.

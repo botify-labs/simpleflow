@@ -31,7 +31,7 @@ Optional:
 
 Settings are found respectively in:
 
-A credential file a `.swf` file in the user's home directory:
+A credential file a `.swf` file in the user’s home directory:
 
 ```ini
 [credentials]
@@ -45,22 +45,22 @@ region=us-east-1
 The following environment variables
     - `AWS_ACCESS_KEY_ID`
     - `AWS_SECRET_ACCESS_KEY`
-    - `region`
+    - `AWS_DEFAULT_REGION`
 
 If neither of the previous methods were used, you can still set the AWS credentials with `swf.settings.set`:
 
 ```python
 >>> import swf.settings
->>> swf.settings.set(aws_access_key_id='MYAWSACCESSKEYID',
-...                  aws_secret_access_key='MYAWSSECRETACCESSKEY',
-...                  region='REGION')
-# And then you're good to go...
+>>> swf.settings.set(aws_access_key_id="MYAWSACCESSKEYID",
+...                  aws_secret_access_key="MYAWSSECRETACCESSKEY",
+...                  region="REGION")
+# And then you’re good to go...
 >>> queryset = DomainQuery()
 >>> queryset.all()
-[Domain('test1'), Domain('test2')]
+[Domain("test1"), Domain("test2")]
 ```
 
-Leaving these AWS API keys unspecified is fine, as Boto's credentials chain
+Leaving these AWS API keys unspecified is fine, as Boto’s credentials chain
 handler will discover them if present.
 
 Example usage
@@ -77,7 +77,7 @@ local and remote objects.
 # Models reside in the swf.models module
 >>> from swf.models import Domain, WorkflowType, WorkflowExecution, ActivityType
 
-# Once imported you're ready to create a local model instance
+# Once imported you’re ready to create a local model instance
 >>> D = Domain(
     "my-test-domain-name",
     description="my-test-domain-description",
@@ -90,8 +90,8 @@ local and remote objects.
 ```
 
 Now you have a local `Domain` model object, and if no errors were raised, the `save` method have saved
-amazon-side. Sometimes you won't be able to know if the model you're manipulating has an upstream version:
-whether you've acquired it through a queryset, or the remote object has been deleted for example.
+amazon-side. Sometimes you won’t be able to know if the model you’re manipulating has an upstream version:
+whether you’ve acquired it through a queryset, or the remote object has been deleted for example.
 Fortunately, models are shipped with a set of functions to make sure your local objects keep synced and
 consistent.
 
@@ -120,10 +120,10 @@ your object and will build a new model instance using its attributes.
 False
 >>> D.changes
 ModelDiff(
-    Difference('status', 'REGISTERED', 'DEPRECATED')
+    Difference("status", "REGISTERED", "DEPRECATED")
 )
 
-# Let's pull the upstream version
+# Let’s pull the upstream version
 >>> D = D.upstream()
 >>> D.is_synced
 True
@@ -134,7 +134,7 @@ ModelDiff()
 ### QuerySets
 
 Models can be retrieved and instantiated via querysets. To continue over the django comparison,
-they're behaving like django managers.
+they’re behaving like django managers.
 
 ```python
 # As querying for models needs a valid connection to amazon service,
@@ -200,8 +200,8 @@ class Decider(Actor):
 
 * `Worker` base class implements the core functionality of a swf worker whoes role is to process activity
   tasks. It is basically able to poll for new activity tasks to process, send back a heartbeat to SWF
-  service in order to let it know it hasn't failed or crashed, and to complete, fail or cancel the activity
-  task it's processing.
+  service in order to let it know it hasn’t failed or crashed, and to complete, fail or cancel the activity
+  task it’s processing.
 
 ```python
 class ActivityWorker(Actor):
