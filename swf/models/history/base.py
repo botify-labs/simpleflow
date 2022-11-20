@@ -5,8 +5,6 @@
 
 from itertools import groupby
 
-from future.utils import iteritems
-
 from swf.models.event import CompiledEventFactory, EventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
@@ -177,9 +175,7 @@ class History:
         :rtype: swf.models.history.History
         """
         return [
-            e
-            for e in self.events
-            if all(getattr(e, k) == v for k, v in iteritems(kwargs))
+            e for e in self.events if all(getattr(e, k) == v for k, v in kwargs.items())
         ]
 
     @property

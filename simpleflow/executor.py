@@ -3,8 +3,6 @@ from __future__ import annotations
 import abc
 from typing import TYPE_CHECKING
 
-from future.utils import with_metaclass
-
 from ._decorators import deprecated
 
 if TYPE_CHECKING:
@@ -15,7 +13,7 @@ if TYPE_CHECKING:
 __all__ = ["Executor"]
 
 
-class Executor(with_metaclass(abc.ABCMeta, object)):
+class Executor(metaclass=abc.ABCMeta):
     """
     Abstract class that describes the interface to manage the execution of
     a workflow.

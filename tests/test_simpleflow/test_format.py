@@ -4,7 +4,6 @@ import random
 import unittest
 
 import boto
-from future.utils import PY2
 
 from simpleflow import constants, format
 from simpleflow.storage import push_content
@@ -12,9 +11,6 @@ from tests.moto_compat import mock_s3
 
 
 class TestFormat(unittest.TestCase):
-    if PY2:
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegex
-
     def setUp(self):
         pass
 

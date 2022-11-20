@@ -6,7 +6,6 @@
 from datetime import datetime
 
 import pytz
-from future.utils import iteritems
 
 from simpleflow import format
 from swf.utils import cached_property, camel_to_underscore
@@ -102,5 +101,5 @@ class Event:
     def process_attributes(self):
         """Processes the event raw_data attributes_key elements
         and sets current instance attributes accordingly"""
-        for key, value in iteritems(self.raw[self._attributes_key]):
+        for key, value in self.raw[self._attributes_key].items():
             setattr(self, camel_to_underscore(key), value)

@@ -6,8 +6,6 @@ import os
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from future.utils import with_metaclass
-
 from simpleflow import activity, settings, task
 
 from .constants import STEP_ACTIVITY_PARAMS_DEFAULT
@@ -18,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any, DefaultDict, Sequence
 
 
-class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
+class WorkflowStepMixin(metaclass=abc.ABCMeta):
     def get_step_bucket(self) -> str:
         """
         Return the S3 bucket where to store the steps files.

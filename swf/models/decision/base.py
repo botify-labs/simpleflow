@@ -4,10 +4,12 @@
 # See the file LICENSE for copying permission.
 
 from functools import wraps
-
-from future.utils import iteritems
+from typing import TYPE_CHECKING
 
 from swf.utils import decapitalize, underscore_to_camel
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def decision_action(fn):
@@ -55,7 +57,7 @@ class Decision(dict):
         self["decisionType"] = self.type
         self[self.attributes_key] = {}
 
-    def update_attributes(self, data):
+    def update_attributes(self, data: dict[str, Any]):
         """Updates Decision instance attributes_key dictionary
         with provided data which values is not None
 
@@ -67,6 +69,6 @@ class Decision(dict):
                 "Can't update unset attributes_key" "decision attribute"
             )
 
-        for key, value in iteritems(data):
+        for key, value in data.items():
             if value:
                 self[self.attributes_key].update({key: value})

@@ -1,18 +1,20 @@
 import sys
 from pprint import pformat
-
-from future.utils import iteritems
+from typing import TYPE_CHECKING
 
 from . import base
 
+if TYPE_CHECKING:
+    from typing import Any
 
-def put_setting(key, value):
+
+def put_setting(key: str, value: Any):
     setattr(sys.modules[__name__], key, value)
     _keys.add(key)
 
 
-def configure(dct):
-    for k, v in iteritems(dct):
+def configure(dct: dict) -> None:
+    for k, v in dct.items():
         put_setting(k, v)
 
 
@@ -23,7 +25,7 @@ def print_settings():
 
 
 # initialize a list of settings names
-_keys = set()
+_keys: set[str] = set()
 
 # look for settings and initialize them
 configure(base.load())

@@ -7,7 +7,6 @@ from itertools import chain
 from typing import TYPE_CHECKING
 
 import pytz
-from future.utils import iteritems
 from tabulate import tabulate
 
 from simpleflow.history import History
@@ -315,8 +314,8 @@ def dump_history_to_json(history):
     history.parse()
     events = list(
         chain(
-            iteritems(history.activities),
-            iteritems(history.child_workflows),
+            history.activities.items(),
+            history.child_workflows.items(),
         )
     )
     return jsonify(events, headers=None)

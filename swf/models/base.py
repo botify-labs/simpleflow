@@ -5,8 +5,6 @@
 
 from collections import OrderedDict, namedtuple
 
-from future.utils import iteritems, listitems
-
 from swf.core import ConnectedSWFObject
 from swf.exceptions import DoesNotExistError
 
@@ -31,7 +29,7 @@ class ModelDiff:
         return len(self.container)
 
     def __getitem__(self, index):
-        attr, (local, upstream) = listitems(self.container)[index]
+        attr, (local, upstream) = list(self.container.items())[index]
         return Difference(attr, local, upstream)
 
     def _process_input(self, input):
@@ -57,7 +55,7 @@ class ModelDiff:
         """Outputs models differences as a list of
         swf.models.base.Difference namedtuple
         """
-        return [Difference(k, v[0], v[1]) for k, v in iteritems(self.container)]
+        return [Difference(k, v[0], v[1]) for k, v in self.container.items()]
 
 
 class BaseModel(ConnectedSWFObject):

@@ -4,7 +4,6 @@ import types
 from uuid import UUID
 
 import lazy_object_proxy
-from future.utils import iteritems
 
 from simpleflow.futures import Future
 
@@ -46,7 +45,7 @@ def serialize_complex_object(obj):
 
 def _resolve_proxy(obj):
     if isinstance(obj, dict):
-        return {k: _resolve_proxy(v) for k, v in iteritems(obj)}
+        return {k: _resolve_proxy(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_resolve_proxy(v) for v in obj]
     if isinstance(obj, lazy_object_proxy.Proxy):

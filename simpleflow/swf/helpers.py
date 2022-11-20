@@ -5,7 +5,6 @@ import os
 import socket
 
 import psutil
-from future.utils import iteritems, itervalues
 
 import swf.exceptions
 import swf.models
@@ -120,7 +119,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     :type input: Optional[dict[str, Any]]
     """
     found_activity = None
-    for params in itervalues(history.activities):
+    for params in history.activities.values():
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
@@ -177,11 +176,11 @@ def swf_identity():
             extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
         except Exception:
             extra_keys = {}
-        for key, value in iteritems(extra_keys):
+        for key, value in extra_keys.items():
             identity[key] = value
 
     # remove null values
-    identity = {k: v for k, v in iteritems(identity) if v is not None}
+    identity = {k: v for k, v in identity.items() if v is not None}
 
     # serialize the result
     return json_dumps(identity)
