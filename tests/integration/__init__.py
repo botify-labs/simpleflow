@@ -16,8 +16,6 @@ import boto.swf  # noqa
 
 
 if TYPE_CHECKING:
-    from typing import List, Union
-
     from click.testing import Result
 
 
