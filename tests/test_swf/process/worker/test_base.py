@@ -19,18 +19,30 @@ def noop_target(handler):
         time.sleep(1)
 
 
+def exit_handler(signum, frame):
+    sys.exit()
+
+
+def noop_handler(signum, frame):
+    pass
+
+
+def reap_handler(signum, frame):
+    base.reap_process_tree(os.getpid()) or sys.exit()
+
+
 @pytest.mark.parametrize(
     "handler",
     [
-        lambda signum, frame: sys.exit(),
-        lambda signum, frame: None,
+        exit_handler,
+        noop_handler,
     ],
 )
 def test_reap_process_tree_plain(handler):
     """
     Tests that process is killed when handling SIGTERM, times out, or ignores.
     """
-    proc = Process(target=noop_target, args=[handler])
+    proc = Process(target=noop_target, args=(handler,))
     try:
         proc.start()
         # Wait until ready
@@ -41,7 +53,7 @@ def test_reap_process_tree_plain(handler):
         assert not psutil.pid_exists(proc.pid)
     finally:
         # Clean up any potentially danging processp
-        if psutil.pid_exists(proc.pid):
+        if proc.pid and psutil.pid_exists(proc.pid):
             os.kill(proc.pid, signal.SIGKILL)
             assert False, f"KILLed process with pid={proc.pid}"
 
@@ -58,7 +70,7 @@ def nested_target(handler, child_pid, lock):
     :type lock: multiprocessing.Lock
     """
     signal.signal(signal.SIGTERM, handler)
-    proc = Process(target=noop_target, args=[handler])
+    proc = Process(target=noop_target, args=(handler,))
     proc.start()
     while not proc.pid:
         time.sleep(0.1)
@@ -71,9 +83,9 @@ def nested_target(handler, child_pid, lock):
 @pytest.mark.parametrize(
     "handler",
     [
-        lambda signum, frame: sys.exit(),
-        lambda signum, frame: None,
-        lambda signum, frame: base.reap_process_tree(os.getpid()) or sys.exit(),
+        exit_handler,
+        noop_handler,
+        reap_handler,
     ],
 )
 def test_reap_process_tree_children(handler):
@@ -82,7 +94,8 @@ def test_reap_process_tree_children(handler):
     """
     child_pid = Value("i", 0)
     lock = Lock()
-    proc = Process(target=nested_target, args=[handler, child_pid, lock])
+    proc = Process(target=nested_target, args=(handler, child_pid, lock))
+    pids = []
     try:
         proc.start()
         while not proc.pid or not child_pid.value:
@@ -93,6 +106,6 @@ def test_reap_process_tree_children(handler):
         assert all(not psutil.pid_exists(p) for p in pids)
     finally:
         for pid in pids:
-            if psutil.pid_exists(proc.pid):
+            if pid and psutil.pid_exists(proc.pid):
                 os.kill(proc.pid, signal.SIGKILL)
                 assert False, f"KILLed process with pid={proc.pid}"
