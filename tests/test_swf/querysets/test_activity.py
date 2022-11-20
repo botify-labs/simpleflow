@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
-from unittest.mock import patch
 
 import swf.settings
 from swf.exceptions import DoesNotExistError, ResponseError

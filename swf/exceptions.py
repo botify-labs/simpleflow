@@ -6,12 +6,7 @@
 from __future__ import annotations
 
 import re
-
-try:
-    from collections.abc import Sequence  # noqa
-except ImportError:
-    from collections import Sequence
-
+from collections.abc import Sequence
 from functools import partial, wraps
 
 import boto.swf.exceptions

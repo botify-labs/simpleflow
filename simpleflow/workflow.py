@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
 from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
@@ -9,9 +11,10 @@ from ._decorators import deprecated
 from .activity import Activity
 from .utils import issubclass_
 
-if False:
-    from typing import Any, List, Optional  # NOQA
-    from .marker import Marker  # NOQA
+if TYPE_CHECKING:
+    from typing import Any
+
+    from .marker import Marker
 
 
 class Workflow(Submittable):

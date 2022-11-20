@@ -28,7 +28,6 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     with workflows has to be built against a `domain`
 
     :param      domain: domain the inheriting queryset belongs to
-    :type       domain: swf.model.domain.Domain
     """
 
     # Amazon response section corresponding
@@ -36,7 +35,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     _infos = "typeInfo"
     _infos_plural = "typeInfos"
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain: Domain, *args, **kwargs):
         super().__init__(*args, **kwargs)
         Domain.check(domain)
         self.domain = domain
@@ -48,10 +47,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
         return self._domain
 
     @domain.setter
-    def domain(self, value):
-        # Avoiding circular import
-        from swf.models.domain import Domain
-
+    def domain(self, value: Domain):
         if not isinstance(value, Domain):
             err = (
                 "domain property has to be of"

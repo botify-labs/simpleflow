@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import unittest
-
 from unittest.mock import patch
+
 from sure import expect
 
 from simpleflow.swf.helpers import swf_identity

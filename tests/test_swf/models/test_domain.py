@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from boto.swf.layer1 import Layer1
-from unittest.mock import Mock, patch
 
 import swf.settings
 from swf.constants import DEPRECATED

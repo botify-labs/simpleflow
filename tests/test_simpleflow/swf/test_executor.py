@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import unittest
-
 from unittest import mock
+
 from sure import expect
 
 from simpleflow import activity, format, futures

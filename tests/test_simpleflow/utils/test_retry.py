@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 from time import time
-
 from unittest import mock
+
 from flaky import flaky
 
 from simpleflow.utils.retry import constant, exponential, with_delay

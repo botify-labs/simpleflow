@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from boto.swf.exceptions import SWFResponseError
 
 from swf.constants import REGISTERED
@@ -12,6 +14,9 @@ from swf.exceptions import DoesNotExistError, ResponseError
 from swf.models.activity import ActivityType
 from swf.querysets.base import BaseQuerySet
 from swf.utils import get_subkey
+
+if TYPE_CHECKING:
+    from swf.models.domain import Domain
 
 
 class ActivityTypeQuerySet(BaseQuerySet):
@@ -33,7 +38,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         self.domain = domain
 
     @property
-    def domain(self):
+    def domain(self) -> Domain | None:
         if not hasattr(self, "_domain"):
             self._domain = None
         return self._domain

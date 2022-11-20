@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import datetime
 import functools
+from unittest.mock import patch
 
 import boto
-from unittest.mock import patch
 
 import swf.models
 import swf.models.decision

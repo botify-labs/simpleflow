@@ -6,18 +6,10 @@ import os
 import re
 import subprocess
 import sys
+from shlex import quote
+from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
-
-from builtins import input, str  # noqa
-
-
-try:
-    from shlex import quote
-except ImportError:
-    from pipes import quote  # undocumented; still available anyway
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Iterator, List

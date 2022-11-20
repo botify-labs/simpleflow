@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import unittest
 from collections import namedtuple
-
 from unittest.mock import patch
 
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker

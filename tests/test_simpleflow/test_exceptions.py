@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import boto
-from unittest.mock import patch
 from sure import expect
 
 from simpleflow.exceptions import TaskFailed

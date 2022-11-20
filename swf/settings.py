@@ -6,11 +6,7 @@
 from __future__ import annotations
 
 import os
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 
 
 def from_stream(stream):

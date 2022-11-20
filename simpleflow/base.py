@@ -18,5 +18,8 @@ class SubmittableContainer:
     We cannot pass those objects directly to the executor
     """
 
+    def submit(self, executor):
+        raise NotImplementedError
+
     def propagate_attribute(self, attr, val):
         pass

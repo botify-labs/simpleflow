@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import boto
-from unittest.mock import patch
 
 from simpleflow import storage
 from tests.moto_compat import mock_s3

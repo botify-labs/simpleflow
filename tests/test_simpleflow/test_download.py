@@ -3,8 +3,8 @@ from __future__ import annotations
 import os
 import shutil
 import unittest
-
 from unittest.mock import patch
+
 from sure import expect
 
 from simpleflow.download import RemoteBinary, with_binaries
