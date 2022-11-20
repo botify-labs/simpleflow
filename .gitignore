@@ -21,9 +21,13 @@ lib64
 # Installer logs
 pip-log.txt
 
+# Virtualenv
+/venv/
+
 # Unit test / coverage reports
 .coverage*
 nosetests.xml
+/.pytest_cache/
 
 # Translations
 *.mo
@@ -51,8 +55,7 @@ htmlcov/
 
 # Temporary files
 .cache/
-tmp/
-
+/tmp/
 
 # Not to be ignored
 !docs/script/build
