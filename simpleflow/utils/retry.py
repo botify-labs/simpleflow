@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import functools
 import time
-
-try:
-    from collections.abc import Sequence
-except ImportError:
-    from collections import Sequence
+from collections.abc import Sequence
 
 from simpleflow import logger
 

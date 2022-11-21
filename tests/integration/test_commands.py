@@ -1,18 +1,10 @@
 # See README for more information about integration tests
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from click.testing import CliRunner
 from flaky import flaky
 from sure import expect
 
-import simpleflow.command
-
 from . import VCRIntegrationTest, vcr
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestSimpleflowCommand(VCRIntegrationTest):

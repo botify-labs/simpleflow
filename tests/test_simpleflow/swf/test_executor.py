@@ -9,7 +9,9 @@ from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import DOMAIN, BaseTestWorkflow, increment
+from tests.data.activities import increment
+from tests.data.constants import DOMAIN
+from tests.data.workflows import BaseTestWorkflow
 from tests.utils import MockSWFTestCase
 
 

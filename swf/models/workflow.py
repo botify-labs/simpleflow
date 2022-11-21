@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import collections
 import time
+from typing import TYPE_CHECKING
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 
@@ -18,6 +19,10 @@ from swf.models import BaseModel, Domain
 from swf.models.base import ModelDiff
 from swf.models.history import History
 from swf.utils import immutable
+
+if TYPE_CHECKING:
+    from typing import Any
+
 
 _POLICIES = (
     "TERMINATE",  # child executions will be terminated
@@ -501,11 +506,10 @@ class WorkflowExecution(BaseModel):
         qs = WorkflowExecutionQuerySet(self.domain)
         return qs.get(self.workflow_id, self.run_id)
 
-    def history(self, *args, **kwargs):
+    def history(self, *args, **kwargs) -> History:
         """Returns workflow execution history report
 
         :returns: The workflow execution complete events history
-        :rtype: swf.models.event.History
         """
         domain = kwargs.pop("domain", self.domain)
         if not isinstance(domain, str):
@@ -515,7 +519,7 @@ class WorkflowExecution(BaseModel):
             domain, self.run_id, self.workflow_id, **kwargs
         )
 
-        events = response["events"]
+        events: list[dict[str, Any]] = response["events"]
         next_page = response.get("nextPageToken")
         while next_page is not None:
             response = self.connection.get_workflow_execution_history(

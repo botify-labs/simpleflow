@@ -7,7 +7,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import attr
-import six
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
@@ -17,7 +16,9 @@ from . import futures, logger
 from .activity import Activity
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type, Union  # NOQA
+    from typing import Any
+
+    from simpleflow.exceptions import TaskFailed
 
 
 def get_actual_value(value):
@@ -352,7 +353,7 @@ class TaskFailureContext:
         return None
 
     @property
-    def exception(self) -> Exception | None:
+    def exception(self) -> Exception | TaskFailed | None:
         return self.future.exception
 
     @property

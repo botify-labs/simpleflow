@@ -43,7 +43,7 @@ def format_exc(exc: Exception) -> str:
     if exc is None or not valuestr:
         line = "%s" % etype
     else:
-        line = "{}: {}".format(etype, valuestr)
+        line = f"{etype}: {valuestr}"
     return line
 
 
@@ -61,7 +61,7 @@ def format_exc_type(exc_type: type) -> str:
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
-        type_str = "{}.{}".format(type_mod, type_str)
+        type_str = f"{type_mod}.{type_str}"
     return type_str
 
 

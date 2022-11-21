@@ -74,7 +74,7 @@ class CompiledEvent(Event, Stateful):
         self.__dict__ = event.__dict__.copy()
 
     def __repr__(self):
-        return "<CompiledEvent {} {}>".format(self.type, self.state)
+        return f"<CompiledEvent {self.type} {self.state}>"
 
     @property
     def next_states(self):

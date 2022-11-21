@@ -36,7 +36,10 @@ vcr = VCR(
     filter_headers=[
         (
             "Authorization",
-            "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar",
+            (
+                "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/"
+                "aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar"
+            ),
         ),  # noqa
     ],
     record_mode=os.getenv("SIMPLEFLOW_VCR_RECORD_MODE", "once"),

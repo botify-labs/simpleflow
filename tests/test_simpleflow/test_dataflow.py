@@ -18,9 +18,7 @@ from simpleflow.task import ActivityTask
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import (
-    DOMAIN,
-    BaseTestWorkflow,
+from tests.data.activities import (
     Tetra,
     double,
     increment,
@@ -31,6 +29,8 @@ from tests.data import (
     raise_on_failure,
     triple,
 )
+from tests.data.constants import DOMAIN
+from tests.data.workflows import BaseTestWorkflow
 from tests.moto_compat import mock_swf
 
 
@@ -261,7 +261,7 @@ def test_workflow_with_after_replay(mock_decref_workflow):
 
     # The executor should only schedule the *increment* task.
     assert not hasattr(executor.workflow, "b")
-    decisions = executor.replay(Response(history=history, execution=None)).decisions
+    _ = executor.replay(Response(history=history, execution=None)).decisions
     assert executor.workflow.b == 5
     # Check that workflow is not marked as finished
     assert not hasattr(executor.workflow, "c")

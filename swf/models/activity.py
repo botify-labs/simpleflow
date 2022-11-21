@@ -213,7 +213,7 @@ class ActivityType(BaseModel):
                 ),
                 description=self.description,
             )
-        except SWFTypeAlreadyExistsError as err:
+        except SWFTypeAlreadyExistsError:
             raise AlreadyExistsError(f"{self} already exists")
         except SWFResponseError as err:
             if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:

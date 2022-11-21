@@ -1,44 +1,32 @@
 from __future__ import annotations
 
 import collections
+from typing import TYPE_CHECKING
 
+import swf.models.history
 from simpleflow import logger
 
+if TYPE_CHECKING:
+    from typing import Any
 
-# noinspection PyUnresolvedReferences
+    from swf.models.event import ActivityTaskEvent
+    from swf.models.event.task import ActivityTaskEventDict
+
+
 class History:
     """
     History data.
-
-    :ivar _history: raw(ish) history events
-    :type _history: swf.models.history.History
-    :ivar _activities: activity events
-    :type _activities: collections.OrderedDict[str, dict[str, Any]]
-    :ivar _child_workflows: child workflow events
-    :type _child_workflows: collections.OrderedDict[str, dict[str, Any]]
-    :ivar _external_workflows_signaling: external workflow signaling events, by initiated event ID
-    :type _external_workflows_signaling: collections.OrderedDict[int, dict[str, Any]]
-    :ivar _external_workflows_canceling: external workflow canceling events
-    :type _external_workflows_canceling: collections.OrderedDict[str, dict[str, Any]]
-    :ivar _signals: activity events
-    :type _signals: collections.OrderedDict[str, dict[str, Any]]
-    :ivar _markers: marker events
-    :type _markers: collections.OrderedDict[str, list[dict[str, Any]]]
-    :ivar _timers: timer events
-    :type _timers: dict[str, dict[str, Any]]]
-    :ivar _tasks: ordered list of tasks/etc
-    :type _tasks: list[dict[str, Any]]
     """
 
     def __init__(self, history):
-        self._history = history
-        self._activities = collections.OrderedDict()
-        self._child_workflows = collections.OrderedDict()
-        self._external_workflows_signaling = collections.OrderedDict()
-        self._external_workflows_canceling = collections.OrderedDict()
-        self._signals = collections.OrderedDict()
+        self._history: swf.models.history.History = history
+        self._activities: dict[int, ActivityTaskEventDict] = {}
+        self._child_workflows = {}
+        self._external_workflows_signaling = {}
+        self._external_workflows_canceling = {}
+        self._signals = {}
         self._signaled_workflows = collections.defaultdict(list)
-        self._markers = collections.OrderedDict()
+        self._markers = {}
         self._timers = {}
         self._tasks = []
         self._cancel_requested = None
@@ -141,7 +129,7 @@ class History:
         return self._markers
 
     @property
-    def timers(self) -> Dict[str, Dict[str, Any]]:
+    def timers(self) -> dict[str, dict[str, Any]]:
         return self._timers
 
     @property
@@ -161,14 +149,11 @@ class History:
         """
         return self._history.events
 
-    def parse_activity_event(self, events, event):
+    def parse_activity_event(
+        self, events: list[ActivityTaskEvent], event: ActivityTaskEvent
+    ):
         """
         Aggregate all the attributes of an activity in a single entry.
-
-        :param events:
-        :type events: list[swf.models.event.Event]
-        :param event:
-        :type event: swf.models.event.Event
         """
 
         def get_activity():

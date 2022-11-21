@@ -9,7 +9,7 @@ from moto.swf import swf_backend
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from swf.actors import Decider
-from tests.data import DOMAIN
+from tests.data.constants import DOMAIN
 from tests.moto_compat import mock_s3, mock_swf
 
 

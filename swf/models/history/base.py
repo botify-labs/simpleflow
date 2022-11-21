@@ -6,10 +6,14 @@
 from __future__ import annotations
 
 from itertools import groupby
+from typing import TYPE_CHECKING
 
 from swf.models.event import CompiledEventFactory, EventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class History:
@@ -243,7 +247,7 @@ class History:
         return self.compile()
 
     @classmethod
-    def from_event_list(cls, data):
+    def from_event_list(cls, data: list[dict[str, Any]]) -> History:
         """Instantiates a new ``swf.models.history.History`` instance
         from amazon service response.
 
@@ -252,10 +256,8 @@ class History:
         facilitate decisions according to the history.
 
         :param  data: event history description (typically, an amazon response)
-        :type   data: dict[str, Any]
 
         :returns: History model instance built upon data description
-        :rtype: swf.model.history.History
         """
         events_history = []
 

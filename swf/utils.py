@@ -9,50 +9,39 @@ from datetime import datetime, timedelta
 from functools import wraps
 from itertools import chain, islice
 from time import mktime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
-def decapitalize(s):
+def decapitalize(s: str) -> str:
     """
-    De-capitalize a string (lower first character)
-    :param s:
-    :type s:
-    :return:
-    :rtype:
+    De-capitalize a string (lower first character).
     """
     return s[:1].lower() + s[1:] if s else ""
 
 
-def past_day(days):
+def past_day(days: int) -> datetime:
     """
-    Get a datetime in the past
-    :param days: how many days in the past
-    :type days: int
-    :return:
-    :rtype: datetime
+    Get a datetime in the past.
     """
     return datetime.now() - timedelta(days=days)
 
 
-def datetime_timestamp(dt):
+def datetime_timestamp(dt: datetime) -> float:
     """
-    Get a datetime timestamp
-    :param dt:
-    :type dt: datetime
-    :return:
-    :rtype: int
+    Get a datetime timestamp.
     """
     return mktime(dt.timetuple())
 
 
-def get_subkey(d, key_path):
+def get_subkey(d: dict[Any, dict], key_path: list) -> Any | None:
     """Gets a sub-dict key, and return None if either
-    the parent or child dict key does not exist
+    the parent or child dict key does not exist.
 
     :param  d: dict to operate over
-    :type   d: dict of dicts
-
     :param  key_path: dict keys path list representation
-    :type   key_path: list
 
     Example
     -------
@@ -63,20 +52,20 @@ def get_subkey(d, key_path):
     ...     '2': 3,
     ...   }
     ... }
-    >>> # FIXME commented-out: order unspecified, depend on python version
-    >>> # >>> get_subkey(d, ['a'])
-    >>> # {'1': 2, '2': 3}
+    >>> get_subkey(d, ['a'])
+    {'1': 2, '2': 3}
     >>> get_subkey(d, ['a', '1'])
     2
     >>> get_subkey(d, ['a', '3'])
 
     """
+    first_item = d.get(key_path[0])
     if len(key_path) > 1:
-        if d.get(key_path[0]) is None:
+        if first_item is None:
             return None
-        return get_subkey(d[key_path[0]], key_path[1:])
+        return get_subkey(first_item, key_path[1:])
     else:
-        return d.get(key_path[0])
+        return first_item
 
 
 class _CachedProperty(property):

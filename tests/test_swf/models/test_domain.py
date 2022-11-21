@@ -13,9 +13,8 @@ from swf.exceptions import AlreadyExistsError, ResponseError
 from swf.models.domain import Domain, DomainDoesNotExist
 from swf.querysets.domain import DomainQuerySet
 from swf.querysets.workflow import WorkflowTypeQuerySet
-
-from ..mocks import MiniMock
-from ..mocks.domain import mock_describe_domain
+from tests.test_swf.mocks.base import MiniMock
+from tests.test_swf.mocks.domain import mock_describe_domain
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 
@@ -103,7 +102,7 @@ class TestDomain(unittest.TestCase):
                     "mocking exception",
                     {"__type": "WhateverError", "message": "Whatever"},
                 )
-                dummy = self.domain.exists
+                _ = self.domain.exists
 
     def test_domain_is_synced_with_unsynced_domain(self):
         pass

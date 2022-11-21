@@ -6,7 +6,7 @@ import swf.exceptions
 import swf.models
 import swf.querysets
 from simpleflow.history import History
-from simpleflow.utils import full_class_name, full_object_name
+from simpleflow.utils import full_object_name
 
 if TYPE_CHECKING:
     from typing import Any

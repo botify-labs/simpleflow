@@ -4,7 +4,6 @@ import collections
 import sys
 import traceback
 import uuid
-from typing import TYPE_CHECKING
 
 from simpleflow import exceptions, executor, futures, logger
 from simpleflow.activity import Activity
@@ -16,10 +15,6 @@ from simpleflow.task import ActivityTask, MarkerTask, SignalTask, WorkflowTask
 from simpleflow.utils import format_exc, format_exc_type, issubclass_, json_dumps
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
-
-if TYPE_CHECKING:
-
-    from simpleflow.history import History
 
 
 class Executor(executor.Executor):

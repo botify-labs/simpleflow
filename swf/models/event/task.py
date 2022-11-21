@@ -5,12 +5,46 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
+
 from swf.models.event.base import Event
 from swf.models.event.compiler import CompiledEvent
 
 
+class ActivityType(TypedDict):
+    name: str
+    version: str
+
+
+class TaskList(TypedDict):
+    name: str
+
+
 class ActivityTaskEvent(Event):
     _type = "ActivityTask"
+
+    scheduled_event_id: int
+    activity_id: int
+    activity_type: ActivityType
+    task_list: TaskList
+    decision_task_completed_event_id: int
+    cause: str
+    identity: str
+    timeout_type: str
+
+
+class ActivityTaskEventDict(TypedDict):
+    scheduled_event_id: int
+    activity_id: int
+    activity_type: ActivityType
+    task_list: TaskList
+    decision_task_completed_event_id: int
+    cause: str
 
 
 class CompiledActivityTaskEvent(CompiledEvent):

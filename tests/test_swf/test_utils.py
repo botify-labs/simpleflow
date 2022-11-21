@@ -2,16 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from swf.utils import *
+from swf.utils import get_subkey
 
 
 class TestUtils(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_get_non_existent_subkey_from_first_level(self):
         base_dict = {
             "a": {
@@ -20,7 +14,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        self.assertIsNone(get_subkey(base_dict, "b"))
+        self.assertIsNone(get_subkey(base_dict, ["foo"]))
 
     def test_get_existent_subkey_from_first_level(self):
         base_dict = {
@@ -30,7 +24,7 @@ class TestUtils(unittest.TestCase):
             }
         }
 
-        self.assertEqual(get_subkey(base_dict, "a"), base_dict["a"])
+        self.assertEqual(get_subkey(base_dict, ["a"]), base_dict["a"])
 
     def test_get_non_existent_subkey_from_n_level(self):
         base_dict = {

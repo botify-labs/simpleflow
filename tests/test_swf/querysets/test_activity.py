@@ -29,7 +29,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         """Assert .__init__() instantiate _domain private attr"""
         bw = ActivityTypeQuerySet(self.domain)
         delattr(bw, "_domain")
-        dummy = bw.domain
+        _ = bw.domain
 
         self.assertTrue(hasattr(bw, "_domain"))
 

@@ -62,7 +62,7 @@ class Event:
         self.process_attributes()
 
     def __repr__(self):
-        return "<Event {} {} : {} >".format(self.id, self.type, self.state)
+        return f"<Event {self.id} {self.type} : {self.state} >"
 
     @property
     def id(self):

@@ -117,7 +117,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                     "mocking exception",
                     {"__type": "WhateverError", "message": "Whatever"},
                 )
-                dummy = self.domain.exists
+                _ = self.domain.exists
 
     def test_is_synced_with_unsynced_workflow_type(self):
         pass
@@ -314,7 +314,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
                     "mocking exception",
                     {"__type": "WhateverError", "message": "Whatever"},
                 )
-                dummy = self.domain.exists
+                _ = self.domain.exists
 
     def test_is_synced_with_unsynced_workflow_execution(self):
         pass

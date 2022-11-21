@@ -36,7 +36,7 @@ class TestBaseWorkflowTypeQuerySet(unittest.TestCase):
     def test_get_domain_property_instantiates_private_attribute(self):
         bw = BaseWorkflowQuerySet(self.domain)
         delattr(bw, "_domain")
-        dummy = bw.domain
+        _ = bw.domain
 
         self.assertTrue(hasattr(bw, "_domain"))
 
@@ -314,16 +314,14 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
 
     def test_filter_without_close_time_filter(self):
         self.weq._list_items = Mock(return_value=[])
-        qs = self.weq.filter()
+        _ = self.weq.filter()
         self.weq._list_items.assert_called_once()
         kwargs = self.weq._list_items.call_args[1]
         self.assertIsInstance(kwargs["start_oldest_date"], int)
 
     def test_filter_with_close_time_filter(self):
         self.weq._list_items = Mock(return_value=[])
-        qs = self.weq.filter(
-            status=WorkflowExecution.STATUS_CLOSED, close_latest_date=5
-        )
+        _ = self.weq.filter(status=WorkflowExecution.STATUS_CLOSED, close_latest_date=5)
         self.weq._list_items.assert_called_once()
         kwargs = self.weq._list_items.call_args[1]
         self.assertIsNone(kwargs["start_oldest_date"])
