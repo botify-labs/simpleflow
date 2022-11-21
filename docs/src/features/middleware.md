@@ -5,10 +5,10 @@
 
 ## Presentation
 
-Simpleflow allows for the execution of functions before and after the 
+Simpleflow allows for the execution of functions before and after the
 execution of an Activity.
 
-To do this, you may pass functions as paths when running in standalone 
+To do this, you may pass functions as paths when running in standalone
 mode or when launching a worker (`worker.start` command):
 
 ```
@@ -23,7 +23,7 @@ simpleflow standalone
 		--input '{"args":[], "kwargs": {"task_list":"test"}}'
 ```
 
-The above example will execute two functions before each Activity code, 
+The above example will execute two functions before each Activity code,
 and one after.
 
 The `--middleware-pre-execution` and `--middleware-post-execution`
@@ -32,7 +32,7 @@ arguments are also accepted by the `workflow.start` command in
 
 ## Writing a middleware function
 
-Middleware pre-execution functions receive the activity context. 
+Middleware pre-execution functions receive the activity context.
 Middleware post-execution functions receive the activity context and
 result.
 

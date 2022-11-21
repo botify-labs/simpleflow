@@ -85,7 +85,7 @@ different cases.
 * `chain = Chain(raises_on_failure=False); chain.append(some_activity)`
   will propagate `raises_on_failure=False` to `some_activity`;
 * `chain = Chain(); chain.append(some_activity); chain.raises_on_failure = False`
-  will not. 
+  will not.
 
 The `break_on_failure=False` and `send_results=True` options are
 currently incompatible.

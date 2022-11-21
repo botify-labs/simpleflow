@@ -23,4 +23,3 @@ Or download one of the following:
 Once you have the source, you can install it into your site-packages with ::
 
     $ python setup.py install
-
