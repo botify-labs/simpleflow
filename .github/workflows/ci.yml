@@ -1,0 +1,111 @@
+# Adapted from: https://github.com/sesh/thttp/blob/main/.github/workflows/ci.yml
+# Thanks!
+
+name: Python Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy-3.9"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install test dependencies
+      run: |
+        pip install -e .
+        pip install -r requirements-dev.txt
+
+    - name: Test
+      run: |
+        /script/test -v
+
+  black:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install black
+        run: |
+          python -m pip install black
+
+      - name: Run black
+        run: |
+          black --check .
+
+  isort:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install isort
+        run: |
+          python -m pip install isort
+
+      - name: Run isort
+        run: |
+          isort --check .
+
+  ruff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: |
+          python -m pip install ruff
+
+      - name: Run ruff
+        run: |
+          ruff --format=github .
+
+  bandit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3
+
+      - name: Install bandit
+        run: |
+          python -m pip install bandit
+
+      - name: Run bandit scan
+        run: |
+          bandit -r .

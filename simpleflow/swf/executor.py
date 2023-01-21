@@ -725,7 +725,9 @@ class Executor(executor.Executor):
         future: futures.Future,
         swf_task: ActivityTask | WorkflowTask,
         exception_class: type[Exception],
-    ) -> futures.Future | tuple[futures.Future | None, SwfTask] | None:
+    ) -> futures.Future | tuple[
+        futures.Future | None, ActivityTask | WorkflowTask | TimerTask
+    ] | None:
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
             if isinstance(timer["control"], str):  # FIXME unconditional?
