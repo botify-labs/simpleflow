@@ -72,9 +72,8 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         self.middlewares = middlewares
 
         self.process_mode = process_mode or "local"
-        assert (
-            self.process_mode in VALID_PROCESS_MODES
-        ), f'invalid process_mode "{self.process_mode}"'
+        if self.process_mode not in VALID_PROCESS_MODES:
+            raise AssertionError(f'invalid process_mode "{self.process_mode}"')
 
         self.poll_data = poll_data
         super().__init__(domain, task_list)

@@ -30,7 +30,8 @@ class RemoteBinary:
         self.name = name
 
         # limit ourselves to S3 for now
-        assert remote_location.startswith("s3://")
+        if not remote_location.startswith("s3://"):
+            raise NotImplementedError("We currently only support S3")
         self.remote_location = remote_location
         self.local_directory = self._compute_local_directory()
         self.local_location = self._compute_local_location()
@@ -52,7 +53,8 @@ class RemoteBinary:
                 raise
 
     def _compute_local_directory(self):
-        suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
+        # TODO python3.9+: add usedforsecurity=False
+        suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()  # nosec
         return os.path.join(SIMPLEFLOW_BINARIES_DIRECTORY, f"{self.name}-{suffix}")
 
     def _compute_local_location(self):
@@ -73,7 +75,8 @@ class RemoteBinary:
         bucket, path = self.remote_location.replace("s3://", "", 1).split("/", 1)
         # with FileLock(dest):
         pull(bucket, path, self.local_location)
-        os.chmod(self.local_location, 0o755)
+        # Executable file, +x is deliberate
+        os.chmod(self.local_location, 0o755)  # nosec
 
 
 # convenience helpers

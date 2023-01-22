@@ -388,10 +388,8 @@ class TaskFailureContext:
                     self._task_error = details["error"]
                 if "error_type" in details:
                     try:
-                        self._task_error_type = import_from_module(
-                            details["error_type"]
-                        )
-                    except Exception:
+                        self._task_error_type = import_from_module(details["error_type"])
+                    except Exception:  # nosec
                         pass
 
     @property

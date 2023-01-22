@@ -235,7 +235,7 @@ class Executor(executor.Executor):
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
             arguments = json_dumps({"args": args, "kwargs": kwargs})
-            suffix = hashlib.md5(arguments.encode("utf-8")).hexdigest()
+            suffix = hashlib.md5(arguments.encode("utf-8")).hexdigest()  # nosec
 
         if isinstance(a_task, WorkflowTask):
             # Some task types must have globally unique names.
@@ -243,10 +243,7 @@ class Executor(executor.Executor):
 
         task_id = f"{a_task.name}-{suffix}"
         if len(task_id) > 256:  # Better safe than sorry...
-            task_id = (
-                task_id[0:223] + "-" + hashlib.md5(task_id.encode("utf-8")).hexdigest()
-            )
-
+            task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode("utf-8")).hexdigest()  # nosec
         return task_id
 
     def _get_future_from_activity_event(self, event):

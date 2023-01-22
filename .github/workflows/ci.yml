@@ -104,8 +104,8 @@ jobs:
 
       - name: Install bandit
         run: |
-          python -m pip install bandit
+          python -m pip install bandit[toml]
 
       - name: Run bandit scan
         run: |
-          bandit -r .
+          bandit -c pyproject.toml -r .

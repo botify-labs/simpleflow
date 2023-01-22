@@ -55,7 +55,7 @@ LOGGING = {
 SIMPLEFLOW_SYSLOG_TARGET = None
 
 SIMPLEFLOW_ENABLE_DISK_CACHE = False
-SIMPLEFLOW_BINARIES_DIRECTORY = "/tmp/simpleflow-binaries"
+SIMPLEFLOW_BINARIES_DIRECTORY = "/tmp/simpleflow-binaries"  # nosec
 
 # Activity management
 

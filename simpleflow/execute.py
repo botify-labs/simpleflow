@@ -244,7 +244,7 @@ def python(
                 pass_fds = [dup_result_fd, dup_error_fd]
                 if arg_file:
                     pass_fds.append(arg_fd)
-                process = subprocess.Popen(
+                process = subprocess.Popen(  # nosec
                     full_command,
                     bufsize=-1,
                     close_fds=close_fds,
@@ -326,9 +326,7 @@ def program(path=None, argument_format=format_arguments):
             check_keyword_arguments(argspec, kwargs)
 
             command = path or func.__name__
-            return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs), text=True
-            )
+            return subprocess.check_output([command] + argument_format(*args, **kwargs), text=True)  # nosec
 
         try:
             (

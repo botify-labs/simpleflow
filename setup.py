@@ -7,7 +7,7 @@ import sys
 from setuptools import find_packages, setup
 
 REQUIRES = []
-PUBLISH_CMD = "python setup.py sdist bdist_wheel upload"
+PUBLISH_CMD = ["python", "setup.py", "sdist", "bdist_wheel", "upload"]
 
 
 def find_version(fname):
@@ -35,7 +35,7 @@ if "publish" in sys.argv:
     except ImportError:
         print("wheel required. Run `pip install wheel`.")
         sys.exit(1)
-    status = subprocess.call(PUBLISH_CMD, shell=True)
+    status = subprocess.call(PUBLISH_CMD)  # nosec
     sys.exit(status)
 
 

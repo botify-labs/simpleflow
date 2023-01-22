@@ -29,7 +29,7 @@ class KubernetesJob:
         Compute a job definition from the SWF response
         """
         import jinja2
-        from yaml import CLoader, load
+        from yaml import safe_load
 
         # extract job template location
         input = self.response.get("input")
@@ -53,10 +53,11 @@ class KubernetesJob:
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(path or "./"),
             undefined=jinja2.StrictUndefined,
+            autoescape=True,  # Unsure we should do this: if someone uses k8s, let us know :)
         )
         rendered = env.get_template(filename).render(variables)
 
-        return load(rendered, Loader=CLoader)
+        return safe_load(rendered)
 
     def schedule(self):
         """

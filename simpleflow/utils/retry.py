@@ -29,7 +29,7 @@ def exponential(value):
     """
     import random
 
-    return random.random() * (2**value) + 1
+    return random.random() * (2**value) + 1  # nosec
 
 
 def with_delay(

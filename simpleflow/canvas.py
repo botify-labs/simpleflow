@@ -221,7 +221,8 @@ class Group(SubmittableContainer):
         :return:
         """
         for wt in self.workflow_tasks:
-            assert not wt.executor
+            if wt.executor:
+                raise AssertionError("executor already set")
             wt.executor = executor
         self.workflow_tasks = []
 

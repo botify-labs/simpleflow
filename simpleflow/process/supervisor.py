@@ -147,7 +147,8 @@ class Supervisor(NamedMixin):
             # which shows that `pid` ultimately translates to `os.getpid()` after the
             # fork. So no big risk, but I add an assertion just in case anyway.
             pid = child.pid
-            assert pid, f"Cannot add process with pid={pid}: {child}"
+            if not pid:
+                raise AssertionError(f"Cannot add process with pid={pid}: {child}")
             self._processes[pid] = psutil.Process(pid)
 
     def target(self):

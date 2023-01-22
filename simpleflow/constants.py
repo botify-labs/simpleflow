@@ -28,4 +28,5 @@ JUMBO_FIELDS_PREFIX = "simpleflow+s3://"
 JUMBO_FIELDS_MAX_SIZE = 5 * 1024**2  # 5MB
 
 # Cache directory
-CACHE_DIR = "/tmp/simpleflow-cache"
+# No security considerations expected :)
+CACHE_DIR = "/tmp/simpleflow-cache"  # nosec
