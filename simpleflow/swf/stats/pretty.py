@@ -202,7 +202,6 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
                 headers=header if (with_header or fmt == human) else [],
             )
 
-        wrapped.__wrapped__ = wrapped
         return wrapped
 
     if isinstance(fmt, str):

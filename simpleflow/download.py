@@ -90,7 +90,6 @@ def with_binaries(binaries_map):
             download_binaries(binaries_map)
             return func(*args, **kwargs)
 
-        wrapped.__wrapped__ = func
         return wrapped
 
     return decorator

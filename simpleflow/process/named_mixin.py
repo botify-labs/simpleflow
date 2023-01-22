@@ -21,7 +21,6 @@ def with_state(state):
             self.state = state
             return method(self, *args, **kwargs)
 
-        wrapped.__wrapped__ = method
         return wrapped
 
     return wrapper

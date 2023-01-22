@@ -264,8 +264,6 @@ def python(
                 logger.exception("Exception in python.execute: {} {}".format(ex.__class__.__name__, ex))
                 logger.warning("%r", result_str)
 
-        # Not automatically assigned in python < 3.2.
-        execute.__wrapped__ = func
         execute.add_context_in_kwargs = True
         return execute
 
@@ -319,8 +317,6 @@ def program(path=None, argument_format=format_arguments):
             # noinspection PyDeprecation
             argspec = inspect.getargspec(func)
 
-        # Not automatically assigned in python < 3.2.
-        execute.__wrapped__ = func
         return execute
 
     return wrap_callable

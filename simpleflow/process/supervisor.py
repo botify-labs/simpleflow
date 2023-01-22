@@ -28,7 +28,6 @@ def reset_signal_handlers(func):
         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
         return func(*args, **kwargs)
 
-    wrapped.__wrapped__ = func
     return wrapped
 
 
