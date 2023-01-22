@@ -29,5 +29,6 @@ export SIMPLEFLOW_JUMBO_FIELDS_BUCKET=""
 # Prevent Travis from overriding boto configuration
 export BOTO_CONFIG=/dev/null
 
+PYTHON=${PYTHON:-python}
 # run tests
-py.test --no-success-flaky-report -q $PYTEST_OPTIONS --numprocesses ${NUMPROCESSES:-auto} "$@"
+$PYTHON -m pytest --no-success-flaky-report -q $PYTEST_OPTIONS --numprocesses ${NUMPROCESSES:-auto} "$@"
