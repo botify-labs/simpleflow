@@ -32,7 +32,7 @@ jobs:
 
     - name: Test
       run: |
-        /script/test -v
+        ./script/test -v
 
   black:
     runs-on: ubuntu-latest
