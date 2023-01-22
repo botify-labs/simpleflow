@@ -7,7 +7,7 @@ import json
 import multiprocessing
 import re
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import simpleflow.task as base_task
 import swf.exceptions
@@ -36,7 +36,8 @@ from simpleflow.workflow import Workflow
 from swf.core import ConnectedSWFObject
 
 if TYPE_CHECKING:
-    pass
+    from swf.models import Domain
+
 
 __all__ = ["Executor"]
 
@@ -136,31 +137,17 @@ class Executor(executor.Executor):
     passes it to the executor. Only one executor handles a workflow at a time.
     It means the history is consistent and there is no concurrent modifications
     on the execution of the workflow.
-
-    :ivar domain: domain
-    :type domain: swf.models.domain.Domain
-    :ivar task_list: task list
-    :type task_list: Optional[str]
-    :ivar repair_with: previous history to use for repairing
-    :type repair_with: Optional[simpleflow.history.History]
-    :ivar force_activities: regex with activities to force
-    :type _history: History
-    :ivar _repair_workflow_id: workflow ID to repair, if any
-    :type _repair_workflow_id: Optional[str]
-    :ivar repair_run_id: run ID to repair, if any
-    :type _repair_run_id: Optional[str]
-
     """
 
     def __init__(
         self,
-        domain,
-        workflow_class,
-        task_list=None,
-        repair_with=None,
-        force_activities=None,
-        repair_workflow_id=None,
-        repair_run_id=None,
+        domain: Domain,
+        workflow_class: type[Workflow],
+        task_list: str | None = None,
+        repair_with: History | None = None,
+        force_activities: str | None = None,
+        repair_workflow_id: str | None = None,
+        repair_run_id: str | None = None,
     ):
         super().__init__(workflow_class)
         self._history: History | None = None
@@ -207,24 +194,15 @@ class Executor(executor.Executor):
     def history(self) -> History | None:
         return self._history
 
-    def _make_task_id(self, a_task, workflow_id, run_id, *args, **kwargs):
+    def _make_task_id(self, a_task: ActivityTask | WorkflowTask, workflow_id: str, run_id: str, *args, **kwargs) -> str:
         """
         Assign a new ID to *a_task*.
 
-        :type a_task: ActivityTask | WorkflowTask
-        :type workflow_id: str
-        :type run_id: str
         :returns:
             String with at most 256 characters.
-        :rtype: str
-
         """
-        if isinstance(a_task, ActivityTask) and hasattr(
-            a_task.activity.callable, "get_task_id"
-        ):
-            suffix = a_task.activity.callable.get_task_id(
-                self.workflow, *args, **kwargs
-            )
+        if isinstance(a_task, ActivityTask) and hasattr(a_task.activity.callable, "get_task_id"):
+            suffix = a_task.activity.callable.get_task_id(self.workflow, *args, **kwargs)
         elif not a_task.idempotent:
             # If idempotency is False or unknown, let's generate a task id by
             # incrementing an id after the a_task name.
@@ -246,13 +224,10 @@ class Executor(executor.Executor):
             task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode("utf-8")).hexdigest()  # nosec
         return task_id
 
-    def _get_future_from_activity_event(self, event):
+    def _get_future_from_activity_event(self, event: dict[str, Any]) -> futures.Future | None:
         """Maps an activity event to a Future with the corresponding state.
 
         :param event: activity event
-        :type  event: dict[str, Any]
-        :rtype: futures.Future
-
         """
         future = futures.Future()  # state is PENDING.
         state = event["state"]
@@ -262,19 +237,10 @@ class Executor(executor.Executor):
         elif state == "schedule_failed":
             name = event["activity_type"]["name"]
             version = event["activity_type"]["version"]
-            if (
-                event["cause"] == "ACTIVITY_TYPE_DOES_NOT_EXIST"
-                and (name, version) not in self.created_activity_types
-            ):
+            if event["cause"] == "ACTIVITY_TYPE_DOES_NOT_EXIST" and (name, version) not in self.created_activity_types:
                 self.created_activity_types.add((name, version))
-                activity_type = swf.models.ActivityType(
-                    self.domain, name=name, version=version
-                )
-                logger.info(
-                    "creating activity type {} in domain {}".format(
-                        activity_type.name, self.domain.name
-                    )
-                )
+                activity_type = swf.models.ActivityType(self.domain, name=name, version=version)
+                logger.info("creating activity type {} in domain {}".format(activity_type.name, self.domain.name))
                 try:
                     activity_type.save()
                 except swf.exceptions.AlreadyExistsError:
@@ -299,14 +265,10 @@ class Executor(executor.Executor):
         elif state == "canceled":
             future.set_cancelled()
         elif state == "failed":
-            exception = exceptions.TaskFailed(
-                name=event["id"], reason=event["reason"], details=event.get("details")
-            )
+            exception = exceptions.TaskFailed(name=event["id"], reason=event["reason"], details=event.get("details"))
             future.set_exception(exception)
         elif state == "timed_out":
-            exception = exceptions.TimeoutError(
-                event["timeout_type"], event["timeout_value"]
-            )
+            exception = exceptions.TimeoutError(event["timeout_type"], event["timeout_value"])
             future.set_exception(exception)
         else:
             logger.info(
@@ -317,7 +279,7 @@ class Executor(executor.Executor):
 
         return future
 
-    def _get_future_from_child_workflow_event(self, event):
+    def _get_future_from_child_workflow_event(self, event: dict[str, Any]) -> futures.Future | None:
         """Maps a child workflow event to a Future with the corresponding
         state.
 
@@ -391,15 +353,12 @@ class Executor(executor.Executor):
 
         return future
 
-    def _get_future_from_marker_event(self, a_task, event):
+    def _get_future_from_marker_event(self, a_task, event: dict[str, Any]) -> futures.Future:
         """Maps a marker event to a Future with the corresponding
         state.
 
         :param a_task: currently unused
-        :type a_task:
         :param event: marker event
-        :type  event: dict[str, Any]
-        :rtype: futures.Future
         """
         future = futures.Future()
         if not event:
@@ -417,15 +376,10 @@ class Executor(executor.Executor):
 
         return future
 
-    def get_future_from_signal_event(self, a_task, event):
+    def get_future_from_signal_event(self, a_task: SignalTask | None, event: dict[str, Any]) -> futures.Future:
         """Maps a signal event to a Future with the corresponding
         state.
-
-        :param a_task: currently unused
-        :type a_task: Optional[SignalTask]
-        :param event: signal event
-        :type  event: dict[str, Any]
-        :rtype: futures.Future
+        a_task: currently unused
         """
         future = futures.Future()
         if not event:
@@ -436,15 +390,12 @@ class Executor(executor.Executor):
 
         return future
 
-    def get_future_from_external_workflow_event(self, a_task, event):
+    def get_future_from_external_workflow_event(self, a_task: WorkflowTask, event: dict[str, Any]) -> futures.Future:
         """Maps an external workflow event to a Future with the corresponding
         state.
 
         :param a_task: currently unused
-        :type a_task:
         :param event: external workflow event
-        :type  event: dict[str, Any]
-        :rtype: futures.Future
         """
         future = futures.Future()
         if not event:
@@ -465,16 +416,12 @@ class Executor(executor.Executor):
 
         return future
 
-    def _get_future_from_timer_event(self, a_task, event):
+    def _get_future_from_timer_event(self, a_task: TimerTask, event: dict[str, Any]) -> futures.Future:
         """
         Maps a timer event to a Future with the corresponding state.
 
         :param a_task: Timer task; unused.
-        :type a_task: TimerTask
         :param event: Timer event
-        :type event: dict[str, Any]
-        :return:
-        :rtype: futures.Future
         """
         future = futures.Future()
         if not event:
@@ -496,54 +443,26 @@ class Executor(executor.Executor):
 
         return future
 
-    def get_future_from_signal(self, signal_name):
-        """
-
-        :param signal_name:
-        :type signal_name: str
-        :return:
-        :rtype: futures.Future
-        """
+    def get_future_from_signal(self, signal_name: str) -> futures.Future:
         event = self._history.signals.get(signal_name)
         return self.get_future_from_signal_event(None, event)
 
-    def find_activity_event(self, a_task, history):
+    def find_activity_event(self, a_task: ActivityTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to an activity task, if any.
-
-        :param a_task:
-        :type a_task: ActivityTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict[str, Any]]
         """
         activity = history.activities.get(a_task.id)
         return activity
 
-    def find_child_workflow_event(self, a_task, history):
+    def find_child_workflow_event(self, a_task: WorkflowTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to a child workflow, if any.
-
-        :param a_task:
-        :type a_task: WorkflowTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict]
         """
         return history.child_workflows.get(a_task.id)
 
-    def find_signal_event(self, a_task, history):
+    def find_signal_event(self, a_task: SignalTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to a signal, if any.
-
-        :param a_task:
-        :type a_task: SignalTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict]
         """
         # FIXME could look directly in signaled_workflows?
         event = history.signals.get(a_task.name)
@@ -552,27 +471,16 @@ class Executor(executor.Executor):
                 return None
             signaled_workflows = history.signaled_workflows.get(a_task.name, [])
             for w in signaled_workflows:
-                if w["workflow_id"] == a_task.workflow_id and (
-                    a_task.run_id is None or w["run_id"] == a_task.run_id
-                ):
+                if w["workflow_id"] == a_task.workflow_id and (a_task.run_id is None or w["run_id"] == a_task.run_id):
                     event = w
                     break
         return event
 
-    def find_marker_event(self, a_task, history):
+    def find_marker_event(self, a_task: MarkerTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to a marker, if any.
-
-        :param a_task:
-        :type a_task: MarkerTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict[str, Any]]
         """
-        json_details = (
-            json_dumps(a_task.details) if a_task.details is not None else None
-        )
+        json_details = json_dumps(a_task.details) if a_task.details is not None else None
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
@@ -584,30 +492,20 @@ class Executor(executor.Executor):
         )
         return marker_list[-1] if marker_list else None
 
-    def find_timer_event(self, a_task, history):
+    def find_timer_event(self, a_task: TimerTask | CancelTimerTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to a timer or timer cancellation, if any.
-
-        :param a_task:
-        :type a_task: TimerTask | CancelTimerTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict[str, Any]]
         """
         event = history.timers.get(a_task.id)
         if not event:
             return None
         if isinstance(a_task, CancelTimerTask):
-            if (
-                "canceled_event_id" not in event
-                and "cancel_failed_event_id" not in event
-            ):
+            if "canceled_event_id" not in event and "cancel_failed_event_id" not in event:
                 # Timer not yet cancelled: no future returned
                 return None
         return event
 
-    TASK_TYPE_TO_EVENT_FINDER = {
+    TASK_TYPE_TO_EVENT_FINDER: dict[type, callable] = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
@@ -616,15 +514,9 @@ class Executor(executor.Executor):
         CancelTimerTask: find_timer_event,
     }
 
-    def find_event(self, a_task, history):
+    def find_event(self, a_task: SwfTask, history: History) -> dict[str, Any] | None:
         """
         Get the event corresponding to a "task", if any.
-        :param a_task:
-        :type a_task: SwfTask
-        :param history:
-        :type history: simpleflow.history.History
-        :return:
-        :rtype: Optional[dict]
         """
         for typ in inspect.getmro(type(a_task)):
             finder = self.TASK_TYPE_TO_EVENT_FINDER.get(typ)
@@ -632,15 +524,9 @@ class Executor(executor.Executor):
                 return finder(self, a_task, history)
         raise TypeError(f"invalid type {type(a_task)} for task {a_task}")
 
-    def resume_activity(self, a_task, event):
+    def resume_activity(self, a_task: ActivityTask, event: dict[str, Any]) -> futures.Future | None:
         """
         Resume an activity task.
-        :param a_task:
-        :type a_task: ActivityTask
-        :param event:
-        :type event: dict
-        :return:
-        :rtype: Optional[futures.Future]
         """
         future = self._get_future_from_activity_event(event)
         if not future:  # schedule failed, maybe OK later.
@@ -654,16 +540,9 @@ class Executor(executor.Executor):
 
         return self.handle_failure(event, future, a_task, exceptions.TaskException)
 
-    def resume_child_workflow(self, a_workflow, event):
+    def resume_child_workflow(self, a_workflow: WorkflowTask, event: dict[str, Any]) -> futures.Future | None:
         """
         Resume a child workflow.
-
-        :param a_workflow:
-        :type a_workflow: WorkflowTask
-        :param event:
-        :type event: dict
-        :return:
-        :rtype: Optional[simpleflow.futures.Future]
         """
         future = self._get_future_from_child_workflow_event(event)
 
@@ -677,13 +556,11 @@ class Executor(executor.Executor):
         if future.exception is None:  # Result available!
             return future
 
-        return self.handle_failure(
-            event, future, a_workflow, exceptions.WorkflowException
-        )
+        return self.handle_failure(event, future, a_workflow, exceptions.WorkflowException)
 
     def handle_failure(
         self,
-        event: dict,
+        event: dict[str, Any],
         future: futures.Future,
         swf_task: ActivityTask | WorkflowTask,
         exception_class: type[Exception],
@@ -698,17 +575,9 @@ class Executor(executor.Executor):
         * cancel the task (the future will be marked "cancelled")
         * retry as many times as wanted, immediately or with a wait period
         * do nothing: the default error handling is used
-
-        :param event:
-        :param future:
-        :param swf_task:
-        :param exception_class:
-        :return:
         """
         event_id = History.get_event_id(event)
-        if (
-            event_id in self.handled_failures
-        ):  # don't call workflow method multiple times
+        if event_id in self.handled_failures:  # don't call workflow method multiple times
             return self.handled_failures[event_id]
 
         logger.debug("handle_failure: failed_id=%s", event_id)
@@ -722,9 +591,7 @@ class Executor(executor.Executor):
         future: futures.Future,
         swf_task: ActivityTask | WorkflowTask,
         exception_class: type[Exception],
-    ) -> futures.Future | tuple[
-        futures.Future | None, ActivityTask | WorkflowTask | TimerTask
-    ] | None:
+    ) -> futures.Future | tuple[futures.Future | None, ActivityTask | WorkflowTask | TimerTask] | None:
         timer = self.find_timer_associated_with(event, swf_task)
         if timer:
             if isinstance(timer["control"], str):  # FIXME unconditional?
@@ -734,37 +601,21 @@ class Executor(executor.Executor):
             if not isinstance(control, dict):
                 control = {}
             if timer["state"] == "started":
-                logger.debug(
-                    'handle_failure: timer {} started, "pending" future'.format(
-                        timer["id"]
-                    )
-                )
+                logger.debug('handle_failure: timer {} started, "pending" future'.format(timer["id"]))
                 return futures.Future(), swf_task  # mark as pending
             elif timer["state"] in ("fired", "canceled"):
-                logger.debug(
-                    "handle_failure: timer {} fired or canceled, retrying".format(
-                        timer["id"]
-                    )
-                )
+                logger.debug("handle_failure: timer {} fired or canceled, retrying".format(timer["id"]))
                 swf_task.args = control.get("args", ())
                 swf_task.kwargs = control.get("kwargs", {})
                 return None, swf_task
             elif timer["state"] == "start_failed":
                 raise exceptions.TaskFailed("timer", timer["id"], timer["cause"])
             else:  # TODO: handle
-                logger.warning(
-                    'Unexpected timer state for timer "{}": {}'.format(
-                        timer["id"], timer["state"]
-                    )
-                )
+                logger.warning('Unexpected timer state for timer "{}": {}'.format(timer["id"], timer["state"]))
 
-        failure_context = base_task.TaskFailureContext(
-            swf_task, event, future, exception_class, self._history
-        )
+        failure_context = base_task.TaskFailureContext(swf_task, event, future, exception_class, self._history)
         if hasattr(self.workflow, "on_task_failure"):
-            new_failure_context: base_task.TaskFailureContext = (
-                self.workflow.on_task_failure(failure_context)
-            )
+            new_failure_context: base_task.TaskFailureContext = self.workflow.on_task_failure(failure_context)
             if new_failure_context:
                 failure_context = new_failure_context
             future, swf_task, event = (
@@ -776,30 +627,18 @@ class Executor(executor.Executor):
                 if swf_task.payload.raises_on_failure:
                     raise exception_class(swf_task, future.exception)
                 return future, swf_task
-            elif (
-                failure_context.decision == base_task.TaskFailureContext.Decision.ignore
-            ):
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.ignore:
                 future.set_exception(None)
                 return future, swf_task
-            elif (
-                failure_context.decision == base_task.TaskFailureContext.Decision.cancel
-            ):
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.cancel:
                 future.set_cancelled()
                 return future, swf_task
-            elif (
-                failure_context.decision
-                == base_task.TaskFailureContext.Decision.retry_now
-                or (
-                    failure_context.decision
-                    == base_task.TaskFailureContext.Decision.retry_later
-                    and not failure_context.retry_wait_timeout
-                )
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.retry_now or (
+                failure_context.decision == base_task.TaskFailureContext.Decision.retry_later
+                and not failure_context.retry_wait_timeout
             ):
                 return None, swf_task
-            elif (
-                failure_context.decision
-                == base_task.TaskFailureContext.Decision.retry_later
-            ):
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.retry_later:
                 return (
                     None,
                     TimerTask(
@@ -808,17 +647,10 @@ class Executor(executor.Executor):
                         swf_task.get_input(),
                     ),
                 )
-            elif (
-                failure_context.decision
-                == base_task.TaskFailureContext.Decision.handled
-            ):
+            elif failure_context.decision == base_task.TaskFailureContext.Decision.handled:
                 return future, swf_task
             if failure_context.decision != base_task.TaskFailureContext.Decision.none:
-                raise ValueError(
-                    "Unexpected TaskFailureValue decision: {}".format(
-                        failure_context.decision
-                    )
-                )
+                raise ValueError("Unexpected TaskFailureValue decision: {}".format(failure_context.decision))
 
         new_failure_context = self.default_failure_handling(failure_context)
         return new_failure_context.future
@@ -833,23 +665,16 @@ class Executor(executor.Executor):
         # infinite retries in case the code is redeployed with a decreased
         # retry limit and a workflow has a already crossed the new limit. So
         # ">=" is better there.
-        if (
-            failure_context.event.get("retry", 0)
-            >= failure_context.a_task.payload.retry
-        ):
+        if failure_context.event.get("retry", 0) >= failure_context.a_task.payload.retry:
             if failure_context.a_task.payload.raises_on_failure:
-                raise failure_context.exception_class(
-                    failure_context.a_task, failure_context.future.exception
-                )
+                raise failure_context.exception_class(failure_context.a_task, failure_context.future.exception)
         else:
             # Otherwise retry the workflow by scheduling it again.
             failure_context.future = None  # means it is not in SWF.
         failure_context.decision = base_task.TaskFailureContext.Decision.handled
         return failure_context
 
-    def find_timer_associated_with(
-        self, event: dict, swf_task: ActivityTask | WorkflowTask
-    ) -> dict | None:
+    def find_timer_associated_with(self, event: dict, swf_task: ActivityTask | WorkflowTask) -> dict | None:
         """
         Return a potential timer "associated with" an event, i.e.
         * with a related name
@@ -859,11 +684,7 @@ class Executor(executor.Executor):
         :return:
         """
         timer = self._history.timers.get(self.get_retry_task_timer_id(swf_task))
-        if (
-            timer
-            and timer["decision_task_completed_event_id"]
-            > event["decision_task_completed_event_id"]
-        ):
+        if timer and timer["decision_task_completed_event_id"] > event["decision_task_completed_event_id"]:
             return timer
         return None
 
@@ -871,14 +692,12 @@ class Executor(executor.Executor):
     def get_retry_task_timer_id(swf_task):
         return f"__simpleflow_task_{str(swf_task.id)}"
 
-    def schedule_task(self, a_task, task_list=None):
+    def schedule_task(
+        self, a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask, task_list: str | None = None
+    ) -> None:
         """
         Let a task schedule itself.
         If too many decisions are in flight, add a timer decision and raise ExecutionBlocked.
-        :param a_task:
-        :type a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask
-        :param task_list:
-        :type task_list: Optional[str]
         :raise: exceptions.ExecutionBlocked if too many decisions waiting
         """
 
@@ -890,9 +709,7 @@ class Executor(executor.Executor):
             self._idempotent_tasks_to_submit.add(task_identifier)
 
         # NB: ``decisions`` contains a single decision.
-        decisions = a_task.schedule(
-            self.domain, task_list, priority=self.current_priority, executor=self
-        )
+        decisions = a_task.schedule(self.domain, task_list, priority=self.current_priority, executor=self)
 
         # Ready to schedule
         if isinstance(a_task, ActivityTask):
@@ -906,9 +723,7 @@ class Executor(executor.Executor):
         # See: http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-limits.html
         # NB: here we use json.dumps, not json_dumps, since the serialization will
         # happen inside boto.swf and is out of our control.
-        request_size = len(
-            json.dumps(self._decisions_and_context.decisions + decisions)
-        )
+        request_size = len(json.dumps(self._decisions_and_context.decisions + decisions))
         # We keep a 5kB of error margin for headers, json structure, and the
         # timer decision, and 32kB for the context, even if we don't use it now.
         if request_size > constants.MAX_REQUEST_SIZE - 5000 - 32000:
@@ -930,12 +745,12 @@ class Executor(executor.Executor):
             raise exceptions.ExecutionBlocked()
 
     def _add_start_timer_decision(self, id, timeout=0):
-        timer = swf.models.decision.TimerDecision(
-            "start", id=id, start_to_fire_timeout=str(timeout)
-        )
+        timer = swf.models.decision.TimerDecision("start", id=id, start_to_fire_timeout=str(timeout))
         self._decisions_and_context.append_decision(timer)
 
-    EVENT_TYPE_TO_FUTURE = {
+    EVENT_TYPE_TO_FUTURE: dict[
+        str, Callable[[ActivityTask | WorkflowTask | SignalTask | MarkerTask, dict[str, Any]], futures.Future | None]
+    ] = {
         "activity": resume_activity,
         "child_workflow": resume_child_workflow,
         "signal": get_future_from_signal_event,
@@ -944,21 +759,13 @@ class Executor(executor.Executor):
         "timer": _get_future_from_timer_event,
     }
 
-    def resume(self, a_task, *args, **kwargs):
+    def resume(self, a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask, *args, **kwargs) -> futures.Future:
         """Resume the execution of a task.
         Called by `submit`.
 
         If the task was scheduled, returns a future that wraps its state,
         otherwise schedules it.
         If in repair mode, we may fake the task to repair from the previous history.
-
-        :param a_task:
-        :type a_task: Task
-        :param args:
-        :type args: tuple
-        :type kwargs:
-        :type kwargs: dict
-        :rtype: futures.Future
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
         is_repair = bool(self.repair_with)
@@ -974,9 +781,7 @@ class Executor(executor.Executor):
         future = None
 
         # in repair mode, check if we absolutely want to re-execute this task
-        force_execution = self.force_activities and self.force_activities.search(
-            a_task.id
-        )
+        force_execution = self.force_activities and self.force_activities.search(a_task.id)
 
         # try to fill in the blanks with the workflow we're trying to repair if any
         if not event and is_repair and not force_execution:
@@ -984,13 +789,8 @@ class Executor(executor.Executor):
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful
             if former_event and former_event["state"] == "completed":
-                logger.info(
-                    "faking task completed successfully in previous "
-                    "workflow: {}".format(former_event["id"])
-                )
-                json_hash = hashlib.md5(
-                    json_dumps(former_event).encode("utf-8")
-                ).hexdigest()
+                logger.info("faking task completed successfully in previous " "workflow: {}".format(former_event["id"]))
+                json_hash = hashlib.md5(json_dumps(former_event).encode("utf-8")).hexdigest()  # nosec
                 fake_task_list = "FAKE-" + json_hash
 
                 # schedule task on a fake task list
@@ -1018,11 +818,7 @@ class Executor(executor.Executor):
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
-            logger.warning(
-                "limit of {} open activities reached".format(
-                    constants.MAX_OPEN_ACTIVITY_COUNT
-                )
-            )
+            logger.warning("limit of {} open activities reached".format(constants.MAX_OPEN_ACTIVITY_COUNT))
             raise exceptions.ExecutionBlocked
 
         return future
@@ -1047,10 +843,7 @@ class Executor(executor.Executor):
         """
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit
-        elif (
-            isinstance(a_task, ActivityTask)
-            and a_task.activity.task_priority is not PRIORITY_NOT_SET
-        ):
+        elif isinstance(a_task, ActivityTask) and a_task.activity.task_priority is not PRIORITY_NOT_SET:
             return a_task.activity.task_priority
         elif self._workflow.task_priority is not PRIORITY_NOT_SET:
             return self._workflow.task_priority
@@ -1076,9 +869,7 @@ class Executor(executor.Executor):
             elif isinstance(func, base_task.WorkflowTask):
                 func = WorkflowTask.from_generic_task(func)
             elif isinstance(func, base_task.SignalTask):
-                func = SignalTask.from_generic_task(
-                    func, self._workflow_id, self._run_id, None, None
-                )
+                func = SignalTask.from_generic_task(func, self._workflow_id, self._run_id, None, None)
             elif isinstance(func, base_task.MarkerTask):
                 func = MarkerTask.from_generic_task(func)
             elif isinstance(func, base_task.TimerTask):
@@ -1098,15 +889,9 @@ class Executor(executor.Executor):
                 a_task = WorkflowTask(self, func, *args, **kwargs)
             elif isinstance(func, WaitForSignal):
                 future = self.get_future_from_signal(func.signal_name)
-                logger.debug(
-                    "submitted WaitForSignalTask({}): future={}".format(
-                        func.signal_name, future
-                    )
-                )
+                logger.debug("submitted WaitForSignalTask({}): future={}".format(func.signal_name, future))
                 if not future.done:
-                    self._decisions_and_context.append_kv_to_set_context(
-                        "waiting_signals", func.signal_name
-                    )
+                    self._decisions_and_context.append_kv_to_set_context("waiting_signals", func.signal_name)
                 return future
             elif isinstance(func, Submittable):
                 raise TypeError(
@@ -1140,9 +925,7 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super().starmap(callable, iterable)
 
-    def replay(
-        self, decision_response: swf.responses.Response, decref_workflow: bool = True
-    ) -> DecisionsAndContext:
+    def replay(self, decision_response: swf.responses.Response, decref_workflow: bool = True) -> DecisionsAndContext:
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
@@ -1208,12 +991,8 @@ class Executor(executor.Executor):
                     return format.decode(raw, parse_json=False, use_proxy=False)
                 return repr(err.exception)
 
-            reason = 'Workflow execution error in {}: "{}"'.format(
-                err.payload.name, _extract_reason(err)
-            )
-            logger.exception(
-                "%s", reason
-            )  # Don't let logger try to interpolate the message
+            reason = 'Workflow execution error in {}: "{}"'.format(err.payload.name, _extract_reason(err))
+            logger.exception("%s", reason)  # Don't let logger try to interpolate the message
 
             details = getattr(err.exception, "details", None)
             self.on_failure(reason, details)
@@ -1236,9 +1015,7 @@ class Executor(executor.Executor):
 
             tb = traceback.format_exc()
             details = f"Traceback:\n{tb}"
-            logger.exception(
-                "%s", reason + "\n" + details
-            )  # Don't let logger try to interpolate the message
+            logger.exception("%s", reason + "\n" + details)  # Don't let logger try to interpolate the message
 
             self.on_failure(reason)
 
@@ -1270,11 +1047,7 @@ class Executor(executor.Executor):
         events = self._history.events
         last_completed_decision = next(
             # next((generator), default) to prevent StopIteration. Python is fun :-)
-            (
-                e
-                for e in reversed(events)
-                if e.type == "DecisionTask" and e.state == "completed"
-            ),
+            (e for e in reversed(events) if e.type == "DecisionTask" and e.state == "completed"),
             None,
         )
         last_decision_had_context = (
@@ -1355,15 +1128,9 @@ class Executor(executor.Executor):
             "workflow_id": execution.workflow_id,
             "run_id": execution.run_id,
             "tag_list": getattr(workflow_started_event, "tag_list", None) or [],
-            "continued_execution_run_id": getattr(
-                workflow_started_event, "continued_execution_run_id", None
-            ),
-            "parent_workflow_id": getattr(
-                workflow_started_event, "parent_workflow_execution", {}
-            ).get("workflowId"),
-            "parent_run_id": getattr(
-                workflow_started_event, "parent_workflow_execution", {}
-            ).get("runId"),
+            "continued_execution_run_id": getattr(workflow_started_event, "continued_execution_run_id", None),
+            "parent_workflow_id": getattr(workflow_started_event, "parent_workflow_execution", {}).get("workflowId"),
+            "parent_run_id": getattr(workflow_started_event, "parent_workflow_execution", {}).get("runId"),
         }
 
     @property
@@ -1396,9 +1163,7 @@ class Executor(executor.Executor):
             )
         )
 
-        extra_input = {
-            "__propagate": propagate if isinstance(propagate, bool) else str(propagate)
-        }
+        extra_input = {"__propagate": propagate if isinstance(propagate, bool) else str(propagate)}
         return SignalTask(
             name,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
@@ -1430,16 +1195,14 @@ class Executor(executor.Executor):
                 )
             )
         known_workflows_ids.extend(
-            (w["workflow_id"], w["run_id"])
-            for w in list(history.child_workflows.values())
-            if w["state"] == "started"
+            (w["workflow_id"], w["run_id"]) for w in history.child_workflows.values() if w["state"] == "started"
         )
 
         known_workflows_ids = frozenset(known_workflows_ids)
 
         signals_scheduled = False
 
-        for signal in list(history.signals.values()):
+        for signal in history.signals.values():
             input = signal["input"]
             if not isinstance(input, dict):  # foreign signal: don't try processing it
                 continue
@@ -1451,20 +1214,11 @@ class Executor(executor.Executor):
             args = input.get("args", ())
             kwargs = input.get("kwargs", {})
             sender = (signal["external_workflow_id"], signal["external_run_id"])
-            signaled_workflows_ids = {
-                (w["workflow_id"], w["run_id"])
-                for w in history.signaled_workflows[name]
-            }
-            not_signaled_workflows_ids = list(
-                known_workflows_ids - signaled_workflows_ids - {sender}
-            )
+            signaled_workflows_ids = {(w["workflow_id"], w["run_id"]) for w in history.signaled_workflows[name]}
+            not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
             extra_input = {"__propagate": propagate}
             for workflow_id, run_id in not_signaled_workflows_ids:
-                self.schedule_task(
-                    SignalTask(
-                        name, workflow_id, run_id, None, extra_input, *args, **kwargs
-                    )
-                )
+                self.schedule_task(SignalTask(name, workflow_id, run_id, None, extra_input, *args, **kwargs))
                 signals_scheduled = True
         if signals_scheduled:
             raise exceptions.ExecutionBlocked()
@@ -1474,13 +1228,9 @@ class Executor(executor.Executor):
 
     def list_markers(self, all=False):
         if all:
-            return [
-                Marker(m["name"], format.decode(m["details"]))
-                for ml in list(self._history.markers.values())
-                for m in ml
-            ]
+            return [Marker(m["name"], format.decode(m["details"])) for ml in self._history.markers.values() for m in ml]
         rc = []
-        for ml in list(self._history.markers.values()):
+        for ml in self._history.markers.values():
             m = ml[-1]
             if m["state"] == "recorded":
                 rc.append(Marker(m["name"], format.decode(m["details"])))
@@ -1507,9 +1257,7 @@ class Executor(executor.Executor):
 
     def handle_cancel_requested(self):
         decision = swf.models.decision.WorkflowExecutionDecision()
-        is_current_decision = (
-            self._history.completed_decision_id < self._history.cancel_requested_id
-        )
+        is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
         should_cancel = self._workflow.should_cancel(self._history)
         if not should_cancel:
             return None  # ignore cancel
@@ -1521,8 +1269,7 @@ class Executor(executor.Executor):
             logger.warning("failed: %s", self._history.cancel_failed)
         if (
             self._history.cancel_failed
-            and self._history.cancel_failed_decision_task_completed_event_id
-            == self._history.completed_decision_id
+            and self._history.cancel_failed_decision_task_completed_event_id == self._history.completed_decision_id
         ):
             # Per http://docs.aws.amazon.com/amazonswf/latest/apireference/API_Decision.html,
             # we should call RespondDecisionTaskCompleted without any decisions; however this hangs the workflow...

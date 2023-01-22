@@ -67,11 +67,7 @@ class RemoteBinary:
         return os.access(self.local_location, os.X_OK)
 
     def _download_binary(self):
-        logger.info(
-            "Downloading binary: {} -> {}".format(
-                self.remote_location, self.local_location
-            )
-        )
+        logger.info("Downloading binary: {} -> {}".format(self.remote_location, self.local_location))
         bucket, path = self.remote_location.replace("s3://", "", 1).split("/", 1)
         # with FileLock(dest):
         pull(bucket, path, self.local_location)

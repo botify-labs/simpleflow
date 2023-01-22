@@ -160,9 +160,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @property
     def identity(self):
         if self.process_mode == "kubernetes":
-            self.job_name = "{}--{}".format(
-                to_k8s_identifier(self.task_list), str(uuid.uuid4())
-            )
+            self.job_name = "{}--{}".format(to_k8s_identifier(self.task_list), str(uuid.uuid4()))
             return json_dumps(
                 {
                     "cluster": os.environ["K8S_CLUSTER"],
@@ -304,11 +302,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
     # Kill
     for p in alive:
-        logger.warning(
-            "process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL".format(
-                p.pid, p.status()
-            )
-        )
+        logger.warning("process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL".format(p.pid, p.status()))
         try:
             p.kill()
         except psutil.NoSuchProcess:
@@ -316,11 +310,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     # Check
     _, alive = psutil.wait_procs(alive)
     for p in alive:
-        logger.error(
-            "process: pid={} status={} still alive. Giving up!".format(
-                p.pid, p.status()
-            )
-        )
+        logger.error("process: pid={} status={} still alive. Giving up!".format(p.pid, p.status()))
 
 
 def spawn(poller, token, task, middlewares=None, heartbeat=60):
@@ -341,14 +331,8 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.info(
-        "spawning new activity worker pid={} heartbeat={}".format(
-            os.getpid(), heartbeat
-        )
-    )
-    worker = multiprocessing.Process(
-        target=process_task, args=(poller, token, task, middlewares)
-    )
+    logger.info("spawning new activity worker pid={} heartbeat={}".format(os.getpid(), heartbeat))
+    worker = multiprocessing.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
     def worker_alive():
@@ -363,17 +347,13 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
                 worker.join(timeout=0)
                 if worker.exitcode is None:
                     logger.warning(
-                        "process {} is dead but multiprocessing doesn't know it (simpleflow bug)".format(
-                            worker.pid
-                        )
+                        "process {} is dead but multiprocessing doesn't know it (simpleflow bug)".format(worker.pid)
                     )
             if worker.exitcode != 0:
                 poller.fail_with_retry(
                     token,
                     task,
-                    reason="process {} died: exit code {}".format(
-                        worker.pid, worker.exitcode
-                    ),
+                    reason="process {} died: exit code {}".format(worker.pid, worker.exitcode),
                 )
             return
         try:
@@ -399,11 +379,7 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
             # Let's crash if it cannot notify the heartbeat failed.  The
             # subprocess will become orphan and the heartbeat timeout may
             # eventually trigger on Amazon SWF side.
-            logger.error(
-                "cannot send heartbeat for task {}: {}".format(
-                    task.activity_type.name, error
-                )
-            )
+            logger.error("cannot send heartbeat for task {}: {}".format(task.activity_type.name, error))
             raise
 
         # Task cancelled.

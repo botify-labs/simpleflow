@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import swf.models.history
 from simpleflow import logger
@@ -9,7 +9,7 @@ from simpleflow import logger
 if TYPE_CHECKING:
     from typing import Any
 
-    from swf.models.event import ActivityTaskEvent
+    from swf.models.event import ActivityTaskEvent, Event
     from swf.models.event.task import ActivityTaskEventDict
 
 
@@ -44,10 +44,9 @@ class History:
         return self._history
 
     @property
-    def activities(self):
+    def activities(self) -> dict[int, ActivityTaskEventDict]:
         """
         :return: activities
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._activities
 
@@ -105,11 +104,7 @@ class History:
         :return: ID of last cancel failed event, if any.
         :rtype: Optional[int]
         """
-        return (
-            self._cancel_failed["decision_task_completed_event_id"]
-            if self._cancel_failed
-            else None
-        )
+        return self._cancel_failed["decision_task_completed_event_id"] if self._cancel_failed else None
 
     @property
     def signaled_workflows(self):
@@ -141,17 +136,10 @@ class History:
         return self._tasks
 
     @property
-    def events(self):
-        """
-
-        :return:
-        :rtype: list[swf.models.event.Event]
-        """
+    def events(self) -> list[swf.models.event.Event]:
         return self._history.events
 
-    def parse_activity_event(
-        self, events: list[ActivityTaskEvent], event: ActivityTaskEvent
-    ):
+    def parse_activity_event(self, events: list[ActivityTaskEvent], event: ActivityTaskEvent):
         """
         Aggregate all the attributes of an activity in a single entry.
         """
@@ -328,9 +316,7 @@ class History:
                 "version": event.workflow_type["version"],
                 "state": event.state,
                 "initiated_event_id": event.id,
-                "raw_input": event.raw.get(
-                    "input"
-                ),  # FIXME obsolete; any user out there?
+                "raw_input": event.raw.get("input"),  # FIXME obsolete; any user out there?
                 "input": event.input,
                 "child_policy": event.child_policy,
                 "control": event.control,
@@ -344,17 +330,12 @@ class History:
                 self._tasks.append(workflow)
             else:
                 # May have gotten a start_failed before (or retrying?)
-                if (
-                    self._child_workflows[event.workflow_id]["state"]
-                    == "start_initiated"
-                ):
+                if self._child_workflows[event.workflow_id]["state"] == "start_initiated":
                     # Should not happen anymore
                     logger.warning(
                         "start_initiated again for workflow {} (initiated @{}, we're @{})".format(
                             event.workflow_id,
-                            self._child_workflows[event.workflow_id][
-                                "initiated_event_id"
-                            ],
+                            self._child_workflows[event.workflow_id]["initiated_event_id"],
                             event.id,
                         )
                     )
@@ -463,15 +444,9 @@ class History:
                 "type": "signal",
                 "name": event.signal_name,
                 "state": event.state,
-                "external_initiated_event_id": getattr(
-                    event, "external_initiated_event_id", None
-                ),
-                "external_run_id": getattr(
-                    event, "external_workflow_execution", {}
-                ).get("runId"),
-                "external_workflow_id": getattr(
-                    event, "external_workflow_execution", {}
-                ).get("workflowId"),
+                "external_initiated_event_id": getattr(event, "external_initiated_event_id", None),
+                "external_run_id": getattr(event, "external_workflow_execution", {}).get("runId"),
+                "external_workflow_id": getattr(event, "external_workflow_execution", {}).get("workflowId"),
                 "input": event.input,
                 "event_id": event.id,
                 "timestamp": event.timestamp,
@@ -482,15 +457,9 @@ class History:
             cancel_requested = {
                 "type": event.state,
                 "cause": getattr(event, "cause", None),
-                "external_initiated_event_id": getattr(
-                    event, "external_initiated_event_id", None
-                ),
-                "external_run_id": getattr(
-                    event, "external_workflow_execution", {}
-                ).get("runId"),
-                "external_workflow_id": getattr(
-                    event, "external_workflow_execution", {}
-                ).get("workflowId"),
+                "external_initiated_event_id": getattr(event, "external_initiated_event_id", None),
+                "external_run_id": getattr(event, "external_workflow_execution", {}).get("runId"),
+                "external_workflow_id": getattr(event, "external_workflow_execution", {}).get("workflowId"),
                 "event_id": event.id,
                 "timestamp": event.timestamp,
             }
@@ -568,9 +537,7 @@ class History:
                 logger.warning(
                     "request_cancel_initiated again for workflow {} (initiated @{}, we're @{})".format(
                         event.workflow_id,
-                        self._external_workflows_canceling[event.workflow_id][
-                            "initiated_event_id"
-                        ],
+                        self._external_workflows_canceling[event.workflow_id]["initiated_event_id"],
                         event.id,
                     )
                 )
@@ -691,7 +658,7 @@ class History:
         if event.state == "completed":
             self.completed_decision_id = event.id
 
-    TYPE_TO_PARSER = {
+    TYPE_TO_PARSER: dict[str, Callable[[History, list[Event], Event], None]] = {
         "ActivityTask": parse_activity_event,
         "DecisionTask": parse_decision_event,
         "ChildWorkflowExecution": parse_child_workflow_event,
@@ -714,7 +681,7 @@ class History:
                 parser(self, events, event)
 
     @staticmethod
-    def get_event_id(event):
+    def get_event_id(event: dict[str, Any]) -> int | None:
         for event_id_key in (  # FIXME add a universal name?..
             "scheduled_id",
             "initiated_event_id",

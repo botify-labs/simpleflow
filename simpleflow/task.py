@@ -276,9 +276,7 @@ class TimerTask(Task):
         return self.timer_id
 
     def __repr__(self):
-        return '<{} timer_id="{}" timeout={}>'.format(
-            self.__class__.__name__, self.timer_id, self.timeout
-        )
+        return '<{} timer_id="{}" timeout={}>'.format(self.__class__.__name__, self.timer_id, self.timeout)
 
     def execute(self):
         # Local execution
@@ -410,11 +408,7 @@ class TaskFailureContext:
         return self
 
     def decide_retry(self, retry_wait_timeout: int | None = 0) -> TaskFailureContext:
-        self.decision = (
-            self.Decision.retry_now
-            if not retry_wait_timeout
-            else self.Decision.retry_later
-        )
+        self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
         self.retry_wait_timeout = retry_wait_timeout
         return self
 

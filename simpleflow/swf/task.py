@@ -103,9 +103,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return input
 
     @classmethod
-    def get_activity_type(
-        cls, domain: swf.models.Domain, name: str, version: str
-    ) -> swf.models.ActivityType:
+    def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.
         :param domain:
@@ -193,18 +191,14 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         :rtype: list[swf.models.decision.Decision]
         """
         workflow = self.workflow
-        model = self.get_workflow_type(
-            domain, workflow.__module__ + "." + workflow.__name__, workflow.version
-        )
+        model = self.get_workflow_type(domain, workflow.__module__ + "." + workflow.__name__, workflow.version)
 
         input = self.get_input()
         control = kwargs.get("control")
 
         tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
-            tag_list = executor.get_run_context()[
-                "tag_list"
-            ]  # FIXME what about self.executor?
+            tag_list = executor.get_run_context()["tag_list"]  # FIXME what about self.executor?
 
         execution_timeout = getattr(workflow, "execution_timeout", None)
         decision = swf.models.decision.ChildWorkflowExecutionDecision(
@@ -229,9 +223,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return input
 
     @classmethod
-    def get_workflow_type(
-        cls, domain: swf.models.Domain, name: str, version: str
-    ) -> swf.models.WorkflowType:
+    def get_workflow_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.WorkflowType:
         """
         Cache known WorkflowType's to remove useless latency.
         :param domain:
@@ -272,9 +264,7 @@ class SignalTask(task.SignalTask, SwfTask):
             **a_task.kwargs,
         )
 
-    def __init__(
-        self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs
-    ):
+    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id

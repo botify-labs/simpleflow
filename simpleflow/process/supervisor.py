@@ -114,9 +114,7 @@ class Supervisor(NamedMixin):
                 name, status = child.name(), child.status()
             except psutil.NoSuchProcess:  # May be untimely deceased
                 name, status = "unknown", "unknown"
-            logger.debug(
-                "  child: name=%s pid=%d status=%s" % (name, child.pid, status)
-            )
+            logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
             if status in (psutil.STATUS_ZOMBIE, "unknown"):
                 logger.debug(f"  process {child.pid} is zombie, will cleanup")
                 # join process to clean it up
@@ -136,9 +134,7 @@ class Supervisor(NamedMixin):
         if self._terminating:
             return
         for _ in range(len(self._processes), self._nb_children):
-            child = multiprocessing.Process(
-                target=reset_signal_handlers(self._payload), args=self._args
-            )
+            child = multiprocessing.Process(target=reset_signal_handlers(self._payload), args=self._args)
             child.start()
 
             # One might wonder if `child.pid` is guaranteed to be set at this
@@ -161,9 +157,7 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception(
-                "Child processes map is not empty, already called .start() ?"
-            )
+            raise Exception("Child processes map is not empty, already called .start()?")
 
         # wait for all processes to finish
         while True:
@@ -200,11 +194,7 @@ class Supervisor(NamedMixin):
         def _handle_graceful_shutdown(signum, frame):
             signals_map = {2: "SIGINT", 15: "SIGTERM"}
             signal_name = signals_map.get(signum, signum)
-            logger.info(
-                "process: caught signal signal={} pid={}".format(
-                    signal_name, os.getpid()
-                )
-            )
+            logger.info("process: caught signal signal={} pid={}".format(signal_name, os.getpid()))
             self.terminate()
 
         # bind SIGTERM and SIGINT
@@ -220,10 +210,7 @@ class Supervisor(NamedMixin):
         Terminate all worker processes managed by this Supervisor.
         """
         self._terminating = True
-        logger.info(
-            "process: will stop workers, this might take up several minutes. "
-            "Please, be patient."
-        )
+        logger.info("process: will stop workers, this might take up several minutes. " "Please, be patient.")
         self._killall()
 
     def _killall(self):

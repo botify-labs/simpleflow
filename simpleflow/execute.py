@@ -84,9 +84,7 @@ def check_arguments(argspec: inspect.ArgSpec, args: Any) -> None:
 
     # Calling func(a, b) with func(1, 2, 3)
     if not argspec.varargs and argspec.args and len(args) != len(argspec.args):
-        raise TypeError(
-            f"command takes {len(argspec.args)} arguments: {len(args)} passed"
-        )
+        raise TypeError(f"command takes {len(argspec.args)} arguments: {len(args)} passed")
 
 
 def check_keyword_arguments(argspec: inspect.ArgSpec, kwargs: dict) -> None:
@@ -95,16 +93,10 @@ def check_keyword_arguments(argspec: inspect.ArgSpec, kwargs: dict) -> None:
         raise TypeError("command does not take keyword arguments")
 
     arguments_defaults = zip_arguments_defaults(argspec)
-    not_found = {
-        name for name, value in arguments_defaults if value is RequiredArgument
-    } - set(kwargs)
+    not_found = {name for name, value in arguments_defaults if value is RequiredArgument} - set(kwargs)
     # Calling func(a=1, b) with func(2) instead of func(a=0, 2)
     if not_found:
-        raise TypeError(
-            'argument{} "{}" not found'.format(
-                "s" if len(not_found) > 1 else "", ", ".join(not_found)
-            )
-        )
+        raise TypeError('argument{} "{}" not found'.format("s" if len(not_found) > 1 else "", ", ".join(not_found)))
 
 
 def format_arguments_json(*args, **kwargs):
@@ -208,9 +200,7 @@ def python(
                     tmp_dir = env.get(envname)
                     if tmp_dir:
                         break
-            with tempfile.TemporaryFile(
-                dir=tmp_dir
-            ) as result_fd, tempfile.TemporaryFile(dir=tmp_dir) as error_fd:
+            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(dir=tmp_dir) as error_fd:
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)
@@ -224,9 +214,7 @@ def python(
                     f"--error-fd={dup_error_fd}",
                     f"--context={json_dumps(context)}",
                 ]
-                if (
-                    len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH
-                ):  # command-line limit on Linux: 128K
+                if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
                     full_command.append(arguments_json)
                     arg_file = None
                     arg_fd = None
@@ -251,9 +239,7 @@ def python(
                     pass_fds=pass_fds,
                     env=env,
                 )
-                rc = wait_subprocess(
-                    process, timeout=timeout, command_info=full_command
-                )
+                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if arg_file:
@@ -275,11 +261,7 @@ def python(
                 result = format.decode(result_str)
                 return result
             except BaseException as ex:
-                logger.exception(
-                    "Exception in python.execute: {} {}".format(
-                        ex.__class__.__name__, ex
-                    )
-                )
+                logger.exception("Exception in python.execute: {} {}".format(ex.__class__.__name__, ex))
                 logger.warning("%r", result_str)
 
         # Not automatically assigned in python < 3.2.
@@ -329,15 +311,7 @@ def program(path=None, argument_format=format_arguments):
             return subprocess.check_output([command] + argument_format(*args, **kwargs), text=True)  # nosec
 
         try:
-            (
-                args,
-                varargs,
-                varkw,
-                defaults,
-                kwonlyargs,
-                kwonlydefaults,
-                ann,
-            ) = inspect.getfullargspec(  # noqa
+            (args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, ann,) = inspect.getfullargspec(  # noqa
                 func
             )
             argspec = inspect.ArgSpec(args, varargs, varkw, defaults)
@@ -474,9 +448,7 @@ def main():
         callable_ = callable_.__wrapped__
     args = arguments.get("args", ())
     kwargs = arguments.get("kwargs", {})
-    context = (
-        json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
-    )
+    context = json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
     try:
         if hasattr(callable_, "execute"):
             inst = callable_(*args, **kwargs)

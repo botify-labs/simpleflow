@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import os
-
 import logging  # NOQA
+import os
 
 WORKFLOW_DEFAULT_TASK_LIST = "default"
 WORKFLOW_DEFAULT_VERSION = "default"
