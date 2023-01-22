@@ -484,12 +484,7 @@ class Executor(executor.Executor):
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
-        marker_list = list(
-            filter(
-                lambda m: m["state"] == "recorded" and m["details"] == json_details,
-                marker_list,
-            )
-        )
+        marker_list = [m for m in marker_list if m["state"] == "recorded" and m["details"] == json_details]
         return marker_list[-1] if marker_list else None
 
     def find_timer_event(self, a_task: TimerTask | CancelTimerTask, history: History) -> dict[str, Any] | None:
@@ -1243,7 +1238,7 @@ class Executor(executor.Executor):
             marker_list = self._history.markers.get(event_name)
             if not marker_list:
                 return None
-            marker_list = list(m for m in marker_list if m["state"] == "recorded")
+            marker_list = [m for m in marker_list if m["state"] == "recorded"]
             if not marker_list:
                 return None
             # Make pleasing details

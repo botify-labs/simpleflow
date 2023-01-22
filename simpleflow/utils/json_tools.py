@@ -38,7 +38,8 @@ def serialize_complex_object(obj):
     elif isinstance(obj, (set, frozenset)):
         return list(obj)
     raise TypeError(
-        "Type %s couldn't be serialized. This is a bug in simpleflow," " please file a new issue on GitHub!" % type(obj)
+        f"Type {type(obj).__name__} couldn't be serialized. This may be a bug in simpleflow,"
+        f" please file a new issue on GitHub!"
     )
 
 

@@ -44,7 +44,7 @@ class Task(Submittable, metaclass=abc.ABCMeta):
 
     @staticmethod
     def resolve_kwargs(**kwargs):
-        return {key: get_actual_value(val) for key, val in list(kwargs.items())}
+        return {key: get_actual_value(val) for key, val in kwargs.items()}
 
 
 class ActivityTask(Task):

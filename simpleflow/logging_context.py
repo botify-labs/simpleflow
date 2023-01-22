@@ -23,5 +23,5 @@ def get(key):
 
 
 def reset():
-    for env_var in list(ENV_KEYS.values()):
+    for env_var in ENV_KEYS.values():
         os.environ[env_var] = ""

@@ -77,7 +77,7 @@ class RemoteBinary:
 
 # convenience helpers
 def download_binaries(binaries_map):
-    for binary, remote_location in list(binaries_map.items()):
+    for binary, remote_location in binaries_map.items():
         binary = RemoteBinary(binary, remote_location)
         binary.download()
         os.environ["PATH"] = binary.local_directory + ":" + os.environ["PATH"]

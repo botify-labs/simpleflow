@@ -154,7 +154,7 @@ class History:
             return self._activities[scheduled_event.activity_id]
 
         if event.state == "scheduled":
-            activity = {
+            activity: ActivityTaskEventDict = {
                 "type": "activity",
                 "id": event.activity_id,
                 "name": event.activity_type["name"],

@@ -4,7 +4,7 @@ import operator
 from datetime import datetime
 from functools import partial, wraps
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Sequence
 
 import pytz
 from tabulate import tabulate
@@ -32,15 +32,15 @@ Total time = {total_time} seconds
 TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 
-def _show_tag_list(tag_list):
+def _show_tag_list(tag_list: list[str]) -> str:
     return "\n".join(f"{key.strip()}:\t{value.strip()}" for key, value in (keyval.split("=") for keyval in tag_list))
 
 
-def _to_timestamp(date):
+def _to_timestamp(date: datetime):
     return (date - datetime(1970, 1, 1)).total_seconds()
 
 
-def tabular(values, headers, tablefmt, floatfmt):
+def tabular(values: Sequence[Sequence[Any]], headers: Sequence[str], tablefmt: str, floatfmt: str) -> str:
     return tabulate(
         values,
         headers=headers,
@@ -49,27 +49,27 @@ def tabular(values, headers, tablefmt, floatfmt):
     )
 
 
-def csv(values, headers, delimiter=","):
+def csv(values: Sequence[Sequence[Any]], headers: Sequence[str] | None, delimiter=",") -> str:
     import csv
-    from io import BytesIO
+    from io import StringIO
 
-    data = BytesIO()
+    data = StringIO()
 
     csv.writer(data, delimiter=delimiter).writerows(values)
 
     return data.getvalue()
 
 
-def human(values, headers):
+def human(values: Sequence[Sequence[Any]], headers: Sequence[str]) -> str:
     return tabulate(
         [(str(k), str(v)) for k, v in zip(headers, values[0])],
         tablefmt="plain",
     )
 
 
-def jsonify(values, headers):
+def jsonify(values: Sequence[Sequence[Any]], headers: Sequence[str]) -> str:
     if headers:
-        return json_dumps([dict(list(zip(headers, value))) for value in values])
+        return json_dumps([dict(zip(headers, value)) for value in values])
     else:
         return json_dumps(values)
 
@@ -84,7 +84,7 @@ FORMATS = {
 }
 
 
-def get_timestamps(task):
+def get_timestamps(task) -> tuple:
     last_state = task["state"]
     timestamp = task[last_state + "_timestamp"]
     scheduled_timestamp = task.get("scheduled_timestamp", "")
@@ -92,7 +92,7 @@ def get_timestamps(task):
     return last_state, timestamp, scheduled_timestamp
 
 
-def info(workflow_execution):
+def info(workflow_execution: WorkflowExecution) -> tuple[Sequence, Sequence]:
     history = History(workflow_execution.history())
     history.parse()
 
@@ -180,7 +180,7 @@ def profile(workflow_execution, nb_tasks=None):
     return header, rows
 
 
-def status(workflow_execution, nb_tasks=None):
+def status(workflow_execution, nb_tasks=None) -> tuple[Sequence, Sequence]:
     history = History(workflow_execution.history())
     history.parse()
 
@@ -192,7 +192,7 @@ def status(workflow_execution, nb_tasks=None):
     return header, rows
 
 
-def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
+def formatted(with_header: bool = False, fmt: callable = DEFAULT_FORMAT) -> callable:
     def formatter(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
@@ -210,21 +210,21 @@ def formatted(with_info=False, with_header=False, fmt=DEFAULT_FORMAT):
     return formatter
 
 
-def list_executions(workflow_executions):
+def list_executions(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence, Sequence]:
     header = "Workflow ID", "Workflow Type", "Status"
-    rows = (
+    rows = [
         (
             execution.workflow_id,
             execution.workflow_type.name,
             execution.status,
         )
         for execution in workflow_executions
-    )
+    ]
 
     return header, rows
 
 
-def list_details(workflow_executions: list[WorkflowExecution]) -> tuple:
+def list_details(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence, Sequence]:
     header = (
         "Workflow ID",
         "Workflow Type",
@@ -242,7 +242,7 @@ def list_details(workflow_executions: list[WorkflowExecution]) -> tuple:
         "Tags",
         "Decision Tasks Timeout",
     )
-    rows = (
+    rows = [
         (
             execution.workflow_id,
             execution.workflow_type.name,
@@ -261,12 +261,14 @@ def list_details(workflow_executions: list[WorkflowExecution]) -> tuple:
             execution.decision_tasks_timeout,
         )
         for execution in workflow_executions
-    )
+    ]
 
     return header, rows
 
 
-def get_task(workflow_execution, task_id, details=False):
+def get_task(
+    workflow_execution: WorkflowExecution, task_id: int, details: bool = False
+) -> tuple[list[str], list[list[Any]]]:
     history = History(workflow_execution.history())
     history.parse()
     task = history.activities[task_id]
@@ -303,9 +305,9 @@ def get_task(workflow_execution, task_id, details=False):
     return header, rows
 
 
-def dump_history_to_json(history):
+def dump_history_to_json(history: History) -> str:
     history.parse()
-    events = list(
+    events: list[Sequence] = list(
         chain(
             history.activities.items(),
             history.child_workflows.items(),

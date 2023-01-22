@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 import traceback
-from typing import TYPE_CHECKING
+from inspect import signature
 
 import psutil
 
@@ -18,11 +18,6 @@ from simpleflow import format
 from simpleflow import logger as simpleflow_logger
 from simpleflow.exceptions import ExecutionError, ExecutionTimeoutError
 from simpleflow.utils import import_from_module, json_dumps
-
-if TYPE_CHECKING:
-    import inspect
-    from typing import Any, Iterable
-
 
 MAX_ARGUMENTS_JSON_LENGTH = 65536
 
@@ -67,36 +62,6 @@ def format_arguments(*args, **kwargs):
         return "--" + str(key)  # long option --val
 
     return [f'{arg(k)}="{v}"' for k, v in kwargs.items()] + list(map(str, args))
-
-
-def zip_arguments_defaults(argspec: inspect.ArgSpec) -> Iterable:
-    if not argspec.defaults:
-        return []
-
-    return list(zip(argspec.args[-len(argspec.defaults) :], argspec.defaults))
-
-
-def check_arguments(argspec: inspect.ArgSpec, args: Any) -> None:
-    """Validates there is the right number of arguments"""
-    # func() or func(**kwargs) or func(a=1, b=2)
-    if not argspec.varargs and not argspec.args and args:
-        raise TypeError("command does not take varargs")
-
-    # Calling func(a, b) with func(1, 2, 3)
-    if not argspec.varargs and argspec.args and len(args) != len(argspec.args):
-        raise TypeError(f"command takes {len(argspec.args)} arguments: {len(args)} passed")
-
-
-def check_keyword_arguments(argspec: inspect.ArgSpec, kwargs: dict) -> None:
-    # func() or func(*args) or func(a, b)
-    if not argspec.keywords and not argspec.defaults and kwargs:
-        raise TypeError("command does not take keyword arguments")
-
-    arguments_defaults = zip_arguments_defaults(argspec)
-    not_found = {name for name, value in arguments_defaults if value is RequiredArgument} - set(kwargs)
-    # Calling func(a=1, b) with func(2) instead of func(a=0, 2)
-    if not_found:
-        raise TypeError('argument{} "{}" not found'.format("s" if len(not_found) > 1 else "", ", ".join(not_found)))
 
 
 def format_arguments_json(*args, **kwargs):
@@ -297,25 +262,16 @@ def program(path=None, argument_format=format_arguments):
     argument *path*.
 
     """
-    import inspect
 
     def wrap_callable(func):
         @functools.wraps(func)
         def execute(*args, **kwargs):
-            check_arguments(argspec, args)
-            check_keyword_arguments(argspec, kwargs)
+            sig.bind(*args, **kwargs)  # Raise TypeError on error
 
             command = path or func.__name__
             return subprocess.check_output([command] + argument_format(*args, **kwargs), text=True)  # nosec
 
-        try:
-            (args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, ann,) = inspect.getfullargspec(  # noqa
-                func
-            )
-            argspec = inspect.ArgSpec(args, varargs, varkw, defaults)
-        except AttributeError:
-            # noinspection PyDeprecation
-            argspec = inspect.getargspec(func)
+        sig = signature(func)
 
         return execute
 

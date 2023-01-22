@@ -27,10 +27,8 @@ def ls_nokwargs(*args):
 
 def test_execute_program_no_kwargs():
     with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             ls_nokwargs(hide=f.name)
-
-        assert exc_info.value.args[0] == "command does not take keyword arguments"
 
 
 @execute.program(path="ls")
@@ -44,23 +42,19 @@ def ls_noargs(**kwargs):
 
 def test_execute_program_no_args():
     with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             ls_noargs(f.name)
-
-        assert exc_info.value.args[0] == "command does not take varargs"
 
 
 @execute.program(path="ls")
-def ls_restrict_named_arguments(hide=execute.RequiredArgument, *args):
+def ls_restrict_named_arguments(*, hide=execute.RequiredArgument):
     pass
 
 
 def test_execute_program_restrict_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             ls_restrict_named_arguments(f.name)
-
-        assert exc_info.value.args[0] == 'argument "hide" not found'
 
 
 @execute.program(path="ls")
@@ -97,10 +91,8 @@ def ls_2args(a, b):
 
 
 def test_ls_2args():
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(TypeError):
         ls_2args(1, 2, 3)
-
-    assert exc_info.value.args[0] == "command takes 2 arguments: 3 passed"
 
 
 @execute.python()

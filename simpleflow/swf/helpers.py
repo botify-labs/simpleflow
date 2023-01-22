@@ -5,6 +5,7 @@ import getpass
 import json
 import os
 import socket
+from typing import TYPE_CHECKING
 
 import psutil
 
@@ -16,6 +17,10 @@ from simpleflow.utils import json_dumps
 
 from .stats import pretty
 
+if TYPE_CHECKING:
+    from swf.models import WorkflowExecution
+
+
 __all__ = [
     "show_workflow_profile",
     "show_workflow_status",
@@ -24,7 +29,7 @@ __all__ = [
 ]
 
 
-def get_workflow_execution(domain_name, workflow_id, run_id=None):
+def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | None = None) -> WorkflowExecution:
     def filter_execution(*args, **kwargs):
         if "workflow_status" in kwargs:
             kwargs["status"] = kwargs.pop("workflow_status")
