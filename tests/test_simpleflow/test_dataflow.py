@@ -430,9 +430,7 @@ def test_workflow_with_two_tasks_not_completed():
     # Let's now set the task as ``completed`` in the history.
     decision_id = history.last_id
     (
-        history.add_activity_task_completed(
-            scheduled=scheduled_id, started=scheduled_id + 1, result=result
-        )
+        history.add_activity_task_completed(scheduled=scheduled_id, started=scheduled_id + 1, result=result)
         .add_decision_task_scheduled()
         .add_decision_task_started()
     )
@@ -944,10 +942,7 @@ def test_workflow_with_child_workflow_timed_out():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason
-        == 'Workflow execution error in workflow-test_workflow: "TimeoutError(START_TO_CLOSE)"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TimeoutError(START_TO_CLOSE)"'
 
 
 def test_workflow_with_child_workflow_canceled():
@@ -975,9 +970,7 @@ def test_workflow_with_child_workflow_canceled():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason == 'Workflow execution error in workflow-test_workflow: "TaskCanceled()"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskCanceled()"'
 
 
 def test_workflow_with_child_workflow_terminated():
@@ -1005,10 +998,7 @@ def test_workflow_with_child_workflow_terminated():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason
-        == 'Workflow execution error in workflow-test_workflow: "TaskTerminated()"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskTerminated()"'
 
 
 class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
@@ -1186,9 +1176,7 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason="Workflow execution error in "
-        "activity-tests.data.activities.raise_on_failure: "
-        '"error"',
+        reason="Workflow execution error in " "activity-tests.data.activities.raise_on_failure: " '"error"',
         details=builder.DEFAULT_DETAILS,
     )
 
@@ -1415,9 +1403,7 @@ class ATestDefinitionMoreThanMaxOpenActivities(BaseTestWorkflow):
     """
 
     def run(self):
-        results = self.map(
-            increment, list(range(constants.MAX_OPEN_ACTIVITY_COUNT + 5))
-        )
+        results = self.map(increment, list(range(constants.MAX_OPEN_ACTIVITY_COUNT + 5)))
         futures.wait(*results)
 
 
@@ -1637,9 +1623,7 @@ class ATestDefinitionParentWorkflow(BaseTestWorkflow):
     name = "test_parent_workflow"
 
     def run(self):
-        future = self.submit(
-            ATestDefinitionChildWithIdWorkflow, workflow_name="workflow-child-one-1"
-        )
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name="workflow-child-one-1")
         futures.wait(future)
 
 
@@ -1727,9 +1711,7 @@ class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
             "what": "Details for second marker",
             "date": datetime.date(2018, 1, 1),
         }
-        m3 = self.submit(
-            self.record_marker("Second marker", details=self.second_marker_details)
-        )
+        m3 = self.submit(self.record_marker("Second marker", details=self.second_marker_details))
         futures.wait(m1, m2, m3)
 
 
@@ -1754,9 +1736,7 @@ def test_markers():
         {
             "decisionType": "RecordMarker",
             "recordMarkerDecisionAttributes": {
-                "details": json_dumps(
-                    {"what": "Details for second marker", "date": "2018-01-01"}
-                ),
+                "details": json_dumps({"what": "Details for second marker", "date": "2018-01-01"}),
                 "markerName": "Second marker",
             },
         },

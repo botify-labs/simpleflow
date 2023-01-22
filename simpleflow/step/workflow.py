@@ -27,9 +27,7 @@ class WorkflowStepMixin(metaclass=abc.ABCMeta):
         """
         Return the S3 bucket's path prefix where to store the steps files.
         """
-        return os.path.join(
-            self.get_run_context().get("workflow_id", "default"), "steps/"
-        )
+        return os.path.join(self.get_run_context().get("workflow_id", "default"), "steps/")
 
     def get_step_activity_params(self) -> dict[str, Any]:
         """
@@ -57,9 +55,7 @@ class WorkflowStepMixin(metaclass=abc.ABCMeta):
         """
         return list(getattr(self, "steps_forced", []))
 
-    def add_skipped_steps(
-        self, steps: Sequence[str], reason: str | None = None
-    ) -> None:
+    def add_skipped_steps(self, steps: Sequence[str], reason: str | None = None) -> None:
         """
         Add steps to skip.
         """

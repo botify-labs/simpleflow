@@ -71,9 +71,7 @@ class Workflow(Submittable):
         elif isinstance(submittable, SubmittableContainer):
             return submittable.submit(self._executor)
         else:
-            raise TypeError(
-                f"Bad type for {submittable} activity ({type(submittable)})"
-            )
+            raise TypeError(f"Bad type for {submittable} activity ({type(submittable)})")
 
     def map(self, activity, iterable):
         """

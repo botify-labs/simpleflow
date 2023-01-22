@@ -64,9 +64,7 @@ def comma_separated_list(value):
 @click.option("--header/--no-header", default=False)
 @click.option(
     "--color",
-    type=click.Choice(
-        [log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]
-    ),
+    type=click.Choice([log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]),
     default=log.ColorModes.AUTO,
 )
 @click.version_option(version=__version__)
@@ -154,9 +152,7 @@ def run_workflow_locally(workflow_class, wf_input, middlewares):
     required=False,
     help="Tags for the workflow execution.",
 )
-@click.option(
-    "--decision-tasks-timeout", required=False, help="Timeout for the decision tasks."
-)
+@click.option("--decision-tasks-timeout", required=False, help="Timeout for the decision tasks.")
 @click.option(
     "--execution-timeout",
     required=False,
@@ -164,13 +160,9 @@ def run_workflow_locally(workflow_class, wf_input, middlewares):
 )
 @click.option("--task-list", required=False, help="Task list for decision tasks.")
 @click.option("--workflow-id", required=False, help="ID of the workflow execution.")
-@click.option(
-    "--domain", "-d", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain."
-)
+@click.option("--domain", "-d", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain.")
 @click.argument("workflow")
-@cli.command(
-    "workflow.start", help="Start the workflow defined in the WORKFLOW module."
-)
+@cli.command("workflow.start", help="Start the workflow defined in the WORKFLOW module.")
 def start_workflow(
     workflow,
     domain,
@@ -359,9 +351,7 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
     type=click.Choice(["open", "closed"]),
     help="Open/Closed",
 )
-@click.option(
-    "--started-since", "-d", default=30, show_default=True, help="Started since N days."
-)
+@click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.pass_context
 def list_workflows(ctx, domain, status, started_since):
     print(
@@ -387,12 +377,8 @@ def list_workflows(ctx, domain, status, started_since):
 @click.option("--tag", default=None, help="Tag (multiple option).")  # , multiple=True
 @click.option("--workflow-id", default=None, help="Workflow ID.")
 @click.option("--workflow-type-name", default=None, help="Workflow Name.")
-@click.option(
-    "--workflow-type-version", default=None, help="Workflow Version (name needed)."
-)
-@click.option(
-    "--started-since", "-d", default=30, show_default=True, help="Started since N days."
-)
+@click.option("--workflow-type-version", default=None, help="Workflow Version (name needed).")
+@click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.pass_context
 def filter_workflows(
     ctx,
@@ -441,14 +427,10 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @click.argument("workflows", nargs=-1, required=False)
-@cli.command(
-    "decider.start", help="Start a decider process to manage workflow executions."
-)
+@cli.command("decider.start", help="Start a decider process to manage workflow executions.")
 def start_decider(workflows, domain, task_list, log_level, nb_processes):
     if log_level:
-        logger.warning(
-            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
-        )
+        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
     decider.command.start(
         workflows,
         domain,
@@ -470,9 +452,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     default="local",
     help="Whether to process the task locally or in a Kubernetes job (default=local)",
 )
-@click.option(
-    "--one-task", is_flag=True, help="Run only one task and shut down (no supervisor)."
-)
+@click.option("--one-task", is_flag=True, help="Run only one task and shut down (no supervisor).")
 @click.option(
     "--heartbeat",
     type=int,
@@ -498,16 +478,12 @@ def start_worker(
     middleware_post_execution,
 ):
     if log_level:
-        logger.warning(
-            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
-        )
+        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
 
     if process_mode == "kubernetes" and poll_data:
         # don't accept to have a worker that doesn't poll AND doesn't process
         # since it would be just a gate to a scheduling infinite loop
-        raise ValueError(
-            "--process-mode=kubernetes and --poll-data options are exclusive"
-        )
+        raise ValueError("--process-mode=kubernetes and --poll-data options are exclusive")
 
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
@@ -576,9 +552,7 @@ def create_unique_task_list(workflow_id=""):
     required=False,
     help="Tags identifying the workflow execution.",
 )
-@click.option(
-    "--decision-tasks-timeout", required=False, help="Decision tasks timeout."
-)
+@click.option("--decision-tasks-timeout", required=False, help="Decision tasks timeout.")
 @click.option(
     "--execution-timeout",
     required=False,
@@ -586,9 +560,7 @@ def create_unique_task_list(workflow_id=""):
 )
 @click.option("--workflow-id", required=False, help="ID of the workflow execution.")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain.")
-@click.option(
-    "--display-status", type=bool, required=False, help="Display execution status."
-)
+@click.option("--display-status", type=bool, required=False, help="Display execution status.")
 @click.option(
     "--repair",
     type=str,
@@ -651,9 +623,7 @@ def standalone(
             "retrieving history of previous execution: domain={} "
             "workflow_id={} run_id={}".format(domain, repair, repair_run_id)
         )
-        workflow_execution = get_workflow_execution(
-            domain, repair, run_id=repair_run_id
-        )
+        workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
         previous_history = History(workflow_execution.history())
         repair_run_id = workflow_execution.run_id
         previous_history.parse()
@@ -749,9 +719,7 @@ def standalone(
     decider_proc.join()
 
 
-@click.option(
-    "--domain", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain."
-)
+@click.option("--domain", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain.")
 @click.option("--workflow-id", required=True, help="ID of the workflow execution.")
 @click.option("--input", "-i", required=False, help="JSON input of the workflow.")
 @click.option("--run-id", required=False, help="Run ID of the workflow execution.")

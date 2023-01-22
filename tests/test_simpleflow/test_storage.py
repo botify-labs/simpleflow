@@ -40,9 +40,7 @@ class TestGroup(unittest.TestCase):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
         bucket = self.conn.get_bucket(self.bucket)
-        self.assertEqual(
-            bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"), "42"
-        )
+        self.assertEqual(bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"), "42")
 
     @mock_s3
     def test_push_content(self):
@@ -81,9 +79,7 @@ class TestGroup(unittest.TestCase):
         self.create()
 
         # bucket where "get_location" works: return bucket+region
-        self.assertEqual(
-            storage.sanitize_bucket_and_host(self.bucket), (self.bucket, "us-east-1")
-        )
+        self.assertEqual(storage.sanitize_bucket_and_host(self.bucket), (self.bucket, "us-east-1"))
 
         # bucket where "get_location" doesn't work: return bucket + default region setting
         def _access_denied():
@@ -112,6 +108,4 @@ class TestGroup(unittest.TestCase):
 
         # bucket with too many "/": raise
         with self.assertRaises(ValueError):
-            storage.sanitize_bucket_and_host(
-                "s3-eu-west-1.amazonaws.com/mybucket/subpath"
-            )
+            storage.sanitize_bucket_and_host("s3-eu-west-1.amazonaws.com/mybucket/subpath")

@@ -23,9 +23,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         super().__init__(domain, task_list)
 
     def __repr__(self):
-        return "{}(domain={}, task_list={})".format(
-            self.__class__.__name__, self.domain.name, self.task_list
-        )
+        return "{}(domain={}, task_list={})".format(self.__class__.__name__, self.domain.name, self.task_list)
 
     @property
     def identity(self):

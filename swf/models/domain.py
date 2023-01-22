@@ -71,11 +71,7 @@ class Domain(BaseModel):
         as a string.
 
         """
-        if (
-            not isinstance(domain, cls)
-            or not hasattr(domain, "name")
-            or not isinstance(domain.name, str)
-        ):
+        if not isinstance(domain, cls) or not hasattr(domain, "name") or not isinstance(domain.name, str):
             raise TypeError(f"invalid type {type(domain)} for domain")
 
     def _diff(self):
@@ -130,9 +126,7 @@ class Domain(BaseModel):
     def save(self):
         """Creates the domain amazon side"""
         try:
-            self.connection.register_domain(
-                self.name, str(self.retention_period), self.description
-            )
+            self.connection.register_domain(self.name, str(self.retention_period), self.description)
         except SWFDomainAlreadyExistsError:
             raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
 
@@ -188,6 +182,4 @@ class Domain(BaseModel):
         pass
 
     def __repr__(self):
-        return "<{} name={} status={}>".format(
-            self.__class__.__name__, self.name, self.status
-        )
+        return "<{} name={} status={}>".format(self.__class__.__name__, self.name, self.status)

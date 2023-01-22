@@ -30,9 +30,7 @@ class Step(SubmittableContainer):
         step_name: str,
         activities: Submittable | SubmittableContainer,
         force: bool = False,
-        activities_if_step_already_done: Submittable
-        | SubmittableContainer
-        | None = None,
+        activities_if_step_already_done: Submittable | SubmittableContainer | None = None,
         emit_signal: bool = False,
         force_steps_if_executed: Sequence[str] | None = None,
         bubbles_exception_on_failure: bool = False,
@@ -69,9 +67,7 @@ class Step(SubmittableContainer):
             chain = Chain()
             forced_steps = workflow.get_forced_steps()
             skipped_steps = workflow.get_skipped_steps()
-            if step_will_run(
-                self.step_name, forced_steps, skipped_steps, steps_done, self.force
-            ):
+            if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
                 if step_is_forced(self.step_name, forced_steps, self.force):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(
@@ -81,16 +77,12 @@ class Step(SubmittableContainer):
                 marker_done = copy.copy(marker)
                 marker_done["status"] = "completed"
 
-                workflow.add_forced_steps(
-                    self.force_steps_if_executed, f"Dep of {self.step_name}"
-                )
+                workflow.add_forced_steps(self.force_steps_if_executed, f"Dep of {self.step_name}")
                 chain += (
                     workflow.record_marker("log.step", marker),
                     self.activities,
                     (
-                        activity.Activity(
-                            MarkStepDoneTask, **workflow._get_step_activity_params()
-                        ),
+                        activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
                         workflow.get_step_bucket(),
                         workflow.get_step_path_prefix(),
                         self.step_name,

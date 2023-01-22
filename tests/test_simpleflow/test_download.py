@@ -12,9 +12,7 @@ from simpleflow.download import RemoteBinary, with_binaries
 # example binary remote/local location
 remote_location = "s3://a.bucket/v1.2.3/custom-bin"
 local_directory = "/tmp/simpleflow-binaries/custom-bin-585b3e5c252d6ec7aff52c24b149d719"
-local_location = (
-    "/tmp/simpleflow-binaries/custom-bin-585b3e5c252d6ec7aff52c24b149d719/custom-bin"
-)
+local_location = "/tmp/simpleflow-binaries/custom-bin-585b3e5c252d6ec7aff52c24b149d719/custom-bin"
 
 
 def fake_download_binary(binary):

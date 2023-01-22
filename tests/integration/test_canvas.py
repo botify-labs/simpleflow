@@ -13,19 +13,13 @@ class TestCanvas(VCRIntegrationTest):
         events = self.run_standalone("tests.integration.workflow.ChainTestWorkflow")
         last_event = events[-1]
         expect(last_event["eventType"]).to.equal("WorkflowExecutionCompleted")
-        result = json.loads(
-            last_event["workflowExecutionCompletedEventAttributes"]["result"]
-        )
+        result = json.loads(last_event["workflowExecutionCompletedEventAttributes"]["result"])
         expect(result).to.equal([6, 12])
 
     @vcr.use_cassette
     def test_child_workflow(self):
-        events = self.run_standalone(
-            "tests.integration.workflow.GroupTestWorkflowWithChild"
-        )
+        events = self.run_standalone("tests.integration.workflow.GroupTestWorkflowWithChild")
         last_event = events[-1]
         expect(last_event["eventType"]).to.equal("WorkflowExecutionCompleted")
-        result = json.loads(
-            last_event["workflowExecutionCompletedEventAttributes"]["result"]
-        )
+        result = json.loads(last_event["workflowExecutionCompletedEventAttributes"]["result"])
         expect(result).to.equal([[5, 10]])

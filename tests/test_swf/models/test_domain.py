@@ -67,9 +67,7 @@ class TestDomain(unittest.TestCase):
                 mocked["domainInfo"]["name"],
                 status=mocked["domainInfo"]["status"],
                 description=mocked["domainInfo"]["description"],
-                retention_period=mocked["configuration"][
-                    "workflowExecutionRetentionPeriodInDays"
-                ],
+                retention_period=mocked["configuration"]["workflowExecutionRetentionPeriodInDays"],
             )
 
             diffs = domain._diff()
@@ -142,9 +140,7 @@ class TestDomain(unittest.TestCase):
                 mocked["domainInfo"]["name"],
                 status=mocked["domainInfo"]["status"],
                 description=mocked["domainInfo"]["description"],
-                retention_period=mocked["configuration"][
-                    "workflowExecutionRetentionPeriodInDays"
-                ],
+                retention_period=mocked["configuration"]["workflowExecutionRetentionPeriodInDays"],
             )
 
             diffs = domain.changes

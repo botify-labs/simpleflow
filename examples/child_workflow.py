@@ -47,9 +47,7 @@ class IdempotentChildWorkflow(Workflow):
     tag_list = Workflow.INHERIT_TAG_LIST
 
     def run(self, x):
-        y = self.submit(
-            ChildWorkflow, x, name="GRAND-CHILD", my_tag_list=["abc", "def=3"]
-        )
+        y = self.submit(ChildWorkflow, x, name="GRAND-CHILD", my_tag_list=["abc", "def=3"])
         return y.result + randrange(1000000)
 
 
@@ -64,11 +62,7 @@ class ChildWorkflowWithGetId(Workflow):
         return kwargs.get("my_id")
 
     def run(self, my_id=None):
-        print(
-            "ChildWorkflowWithGetId: id={}, workflow_id={}".format(
-                my_id, self.get_run_context().get("workflow_id")
-            )
-        )
+        print("ChildWorkflowWithGetId: id={}, workflow_id={}".format(my_id, self.get_run_context().get("workflow_id")))
 
 
 class ParentWorkflow(Workflow):

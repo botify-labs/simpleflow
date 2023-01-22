@@ -130,15 +130,11 @@ class DomainQuerySet(BaseQuerySet):
         def get_domains():
             response = {"nextPageToken": None}
             while "nextPageToken" in response:
-                response = self.connection.list_domains(
-                    registration_status, next_page_token=response["nextPageToken"]
-                )
+                response = self.connection.list_domains(registration_status, next_page_token=response["nextPageToken"])
 
                 yield from response["domainInfos"]
 
-        return [
-            Domain(d["name"], d["status"], d.get("description")) for d in get_domains()
-        ]
+        return [Domain(d["name"], d["status"], d.get("description")) for d in get_domains()]
 
     def create(
         self,

@@ -24,9 +24,7 @@ class CustomAssertions:
         self.assertEqual(
             len(a_list),
             count,
-            "Expected length to be {}, got {}. Object: {}".format(
-                count, len(a_list), a_list
-            ),
+            "Expected length to be {}, got {}. Object: {}".format(count, len(a_list), a_list),
         )
 
 
@@ -48,9 +46,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
             "describe_workflow_type",
             mock_describe_workflow_type,
         ):
-            workflow_type = WorkflowType(
-                self.domain, "different-workflow-type", version="different-version"
-            )
+            workflow_type = WorkflowType(self.domain, "different-workflow-type", version="different-version")
             diffs = workflow_type._diff()
 
             self.assertIsNotNone(diffs)
@@ -76,12 +72,8 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                 deprecation_date=mocked["typeInfo"]["deprecationDate"],
                 task_list=mocked["configuration"]["defaultTaskList"]["name"],
                 child_policy=mocked["configuration"]["defaultChildPolicy"],
-                execution_timeout=mocked["configuration"][
-                    "defaultExecutionStartToCloseTimeout"
-                ],
-                decision_tasks_timeout=mocked["configuration"][
-                    "defaultTaskStartToCloseTimeout"
-                ],
+                execution_timeout=mocked["configuration"]["defaultExecutionStartToCloseTimeout"],
+                decision_tasks_timeout=mocked["configuration"]["defaultTaskStartToCloseTimeout"],
                 description=mocked["typeInfo"]["description"],
             )
 
@@ -126,9 +118,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
         pass
 
     def test_is_synced_over_non_existent_workflow_type(self):
-        with patch.object(
-            Layer1, "describe_workflow_type", mock_describe_workflow_type
-        ):
+        with patch.object(Layer1, "describe_workflow_type", mock_describe_workflow_type):
             workflow_type = WorkflowType(
                 self.domain,
                 "non-existent-workflow-type",
@@ -172,12 +162,8 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                 deprecation_date=mocked["typeInfo"]["deprecationDate"],
                 task_list=mocked["configuration"]["defaultTaskList"]["name"],
                 child_policy=mocked["configuration"]["defaultChildPolicy"],
-                execution_timeout=mocked["configuration"][
-                    "defaultExecutionStartToCloseTimeout"
-                ],
-                decision_tasks_timeout=mocked["configuration"][
-                    "defaultTaskStartToCloseTimeout"
-                ],
+                execution_timeout=mocked["configuration"]["defaultExecutionStartToCloseTimeout"],
+                decision_tasks_timeout=mocked["configuration"]["defaultTaskStartToCloseTimeout"],
                 description=mocked["typeInfo"]["description"],
             )
 
@@ -235,9 +221,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
         we = WorkflowExecution(self.domain, self.wt, "TestType-0.1-TestDomain")
         self.assertIsNotNone(we)
         self.assertIsInstance(we, WorkflowExecution)
-        self.assertIn(
-            we.status, [WorkflowExecution.STATUS_OPEN, WorkflowExecution.STATUS_CLOSED]
-        )
+        self.assertIn(we.status, [WorkflowExecution.STATUS_OPEN, WorkflowExecution.STATUS_CLOSED])
 
     def test___diff_with_different_workflow_execution(self):
         with patch.object(
@@ -273,13 +257,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
                 status=mocked["executionInfo"]["executionStatus"],
                 task_list=mocked["executionConfiguration"]["taskList"]["name"],
                 child_policy=mocked["executionConfiguration"]["childPolicy"],
-                execution_timeout=mocked["executionConfiguration"][
-                    "executionStartToCloseTimeout"
-                ],
+                execution_timeout=mocked["executionConfiguration"]["executionStartToCloseTimeout"],
                 tag_list=mocked["executionInfo"]["tagList"],
-                decision_tasks_timeout=mocked["executionConfiguration"][
-                    "taskStartToCloseTimeout"
-                ],
+                decision_tasks_timeout=mocked["executionConfiguration"]["taskStartToCloseTimeout"],
             )
 
             diffs = workflow_execution._diff()
@@ -323,9 +303,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
         pass
 
     def test_is_synced_over_non_existent_workflow_execution(self):
-        with patch.object(
-            Layer1, "describe_workflow_execution", mock_describe_workflow_execution
-        ):
+        with patch.object(Layer1, "describe_workflow_execution", mock_describe_workflow_execution):
             workflow_execution = WorkflowExecution(
                 self.domain,
                 WorkflowType(self.domain, "NonExistentTestType", "1.0"),
@@ -367,13 +345,9 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
                 status=mocked["executionInfo"]["executionStatus"],
                 task_list=mocked["executionConfiguration"]["taskList"]["name"],
                 child_policy=mocked["executionConfiguration"]["childPolicy"],
-                execution_timeout=mocked["executionConfiguration"][
-                    "executionStartToCloseTimeout"
-                ],
+                execution_timeout=mocked["executionConfiguration"]["executionStartToCloseTimeout"],
                 tag_list=mocked["executionInfo"]["tagList"],
-                decision_tasks_timeout=mocked["executionConfiguration"][
-                    "taskStartToCloseTimeout"
-                ],
+                decision_tasks_timeout=mocked["executionConfiguration"]["taskStartToCloseTimeout"],
             )
 
             diffs = workflow_execution.changes

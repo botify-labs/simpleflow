@@ -77,15 +77,11 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
-        self.workflow_name = "{}".format(
-            ",".join([ex.workflow_class.name for ex in workflow_executors])
-        )
+        self.workflow_name = "{}".format(",".join([ex.workflow_class.name for ex in workflow_executors]))
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
-        self._workflow_executors = {
-            executor.workflow_class.name: executor for executor in workflow_executors
-        }
+        self._workflow_executors = {executor.workflow_class.name: executor for executor in workflow_executors}
 
         if task_list:
             self.task_list = task_list
@@ -117,11 +113,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
     def _check_all_domains_identical(self):
         for ex in self._workflow_executors.values():
             if ex.domain.name != self.domain.name:
-                raise ValueError(
-                    'all workflows must be in the same domain "{}"'.format(
-                        self.domain.name
-                    )
-                )
+                raise ValueError('all workflows must be in the same domain "{}"'.format(self.domain.name))
 
     def _check_all_task_lists_identical(self):
         for ex in self._workflow_executors.values():
@@ -196,9 +188,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :rtype: Union[List[swf.models.decision.base.Decision], DecisionsAndContext]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
-        decisions = worker.decide(
-            decision_response, self.task_list if self.is_standalone else None
-        )
+        decisions = worker.decide(decision_response, self.task_list if self.is_standalone else None)
         return decisions
 
 

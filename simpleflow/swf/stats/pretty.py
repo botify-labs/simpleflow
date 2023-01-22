@@ -33,10 +33,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 
 def _show_tag_list(tag_list):
-    return "\n".join(
-        f"{key.strip()}:\t{value.strip()}"
-        for key, value in (keyval.split("=") for keyval in tag_list)
-    )
+    return "\n".join(f"{key.strip()}:\t{value.strip()}" for key, value in (keyval.split("=") for keyval in tag_list))
 
 
 def _to_timestamp(date):
@@ -103,10 +100,7 @@ def info(workflow_execution):
         first_event = history.tasks[0]
         first_timestamp = first_event[first_event["state"] + "_timestamp"]
         last_event = history.tasks[-1]
-        last_timestamp = (
-            last_event.get("timestamp")
-            or last_event[last_event["state"] + "_timestamp"]
-        )
+        last_timestamp = last_event.get("timestamp") or last_event[last_event["state"] + "_timestamp"]
         workflow_input = first_event["input"]
     else:
         first_event = history.events[0]

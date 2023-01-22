@@ -4,6 +4,7 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
+import boto.swf  # noqa
 from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
@@ -11,9 +12,6 @@ from vcr import VCR
 import simpleflow.command
 from simpleflow.utils import json_dumps
 from tests.utils import IntegrationTestCase
-
-import boto.swf  # noqa
-
 
 if TYPE_CHECKING:
     from click.testing import Result
@@ -89,16 +87,12 @@ class VCRIntegrationTest(IntegrationTestCase):
             next_page = response.get("nextPageToken")
         return events
 
-    def invoke(
-        self, arguments: str | list[str], catch_exceptions: bool = True
-    ) -> Result:
+    def invoke(self, arguments: str | list[str], catch_exceptions: bool = True) -> Result:
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):
             arguments = arguments.split(" ")
-        return self.runner.invoke(
-            simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions
-        )
+        return self.runner.invoke(simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions)
 
     def run_standalone(self, workflow_name, *args, **kwargs):
         input = json_dumps(dict(args=args, kwargs=kwargs))

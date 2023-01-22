@@ -89,14 +89,10 @@ class Executor(executor.Executor):
             signal_name = func.signal_name
             if signal_name not in self.signals_sent:
                 raise NotImplementedError(
-                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(
-                        signal_name
-                    )
+                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(signal_name)
                 )
         elif isinstance(func, MarkerTask):
-            self._markers.setdefault(func.name, []).append(
-                Marker(func.name, func.details)
-            )
+            self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
@@ -136,9 +132,7 @@ class Executor(executor.Executor):
             )
             future.set_exception(task_failed)
             logger.exception(f"rescuing exception: {exc_value}")
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(
-                func, "raises_on_failure", None
-            ):
+            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, "raises_on_failure", None):
                 raise task_failed
             state = "failed"
         finally:

@@ -45,22 +45,14 @@ class MetrologyTestCase(unittest.TestCase):
         self.create_bucket()
         ex = Executor(MyWorkflow)
         ex.run(input={"args": [1], "kwargs": {}})
-        res = json.loads(
-            storage.pull_content(
-                settings.METROLOGY_BUCKET, "local/local/activity.0.json"
-            )
-        )
+        res = json.loads(storage.pull_content(settings.METROLOGY_BUCKET, "local/local/activity.0.json"))
         self.assertEqual(res["meta"], "foo bar")
         steps = res["steps"]
         self.assertEqual(steps[0]["name"], "Step1")
         self.assertEqual(steps[0]["read"]["records"], 1)
         self.assertEqual(steps[0]["metadata"]["num"], 1)
 
-        res = json.loads(
-            storage.pull_content(
-                settings.METROLOGY_BUCKET, "local/local/metrology.json"
-            )
-        )
+        res = json.loads(storage.pull_content(settings.METROLOGY_BUCKET, "local/local/metrology.json"))
         self.assertEqual(res[0][1]["metrology"]["meta"], "foo bar")
         self.assertEqual(res[0][1]["metrology"]["steps"][0]["name"], "Step1")
         self.assertEqual(res[0][1]["metrology"]["steps"][0]["read"]["records"], 1)

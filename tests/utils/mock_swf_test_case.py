@@ -41,9 +41,7 @@ class MockSWFTestCase(unittest.TestCase):
 
     def tearDown(self):
         swf_backend.reset()
-        assert not self.conn.list_domains("REGISTERED")[
-            "domainInfos"
-        ], "moto state incorrectly reset!"
+        assert not self.conn.list_domains("REGISTERED")["domainInfos"], "moto state incorrectly reset!"
 
     def register_activity_type(self, func, task_list):
         self.conn.register_activity_type(self.domain.name, func, task_list)

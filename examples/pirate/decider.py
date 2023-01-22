@@ -33,9 +33,7 @@ class PirateBusiness(Workflow):
         # get money
         money = 0
         while money < money_needed:
-            money = self.submit(
-                find_or_steal_money, initial=money, target=money_needed
-            ).result
+            money = self.submit(find_or_steal_money, initial=money, target=money_needed).result
 
         # build boat / crew
         a1 = self.submit(build_boat)

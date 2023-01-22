@@ -96,9 +96,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.create_bucket()
         t = MarkStepDoneTask(BUCKET, "steps/", "mystep")
         t.execute()
-        self.assertEqual(
-            storage.pull_content(BUCKET, "steps/mystep"), json.dumps(UNKNOWN_CONTEXT)
-        )
+        self.assertEqual(storage.pull_content(BUCKET, "steps/mystep"), json.dumps(UNKNOWN_CONTEXT))
 
     @mock_s3
     @mock_swf
@@ -112,14 +110,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(GetStepsDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns no step done
-        self.add_activity_task_from_decision(
-            decisions[0], task.Activity(GetStepsDoneTask), result=[]
-        )
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
 
         # Call marker
         decisions = self.replay()
@@ -141,9 +135,7 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         # Execute the task and check the we call MarkStepDoneTask
         self.add_activity_task_from_decision(decisions[0], MyTask)
         decisions = self.replay()
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(MarkStepDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         # Check that we'll force the step 'my_step_3'
         self.assertEqual(self.executor._workflow.get_forced_steps(), ["my_step_2"])
@@ -157,14 +149,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(GetStepsDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns 'my_step' as done
-        self.add_activity_task_from_decision(
-            decisions[0], task.Activity(GetStepsDoneTask), result=["my_step"]
-        )
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=["my_step"])
 
         # Call Marker Step is done
         # Check that the workflow is done
@@ -192,14 +180,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(GetStepsDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns 'my_step' as done
-        self.add_activity_task_from_decision(
-            decisions[0], task.Activity(GetStepsDoneTask), result=["my_step"]
-        )
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=["my_step"])
         decisions = self.replay()
 
         # Call marker
@@ -220,12 +204,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         self.add_activity_task_from_decision(decisions[0], task.Activity(MyTask))
 
         decisions = self.replay()
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(MarkStepDoneTask)
-        )
-        self.add_activity_task_from_decision(
-            decisions[0], task.Activity(MarkStepDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(MarkStepDoneTask))
+        self.add_activity_task_from_decision(decisions[0], task.Activity(MarkStepDoneTask))
 
         decisions = self.replay()
         self.assertEqual(decisions[0]["decisionType"], "RecordMarker")
@@ -251,14 +231,10 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
         decisions = self.replay()
 
         # Check that we call GetStepsDoneTask
-        self.check_task_scheduled_decision(
-            decisions[0], task.Activity(GetStepsDoneTask)
-        )
+        self.check_task_scheduled_decision(decisions[0], task.Activity(GetStepsDoneTask))
 
         # Now decide that it returns 'my_step' as done
-        self.add_activity_task_from_decision(
-            decisions[0], task.Activity(GetStepsDoneTask), result=[]
-        )
+        self.add_activity_task_from_decision(decisions[0], task.Activity(GetStepsDoneTask), result=[])
         decisions = self.replay()
 
         # Call marker

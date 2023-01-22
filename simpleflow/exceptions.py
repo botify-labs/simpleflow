@@ -100,9 +100,7 @@ class TaskCanceled(Exception):
         self.details = details
 
     def __repr__(self):
-        if (
-            self.details is None
-        ):  # same repr in python 2 and 3, because test :roll_eyes:
+        if self.details is None:  # same repr in python 2 and 3, because test :roll_eyes:
             return f"{self.__class__.__name__}()"
         return f"{self.__class__.__name__}({self.details})"
 
@@ -160,14 +158,10 @@ class AggregateException(Exception):
             exceptions.append(exception)
 
     def __repr__(self):
-        return "<{} {}>".format(
-            self.__class__.__name__, repr([repr(ex) for ex in self.exceptions])
-        )
+        return "<{} {}>".format(self.__class__.__name__, repr([repr(ex) for ex in self.exceptions]))
 
     def __str__(self):
-        return "{}({})".format(
-            self.__class__.__name__, str([str(ex) for ex in self.exceptions])
-        )
+        return "{}({})".format(self.__class__.__name__, str([str(ex) for ex in self.exceptions]))
 
     def __eq__(self, other):
         return self.exceptions == other.exceptions
@@ -183,9 +177,7 @@ class ExecutionTimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return "{} after {} seconds ({})".format(
-            self.__class__.__name__, self.timeout_value, self.timeout_command
-        )
+        return "{} after {} seconds ({})".format(self.__class__.__name__, self.timeout_value, self.timeout_command)
 
     def __str__(self):
         return self.__repr__()

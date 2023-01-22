@@ -50,9 +50,7 @@ def step_is_forced(step_name: str, force_steps: Sequence[str], force: bool) -> b
     return force or should_force_step(step_name, force_steps)
 
 
-def _get_step_reasons(
-    step_name: str, step_reasons: dict[str, Sequence[str]]
-) -> list[str]:
+def _get_step_reasons(step_name: str, step_reasons: dict[str, Sequence[str]]) -> list[str]:
     reasons: list[str] = []
     for step, step_reasons in step_reasons.items():
         if step == "*" or step == step_name or step_name.startswith(step + "."):
@@ -60,9 +58,7 @@ def _get_step_reasons(
     return reasons
 
 
-def get_step_force_reasons(
-    step_name: str, step_force_reasons: dict[str, Sequence[str]]
-) -> list[str]:
+def get_step_force_reasons(step_name: str, step_force_reasons: dict[str, Sequence[str]]) -> list[str]:
     return _get_step_reasons(step_name, step_force_reasons)
 
 
@@ -70,7 +66,5 @@ def step_is_skipped_by_force(step_name: str, skipped_steps: Sequence[str]) -> bo
     return should_skip_step(step_name, skipped_steps)
 
 
-def get_step_skip_reasons(
-    step_name: str, step_skip_reasons: dict[str, Sequence[str]]
-) -> list[str]:
+def get_step_skip_reasons(step_name: str, step_skip_reasons: dict[str, Sequence[str]]) -> list[str]:
     return _get_step_reasons(step_name, step_skip_reasons)

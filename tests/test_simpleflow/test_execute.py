@@ -68,9 +68,7 @@ def ls_optional_named_arguments(hide="", *args):
     pass
 
 
-@pytest.mark.xfail(
-    platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX"
-)
+@pytest.mark.xfail(platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_optional_named_arguments():
     with tempfile.NamedTemporaryFile(suffix="\xe9") as f:
         assert ls_optional_named_arguments(f.name).strip() == f.name
@@ -87,9 +85,7 @@ def test_execute_program_with_positional_arguments():
         assert ls(f.name).strip() == f.name
 
 
-@pytest.mark.xfail(
-    platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX"
-)
+@pytest.mark.xfail(platform.system() == "Darwin", reason="ls doesn't have a --hide option on MacOSX")
 def test_execute_program_with_named_arguments():
     with tempfile.NamedTemporaryFile() as f:
         assert f.name not in (ls(os.path.dirname(f.name), hide=f.name).strip())

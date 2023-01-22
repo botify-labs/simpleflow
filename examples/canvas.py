@@ -82,9 +82,7 @@ class CanvasWorkflow(Workflow):
             )
         )
 
-        assert [None, 2, 6] == future.result, "Unexpected result {!r}".format(
-            future.result
-        )
+        assert [None, 2, 6] == future.result, "Unexpected result {!r}".format(future.result)
         print(f"Chain ignoring failure: {future.result}")
 
         # Failing inside a chain by default don't stop an upper chain
@@ -99,9 +97,7 @@ class CanvasWorkflow(Workflow):
             )
         )
 
-        assert [[None], 2, 6] == future.result, "Unexpected result {!r}".format(
-            future.result
-        )
+        assert [[None], 2, 6] == future.result, "Unexpected result {!r}".format(future.result)
         print(f"Chain with failure in subchain: {future.result}")
 
         # But it can, too
@@ -120,9 +116,7 @@ class CanvasWorkflow(Workflow):
             )
         )
 
-        assert [[[None]], 6] == future.result, "Unexpected result {!r}".format(
-            future.result
-        )
+        assert [[[None]], 6] == future.result, "Unexpected result {!r}".format(future.result)
         print(f"Chain with failure in sub-subchain: {future.result}")
 
         print("Finished!")

@@ -65,9 +65,7 @@ def from_stream(stream):
         settings.update(
             {
                 "aws_access_key_id": config.get("credentials", "aws_access_key_id"),
-                "aws_secret_access_key": config.get(
-                    "credentials", "aws_secret_access_key"
-                ),
+                "aws_secret_access_key": config.get("credentials", "aws_secret_access_key"),
             }
         )
 

@@ -25,9 +25,7 @@ color_mode = "auto"
 
 def colorize(level, message):
     # if not in a tty, we're likely redirected or piped
-    if color_mode == ColorModes.NEVER or (
-        color_mode == ColorModes.AUTO and not sys.stdout.isatty()
-    ):
+    if color_mode == ColorModes.NEVER or (color_mode == ColorModes.AUTO and not sys.stdout.isatty()):
         return message
 
     # color mappings
@@ -86,10 +84,7 @@ class SimpleflowFormatter(logging.Formatter):
             record.message = record.msg
 
         record.coloredlevel = colorize(record.levelname, record.levelname)
-        s = (
-            "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s"
-            % record.__dict__
-        )
+        s = "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s" % record.__dict__
 
         # C&P from logging.Formatter#format
         if record.exc_info:
@@ -142,11 +137,7 @@ class SyslogFormatter(logging.Formatter):
         workflow_id = logging_context.get("workflow_id")[0:64]
         if workflow_id:
             msg.append(workflow_id + ":")
-            msg.append(
-                "{}#{}".format(
-                    logging_context.get("task_type"), logging_context.get("event_id")
-                )
-            )
+            msg.append("{}#{}".format(logging_context.get("task_type"), logging_context.get("event_id")))
 
         msg.append(record.levelname)
         msg.append(f"pid={record.process}")

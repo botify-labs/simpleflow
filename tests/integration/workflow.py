@@ -47,9 +47,7 @@ def double(y):
 @activity.with_attributes(task_list="quickstart", version="example")
 def send_unrequested_signal():
     context = send_unrequested_signal.context
-    ex = get_workflow_execution(
-        context["domain_name"], context["workflow_id"], context["run_id"]
-    )
+    ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
     ex.connection.signal_workflow_execution(
         ex.domain.name,
         "unexpected",
@@ -89,9 +87,7 @@ class ATestDefinitionWithIdempotentTask(Workflow):
 
     def run(self):
         results = [self.submit(get_uuid) for _ in range(10)]
-        results.append(
-            self.submit(get_uuid, results[0].result)  # Changed arguments, must submit
-        )
+        results.append(self.submit(get_uuid, results[0].result))  # Changed arguments, must submit
         futures.wait(*results)
         assert all(r.result == results[0].result for r in results[1:-1])
         assert results[0].result != results[-1].result
@@ -125,9 +121,7 @@ class ChainTestWorkflow(Workflow):
     task_list = "example"
 
     def run(self, x=5):
-        future = self.submit(
-            Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True)
-        )
+        future = self.submit(Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True))
         print(f"Future: {future}")
         futures.wait(future)
         print(f"Result: {future.result}")  # future.result == [6, 12]
@@ -211,9 +205,7 @@ class WorkflowToCancel(Workflow):
 def wait_and_signal(name="signal"):
     time.sleep(1 + len(name))  # Hoping to be deterministic
     context = wait_and_signal.context
-    ex = get_workflow_execution(
-        context["domain_name"], context["workflow_id"], context["run_id"]
-    )
+    ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
     ex.connection.signal_workflow_execution(
         ex.domain.name,
         name,

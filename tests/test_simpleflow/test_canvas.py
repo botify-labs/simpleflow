@@ -77,9 +77,7 @@ class TestGroup(unittest.TestCase):
         future = Group((to_string, 1), (to_string, 2)).submit(executor)
         self.assertTrue(future.finished)
 
-        future = Group(
-            (to_string, "test1"), (running_task, "test2"), (sum_values, [1, 2])
-        ).submit(executor)
+        future = Group((to_string, "test1"), (running_task, "test2"), (sum_values, [1, 2])).submit(executor)
         self.assertTrue(future.running)
         self.assertEqual(future.count_finished_activities, 2)
         self.assertEqual(future._result, ["test1", None, 3])
@@ -112,15 +110,11 @@ class TestGroup(unittest.TestCase):
             def run(self, str1, *args, **kwargs):
                 return {"str1": str1, "kwargs": kwargs}
 
-        future = Group(
-            ChildWorkflowTask(
-                ChildWorkflowGroupWithWorkflow, str1="str1", **{"hello": "world"}
-            )
-        ).submit(executor)
-        self.assertTrue(future.finished)
-        self.assertEqual(
-            future.result, [{"str1": "str1", "kwargs": {"hello": "world"}}]
+        future = Group(ChildWorkflowTask(ChildWorkflowGroupWithWorkflow, str1="str1", **{"hello": "world"})).submit(
+            executor
         )
+        self.assertTrue(future.finished)
+        self.assertEqual(future.result, [{"str1": "str1", "kwargs": {"hello": "world"}}])
 
     def test_exceptions(self):
         future = Group((to_string, 1), (to_string, 2)).submit(executor)
@@ -190,9 +184,7 @@ class TestChain(unittest.TestCase):
         self.assertTrue(future.finished)
         self.assertEqual(future.count_finished_activities, 2)
 
-        future = Chain(
-            (to_string, "test"), (running_task, "test"), (to_string, "test")
-        ).submit(executor)
+        future = Chain((to_string, "test"), (running_task, "test"), (to_string, "test")).submit(executor)
         self.assertTrue(future.running)
         self.assertEqual(future.count_finished_activities, 1)
 
@@ -236,9 +228,7 @@ class TestChain(unittest.TestCase):
         self.assertTrue(chain.activities[1].activity.raises_on_failure)
 
     def test_raises_on_failure_doesnt_set_exception(self):
-        future = Chain(
-            (zero_division), (to_string, "test1"), raises_on_failure=False
-        ).submit(executor)
+        future = Chain((zero_division), (to_string, "test1"), raises_on_failure=False).submit(executor)
         self.assertEqual(1, future.count_finished_activities)
         self.assertIsNone(future.exception)
 
@@ -339,12 +329,8 @@ class TestFuncGroup(unittest.TestCase):
 
         self.assertFalse(first.activity.raises_on_failure)
         self.assertFalse(last.activity.raises_on_failure)
-        self.assertFalse(
-            intermediary_activities.activities[0].activity.raises_on_failure
-        )
-        self.assertFalse(
-            intermediary_activities.activities[1].activity.raises_on_failure
-        )
+        self.assertFalse(intermediary_activities.activities[0].activity.raises_on_failure)
+        self.assertFalse(intermediary_activities.activities[1].activity.raises_on_failure)
 
 
 class TestComplexCanvas(unittest.TestCase):

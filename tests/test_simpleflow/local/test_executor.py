@@ -60,9 +60,7 @@ class TestRunContext(unittest.TestCase):
             name = "ChildWorkflow"
 
             def run(self, *args, **kwargs):
-                results = (
-                    Chain(ChildWorkflow2, (to_int, "2")).submit(self.executor).result
-                )
+                results = Chain(ChildWorkflow2, (to_int, "2")).submit(self.executor).result
                 return {
                     "workflow_id": self.get_run_context()["workflow_id"],
                     "run_id": self.get_run_context()["run_id"],

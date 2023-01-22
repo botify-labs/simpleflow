@@ -10,6 +10,7 @@ from . import logger, settings
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple  # NOQA
+
     from boto.s3.bucket import Bucket  # NOQA
     from boto.s3.bucketlistresultset import BucketListResultSet  # NOQA
 
@@ -61,9 +62,7 @@ def sanitize_bucket_and_host(bucket: str) -> tuple[str, str]:
     except S3ResponseError as e:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
-            logger.warning(
-                f"Access denied while trying to get location of bucket {bucket}"
-            )
+            logger.warning(f"Access denied while trying to get location of bucket {bucket}")
             location = ""
         else:
             raise
@@ -96,30 +95,22 @@ def pull_content(bucket: str, path: str) -> str:
     return key.get_contents_as_string(encoding="utf-8")
 
 
-def push(
-    bucket: str, path: str, src_file: str, content_type: str | None = None
-) -> None:
+def push(bucket: str, path: str, src_file: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_filename(
-        src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
-    )
+    key.set_contents_from_filename(src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
-def push_content(
-    bucket: str, path: str, content: str, content_type: str | None = None
-) -> None:
+def push_content(bucket: str, path: str, content: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_string(
-        content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
-    )
+    key.set_contents_from_string(content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
 def list_keys(bucket: str, path: str = None) -> BucketListResultSet:

@@ -41,9 +41,7 @@ def start(
     :type repair_run_id: Optional[str]
     """
     if log_level:
-        logger.warning(
-            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
-        )
+        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
     decider = helpers.make_decider(
         workflows,
         domain,

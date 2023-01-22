@@ -49,10 +49,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         from swf.models.domain import Domain
 
         if not isinstance(value, Domain):
-            err = (
-                "domain property has to be of"
-                "swf.model.domain.Domain type, not %r" % type(value)
-            )
+            err = "domain property has to be of" "swf.model.domain.Domain type, not %r" % type(value)
             raise TypeError(err)
         self._domain = value
 
@@ -110,9 +107,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
             }
         """
         try:
-            response = self.connection.describe_activity_type(
-                self.domain.name, name, version
-            )
+            response = self.connection.describe_activity_type(self.domain.name, name, version)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.error_message)
@@ -132,21 +127,15 @@ class ActivityTypeQuerySet(BaseQuerySet):
 
         task_schedule_to_close_timeout = kwargs.get("task_schedule_to_close_timeout")
         if task_schedule_to_close_timeout is None:
-            task_schedule_to_close_timeout = activity_config.get(
-                "defaultTaskScheduleToCloseTimeout"
-            )
+            task_schedule_to_close_timeout = activity_config.get("defaultTaskScheduleToCloseTimeout")
 
         task_schedule_to_start_timeout = kwargs.get("task_schedule_to_start_timeout")
         if task_schedule_to_start_timeout is None:
-            task_schedule_to_start_timeout = activity_config.get(
-                "defaultTaskScheduleToStartTimeout"
-            )
+            task_schedule_to_start_timeout = activity_config.get("defaultTaskScheduleToStartTimeout")
 
         task_start_to_close_timeout = kwargs.get("task_start_to_close_timeout")
         if task_start_to_close_timeout is None:
-            task_start_to_close_timeout = activity_config.get(
-                "defaultTaskStartToCloseTimeout"
-            )
+            task_start_to_close_timeout = activity_config.get("defaultTaskStartToCloseTimeout")
 
         return self.to_ActivityType(
             self.domain,
@@ -252,9 +241,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 task_start_to_close_timeout=task_start_to_close_timeout,
             )
 
-    def filter(
-        self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs
-    ):
+    def filter(self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs):
         """Filters activity types based on their status, and/or name
 
         :param      domain: domain the activity type belongs to
@@ -325,10 +312,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
 
                 yield from response[self._infos_plural]
 
-        return [
-            self.to_ActivityType(self.domain, activity_info)
-            for activity_info in get_activity_types()
-        ]
+        return [self.to_ActivityType(self.domain, activity_info) for activity_info in get_activity_types()]
 
     def create(
         self,

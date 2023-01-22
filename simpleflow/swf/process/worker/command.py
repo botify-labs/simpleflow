@@ -5,9 +5,7 @@ import swf.models
 from .base import ActivityPoller, Worker
 
 
-def make_worker_poller(
-    domain, task_list, middlewares, heartbeat, process_mode, poll_data
-):
+def make_worker_poller(domain, task_list, middlewares, heartbeat, process_mode, poll_data):
     """
     Make a worker poller for the domain and task list.
     :param domain:
@@ -24,9 +22,7 @@ def make_worker_poller(
     :rtype: ActivityPoller
     """
     domain = swf.models.Domain(domain)
-    return ActivityPoller(
-        domain, task_list, middlewares, heartbeat, process_mode, poll_data
-    )
+    return ActivityPoller(domain, task_list, middlewares, heartbeat, process_mode, poll_data)
 
 
 def start(
@@ -58,9 +54,7 @@ def start(
     :param poll_data: Base64 encoded poll data from SWF, in case you don't want to poll directly.
     :type poll_data: Optional[str]
     """
-    poller = make_worker_poller(
-        domain, task_list, middlewares, heartbeat, process_mode, poll_data
-    )
+    poller = make_worker_poller(domain, task_list, middlewares, heartbeat, process_mode, poll_data)
 
     if poll_data:
         # if "poll_data" is provided, no need to process it multiple times

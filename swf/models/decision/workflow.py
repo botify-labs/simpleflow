@@ -208,9 +208,7 @@ class ExternalWorkflowExecutionDecision(Decision):
         if control is not None:
             control = format.control(control)
 
-        self.update_attributes(
-            {"workflowId": workflow_id, "control": control, "runId": run_id}
-        )
+        self.update_attributes({"workflowId": workflow_id, "control": control, "runId": run_id})
 
     @decision_action
     def signal(self, signal_name, workflow_id, control=None, input=None, run_id=None):

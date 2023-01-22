@@ -35,11 +35,7 @@ class ModelDiff:
         return Difference(attr, local, upstream)
 
     def _process_input(self, input):
-        return OrderedDict(
-            (attr, (local, upstream))
-            for attr, local, upstream in input
-            if local != upstream
-        )
+        return OrderedDict((attr, (local, upstream)) for attr, local, upstream in input if local != upstream)
 
     def add_input(self, *input):
         """Adds input differing data into ModelDiff instance"""

@@ -34,9 +34,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         self.assertTrue(hasattr(bw, "_domain"))
 
     def test_get_or_create_existing_activity_type(self):
-        with patch.object(
-            Layer1, "describe_activity_type", mock_describe_activity_type
-        ):
+        with patch.object(Layer1, "describe_activity_type", mock_describe_activity_type):
             activity_type = self.atq.get_or_create("TestActivityType", "testversion")
 
             self.assertIsInstance(activity_type, ActivityType)
@@ -45,9 +43,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         with patch.object(Layer1, "describe_activity_type") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
-            with patch.object(
-                Layer1, "register_activity_type", mock_describe_activity_type
-            ):
+            with patch.object(Layer1, "register_activity_type", mock_describe_activity_type):
                 activity_type = self.atq.get_or_create("TestDomain", "testversion")
 
                 self.assertIsInstance(activity_type, ActivityType)
@@ -82,9 +78,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
 
     def test_get_existent_activity_type(self):
         """Assert .get() method with valid params returns the asked ActivityType model"""
-        with patch.object(
-            self.atq.connection, "describe_activity_type", mock_describe_activity_type
-        ):
+        with patch.object(self.atq.connection, "describe_activity_type", mock_describe_activity_type):
             activity = self.atq.get("mocked-activity-type", "0.1")
 
             self.assertIsNotNone(activity)
@@ -94,9 +88,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         """Asserts get method over a failing activity type raises"""
         with patch.object(self.atq.connection, "describe_activity_type") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400, "mocking exception", {"__type": "UnrecognizedClientException"}
-                )
+                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnrecognizedClientException"})
 
                 self.atq.get("mocked-failing-activity-type", "0.1")
 
@@ -104,18 +96,14 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         """Asserts get method with non existent activity type name provided raises"""
         with patch.object(self.atq.connection, "describe_activity_type") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400, "mocking exception", {"__type": "UnknownResourceFault"}
-                )
+                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnknownResourceFault"})
                 self.atq.get("mocked-non-existent-activity-type-name", "0.1")
 
     def test_get_with_non_existent_version(self):
         """Asserts get method with non existent activity type version provided raises"""
         with patch.object(self.atq.connection, "describe_activity_type") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400, "mocking exception", {"__type": "UnknownResourceFault"}
-                )
+                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnknownResourceFault"})
                 self.atq.get("mocked-non-existent-activity-type-name", "na")
 
     def test_create(self):

@@ -67,9 +67,7 @@ class Decision(dict):
         :type   data:
         """
         if not hasattr(self, "attributes_key"):
-            raise AttributeError(
-                "Can't update unset attributes_key" "decision attribute"
-            )
+            raise AttributeError("Can't update unset attributes_key" "decision attribute")
 
         for key, value in data.items():
             if value:

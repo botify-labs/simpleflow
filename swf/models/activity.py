@@ -131,9 +131,7 @@ class ActivityType(BaseModel):
         :rtype: ModelDiff
         """
         try:
-            description = self.connection.describe_activity_type(
-                self.domain.name, self.name, self.version
-            )
+            description = self.connection.describe_activity_type(self.domain.name, self.name, self.version)
         except SWFResponseError as err:
             if err.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote ActivityType does not exist")
@@ -188,9 +186,7 @@ class ActivityType(BaseModel):
 
         :rtype: bool
         """
-        self.connection.describe_activity_type(
-            self.domain.name, self.name, self.version
-        )
+        self.connection.describe_activity_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self):
@@ -202,15 +198,9 @@ class ActivityType(BaseModel):
                 self.version,
                 task_list=str(self.task_list),
                 default_task_heartbeat_timeout=str(self.task_heartbeat_timeout),
-                default_task_schedule_to_close_timeout=str(
-                    self.task_schedule_to_close_timeout
-                ),
-                default_task_schedule_to_start_timeout=str(
-                    self.task_schedule_to_start_timeout
-                ),
-                default_task_start_to_close_timeout=str(
-                    self.task_start_to_close_timeout
-                ),
+                default_task_schedule_to_close_timeout=str(self.task_schedule_to_close_timeout),
+                default_task_schedule_to_start_timeout=str(self.task_schedule_to_start_timeout),
+                default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description,
             )
         except SWFTypeAlreadyExistsError:
@@ -230,9 +220,7 @@ class ActivityType(BaseModel):
     )
     def delete(self):
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_activity_type(
-            self.domain.name, self.name, self.version
-        )
+        self.connection.deprecate_activity_type(self.domain.name, self.name, self.version)
 
     def upstream(self):
         from swf.querysets.activity import ActivityTypeQuerySet
@@ -291,9 +279,7 @@ class ActivityTask(BaseModel):
     def from_poll(cls, domain, task_list, data):
         from .workflow import WorkflowExecution
 
-        activity_type = ActivityType(
-            domain, data["activityType"]["name"], data["activityType"]["version"]
-        )
+        activity_type = ActivityType(domain, data["activityType"]["name"], data["activityType"]["version"])
 
         workflow_execution = WorkflowExecution(
             domain,

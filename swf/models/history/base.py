@@ -141,10 +141,7 @@ class History:
         """
         completion_states = ("completed", "failed", "canceled", "terminated")
 
-        if (
-            isinstance(self.last, WorkflowExecutionEvent)
-            and self.last.state in completion_states
-        ):
+        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
             return True
 
         return False
@@ -180,9 +177,7 @@ class History:
 
         :rtype: swf.models.history.History
         """
-        return [
-            e for e in self.events if all(getattr(e, k) == v for k, v in kwargs.items())
-        ]
+        return [e for e in self.events if all(getattr(e, k) == v for k, v in kwargs.items())]
 
     @property
     def reversed(self):
@@ -201,11 +196,7 @@ class History:
             g = list(group)
 
             # Merge every WorkflowExecution events into same group
-            if (
-                len(g) == 1
-                and len(distinct_events) >= 1
-                and g[0].type == "WorkflowExecution"
-            ):
+            if len(g) == 1 and len(distinct_events) >= 1 and g[0].type == "WorkflowExecution":
                 # WorkflowExecution group will always be in first position
                 distinct_events[0].extend(g)
             else:

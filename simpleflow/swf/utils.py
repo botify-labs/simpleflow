@@ -24,9 +24,7 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
     found_run_id = None
     if not run_id:
         qs = swf.querysets.WorkflowExecutionQuerySet(domain)
-        wfe = qs.filter(
-            workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN
-        ) or qs.filter(
+        wfe = qs.filter(workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_OPEN) or qs.filter(
             workflow_id=workflow_id, status=swf.models.WorkflowExecution.STATUS_CLOSED
         )
         if wfe:
@@ -35,9 +33,7 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
             found_run_id = wfe[0].run_id
         else:
             # we would send a malformed request to SWF API, better stop directly
-            raise ValueError(
-                f"Couldn't find an execution with workflowId={workflow_id}"
-            )
+            raise ValueError(f"Couldn't find an execution with workflowId={workflow_id}")
 
     return swf.querysets.WorkflowExecutionQuerySet(domain).get(
         workflow_id=workflow_id,

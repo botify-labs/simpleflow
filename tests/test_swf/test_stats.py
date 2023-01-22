@@ -63,12 +63,7 @@ def test_last_state_times():
     assert timings[TIMING_COMPLETED] == events[EV_COMPLETED].timestamp
 
     TIMING_DURATION = 5
-    assert (
-        timings[TIMING_DURATION]
-        == (
-            events[EV_COMPLETED].timestamp - events[EV_STARTED].timestamp
-        ).total_seconds()
-    )
+    assert timings[TIMING_DURATION] == (events[EV_COMPLETED].timestamp - events[EV_STARTED].timestamp).total_seconds()
 
     timings = stats.get_timings_with_percentage()[0]
     TIMING_TOTAL_TIME = -2

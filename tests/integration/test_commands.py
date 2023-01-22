@@ -37,9 +37,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(wf_id).to.equal(self.workflow_id)
 
         # check against SWF that execution is launched
-        executions = self.conn.list_open_workflow_executions(
-            self.domain, 0, workflow_id=self.workflow_id
-        )
+        executions = self.conn.list_open_workflow_executions(self.domain, 0, workflow_id=self.workflow_id)
         items = executions["executionInfos"]
         expect(len(items)).to.equal(1)
         expect(items[0]["execution"]["runId"]).to.equal(run_id)
@@ -77,22 +75,18 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         # run a very short workflow
         result = self.invoke(
             'standalone --workflow-id %s --input {"args":[0]} --nb-workers 1 '
-            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow"
-            % self.workflow_id,
+            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id,
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
-        start_line = [
-            line for line in lines if line.startswith("test-simpleflow-workflow")
-        ][0]
+        start_line = [line for line in lines if line.startswith("test-simpleflow-workflow")][0]
         _, run_id = start_line.split(" ", 1)
 
         # this workflow has executed a single activity, activity-tests.integration.workflow.sleep-1
         # for which scheduledEventId is 5
         # => let's rerun it locally and check the result
         result = self.invoke(
-            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5"
-            % (self.workflow_id, run_id),
+            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5" % (self.workflow_id, run_id),
         )
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.contain("will sleep 0s")
@@ -100,17 +94,14 @@ class TestSimpleflowCommand(VCRIntegrationTest):
     @flaky(max_runs=2)
     @vcr.use_cassette
     def test_simpleflow_idempotent(self):
-        events = self.run_standalone(
-            "tests.integration.workflow.ATestDefinitionWithIdempotentTask"
-        )
+        events = self.run_standalone("tests.integration.workflow.ATestDefinitionWithIdempotentTask")
 
         activities = [
             e["activityTaskScheduledEventAttributes"]["activityId"]
             for e in events
             if (
                 e["eventType"] == "ActivityTaskScheduled"
-                and e["activityTaskScheduledEventAttributes"]["activityType"]["name"]
-                == "tests.integration.workflow"
+                and e["activityTaskScheduledEventAttributes"]["activityType"]["name"] == "tests.integration.workflow"
                 ".get_uuid"
             )
         ]

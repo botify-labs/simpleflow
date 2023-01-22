@@ -67,9 +67,7 @@ class CompiledEvent(Event, Stateful):
         if event.state != self.initial_state:
             raise InconsistentStateError(
                 "Provided event is in {} state "
-                "when attended intial state is {}".format(
-                    event.state, self.initial_state
-                )
+                "when attended intial state is {}".format(event.state, self.initial_state)
             )
         self.__dict__ = event.__dict__.copy()
 

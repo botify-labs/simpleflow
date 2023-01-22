@@ -148,9 +148,7 @@ class WorkflowType(BaseModel):
         :rtype: ModelDiff
         """
         try:
-            description = self.connection.describe_workflow_type(
-                self.domain.name, self.name, self.version
-            )
+            description = self.connection.describe_workflow_type(self.domain.name, self.name, self.version)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
@@ -201,9 +199,7 @@ class WorkflowType(BaseModel):
 
         :rtype: bool
         """
-        self.connection.describe_workflow_type(
-            self.domain.name, self.name, self.version
-        )
+        self.connection.describe_workflow_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self):
@@ -220,9 +216,7 @@ class WorkflowType(BaseModel):
                 description=self.description,
             )
         except SWFTypeAlreadyExistsError:
-            raise AlreadyExistsError(
-                "Workflow type %s already exists amazon-side" % self.name
-            )
+            raise AlreadyExistsError("Workflow type %s already exists amazon-side" % self.name)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.body["message"])
@@ -230,9 +224,7 @@ class WorkflowType(BaseModel):
     def delete(self):
         """Deprecates the workflow type amazon-side"""
         try:
-            self.connection.deprecate_workflow_type(
-                self.domain.name, self.name, self.version
-            )
+            self.connection.deprecate_workflow_type(self.domain.name, self.name, self.version)
         except SWFResponseError as e:
             if e.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
                 raise DoesNotExistError(e.body["message"])
@@ -293,9 +285,7 @@ class WorkflowType(BaseModel):
 
         # checks
         if tag_list and len(tag_list) > 5:
-            raise ValueError(
-                "You cannot have more than 5 tags in StartWorkflowExecution."
-            )
+            raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
 
         run_id = self.connection.start_workflow_execution(
             self.domain.name,
@@ -444,9 +434,7 @@ class WorkflowExecution(BaseModel):
         :rtype: ModelDiff
         """
         try:
-            description = self.connection.describe_workflow_execution(
-                self.domain.name, self.run_id, self.workflow_id
-            )
+            description = self.connection.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
@@ -495,9 +483,7 @@ class WorkflowExecution(BaseModel):
 
         :rtype: bool
         """
-        self.connection.describe_workflow_execution(
-            self.domain.name, self.run_id, self.workflow_id
-        )
+        self.connection.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
         return True
 
     def upstream(self):
@@ -515,9 +501,7 @@ class WorkflowExecution(BaseModel):
         if not isinstance(domain, str):
             domain = domain.name
 
-        response = self.connection.get_workflow_execution_history(
-            domain, self.run_id, self.workflow_id, **kwargs
-        )
+        response = self.connection.get_workflow_execution_history(domain, self.run_id, self.workflow_id, **kwargs)
 
         events: list[dict[str, Any]] = response["events"]
         next_page = response.get("nextPageToken")
@@ -544,9 +528,7 @@ class WorkflowExecution(BaseModel):
             extract=exceptions.extract_resource,
         ),
     )
-    def signal(
-        self, signal_name, input=None, workflow_id=None, run_id=None, *args, **kwargs
-    ):
+    def signal(self, signal_name, input=None, workflow_id=None, run_id=None, *args, **kwargs):
         """Records a signal event in the workflow execution history and
         creates a decision task.
 
@@ -588,9 +570,7 @@ class WorkflowExecution(BaseModel):
     )
     def request_cancel(self, *args, **kwargs):
         """Requests the workflow execution cancel"""
-        self.connection.request_cancel_workflow_execution(
-            self.domain.name, self.workflow_id, run_id=self.run_id
-        )
+        self.connection.request_cancel_workflow_execution(self.domain.name, self.workflow_id, run_id=self.run_id)
 
     @exceptions.translate(SWFResponseError, to=ResponseError)
     @exceptions.catch(

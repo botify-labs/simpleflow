@@ -49,10 +49,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     @domain.setter
     def domain(self, value: Domain):
         if not isinstance(value, Domain):
-            err = (
-                "domain property has to be of"
-                "swf.model.domain.Domain type, not %r" % type(value)
-            )
+            err = "domain property has to be of" "swf.model.domain.Domain type, not %r" % type(value)
             raise TypeError(err)
         self._domain = value
 
@@ -62,9 +59,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     def _list_items(self, *args, **kwargs):
         response = {"nextPageToken": None}
         while "nextPageToken" in response:
-            response = self._list(
-                *args, next_page_token=response["nextPageToken"], **kwargs
-            )
+            response = self._list(*args, next_page_token=response["nextPageToken"], **kwargs)
 
             yield from response[self._infos_plural]
 
@@ -121,9 +116,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             }
         """
         try:
-            response = self.connection.describe_workflow_type(
-                self.domain.name, name, version
-            )
+            response = self.connection.describe_workflow_type(self.domain.name, name, version)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.body["message"])
@@ -259,9 +252,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     def _list(self, *args, **kwargs):
         return self.connection.list_workflow_types(*args, **kwargs)
 
-    def filter(
-        self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs
-    ):
+    def filter(self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs):
         """Filters workflows based on the ``domain`` they belong to,
         their ``status``, and/or their ``name``
 
@@ -285,8 +276,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
         return [
-            self.to_WorkflowType(domain, wf)
-            for wf in self._list_items(domain.name, registration_status, name=name)
+            self.to_WorkflowType(domain, wf) for wf in self._list_items(domain.name, registration_status, name=name)
         ]
 
     def all(self, registration_status=REGISTERED, *args, **kwargs):
@@ -417,9 +407,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         return param in statuses.get(status, set())
 
     def _validate_status_parameters(self, status, params):
-        return [
-            param for param in params if not self._is_valid_status_param(status, param)
-        ]
+        return [param for param in params if not self._is_valid_status_param(status, param)]
 
     def list_workflow_executions(self, status, *args, **kwargs):
         statuses = {
@@ -473,9 +461,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
     def get(self, workflow_id, run_id, *args, **kwargs):
         """ """
         try:
-            response = self.connection.describe_workflow_execution(
-                self.domain.name, run_id, workflow_id
-            )
+            response = self.connection.describe_workflow_execution(self.domain.name, run_id, workflow_id)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.body["message"])
@@ -574,9 +560,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         invalid_kwargs = self._validate_status_parameters(status, kwargs)
 
         if invalid_kwargs:
-            err_msg = "Invalid keyword arguments supplied: {}".format(
-                ", ".join(invalid_kwargs)
-            )
+            err_msg = "Invalid keyword arguments supplied: {}".format(", ".join(invalid_kwargs))
             raise InvalidKeywordArgumentError(err_msg)
 
         if status == WorkflowExecution.STATUS_OPEN:
@@ -676,7 +660,5 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
         return [
             self.to_WorkflowExecution(self.domain, wfe)
-            for wfe in self._list_items(
-                status, self.domain.name, start_oldest_date=int(start_oldest_date)
-            )
+            for wfe in self._list_items(status, self.domain.name, start_oldest_date=int(start_oldest_date))
         ]

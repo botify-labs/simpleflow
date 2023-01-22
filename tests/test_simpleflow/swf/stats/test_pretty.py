@@ -28,9 +28,7 @@ class TestSimpleflowSwfStatsPretty(unittest.TestCase):
         self.assertEqual(
             3,
             len(parsed),
-            "we should get only one activity in the dump, got {}:\n{}".format(
-                len(parsed), parsed
-            ),
+            "we should get only one activity in the dump, got {}:\n{}".format(len(parsed), parsed),
         )
         self.assertEqual(
             [

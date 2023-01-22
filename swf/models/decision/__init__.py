@@ -7,7 +7,7 @@ from swf.models.decision.marker import MarkerDecision  # NOQA
 from swf.models.decision.task import ActivityTaskDecision  # NOQA
 from swf.models.decision.timer import TimerDecision  # NOQA
 from swf.models.decision.workflow import (  # NOQA
-    WorkflowExecutionDecision,
     ChildWorkflowExecutionDecision,
     ExternalWorkflowExecutionDecision,
+    WorkflowExecutionDecision,
 )
