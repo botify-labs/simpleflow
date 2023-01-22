@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 import pytz
 
@@ -31,32 +32,25 @@ class Event:
     name 'DecisionTaskScheduleFailed', id '1' and state 'failed'.
 
     :param  id: event id provided by amazon service
-    :type   id: string
-
     :param  state: event current state
-    :type   state: string
-
     :param  timestamp: event creation timestamp
-    :type   timestamp: float
-
     :param  raw_data: raw_event representation provided by amazon service
-    :type   raw_data: dict
     """
 
-    _type = None
-    _name = None
-    _attributes_key = None
+    _type: str | None = None
+    _name: str | None = None
+    _attributes_key: str | None = None
     _attributes = None
 
     excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
-    def __init__(self, id, state, timestamp, raw_data):
+    def __init__(self, id: int, state: str, timestamp: float, raw_data: dict | None):
         """ """
         self._id = id
         self._state = state
         self._timestamp = timestamp
-        self._input = {}
-        self._control = None
+        self._input: dict = {}
+        self._control: dict | None = None
         self.raw = raw_data or {}
 
         self.process_attributes()
@@ -65,27 +59,27 @@ class Event:
         return f"<Event {self.id} {self.type} : {self.state} >"
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def state(self):
+    def state(self) -> str:
         return self._state
 
     @cached_property
-    def timestamp(self):
+    def timestamp(self) -> datetime:
         return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)
 
     @property
-    def input(self):
+    def input(self) -> dict[str, Any]:
         return self._input
 
     @input.setter
@@ -93,7 +87,7 @@ class Event:
         self._input = format.decode(value)
 
     @property
-    def control(self):
+    def control(self) -> dict[str, Any] | None:
         return self._control
 
     @control.setter

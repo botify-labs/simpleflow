@@ -10,10 +10,15 @@ import sys
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
 else:
-    from typing import TypedDict
+    from typing import TypedDict, Any
+
+from typing import TYPE_CHECKING
 
 from swf.models.event.base import Event
 from swf.models.event.compiler import CompiledEvent
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class ActivityType(TypedDict):
@@ -39,12 +44,24 @@ class ActivityTaskEvent(Event):
 
 
 class ActivityTaskEventDict(TypedDict):
+    type: str
+    id: int
+    name: str
+    version: str
+    state: str
+    scheduled_id: int
+    scheduled_timestamp: datetime
+    input: dict
+    task_list: str
+    control: dict | None
+    decision_task_completed_event_id: int
     scheduled_event_id: int
     activity_id: int
     activity_type: ActivityType
-    task_list: TaskList
-    decision_task_completed_event_id: int
     cause: str
+    result: Any
+    reason: str | None
+    details: str | None
 
 
 class CompiledActivityTaskEvent(CompiledEvent):
@@ -66,7 +83,7 @@ class CompiledActivityTaskEvent(CompiledEvent):
         "schedule_failed": ("scheduled", "timed_out"),
         "started": ("canceled", "failed", "timed_out", "completed"),
         "failed": ("scheduled", "timed_out"),
-        "timed_out": ("scheduled"),
+        "timed_out": ("scheduled",),
         "canceled": ("scheduled", "timed_out"),
         "cancel_requested": ("canceled", "request_cancel_failed", "timed_out"),
         "request_cancel_failed": ("scheduled", "timed_out"),
@@ -89,9 +106,9 @@ class CompiledDecisionTaskEvent(CompiledEvent):
     )
 
     transitions = {
-        "scheduled": ("started"),
+        "scheduled": ("started",),
         "started": ("timed_out", "completed"),
-        "timed_out": ("scheduled"),
+        "timed_out": ("scheduled",),
     }
 
     initial_state = "scheduled"

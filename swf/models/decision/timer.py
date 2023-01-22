@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from simpleflow import format
 from swf.models.decision.base import Decision, decision_action
 
@@ -13,18 +15,15 @@ class TimerDecision(Decision):
     _base_type = "Timer"
 
     @decision_action
-    def start(self, id, start_to_fire_timeout, control=None):
+    def start(self, id: str, start_to_fire_timeout: str, control: dict[str, Any] | None = None) -> None:
         """Start timer decision builder
 
         :param  id:
-        :type   id:
 
         :param  start_to_fire_timeout:
-        :type   start_to_fire_timeout:
 
         :param  control: Optional data attached to the event that can
                          be used by the decider in subsequent workflow tasks
-        :type   control: Optional[dict]
         """
         if control is not None:
             control = format.control(control)
@@ -38,10 +37,9 @@ class TimerDecision(Decision):
         )
 
     @decision_action
-    def cancel(self, id):
+    def cancel(self, id: str) -> None:
         """Cancel timer decision builder
 
         :param  id: The unique Id of the timer to cancel
-        :type   id: str
         """
         self.update_attributes({"timerId": id})

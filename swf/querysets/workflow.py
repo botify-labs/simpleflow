@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
-from boto.swf.exceptions import SWFResponseError
+from typing import Any
+
+from boto.swf.exceptions import SWFResponseError  # noqa
 
 from swf.constants import MAX_WORKFLOW_AGE, REGISTERED
 from swf.exceptions import (
@@ -41,7 +43,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
         self.domain = domain
 
     @property
-    def domain(self):
+    def domain(self) -> Domain | None:
         if not hasattr(self, "_domain"):
             self._domain = None
         return self._domain
@@ -252,7 +254,14 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     def _list(self, *args, **kwargs):
         return self.connection.list_workflow_types(*args, **kwargs)
 
-    def filter(self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs):
+    def filter(
+        self,
+        domain: Domain | None = None,
+        registration_status: str = REGISTERED,
+        name: str | None = None,
+        *args,
+        **kwargs,
+    ) -> list[WorkflowType]:
         """Filters workflows based on the ``domain`` they belong to,
         their ``status``, and/or their ``name``
 
@@ -436,7 +445,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             workflow_type["version"],
         )
 
-    def to_WorkflowExecution(self, domain, execution_info, **kwargs):
+    def to_WorkflowExecution(self, domain: Domain, execution_info: dict[str, Any], **kwargs) -> WorkflowExecution:
         workflow_type = WorkflowType(
             self.domain,
             execution_info["workflowType"]["name"],

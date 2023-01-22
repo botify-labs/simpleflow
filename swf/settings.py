@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import os
 from configparser import ConfigParser
+from typing import TextIO
 
 
-def from_stream(stream):
+def from_stream(stream: TextIO) -> dict[str, str]:
     """Retrieves AWS settings from a stream in INI format.
 
     Example:
@@ -46,18 +47,12 @@ def from_stream(stream):
     True
 
     :param      stream: of chars in INI format.
-    :type       stream: stream.
-
-    :rtype: dict
 
     ..note:: some fields may be None.
 
     """
     config = ConfigParser(allow_no_value=True)
-    if hasattr(config, "read_file"):
-        config.read_file(stream)
-    else:
-        config.readfp(stream)  # deprecated name
+    config.read_file(stream)
 
     settings = {}
 
@@ -75,13 +70,10 @@ def from_stream(stream):
     return settings
 
 
-def from_file(path):
+def from_file(path: str | os.PathLike) -> dict[str, str]:
     """Retrieves AWS settings from a file in INI format.
 
     :param      path: to file in INI format.
-    :type       path: string.
-
-    :rtype: dict
 
     Returns `{}` is there is no file. Let raise the underlying exception if it
     cannot load the file (permission denied, file is a directory, etc...)
@@ -94,14 +86,11 @@ def from_file(path):
         return from_stream(stream)
 
 
-def from_env():
+def from_env() -> dict[str, str]:
     """Retrieves AWS settings from environment.
 
     Supported environment variables are:
         - `AWS_DEFAULT_REGION`
-
-    :rtype: dict
-
     """
     hsh = {}
 
@@ -111,10 +100,10 @@ def from_env():
     return hsh
 
 
-def from_home(path=".swf"):
+def from_home(path: str | os.PathLike = ".swf") -> dict[str, str]:
     """Retrieves settings from home environment
 
-    If HOME environment is applicapable, search for any files in *path*.
+    If HOME environment is applicable, search $HOME/path.
 
     :rtype: dict
 
@@ -126,29 +115,26 @@ def from_home(path=".swf"):
     return {}
 
 
-def get(path=".swf"):
+def get(path: str | os.PathLike = ".swf") -> dict[str, str]:
     """Retrieves settings from a file or the environment.
 
     First, it will try to retrieve settings from a *path* in the user's home
     directory. Other it tries to load the settings from the environment.
 
     If both return an empty dict, it will also return a empty dict.
-
-    :rtype: dict
-
     """
 
     return from_home(path) or from_env()
 
 
-def set(**settings):
+def set(**settings) -> None:
     """Set settings"""
     from swf.core import SETTINGS
 
-    SETTINGS.update({k: v for k, v in list(settings.items()) if v is not None})
+    SETTINGS.update({k: v for k, v in settings.items() if v is not None})
 
 
-def clear():
+def clear() -> None:
     """Clear settings"""
     from swf.core import SETTINGS
 

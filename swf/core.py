@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-import boto.swf
+import boto.swf  # noqa
 from boto.exception import NoAuthHandlerFound
 
 # NB: import logger directly from simpleflow so we benefit from the logging

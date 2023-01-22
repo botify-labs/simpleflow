@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import collections
+from typing import TYPE_CHECKING, Any
 
 from swf.models.event.marker import CompiledMarkerEvent, MarkerEvent
 from swf.models.event.task import (
@@ -24,6 +25,9 @@ from swf.models.event.workflow import (
     WorkflowExecutionEvent,
 )
 from swf.utils import camel_to_underscore, decapitalize
+
+if TYPE_CHECKING:
+    from swf.models.event import CompiledEvent, Event
 
 EVENTS = collections.OrderedDict(
     [
@@ -104,9 +108,8 @@ class EventFactory:
     will instantiate a ``swf.models.event.task.DecisionTaskEvent`` with state
     set to 'scheduled' from input attributes.
 
-    :param  raw_event: The input json event representation provided by
-                       amazon service
-    :type   raw_event: dict
+    raw_event: The input json event representation provided by
+               amazon service
 
     :returns: ``swf.models.event.Event`` subclass instance
     """
@@ -114,22 +117,22 @@ class EventFactory:
     # eventType to Event subclass bindings
     events = EVENTS
 
-    def __new__(klass, raw_event):
+    def __new__(cls, raw_event: dict[str, Any]) -> Event:
         event_id = raw_event["eventId"]
         event_name = raw_event["eventType"]
         event_timestamp = raw_event["eventTimestamp"]
 
-        event_type = klass._extract_event_type(event_name)
-        event_state = klass._extract_event_state(event_type, event_name)
+        event_type = cls._extract_event_type(event_name)
+        event_state = cls._extract_event_state(event_type, event_name)
         # amazon swf format is not very normalized and event attributes
         # response field is non-capitalized...
         event_attributes_key = decapitalize(event_name) + "EventAttributes"
 
-        klass = EventFactory.events[event_type]["event"]
-        klass._name = event_name
-        klass._attributes_key = event_attributes_key
+        cls = EventFactory.events[event_type]["event"]
+        cls._name = event_name
+        cls._attributes_key = event_attributes_key
 
-        instance = klass(
+        instance = cls(
             id=event_id,
             state=event_state,
             timestamp=event_timestamp,
@@ -139,7 +142,7 @@ class EventFactory:
         return instance
 
     @classmethod
-    def _extract_event_type(klass, event_name):
+    def _extract_event_type(cls, event_name: str) -> str | None:
         """Extracts event type from raw event_name
 
         :param  event_name:
@@ -153,13 +156,13 @@ class EventFactory:
             'ChildWorkflowExecution'
 
         """
-        for name in klass.events:
+        for name in cls.events:
             if name in event_name:
                 return name
         return
 
     @classmethod
-    def _extract_event_state(klass, event_type, event_name):
+    def _extract_event_state(cls, event_type: str, event_name: str) -> str:
         """Extracts event state from raw event type and name
 
         Example:
@@ -185,7 +188,7 @@ class CompiledEventFactory:
 
     events = EVENTS
 
-    def __new__(cls, event):
+    def __new__(cls, event) -> CompiledEvent:
         event_type = event.type
 
         klass = cls.events[event_type]["compiled_event"]

@@ -19,8 +19,8 @@ class TransitionError(Exception):
 class Stateful:
     """Base stateful object implementation"""
 
-    states = ()
-    transitions = {}
+    states: tuple[str, ...] = ()
+    transitions: dict[str, tuple[str, ...]] = {}
 
 
 class CompiledEvent(Event, Stateful):
@@ -53,7 +53,7 @@ class CompiledEvent(Event, Stateful):
 
     """
 
-    initial_state = None
+    initial_state: str | None = None
 
     def __init__(self, event):
         """Builds a  CompiledEvent from provided ``event``
@@ -75,14 +75,11 @@ class CompiledEvent(Event, Stateful):
         return f"<CompiledEvent {self.type} {self.state}>"
 
     @property
-    def next_states(self):
-        """Returns attended next compiled event states
-
-        :rtype: list
-        """
+    def next_states(self) -> tuple[str, ...]:
+        """Returns attended next compiled event states"""
         return self.transitions[self.state]
 
-    def transit(self, event):
+    def transit(self, event: Event):
         """Tries to apply CompiledEvent transition to the provided ``event``
         state
 

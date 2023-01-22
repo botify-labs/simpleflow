@@ -6,14 +6,11 @@
 from __future__ import annotations
 
 from itertools import groupby
-from typing import TYPE_CHECKING
+from typing import Any, Iterator
 
-from swf.models.event import CompiledEventFactory, EventFactory
+from swf.models.event import CompiledEvent, CompiledEventFactory, Event, EventFactory
 from swf.models.event.workflow import WorkflowExecutionEvent
 from swf.utils import cached_property
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 class History:
@@ -68,15 +65,15 @@ class History:
         }
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.events = kwargs.pop("events", [])
         self.raw = kwargs.pop("raw", None)
         self.it_pos = 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.events)
 
-    def __getitem__(self, val):
+    def __getitem__(self, val: int | slice) -> Event | History:
         if isinstance(val, int):
             return self.events[val]
         elif isinstance(val, slice):
@@ -93,10 +90,9 @@ class History:
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Event:
         """
         Iterate.
-        :rtype: swf.models.event.Event
         """
         try:
             next_event = self.events[self.it_pos]
@@ -107,46 +103,40 @@ class History:
         return next_event
 
     @property
-    def last(self):
+    def last(self) -> Event:
         """Returns the last stored event
 
         :rtype: swf.models.event.Event
         """
         return self.events[-1]
 
-    def latest(self, n):
+    def latest(self, n: int) -> list[Event]:
         """Returns the n latest events stored in the History
 
         :param  n: latest events count to return
-        :type   n: int
-
-        :rtype: list
         """
         end_pos = len(self.events)
         start_pos = len(self.events) - n
         return self.events[start_pos:end_pos]
 
     @property
-    def first(self):
-        """Returns the first stored event
-
-        :rtype: swf.models.event.Event
-        """
+    def first(self) -> Event:
+        """Returns the first stored event"""
         return self.events[0]
 
     @property
-    def finished(self):
+    def finished(self) -> bool:
         """Checks if the History matches with a finished Workflow
         Execution history state.
         """
-        completion_states = ("completed", "failed", "canceled", "terminated")
+        completion_states = {"completed", "failed", "canceled", "terminated"}
 
         if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
             return True
 
         return False
 
-    def filter(self, **kwargs):
+    def filter(self, **kwargs) -> list[Event]:
         """Filters the history based on kwargs events attributes
 
         Basically, allows to filter the history events upon their
@@ -160,37 +150,32 @@ class History:
 
             >>> history_obj = History()
             >>> history_obj.filter(type='ActivityTask', state='completed')  # doctest: +SKIP
-            <History
-                <Event 23 ActivityTask : completed>
-                <Event 42 ActivityTask : completed>
-                <Event 61 ActivityTask : completed>
-            >
+            [
+                <Event 23 ActivityTask : completed>,
+                <Event 42 ActivityTask : completed>,
+                <Event 61 ActivityTask : completed>,
+            ]
             >>> history_obj.filter(type='DecisionTask')  # doctest: +SKIP
-            <History
-                <Event 2 DecisionTask : scheduled>
-                <Event 3 DecisionTask : started>
-                <Event 7 DecisionTask : scheduled>
-                <Event 8 DecisionTask : started>
-                <Event 20 DecisionTask : scheduled>
-                <Event 21 DecisionTask : started>
-            >
-
-        :rtype: swf.models.history.History
+            [
+                <Event 2 DecisionTask : scheduled>,
+                <Event 3 DecisionTask : started>,
+                <Event 7 DecisionTask : scheduled>,
+                <Event 8 DecisionTask : started>,
+                <Event 20 DecisionTask : scheduled>,
+                <Event 21 DecisionTask : started>,
+            ]
         """
         return [e for e in self.events if all(getattr(e, k) == v for k, v in kwargs.items())]
 
     @property
-    def reversed(self):
+    def reversed(self) -> Iterator[Event]:
         for i in range(len(self.events) - 1, -1, -1):
             yield self.events[i]
 
     @property
-    def distinct(self):
-        """Extracts distinct history events based on their types
-
-        :rtype: list[list[swf.models.event.Event]]
-        """
-        distinct_events = []
+    def distinct(self) -> list[list[Event]]:
+        """Extracts distinct history events based on their types"""
+        distinct_events: list[list[Event]] = []
 
         for key, group in groupby(self.events, lambda e: e.type):
             g = list(group)
@@ -204,18 +189,17 @@ class History:
 
         return distinct_events
 
-    def compile(self):
+    def compile(self) -> History:
         """Compiles history events into a stateful History
         based on events types and states transitions.
 
-        Every events stored in the resulting history are stateful
+        Every event stored in the resulting history are stateful
         CompiledEvent subclasses instances then.
 
         :return: swf.models.history.History made of swf.models.event.CompiledEvent
-        :rtype: swf.models.history.History
         """
         distinct_events = self.distinct
-        compiled_history = []
+        compiled_history: list[CompiledEvent] = []
 
         for events_list in distinct_events:
             if len(events_list) > 0:
@@ -229,11 +213,10 @@ class History:
         return History(events=compiled_history)
 
     @cached_property
-    def compiled(self):
+    def compiled(self) -> History:
         """Compiled history version
 
         :return: swf.models.history.History made of swf.models.event.CompiledEvent
-        :rtype: swf.models.history.History
         """
         return self.compile()
 
@@ -250,7 +233,7 @@ class History:
 
         :returns: History model instance built upon data description
         """
-        events_history = []
+        events_history: list[Event] = []
 
         for index, d in enumerate(data):
             event = EventFactory(d)

@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import swf.models.event.workflow
 from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory
+
+if TYPE_CHECKING:
+    from swf.models import WorkflowType
+
 
 DEFAULT_DECIDER_IDENTITY = "test_decider"
 DEFAULT_WORKER_IDENTITY = "test_worker"
@@ -13,11 +19,11 @@ DEFAULT_DETAILS = "DETAILS"
 __all__ = ["History"]
 
 
-FIRST_TIMESTAMP = None
-LATEST_TIMESTAMP = None
+FIRST_TIMESTAMP: float | None = None
+LATEST_TIMESTAMP: float | None = None
 
 
-def new_timestamp_string():
+def new_timestamp_string() -> float:
     import random
     from time import time
 
@@ -44,16 +50,14 @@ class History(swf.models.History):
 
     """
 
-    def __init__(self, workflow, input=None, tag_list=None):
+    def __init__(self, workflow: WorkflowType, input: dict[str, Any] | None = None, tag_list: str | None = None):
         """
         Bootstrap a history with the first events added by SWF.
 
         :param workflow: workflow to simulate
         :type  workflow: declarative.Workflow
         :param input: JSON serializable dict
-        :type  input: dict
         :param tag_list: string of tags (beware not a list)
-        :type  tag_list: str
 
         """
         self._workflow = workflow

@@ -9,10 +9,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from itertools import chain, islice
 from time import mktime
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any
+from typing import Any
 
 
 def decapitalize(s: str) -> str:
@@ -129,7 +126,7 @@ def immutable(mutableclass):
     """
 
     if not isinstance(type(mutableclass), type):
-        raise TypeError("@immutable: must be applied to a new-style class")
+        raise TypeError("@immutable: must be applied to a class")
     if not hasattr(mutableclass, "__slots__"):
         raise TypeError("@immutable: class must have __slots__")
 
@@ -149,16 +146,16 @@ def immutable(mutableclass):
     immutableclass.__module__ = mutableclass.__module__
 
     # Make read-only:
-    for name, member in list(mutableclass.__dict__.items()):
+    for name, member in mutableclass.__dict__.items():
         if hasattr(member, "__set__"):
             setattr(immutableclass, name, property(member.__get__))
 
     return immutableclass
 
 
-def camel_to_underscore(string):
-    """Translates amazon Camelcased strings to
-    lowercased underscored strings"""
+def camel_to_underscore(string: str) -> str:
+    """Translates amazon Camelcase strings to
+    lowercase underscored strings"""
     res = []
 
     for index, char in enumerate(string):
@@ -170,7 +167,7 @@ def camel_to_underscore(string):
     return "".join(res)
 
 
-def underscore_to_camel(string):
+def underscore_to_camel(string: str) -> str:
     """
 
     >>> underscore_to_camel('')

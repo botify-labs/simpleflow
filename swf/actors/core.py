@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from swf.core import ConnectedSWFObject
 from swf.models import Domain
+
+if TYPE_CHECKING:
+    from boto.exception import SWFResponseError
 
 
 class Actor(ConnectedSWFObject):
@@ -15,19 +20,16 @@ class Actor(ConnectedSWFObject):
     using an actor is the typical usage.
 
     :ivar  domain: Domain the Actor should interact with
-    :type  domain: swf.models.Domain
-
     :ivar  task_list: task list the Actor should watch for tasks on
-    :type  task_list: str
     """
 
-    def __init__(self, domain, task_list):
+    def __init__(self, domain: Domain, task_list: str) -> None:
         super().__init__()
 
         self._set_domain(domain)
         self.task_list = task_list
 
-    def _set_domain(self, domain):
+    def _set_domain(self, domain: Domain):
         if not isinstance(domain, Domain):
             raise TypeError("domain arg must be a swf.models.Domain instance")
         self.domain = domain
@@ -49,13 +51,7 @@ class Actor(ConnectedSWFObject):
         """
         raise NotImplementedError
 
-    def get_error_message(self, e):
-        """
-
-        :param e:
-         :type e: boto.exception.SWFResponseError
-        :return:
-        """
+    def get_error_message(self, e: SWFResponseError) -> str:
         message = e.error_message
         if not message:
             if e.body:

@@ -20,7 +20,7 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
         "signaled",
         "completed",  # The workflow execution was closed due to successful completion
         "failed",  # The workflow execution closed due to a failure
-        "timed_out",  # The workflow execution was closed because a time out was exceeded
+        "timed_out",  # The workflow execution was closed because a time-out was exceeded
         "canceled",  # The workflow execution was successfully canceled and closed
         "terminated",  # The workflow execution was terminated
         "continued_as_new",  # The workflow execution was closed and a new execution of the same type was created
@@ -43,7 +43,7 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
             "started",
             "continued_as_new",
         ),
-        "cancel_requested": ("canceled"),
+        "cancel_requested": ("canceled",),
     }
 
     initial_state = "started"
@@ -69,7 +69,7 @@ class CompiledChildWorkflowExecutionEvent(CompiledEvent):
 
     transitions = {
         "start_initiated": ("start_failed", "started"),
-        "start_failed": ("failed"),
+        "start_failed": ("failed",),
         "started": ("canceled", "failed", "timed_out", "terminated"),
     }
 
@@ -96,8 +96,8 @@ class CompiledExternalWorkflowExecutionEvent(CompiledEvent):
 
     transitions = {
         "signal_initiated": ("signal_failed", "signaled"),
-        "request_cancel_initiated": ("request_cancel_failed"),
-        "cancel_requested": ("request_cancel_failed"),
+        "request_cancel_initiated": ("request_cancel_failed",),
+        "cancel_requested": ("request_cancel_failed",),
     }
 
     initial_state = "signal_initiated"

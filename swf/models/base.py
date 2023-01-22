@@ -22,7 +22,7 @@ class ModelDiff:
     """
 
     def __init__(self, *input):
-        self.container = self._process_input(input)
+        self.container: OrderedDict[str, tuple[str, str]] = self._process_input(input)
 
     def __contains__(self, attr):
         return attr in self.container
@@ -41,15 +41,15 @@ class ModelDiff:
         """Adds input differing data into ModelDiff instance"""
         self.container.update(self._process_input(input))
 
-    def merge(self, model_diff):
+    def merge(self, model_diff: ModelDiff) -> None:
         """Merges another ModelDiff instance into the current one"""
         self.container.update(model_diff.container)
 
-    def differing_fields(self):
+    def differing_fields(self) -> list[str]:
         """Returns the name of fields differing from upstream"""
         return list(self.container)
 
-    def as_list(self):
+    def as_list(self) -> list[Difference]:
         """Outputs models differences as a list of
         swf.models.base.Difference namedtuple
         """

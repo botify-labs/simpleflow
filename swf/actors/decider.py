@@ -1,41 +1,44 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import boto.exception
 
 from simpleflow import format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
 from swf.exceptions import DoesNotExistError, PollTimeout, ResponseError
+from swf.models.decision.base import Decision
 from swf.models.history import History
 from swf.models.workflow import WorkflowExecution, WorkflowType
 from swf.responses import Response
+
+if TYPE_CHECKING:
+    from swf.models import Domain
 
 
 class Decider(Actor):
     """Decider actor implementation
 
     :param  domain: Domain the Actor should interact with
-    :type   domain: swf.models.Domain
-
     :param  task_list: task list the Actor should watch for tasks on
-    :type   task_list: str
     """
 
-    def __init__(self, domain, task_list):
+    def __init__(self, domain: Domain, task_list: str) -> None:
         super().__init__(domain, task_list)
 
-    def complete(self, task_token, decisions=None, execution_context=None):
+    def complete(
+        self, task_token: str, decisions: list[Decision] | None = None, execution_context: str | Any | None = None
+    ):
         """Responds to ``swf`` decisions have been made about
         the task with `task_token``
 
         :param  task_token: completed decision task token
-        :type   task_token: str
 
         :param  decisions: The list of decisions (possibly empty)
                            made by the decider while processing this decision task
         :type   decisions: list[swf.models.decision.base.Decision]
         :param execution_context: User-defined context to add to workflow execution.
-        :type execution_context: str
         """
         if execution_context is not None and not isinstance(execution_context, str):
             execution_context = json_dumps(execution_context)

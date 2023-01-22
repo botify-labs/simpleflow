@@ -8,14 +8,15 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 from functools import partial, wraps
+from typing import Any, Callable
 
-import boto.swf.exceptions
+import boto.exception
 
 from simpleflow import logger
 
 
 class SWFError(Exception):
-    def __init__(self, message, raw_error="", *args, **kwargs):
+    def __init__(self, message: str, raw_error: str = "", *args) -> None:
         """
         Examples:
 
@@ -54,7 +55,7 @@ class SWFError(Exception):
         'details'
 
         """
-        Exception.__init__(self, message, *args, **kwargs)
+        Exception.__init__(self, message, *args)
 
         values = raw_error.split(":", 1)
 
@@ -157,7 +158,7 @@ def is_swf_response_error(error):
     :type  error: Exception.
 
     """
-    return isinstance(error, boto.swf.exceptions.SWFResponseError)
+    return isinstance(error, boto.exception.SWFResponseError)
 
 
 def is_unknown_resource_raised(error, *args, **kwargs):
@@ -168,7 +169,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     :type  error: Exception
 
     """
-    if not isinstance(error, boto.swf.exceptions.SWFResponseError):
+    if not isinstance(error, boto.exception.SWFResponseError):
         return False
 
     return getattr(error, "error_code", None) == "UnknownResourceFault"
@@ -236,7 +237,7 @@ def extract_resource(error):
     return "Resource {} does not exist".format(resource[0] if resource else "unknown")
 
 
-def raises(exception, when, extract=str):
+def raises(exception, when, extract: Callable[[Any], str] = str):
     """
     :param exception: to raise when the predicate is True.
     :type  exception: type(Exception)

@@ -1,37 +1,40 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from swf.models import History
 from swf.querysets.base import BaseQuerySet
+
+if TYPE_CHECKING:
+    from swf.models import Domain
 
 
 class HistoryQuerySet(BaseQuerySet):
     """WorkflowExecution history queryset"""
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain: Domain, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
 
-    def get(self, run_id, workflow_id, max_results=None, page_size=100, reverse=False):
+    def get(
+        self,
+        run_id: str,
+        workflow_id: str,
+        max_results: int | None = None,
+        page_size: int | None = 100,
+        reverse: bool = False,
+    ) -> History:
         """Retrieves a WorkflowExecution history
 
         :param  run_id: unique identifier of the workflow execution
-        :type   run_id: string
-
         :param  workflow_id: The user defined identifier associated with the workflow execution
-        :type   workflow_id: string
-
         :param  max_results: Max output history size. Retrieved history will be shrinked
                              if it's size is greater than max_results.
-        :type   max_results: int
-
         :param  page_size: Swf api response page size: controls how many history events
                            will be returned at each requests. Keep in mind that until
                            max_results history size is reached, next pages will be
                            requested.
-        :type   page_size: int
-
         :param  reverse: Should the history events be retrieved in reverse order.
-        :type   reverse: bool
         """
         max_results = max_results or page_size
 

@@ -6,12 +6,9 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import Any
 
 from swf.utils import decapitalize, underscore_to_camel
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 def decision_action(fn):
@@ -38,13 +35,12 @@ class Decision(dict):
     as is.
 
     :param  action: Decision action type
-    :type   action: string
     """
 
     _attributes_key_suffix = "DecisionAttributes"
-    _base_type = None
+    _base_type: str | None = None
 
-    def __init__(self, action=None, *args, **kwargs):
+    def __init__(self, action: str | None = None, *args, **kwargs) -> None:
         super().__init__()
 
         if action and hasattr(self, action):
@@ -52,22 +48,19 @@ class Decision(dict):
             if callable(action_method):
                 action_method(*args, **kwargs)
 
-    def _fill_from_action(self, action):
+    def _fill_from_action(self, action: str) -> None:
         self.type = underscore_to_camel(action) + self._base_type
         self.attributes_key = decapitalize(self.type + self._attributes_key_suffix)
 
         self["decisionType"] = self.type
         self[self.attributes_key] = {}
 
-    def update_attributes(self, data: dict[str, Any]):
+    def update_attributes(self, data: dict[str, Any]) -> None:
         """Updates Decision instance attributes_key dictionary
         with provided data which values is not None
-
-        :param  data:
-        :type   data:
         """
         if not hasattr(self, "attributes_key"):
-            raise AttributeError("Can't update unset attributes_key" "decision attribute")
+            raise AttributeError("Can't update unset attributes_key")
 
         for key, value in data.items():
             if value:

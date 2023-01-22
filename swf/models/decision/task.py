@@ -5,19 +5,23 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 from simpleflow import format
 from swf.models.decision.base import Decision, decision_action
+
+if TYPE_CHECKING:
+    from swf.models import ActivityType
 
 
 class ActivityTaskDecision(Decision):
     _base_type = "ActivityTask"
 
     @decision_action
-    def request_cancel(self, activity_id):
+    def request_cancel(self, activity_id: str) -> None:
         """Request activity task cancel decision builder
 
         :param  activity_id: activity task to be canceled id
-        :type   activity_id: str
         """
         self.update_attributes(
             {
@@ -28,49 +32,30 @@ class ActivityTaskDecision(Decision):
     @decision_action
     def schedule(
         self,
-        activity_id,
-        activity_type,
-        control=None,
-        heartbeat_timeout=None,
-        input=None,
-        duration_timeout=None,
-        schedule_timeout=None,
-        task_timeout=None,
-        task_list=None,
-        task_priority=None,
+        activity_id: str,
+        activity_type: ActivityType,
+        control: dict[str, Any] | None = None,
+        heartbeat_timeout: str | None = None,
+        input: dict[str, Any] | None = None,
+        duration_timeout: str | None = None,
+        schedule_timeout: str | None = None,
+        task_timeout: str | None = None,
+        task_list: str | None = None,
+        task_priority: str | int | None = None,
     ):
         """Schedule activity task decision builder
 
         :param  activity_id: activity id of the activity task
-        :type   activity_id: String
-
         :param  activity_type: type of the activity task to schedule
-        :type   activity_type: swf.models.activity.ActivityType
-
         :param  control: data attached to the event that can be used by the decider in subsequent workflow tasks
-        :type   control: Optional[dict]
-
         :param  heartbeat_timeout: Specifies the maximum time before which a worker processing a task of this type must
                 report progress
-        :type   heartbeat_timeout: String
-
         :param  input: input provided to the activity task
-        :type   input: Optional[dict]
-
         :param  duration_timeout: Maximum duration for this activity task
-        :type   duration_timeout: String
-
         :param  schedule_timeout: Specifies the maximum duration the activity task can wait to be assigned to a worker
-        :type   schedule_timeout: String
-
         :param  task_timeout: Specifies the maximum duration a worker may take to process this activity task
-        :type   task_timeout: String
-
         :param  task_list: Specifies the name of the task list in which to schedule the activity task
-        :type   :str
-
         :param  task_priority: Specifies the numeric priority of the task to pass to SWF (defaults to None).
-        :type   task_priority: int|String
         """
         if input is not None:
             input = format.input(input)

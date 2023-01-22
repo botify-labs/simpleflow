@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import boto.exception
 
 from simpleflow import format, logging_context
@@ -13,6 +15,9 @@ from swf.exceptions import (
 from swf.models import ActivityTask
 from swf.responses import Response
 
+if TYPE_CHECKING:
+    from swf.models import Domain
+
 
 class ActivityWorker(Actor):
     """Activity task worker actor implementation
@@ -22,32 +27,26 @@ class ActivityWorker(Actor):
     or crashes for some reason.
 
     :param  domain: Domain the Actor should interact with
-    :type   domain: swf.models.Domain
 
     :param  task_list: task list the Actor should watch for tasks on
-    :type   task_list: string
 
     :param  identity: Identity of the worker making the request,
                       which is recorded in the ActivityTaskStarted
                       event in the workflow history. This enables
                       diagnostic tracing when problems arise.
                       The form of this identity is user defined.
-    :type   identity: string
     """
 
-    def __init__(self, domain, task_list, identity=None):
+    def __init__(self, domain: Domain, task_list: str, identity: str | None = None):
         super().__init__(domain, task_list)
 
         self._identity = identity
 
-    def cancel(self, task_token, details=None):
+    def cancel(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Responds to ``swf`` that the activity task was canceled
 
         :param  task_token: canceled activity task token
-        :type   task_token: string
-
         :param  details: provided details about cancel
-        :type   details: string
         """
         try:
             return self.connection.respond_activity_task_canceled(
@@ -65,7 +64,7 @@ class ActivityWorker(Actor):
         finally:
             logging_context.reset()
 
-    def complete(self, task_token, result=None):
+    def complete(self, task_token: str, result: str | None = None) -> dict[str, Any] | None:
         """Responds to ``swf`` that the activity task is completed
 
         :param  task_token: completed activity task token
@@ -89,15 +88,11 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
 
-    def fail(self, task_token, details=None, reason=None):
+    def fail(self, task_token: str, details: str | None = None, reason: str | None = None) -> dict[str, Any] | None:
         """Replies to ``swf`` that the activity task failed
 
         :param  task_token: canceled activity task token
-        :type   task_token: string
-
         :param  details: provided details about the failure
-        :type   details: string
-
         :param  reason: Description of the error that may assist in diagnostics
         :type   reason: string
         """
@@ -117,14 +112,11 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
 
-    def heartbeat(self, task_token, details=None):
+    def heartbeat(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Records activity task heartbeat
 
         :param  task_token: canceled activity task token
-        :type   task_token: str
-
         :param  details: provided details about task progress
-        :type   details: string
         """
         try:
             return self.connection.record_activity_task_heartbeat(
@@ -147,7 +139,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
 
-    def poll(self, task_list=None, identity=None):
+    def poll(self, task_list: str | None = None, identity: str | None = None) -> Response:
         """Polls for an activity task to process from current
         actor's instance defined ``task_list``
 
@@ -155,19 +147,15 @@ class ActivityWorker(Actor):
         exception.
 
         :param  task_list: task list the Actor should watch for tasks on
-        :type   task_list: string
-
         :param  identity: Identity of the worker making the request,
                           which is recorded in the ActivityTaskStarted
                           event in the workflow history. This enables
                           diagnostic tracing when problems arise.
                           The form of this identity is user defined.
-        :type   identity: string
 
         :raises: PollTimeout
 
         :returns: task token, polled activity task
-        :rtype: (str, ActivityTask)
         """
         logging_context.reset()
         task_list = task_list or self.task_list
