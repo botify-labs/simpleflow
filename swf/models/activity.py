@@ -10,8 +10,7 @@ from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
 from swf import exceptions
 from swf.constants import REGISTERED
 from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
-from swf.models import BaseModel
-from swf.models.base import ModelDiff
+from swf.models.base import BaseModel, ModelDiff
 from swf.utils import immutable
 
 
