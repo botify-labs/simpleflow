@@ -9,5 +9,4 @@ ADD . /code/simpleflow
 
 WORKDIR /code/simpleflow
 
-RUN pip install -e .
-RUN pip install -r requirements-dev.txt
+RUN pip install -e .[dev]

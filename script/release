@@ -44,9 +44,7 @@ def fail(message: str) -> None:
     sys.exit(2)
 
 
-def execute(
-    command: list[str], ignore: bool = False, log: bool = False, dry_run: bool = False
-) -> str:
+def execute(command: list[str], ignore: bool = False, log: bool = False, dry_run: bool = False) -> str:
     """
     Execute a command and return the output.
     :param command: command to execute
@@ -56,11 +54,7 @@ def execute(
     :return: command output
     """
     if log or dry_run:
-        print(
-            "{}execute: {}".format(
-                "would " if dry_run else "", " ".join(quote(c) for c in command)
-            )
-        )
+        print("{}execute: {}".format("would " if dry_run else "", " ".join(quote(c) for c in command)))
     if dry_run:
         return ""
     env = os.environ.copy()
@@ -86,10 +80,7 @@ def current_branch() -> str:
     branch = execute(["git", "branch", "--show-current"]).strip()
     if branch:
         return branch
-    fail(
-        "Couldn't find current branch, please don't"
-        " be in 'detached' state when running this."
-    )
+    fail("Couldn't find current branch, please don't" " be in 'detached' state when running this.")
 
 
 def on_main_branch() -> bool:
@@ -102,9 +93,7 @@ def on_main_branch() -> bool:
 
 def current_version() -> Version:
     with open(VERSION_FILE) as f:
-        version_line_regex = re.compile(
-            r"""^__version__\s*=\s*['"](?P<version>.*?)['"]\s*$"""
-        )
+        version_line_regex = re.compile(r"""^__version__\s*=\s*['"](?P<version>.*?)['"]\s*$""")
         for line in f:
             m = version_line_regex.match(line)
             if m:
@@ -214,12 +203,7 @@ def write_changelog(new_content: str, new_version: Version) -> None:
 
     # detect where the first sub-title begins, it will be the first version
     # section; we will introduce our new changelog just above
-    first_version_line_number = (
-        next(
-            idx for idx, line in enumerate(current_changelog) if line.startswith("---")
-        )
-        - 2
-    )
+    first_version_line_number = next(idx for idx, line in enumerate(current_changelog) if line.startswith("---")) - 2
 
     with open(CHANGELOG_FILE, "w") as f:
         for idx, line in enumerate(current_changelog):
@@ -228,9 +212,7 @@ def write_changelog(new_content: str, new_version: Version) -> None:
             f.write(line)
 
 
-def generate_changelog(
-    previous_version: Version, new_version: Version, dry_run: bool
-) -> str:
+def generate_changelog(previous_version: Version, new_version: Version, dry_run: bool) -> str:
     proposed = proposed_changelog(previous_version, new_version)
     print(proposed.replace("\n", "\n  "))
     if not dry_run:
@@ -271,11 +253,7 @@ def input_new_version(current: Version) -> Version:
             try:
                 new_version = Version(new_version_str)
             except InvalidVersion as ex:
-                print(
-                    "{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(
-                        ex
-                    )
-                )
+                print("{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(ex))
         else:
             new_version = default_new_version
     return new_version
@@ -290,9 +268,7 @@ def main():
         version=f"simpleflow {current_version()}",
         help="display version number",
     )
-    parser.add_argument(
-        "--dry-run", "-n", action="store_true", help="don't actually do anything"
-    )
+    parser.add_argument("--dry-run", "-n", action="store_true", help="don't actually do anything")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--test-pypi",
@@ -348,13 +324,9 @@ def main():
     release_tag(new_version, changes, dry_run)
 
     # push package to pypi
-    step(
-        "Generate and push package to {}".format(
-            args.repository or args.repository_url or "pypi"
-        )
-    )
+    step("Generate and push package to {}".format(args.repository or args.repository_url or "pypi"))
     execute(["python", "setup.py", "bdist_wheel"], log=True)
-    wheel = f"dist/simpleflow-{new_version}-py2.py3-none-any.whl"
+    wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
     cmd = ["twine", "upload", wheel]
     if args.repository:
         cmd += ["--repository", args.repository]
