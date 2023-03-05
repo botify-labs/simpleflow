@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 import signal
 import sys
 import time
 
+import multiprocess
 from flaky import flaky
 from psutil import Process
 from pytest import mark
@@ -143,7 +143,7 @@ class TestSupervisor(IntegrationTestCase):
             self.wait(1)
 
         # check it ignores SIGTERM normally
-        p = multiprocessing.Process(target=foo)
+        p = multiprocess.Process(target=foo)
         p.start()
         # TODO: find a non-sleep approach to this
         self.wait(0.5)
@@ -153,7 +153,7 @@ class TestSupervisor(IntegrationTestCase):
 
         # check it fails with the decorator (meaning that SIGTERM is not ignored
         # anymore)
-        p = multiprocessing.Process(target=reset_signal_handlers(foo))
+        p = multiprocess.Process(target=reset_signal_handlers(foo))
         p.start()
         # TODO: find a non-sleep approach to this
         self.wait(0.5)

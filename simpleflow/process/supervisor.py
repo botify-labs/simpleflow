@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import functools
-import multiprocessing
 import os
 import signal
+import sys
 import time
 import types
 
+import multiprocess
 import psutil
 
 from simpleflow import logger
@@ -60,25 +61,24 @@ class Supervisor(NamedMixin):
     style.
     """
 
-    def __init__(self, payload, arguments=None, nb_children=None, background=False):
+    def __init__(
+        self,
+        payload: callable,
+        arguments: tuple | list | None = None,
+        nb_children: int | None = None,
+        background: bool = False,
+    ) -> None:
         """
         Initializes a Manager() instance, with a payload (a callable that will be
         executed on worker processes), some arguments (a list or tuple of arguments
         to pass to the callable on workers), and nb_children (the expected number
         of workers, which defaults to the number of CPU cores if not passed).
 
-        :param payload:
-        :type payload: callable
-        :param arguments:
-        :type arguments: tuple | list
-        :param nb_children:
-        :type nb_children: int
-        :param background: wether the supervisor process should launch in background
-        :type background: bool
+        background: whether the supervisor process should launch in background
         """
         # NB: below, compare explicitly to "None" there because nb_children could be 0
         if nb_children is None:
-            self._nb_children = multiprocessing.cpu_count()
+            self._nb_children = multiprocess.cpu_count()
         else:
             self._nb_children = nb_children
         self._payload = payload
@@ -100,7 +100,7 @@ class Supervisor(NamedMixin):
         """
         logger.info(f"starting {self._payload}")
         if self._background:
-            p = multiprocessing.Process(target=self.target)
+            p = multiprocess.Process(target=self.target)
             p.start()
         else:
             self.target()
@@ -133,7 +133,7 @@ class Supervisor(NamedMixin):
         if self._terminating:
             return
         for _ in range(len(self._processes), self._nb_children):
-            child = multiprocessing.Process(target=reset_signal_handlers(self._payload), args=self._args)
+            child = multiprocess.Process(target=reset_signal_handlers(self._payload), args=self._args)
             child.start()
 
             # One might wonder if `child.pid` is guaranteed to be set at this

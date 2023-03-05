@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
-import multiprocessing
 import os
 import sys
 import traceback
 import uuid
 from base64 import b64decode
 
+import multiprocess
 import psutil
 
 import swf.actors
@@ -332,7 +332,7 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
     :type heartbeat: int
     """
     logger.info("spawning new activity worker pid={} heartbeat={}".format(os.getpid(), heartbeat))
-    worker = multiprocessing.Process(target=process_task, args=(poller, token, task, middlewares))
+    worker = multiprocess.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
     def worker_alive():
@@ -347,7 +347,7 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
                 worker.join(timeout=0)
                 if worker.exitcode is None:
                     logger.warning(
-                        "process {} is dead but multiprocessing doesn't know it (simpleflow bug)".format(worker.pid)
+                        "process {} is dead but multiprocess doesn't know it (simpleflow bug)".format(worker.pid)
                     )
             if worker.exitcode != 0:
                 poller.fail_with_retry(

@@ -4,10 +4,11 @@ import copy
 import hashlib
 import inspect
 import json
-import multiprocessing
 import re
 import traceback
 from typing import TYPE_CHECKING, Any, Callable
+
+import multiprocess
 
 import simpleflow.task as base_task
 import swf.exceptions
@@ -21,15 +22,8 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import (
-    ActivityTask,
-    CancelTimerTask,
-    MarkerTask,
-    SignalTask,
-    SwfTask,
-    TimerTask,
-    WorkflowTask,
-)
+from simpleflow.swf.task import (ActivityTask, CancelTimerTask, MarkerTask,
+                                 SignalTask, SwfTask, TimerTask, WorkflowTask)
 from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
@@ -83,7 +77,7 @@ def run_fake_child_workflow_task(domain, task_list, result=None):
 
 def run_fake_task_worker(domain, task_list, former_event):
     if former_event["type"] == "activity":
-        worker_proc = multiprocessing.Process(
+        worker_proc = multiprocess.Process(
             target=run_fake_activity_task,
             args=(
                 domain,
@@ -92,7 +86,7 @@ def run_fake_task_worker(domain, task_list, former_event):
             ),
         )
     elif former_event["type"] == "child_workflow":
-        worker_proc = multiprocessing.Process(
+        worker_proc = multiprocess.Process(
             target=run_fake_child_workflow_task,
             args=(
                 domain,

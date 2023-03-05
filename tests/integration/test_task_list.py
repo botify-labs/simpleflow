@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 import signal
 import time
 
+import multiprocess
 from sure import expect
 
 from simpleflow.command import start_workflow
@@ -16,7 +16,7 @@ from tests.integration import VCRIntegrationTest, vcr
 class TestTaskLists(VCRIntegrationTest):
     @vcr.use_cassette
     def test_not_standalone(self):
-        decider_proc = multiprocessing.Process(
+        decider_proc = multiprocess.Process(
             target=decider.command.start,
             args=(
                 [
@@ -35,7 +35,7 @@ class TestTaskLists(VCRIntegrationTest):
         )
         decider_proc.start()
 
-        worker_proc = multiprocessing.Process(
+        worker_proc = multiprocess.Process(
             target=worker.command.start,
             args=(
                 self.domain,

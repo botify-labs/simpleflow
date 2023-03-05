@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 from typing import TYPE_CHECKING
+
+import multiprocess
 
 import swf.actors
 import swf.exceptions
@@ -261,7 +262,7 @@ def process_decision(poller: DeciderPoller, decision_response: Response) -> None
 
 def spawn(poller, decision_response):
     logger.debug(f"spawn() pid={os.getpid()}")
-    worker = multiprocessing.Process(
+    worker = multiprocess.Process(
         target=process_decision,
         args=(poller, decision_response),
     )

@@ -4,10 +4,10 @@ import os
 import signal
 import sys
 import time
-from multiprocessing import Lock, Process, Value
 
 import psutil
 import pytest
+from multiprocess import Lock, Process, Value
 
 import simpleflow.swf.process.worker.base as base
 
@@ -67,9 +67,9 @@ def nested_target(handler, child_pid, lock):
     :param handler: SIGTERM handler
     :type handler: func
     :param child_pid: child process PID
-    :type child_pid: multiprocessing.Value
+    :type child_pid: multiprocess.Value
     :param lock: lock
-    :type lock: multiprocessing.Lock
+    :type lock: multiprocess.Lock
     """
     signal.signal(signal.SIGTERM, handler)
     proc = Process(target=noop_target, args=(handler,))

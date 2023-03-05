@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 import signal
 import time
 
+import multiprocess
 from psutil import Process
 from pytest import mark
 from sure import expect
@@ -40,7 +40,7 @@ class TestSupervisor(IntegrationTestCase):
         # the worker subprocess.
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-        process = multiprocessing.Process(target=poller.start)
+        process = multiprocess.Process(target=poller.start)
         process.start()
         time.sleep(0.5)
 

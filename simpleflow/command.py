@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import multiprocessing
 import os
 import platform
 import signal
@@ -12,6 +11,7 @@ from uuid import uuid4
 
 import boto.connection
 import click
+import multiprocess
 
 import swf.exceptions
 import swf.models
@@ -25,7 +25,8 @@ from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import decider, worker
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
-from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
+from simpleflow.swf.utils import (get_workflow_execution,
+                                  set_workflow_class_name)
 from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
@@ -650,7 +651,7 @@ def standalone(
 
     task_list = create_unique_task_list(workflow_id)
     logger.info(f"using task list {task_list}")
-    decider_proc = multiprocessing.Process(
+    decider_proc = multiprocess.Process(
         target=decider.command.start,
         args=(
             [workflow],
@@ -668,7 +669,7 @@ def standalone(
     )
     decider_proc.start()
 
-    worker_proc = multiprocessing.Process(
+    worker_proc = multiprocess.Process(
         target=worker.command.start,
         args=(
             domain,
@@ -834,7 +835,7 @@ def info(sections):
     "It expects a list of locations as <binary>=<s3_location> arguments.",
 )
 def binaries_download(locations):
-    pool = multiprocessing.Pool(5)
+    pool = multiprocess.Pool(5)
     pool.map(_download_binary, locations)
 
 
