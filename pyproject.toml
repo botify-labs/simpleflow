@@ -54,6 +54,7 @@ dev = [
     "invoke",
     "moto<3.0.0",
     "packaging",
+    "pre-commit",
     "pytest",
     "pytest-xdist>=3.2.0",
     "ruff",
