@@ -56,6 +56,7 @@ htmlcov/
 # Temporary files
 .cache/
 /tmp/
+/out/
 
 # Not to be ignored
 !docs/script/build
