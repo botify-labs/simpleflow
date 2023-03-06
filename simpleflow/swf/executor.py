@@ -22,8 +22,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import (ActivityTask, CancelTimerTask, MarkerTask,
-                                 SignalTask, SwfTask, TimerTask, WorkflowTask)
+from simpleflow.swf.task import ActivityTask, CancelTimerTask, MarkerTask, SignalTask, SwfTask, TimerTask, WorkflowTask
 from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
@@ -648,7 +647,6 @@ class Executor(executor.Executor):
     def default_failure_handling(
         failure_context: base_task.TaskFailureContext,
     ) -> base_task.TaskFailureContext:
-
         # Compare number of retries in history with configured max retries
         # NB: we used to do a strict comparison (==), but that can lead to
         # infinite retries in case the code is redeployed with a decreased

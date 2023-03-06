@@ -71,7 +71,7 @@ class Step:
         return stats
 
     def mset_metadata(self, kvs):
-        for (k, v) in kvs:
+        for k, v in kvs:
             self.metadata[k] = v
 
 

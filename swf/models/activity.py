@@ -87,7 +87,6 @@ class ActivityType(BaseModel):
         *args,
         **kwargs,
     ) -> None:
-
         self.domain = domain
         self.name = name
         self.version = version

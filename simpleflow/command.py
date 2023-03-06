@@ -25,8 +25,7 @@ from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import decider, worker
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
-from simpleflow.swf.utils import (get_workflow_execution,
-                                  set_workflow_class_name)
+from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
