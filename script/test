@@ -31,4 +31,4 @@ export BOTO_CONFIG=/dev/null
 
 PYTHON=${PYTHON:-python}
 # run tests
-$PYTHON -m pytest --no-success-flaky-report -q $PYTEST_OPTIONS --dist worksteal --numprocesses ${NUMPROCESSES:-auto} "$@"
+$PYTHON -m pytest --no-success-flaky-report -q $PYTEST_OPTIONS "$@"
