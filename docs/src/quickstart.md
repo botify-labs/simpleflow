@@ -106,7 +106,7 @@ continue, the decider schedules the task `increment`. **yy** is not a
 dependency for any task, so it is not scheduled.
 
 Once the decider has scheduled the task for **y**, it sleeps and waits for an
-event to be wakened up. This happens when the `increment` task completes.
+event to be woken up. This happens when the `increment` task completes.
 SWF schedules a decision task. A decider takes it and executes the
 `BasicWorkflow.run` method again from the start. It evaluates the line `y
 = self.submit(increment, x)`. The task associated with the **y** future has

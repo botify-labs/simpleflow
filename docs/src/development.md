@@ -53,12 +53,14 @@ simpleflow during tests:
   `tests/integration/README.md`
 
 
-Reproducing Travis failures
----------------------------
+Reproducing CI failures
+-----------------------
+
+*Note: we're currently migrating from Travis to GitHub CI*
 
 It might happen that a test fails on [Travis](https://travis-ci.org/botify-labs/simpleflow)
 and you want to reproduce locally. Travis has a [helpful section in their docs](https://docs.travis-ci.com/user/common-build-problems/#Running-a-Container-Based-Docker-Image-Locally)
-about reproducing such issues. As of 2022, simpleflow builds run on 20.04 containers on
+about reproducing such issues. Since 2022, simpleflow builds run on 20.04 containers on
 the Travis infrastructure. So you can get close to the Travis setup with something like:
 
     docker run -it \
