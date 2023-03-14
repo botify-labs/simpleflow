@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from boto.exception import S3ResponseError
@@ -8,6 +10,7 @@ from . import logger, settings
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple  # NOQA
+
     from boto.s3.bucket import Bucket  # NOQA
     from boto.s3.bucketlistresultset import BucketListResultSet  # NOQA
 
@@ -15,8 +18,7 @@ BUCKET_CACHE = {}
 BUCKET_LOCATIONS_CACHE = {}
 
 
-def get_connection(host_or_region):
-    # type: (str) -> connection.S3Connection
+def get_connection(host_or_region: str) -> connection.S3Connection:
     # first case: we got a valid DNS (host)
     if "." in host_or_region:
         return connection.S3Connection(host=host_or_region)
@@ -25,8 +27,7 @@ def get_connection(host_or_region):
     return connect_to_region(host_or_region)
 
 
-def sanitize_bucket_and_host(bucket):
-    # type: (str) -> Tuple[str, str]
+def sanitize_bucket_and_host(bucket: str) -> tuple[str, str]:
     """
     if bucket is in following format : 'xxx.amazonaws.com/bucket_name',
     Returns a 2-values tuple ('bucket_name', 'xxx.amazonaws.com')
@@ -35,9 +36,7 @@ def sanitize_bucket_and_host(bucket):
     if "/" in bucket:
         host, bucket = bucket.split("/", 1)
         if "/" in bucket:
-            raise ValueError(
-                "{} should contains only one slash separator".format(bucket)
-            )
+            raise ValueError(f"{bucket} should contains only one slash separator")
         if not host.endswith("amazonaws.com"):
             raise ValueError("host should be a *.amazonaws.com URL")
         return bucket, host
@@ -63,9 +62,7 @@ def sanitize_bucket_and_host(bucket):
     except S3ResponseError as e:
         if e.error_code == "AccessDenied":
             # probably not allowed to perform GetBucketLocation on this bucket
-            logger.warning(
-                "Access denied while trying to get location of bucket {}".format(bucket)
-            )
+            logger.warning(f"Access denied while trying to get location of bucket {bucket}")
             location = ""
         else:
             raise
@@ -77,8 +74,7 @@ def sanitize_bucket_and_host(bucket):
     return bucket, location
 
 
-def get_bucket(bucket_name):
-    # type: (str) -> Bucket
+def get_bucket(bucket_name: str) -> Bucket:
     bucket_name, location = sanitize_bucket_and_host(bucket_name)
     conn = get_connection(location)
     if bucket_name not in BUCKET_CACHE:
@@ -87,45 +83,36 @@ def get_bucket(bucket_name):
     return BUCKET_CACHE[bucket_name]
 
 
-def pull(bucket, path, dest_file):
-    # type: (str, str, str) -> None
+def pull(bucket: str, path: str, dest_file: str) -> None:
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
     key.get_contents_to_filename(dest_file)
 
 
-def pull_content(bucket, path):
-    # type: (str, str) -> str
+def pull_content(bucket: str, path: str) -> str:
     bucket = get_bucket(bucket)
     key = bucket.get_key(path)
     return key.get_contents_as_string(encoding="utf-8")
 
 
-def push(bucket, path, src_file, content_type=None):
-    # type: (str, str, str, Optional[str]) -> None
+def push(bucket: str, path: str, src_file: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_filename(
-        src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
-    )
+    key.set_contents_from_filename(src_file, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
-def push_content(bucket, path, content, content_type=None):
-    # type: (str, str, str, Optional[str]) -> None
+def push_content(bucket: str, path: str, content: str, content_type: str | None = None) -> None:
     bucket = get_bucket(bucket)
     key = Key(bucket, path)
     headers = {}
     if content_type:
         headers["content_type"] = content_type
-    key.set_contents_from_string(
-        content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE
-    )
+    key.set_contents_from_string(content, headers=headers, encrypt_key=settings.SIMPLEFLOW_S3_SSE)
 
 
-def list_keys(bucket, path=None):
-    # type: (str, str) -> BucketListResultSet
+def list_keys(bucket: str, path: str = None) -> BucketListResultSet:
     bucket = get_bucket(bucket)
     return bucket.list(path)

@@ -1,11 +1,11 @@
-import sys
+from __future__ import annotations
 
-from future.utils import iteritems
+import sys
 
 from . import default
 
 
-class Setting(object):
+class Setting:
     pass
 
 
@@ -21,7 +21,7 @@ def get_settings(module):
 
 def load_settings(module, env, conf, defaults):
     settings = {}
-    for name, typ in iteritems(get_settings(module)):
+    for name, typ in get_settings(module).items():
         if name in env:
             value = env[name]
         elif conf and hasattr(conf, name):
@@ -44,7 +44,12 @@ def load(conf_module_name=None):
     else:
         conf = None
 
-    return load_settings(sys.modules[__name__], env, conf, default,)
+    return load_settings(
+        sys.modules[__name__],
+        env,
+        conf,
+        default,
+    )
 
 
 def str_or_none(val):

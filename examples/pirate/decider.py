@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from simpleflow import Workflow, activity
 from simpleflow.exceptions import ExecutionBlocked
 
@@ -8,7 +6,10 @@ from .worker import build_boat, find_crew, find_or_steal_money, find_parrot, ste
 
 # decorator for all activities
 def pirate_activity(func):
-    return activity.with_attributes(task_list="pirate", version="1.0",)(func)
+    return activity.with_attributes(
+        task_list="pirate",
+        version="1.0",
+    )(func)
 
 
 # wrap activities
@@ -26,14 +27,13 @@ class PirateBusiness(Workflow):
     version = "1.0"
 
     def run(
-        self, money_needed=150,
+        self,
+        money_needed=150,
     ):
         # get money
         money = 0
         while money < money_needed:
-            money = self.submit(
-                find_or_steal_money, initial=money, target=money_needed
-            ).result
+            money = self.submit(find_or_steal_money, initial=money, target=money_needed).result
 
         # build boat / crew
         a1 = self.submit(build_boat)

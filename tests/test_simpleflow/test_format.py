@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
 import random
 import unittest
 
 import boto
-from future.utils import PY2
 
 from simpleflow import constants, format
 from simpleflow.storage import push_content
@@ -12,9 +13,6 @@ from tests.moto_compat import mock_s3
 
 
 class TestFormat(unittest.TestCase):
-    if PY2:
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
-
     def setUp(self):
         pass
 
@@ -36,7 +34,8 @@ class TestFormat(unittest.TestCase):
         MAX_LENGTH = random.randint(10, 1000)
         message = "A" * (MAX_LENGTH // 2)
         self.assertEqual(
-            format.encode(message, MAX_LENGTH), message,
+            format.encode(message, MAX_LENGTH),
+            message,
         )
 
     @mock_s3
@@ -65,9 +64,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEqual(
-            self.conn.get_bucket("jumbo-bucket")
-            .get_key(key)
-            .get_contents_as_string(encoding="utf-8"),
+            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding="utf-8"),
             json.dumps(message),
         )
 
@@ -83,9 +80,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEqual(
-            self.conn.get_bucket("jumbo-bucket")
-            .get_key(key)
-            .get_contents_as_string(encoding="utf-8"),
+            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding="utf-8"),
             json.dumps(message),
         )
 

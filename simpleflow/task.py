@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import annotations
 
 import abc
 import time
@@ -7,7 +7,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import attr
-import six
 
 from simpleflow.base import Submittable
 from simpleflow.history import History
@@ -17,7 +16,9 @@ from . import futures, logger
 from .activity import Activity
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type, Union  # NOQA
+    from typing import Any
+
+    from simpleflow.exceptions import TaskFailed
 
 
 def get_actual_value(value):
@@ -29,8 +30,7 @@ def get_actual_value(value):
     return value
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Task(Submittable):
+class Task(Submittable, metaclass=abc.ABCMeta):
     """A Task represents a work that can be scheduled for execution."""
 
     @property
@@ -58,9 +58,7 @@ class ActivityTask(Task):
 
     def __init__(self, activity, *args, **kwargs):
         if not isinstance(activity, Activity):
-            raise TypeError(
-                "Wrong value for `activity`, got {} instead".format(type(activity))
-            )
+            raise TypeError(f"Wrong value for `activity`, got {type(activity)} instead")
 
         self.pre_execute_funcs = []
         self.post_execute_funcs = []
@@ -102,7 +100,7 @@ class ActivityTask(Task):
 
     @property
     def name(self):
-        return "activity-{}".format(self.activity.name)
+        return f"activity-{self.activity.name}"
 
     def __repr__(self):
         return "{}(activity={}, args={}, kwargs={}, id={})".format(
@@ -175,7 +173,7 @@ class WorkflowTask(Task):
 
     @property
     def name(self):
-        return "workflow-{}".format(self.workflow.name)
+        return f"workflow-{self.workflow.name}"
 
     def __repr__(self):
         return "{}(workflow={}, args={}, kwargs={}, id={})".format(
@@ -204,7 +202,7 @@ class ChildWorkflowTask(WorkflowTask):
     """
 
     def __init__(self, workflow, *args, **kwargs):
-        super(ChildWorkflowTask, self).__init__(None, workflow, *args, **kwargs)
+        super().__init__(None, workflow, *args, **kwargs)
 
 
 class SignalTask(Task):
@@ -278,9 +276,7 @@ class TimerTask(Task):
         return self.timer_id
 
     def __repr__(self):
-        return '<{} timer_id="{}" timeout={}>'.format(
-            self.__class__.__name__, self.timer_id, self.timeout
-        )
+        return '<{} timer_id="{}" timeout={}>'.format(self.__class__.__name__, self.timer_id, self.timeout)
 
     def execute(self):
         # Local execution
@@ -306,7 +302,7 @@ class CancelTimerTask(Task):
         return self.timer_id
 
     def __repr__(self):
-        return '<{} timer_id="{}">'.format(self.__class__.__name__, self.timer_id)
+        return f'<{self.__class__.__name__} timer_id="{self.timer_id}">'
 
     def execute(self):
         # Local execution: no-op
@@ -314,7 +310,7 @@ class CancelTimerTask(Task):
 
 
 @attr.s
-class TaskFailureContext(object):
+class TaskFailureContext:
     """
     Some context for a task/workflow failure.
     """
@@ -328,29 +324,26 @@ class TaskFailureContext(object):
         cancel = 5
         handled = 6
 
-    a_task = attr.ib()  # type: Union[ActivityTask, WorkflowTask]
-    event = attr.ib()  # type: Dict[str, Any]
-    future = attr.ib()  # type: Optional[futures.Future]
-    exception_class = attr.ib()  # type: Type[Exception]
-    history = attr.ib(default=None)  # type: Optional[History]
-    decision = attr.ib(default=Decision.none)  # type: Optional[Decision]
-    retry_wait_timeout = attr.ib(default=None)  # type: Optional[int]
-    _task_error = attr.ib(default=None)  # type: Optional[str]
-    _task_error_type = attr.ib(default=None)  # type: Optional[Type[Exception]]
+    a_task: ActivityTask | WorkflowTask = attr.ib()
+    event: dict[str, Any] = attr.ib()
+    future: futures.Future | None = attr.ib()
+    exception_class: type[Exception] = attr.ib()
+    history: History | None = attr.ib(default=None)
+    decision: Decision | None = attr.ib(default=Decision.none)
+    retry_wait_timeout: int | None = attr.ib(default=None)
+    _task_error: str | None = attr.ib(default=None)
+    _task_error_type: type[Exception] | None = attr.ib(default=None)
 
     @property
-    def retry_count(self):
-        # type: () -> Optional[int]
+    def retry_count(self) -> int | None:
         return self.event.get("retry")
 
     @property
-    def attempt_number(self):
-        # type: () -> int
+    def attempt_number(self) -> int:
         return self.event.get("retry", 0) + 1
 
     @property
-    def task_name(self):
-        # type: () -> Optional[str]
+    def task_name(self) -> str | None:
         if hasattr(self.a_task, "payload"):
             return self.a_task.payload.name
         if hasattr(self.a_task, "name"):
@@ -358,30 +351,25 @@ class TaskFailureContext(object):
         return None
 
     @property
-    def exception(self):
-        # type: () -> Optional[Exception]
+    def exception(self) -> Exception | TaskFailed | None:
         return self.future.exception
 
     @property
-    def current_started_decision_id(self):
-        # type: () -> Optional[int]
+    def current_started_decision_id(self) -> int | None:
         return self.history.started_decision_id if self.history else None
 
     @property
-    def last_completed_decision_id(self):
-        # type: () -> Optional[int]
+    def last_completed_decision_id(self) -> int | None:
         return self.history.completed_decision_id if self.history else None
 
     @property
-    def task_error(self):
-        # type: () -> str
+    def task_error(self) -> str:
         if self._task_error is None:
             self._cache_error()
         return self._task_error
 
     @property
-    def task_error_type(self):
-        # type: () -> Optional[Type[Exception]]
+    def task_error_type(self) -> type[Exception] | None:
         if self._task_error is None:
             self._cache_error()
         return self._task_error_type
@@ -398,45 +386,35 @@ class TaskFailureContext(object):
                     self._task_error = details["error"]
                 if "error_type" in details:
                     try:
-                        self._task_error_type = import_from_module(
-                            details["error_type"]
-                        )
-                    except Exception:
+                        self._task_error_type = import_from_module(details["error_type"])
+                    except Exception:  # nosec
                         pass
 
     @property
-    def id(self):
-        # type: () -> Optional[int]
+    def id(self) -> int | None:
         event = self.event
         return History.get_event_id(event)
 
-    def decide_abort(self):
-        # type: () -> TaskFailureContext
+    def decide_abort(self) -> TaskFailureContext:
         self.decision = self.Decision.abort
         return self
 
-    def decide_ignore(self):
-        # type: () -> TaskFailureContext
+    def decide_ignore(self) -> TaskFailureContext:
         self.decision = self.Decision.ignore
         return self
 
-    def decide_cancel(self):
-        # type: () -> TaskFailureContext
+    def decide_cancel(self) -> TaskFailureContext:
         self.decision = self.Decision.cancel
         return self
 
-    def decide_retry(self, retry_wait_timeout=0):
-        # type: (Optional[int]) -> TaskFailureContext
-        self.decision = (
-            self.Decision.retry_now
-            if not retry_wait_timeout
-            else self.Decision.retry_later
-        )
+    def decide_retry(self, retry_wait_timeout: int | None = 0) -> TaskFailureContext:
+        self.decision = self.Decision.retry_now if not retry_wait_timeout else self.Decision.retry_later
         self.retry_wait_timeout = retry_wait_timeout
         return self
 
-    def decide_handled(self, a_task, future=None):
-        # type: (Union[ActivityTask, WorkflowTask], Optional[futures.Future]) -> TaskFailureContext
+    def decide_handled(
+        self, a_task: ActivityTask | WorkflowTask, future: futures.Future | None = None
+    ) -> TaskFailureContext:
         self.a_task = a_task
         self.future = future
         self.decision = self.Decision.handled

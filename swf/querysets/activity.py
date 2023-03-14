@@ -1,17 +1,22 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
-from boto.swf.exceptions import SWFResponseError
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from boto.swf.exceptions import SWFResponseError  # noqa
 
 from swf.constants import REGISTERED
 from swf.exceptions import DoesNotExistError, ResponseError
 from swf.models.activity import ActivityType
 from swf.querysets.base import BaseQuerySet
 from swf.utils import get_subkey
+
+if TYPE_CHECKING:
+    from swf.models.domain import Domain
 
 
 class ActivityTypeQuerySet(BaseQuerySet):
@@ -21,37 +26,33 @@ class ActivityTypeQuerySet(BaseQuerySet):
     activity types through a django-queryset-like interface
 
     :param      domain: domain the activity type belongs to
-    :type       domain: swf.models.domain.Domain
     """
 
     # Explicit is better than implicit, keep zen
     _infos = "typeInfo"
     _infos_plural = "typeInfos"
 
-    def __init__(self, domain, *args, **kwargs):
-        super(ActivityTypeQuerySet, self).__init__(*args, **kwargs)
+    def __init__(self, domain: Domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.domain = domain
 
     @property
-    def domain(self):
+    def domain(self) -> Domain | None:
         if not hasattr(self, "_domain"):
             self._domain = None
         return self._domain
 
     @domain.setter
-    def domain(self, value):
+    def domain(self, value: Domain):
         # Avoiding circular import
         from swf.models.domain import Domain
 
         if not isinstance(value, Domain):
-            err = (
-                "domain property has to be of"
-                "swf.model.domain.Domain type, not %r" % type(value)
-            )
+            err = "domain property has to be of" "swf.model.domain.Domain type, not %r" % type(value)
             raise TypeError(err)
         self._domain = value
 
-    def to_ActivityType(self, domain, type_info, **kwargs):
+    def to_ActivityType(self, domain: Domain, type_info: dict[str, Any], **kwargs) -> ActivityType:
         return ActivityType(
             domain,
             type_info["activityType"]["name"],
@@ -60,23 +61,18 @@ class ActivityTypeQuerySet(BaseQuerySet):
             description=type_info.get("description"),
             creation_date=type_info.get("creationDate"),
             deprecation_date=type_info.get("deprecationDate"),
-            **kwargs
+            **kwargs,
         )
 
     def _list(self, *args, **kwargs):
         return self.connection.list_activity_types(*args, **kwargs)["typeInfos"]
 
-    def get(self, name, version, *args, **kwargs):
+    def get(self, name: str, version: str, *args, **kwargs) -> ActivityType:
         """Fetches the activity type with provided ``name`` and ``version``
 
         :param      name: activity type name to fetch
-        :type       name: String
-
         :param      version: activity version to fetch
-        :type       version: String
-
         :returns: Matched activity type instance
-        :rtype: swf.models.activity.ActivityType
 
         A typical Amazon response looks like:
 
@@ -105,9 +101,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
             }
         """
         try:
-            response = self.connection.describe_activity_type(
-                self.domain.name, name, version
-            )
+            response = self.connection.describe_activity_type(self.domain.name, name, version)
         except SWFResponseError as e:
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(e.error_message)
@@ -127,21 +121,15 @@ class ActivityTypeQuerySet(BaseQuerySet):
 
         task_schedule_to_close_timeout = kwargs.get("task_schedule_to_close_timeout")
         if task_schedule_to_close_timeout is None:
-            task_schedule_to_close_timeout = activity_config.get(
-                "defaultTaskScheduleToCloseTimeout"
-            )
+            task_schedule_to_close_timeout = activity_config.get("defaultTaskScheduleToCloseTimeout")
 
         task_schedule_to_start_timeout = kwargs.get("task_schedule_to_start_timeout")
         if task_schedule_to_start_timeout is None:
-            task_schedule_to_start_timeout = activity_config.get(
-                "defaultTaskScheduleToStartTimeout"
-            )
+            task_schedule_to_start_timeout = activity_config.get("defaultTaskScheduleToStartTimeout")
 
         task_start_to_close_timeout = kwargs.get("task_start_to_close_timeout")
         if task_start_to_close_timeout is None:
-            task_start_to_close_timeout = activity_config.get(
-                "defaultTaskStartToCloseTimeout"
-            )
+            task_start_to_close_timeout = activity_config.get("defaultTaskStartToCloseTimeout")
 
         return self.to_ActivityType(
             self.domain,
@@ -155,20 +143,20 @@ class ActivityTypeQuerySet(BaseQuerySet):
 
     def get_or_create(
         self,
-        name,
-        version,
-        status=REGISTERED,
-        description=None,
-        creation_date=0.0,
-        deprecation_date=0.0,
-        task_list=None,
-        task_heartbeat_timeout=0,
-        task_schedule_to_close_timeout=0,
-        task_schedule_to_start_timeout=0,
-        task_start_to_close_timeout=0,
+        name: str,
+        version: str,
+        status: str = REGISTERED,
+        description: str | None = None,
+        creation_date: float = 0.0,
+        deprecation_date: float = 0.0,
+        task_list: str | None = None,
+        task_heartbeat_timeout: int = 0,
+        task_schedule_to_close_timeout: int = 0,
+        task_schedule_to_start_timeout: int = 0,
+        task_start_to_close_timeout: int = 0,
         *args,
-        **kwargs
-    ):
+        **kwargs,
+    ) -> ActivityType:
         """Fetches, or creates the ActivityType with ``name`` and ``version``
 
         When fetching trying to fetch a matching activity type, only
@@ -177,48 +165,26 @@ class ActivityTypeQuerySet(BaseQuerySet):
         has to be created it is made with specific values, just provide it.
 
         :param  name: name of the ActivityType
-        :type   name: str
-
         :param  version: version of the ActivityType
-        :type   version: str
-
         :param  status: ActivityType status
         :type   status: swf.constants.{REGISTERED, DEPRECATED}
-
         :param  description: ActivityType description
-        :type   description: str | None
-
         :param   creation_date: creation date of the current ActivityType
-        :type    creation_date: float (timestamp)
-
         :param   deprecation_date: deprecation date of ActivityType
-        :type    deprecation_date: float (timestamp)
-
         :param  task_list: specifies the default task list to use for scheduling
                            tasks of this activity type.
-        :type   task_list: str
-
         :param  task_heartbeat_timeout: default maximum time before which a worker
                                         processing a task of this type must report
                                         progress by calling RecordActivityTaskHeartbeat.
-        :type   task_heartbeat_timeout: int
-
         :param  task_schedule_to_close_timeout: default maximum duration for a task
                                                 of this activity type.
-        :type   task_schedule_to_close_timeout: int
-
         :param  task_schedule_to_start_timeout: default maximum duration that a
                                                 task of this activity type can wait
                                                 before being assigned to a worker.
-        :type   task_schedule_to_start_timeout: int
-
         :param   task_start_to_close_timeout: default maximum duration that a
                                               worker can take to process tasks of
                                               this activity type.
-        :type    task_start_to_close_timeout: int
-
         :returns: Fetched or created ActivityType model object
-        :rtype: ActivityType
         """
         try:
             return self.get(
@@ -230,7 +196,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
                 task_schedule_to_start_timeout=task_schedule_to_start_timeout,
                 task_start_to_close_timeout=task_start_to_close_timeout,
                 *args,
-                **kwargs
+                **kwargs,
             )
         except DoesNotExistError:
             return self.create(
@@ -248,25 +214,23 @@ class ActivityTypeQuerySet(BaseQuerySet):
             )
 
     def filter(
-        self, domain=None, registration_status=REGISTERED, name=None, *args, **kwargs
-    ):
+        self,
+        domain: Domain | None = None,
+        registration_status: str = REGISTERED,
+        name: str | None = None,
+        *args,
+        **kwargs,
+    ) -> list[ActivityType]:
         """Filters activity types based on their status, and/or name
 
         :param      domain: domain the activity type belongs to
-        :type       domain: swf.models.domain.Domain
-
         :param      registration_status: activity type registration status to match,
                                          Valid values are:
                                          * ``swf.constants.REGISTERED``
                                          * ``swf.constants.DEPRECATED``
 
-        :type       registration_status: string
-
         :param      name: activity type name to match
-        :type       name: string
-
         :returns: list of matched ActivityType models objects
-        :rtype: list
         """
         # name, domain filter is disposable, but not mandatory.
         domain = domain or self.domain
@@ -275,18 +239,14 @@ class ActivityTypeQuerySet(BaseQuerySet):
             for type_info in self._list(domain.name, registration_status, name=name)
         ]
 
-    def all(self, registration_status=REGISTERED, *args, **kwargs):
+    def all(self, registration_status: str = REGISTERED, *args, **kwargs) -> list[ActivityType]:
         """Retrieves every activity types
 
         :param      registration_status: activity type registration status to match,
                                          Valid values are:
                                          * ``swf.constants.REGISTERED``
                                          * ``swf.constants.DEPRECATED``
-
-        :type       registration_status: string
-
         :returns: list of matched ActivityType models objects
-        :rtype: list
 
         A typical Amazon response looks like:
 
@@ -318,73 +278,49 @@ class ActivityTypeQuerySet(BaseQuerySet):
                     next_page_token=response["nextPageToken"],
                 )
 
-                for activity_type_info in response[self._infos_plural]:
-                    yield activity_type_info
+                yield from response[self._infos_plural]
 
-        return [
-            self.to_ActivityType(self.domain, activity_info)
-            for activity_info in get_activity_types()
-        ]
+        return [self.to_ActivityType(self.domain, activity_info) for activity_info in get_activity_types()]
 
     def create(
         self,
-        name,
-        version,
-        status=REGISTERED,
-        description=None,
-        creation_date=0.0,
-        deprecation_date=0.0,
-        task_list=None,
-        task_heartbeat_timeout=0,
-        task_schedule_to_close_timeout=0,
-        task_schedule_to_start_timeout=0,
-        task_start_to_close_timeout=0,
+        name: str,
+        version: str,
+        status: str = REGISTERED,
+        description: str | None = None,
+        creation_date: float = 0.0,
+        deprecation_date: float = 0.0,
+        task_list: str | None = None,
+        task_heartbeat_timeout: int = 0,
+        task_schedule_to_close_timeout: int = 0,
+        task_schedule_to_start_timeout: int = 0,
+        task_start_to_close_timeout: int = 0,
         *args,
-        **kwargs
-    ):
+        **kwargs,
+    ) -> ActivityType:
         """Creates a new remote activity type and returns the
         created ActivityType model instance.
 
         :param  name: name of the ActivityType
-        :type   name: str
-
         :param  version: version of the ActivityType
-        :type   version: str
-
         :param  status: ActivityType status
         :type   status: swf.constants.{REGISTERED, DEPRECATED}
-
         :param  description: ActivityType description
-        :type   description: str | None
-
         :param   creation_date: creation date of the current ActivityType
-        :type    creation_date: float (timestamp)
-
         :param   deprecation_date: deprecation date of ActivityType
-        :type    deprecation_date: float (timestamp)
-
         :param  task_list: specifies the default task list to use for scheduling
                            tasks of this activity type.
-        :type   task_list: str
-
         :param  task_heartbeat_timeout: default maximum time before which a worker
                                         processing a task of this type must report
                                         progress by calling RecordActivityTaskHeartbeat.
-        :type   task_heartbeat_timeout: int
-
         :param  task_schedule_to_close_timeout: default maximum duration for a task
                                                 of this activity type.
-        :type   task_schedule_to_close_timeout: int
-
         :param  task_schedule_to_start_timeout: default maximum duration that a
                                                 task of this activity type can wait
                                                 before being assigned to a worker.
-        :type   task_schedule_to_start_timeout: int
-
         :param   task_start_to_close_timeout: default maximum duration that a
                                               worker can take to process tasks of
                                               this activity type.
-        :type    task_start_to_close_timeout: int
         """
         activity_type = ActivityType(
             self.domain,

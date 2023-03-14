@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import subprocess
 
 from simpleflow.download import with_binaries

@@ -1,10 +1,10 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
-from mock import patch
 
 import swf.settings
 from swf.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
@@ -38,17 +38,13 @@ class TestDomainQuerySet(unittest.TestCase):
     def test_get_non_existent_domain(self):
         with patch.object(self.qs.connection, "describe_domain") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400, "mocking exception", {"__type": "UnknownResourceFault"}
-                )
+                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnknownResourceFault"})
                 self.qs.get("non_existent")
 
     def test_get_domain_with_invalid_credentials(self):
         with patch.object(self.qs.connection, "describe_domain") as mock:
             with self.assertRaises(InvalidCredentialsError):
-                mock.side_effect = SWFResponseError(
-                    400, "mocking exception", {"__type": "UnrecognizedClientException"}
-                )
+                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnrecognizedClientException"})
                 self.qs.get("non_existent")
 
     def test_get_raising_domain(self):
@@ -57,7 +53,10 @@ class TestDomainQuerySet(unittest.TestCase):
                 mock.side_effect = SWFResponseError(
                     400,
                     "mocking exception",
-                    {"__type": "WhateverError", "message": "WhateverMessage",},
+                    {
+                        "__type": "WhateverError",
+                        "message": "WhateverMessage",
+                    },
                 )
                 self.qs.get("whatever")
 

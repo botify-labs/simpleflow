@@ -1,6 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import swf.models.event.workflow
 from simpleflow.utils import json_dumps
 from swf.models.event.factory import EventFactory
+
+if TYPE_CHECKING:
+    from swf.models import WorkflowType
+
 
 DEFAULT_DECIDER_IDENTITY = "test_decider"
 DEFAULT_WORKER_IDENTITY = "test_worker"
@@ -11,11 +19,11 @@ DEFAULT_DETAILS = "DETAILS"
 __all__ = ["History"]
 
 
-FIRST_TIMESTAMP = None
-LATEST_TIMESTAMP = None
+FIRST_TIMESTAMP: float | None = None
+LATEST_TIMESTAMP: float | None = None
 
 
-def new_timestamp_string():
+def new_timestamp_string() -> float:
     import random
     from time import time
 
@@ -33,9 +41,7 @@ def new_timestamp_string():
     return timestamp
 
 
-CHILD_WORKFLOW_STATES = set(
-    swf.models.event.workflow.CompiledChildWorkflowExecutionEvent.states
-)
+CHILD_WORKFLOW_STATES = set(swf.models.event.workflow.CompiledChildWorkflowExecutionEvent.states)
 
 
 class History(swf.models.History):
@@ -44,16 +50,14 @@ class History(swf.models.History):
 
     """
 
-    def __init__(self, workflow, input=None, tag_list=None):
+    def __init__(self, workflow: WorkflowType, input: dict[str, Any] | None = None, tag_list: str | None = None):
         """
         Bootstrap a history with the first events added by SWF.
 
         :param workflow: workflow to simulate
         :type  workflow: declarative.Workflow
         :param input: JSON serializable dict
-        :type  input: dict
         :param tag_list: string of tags (beware not a list)
-        :type  tag_list: str
 
         """
         self._workflow = workflow
@@ -64,7 +68,9 @@ class History(swf.models.History):
                     "eventType": "WorkflowExecutionStarted",
                     "eventTimestamp": new_timestamp_string(),
                     "workflowExecutionStartedEventAttributes": {
-                        "taskList": {"name": workflow.task_list,},
+                        "taskList": {
+                            "name": workflow.task_list,
+                        },
                         "parentInitiatedEventId": 0,
                         "taskStartToCloseTimeout": workflow.decision_tasks_timeout,
                         "childPolicy": "TERMINATE",
@@ -113,7 +119,9 @@ class History(swf.models.History):
                     "eventTimestamp": new_timestamp_string(),
                     "decisionTaskScheduledEventAttributes": {
                         "startToCloseTimeout": self._workflow.decision_tasks_timeout,
-                        "taskList": {"name": self._workflow.task_list,},
+                        "taskList": {
+                            "name": self._workflow.task_list,
+                        },
                     },
                 }
             )
@@ -141,9 +149,7 @@ class History(swf.models.History):
 
         return self
 
-    def add_decision_task_completed(
-        self, scheduled=None, started=None, execution_context=None
-    ):
+    def add_decision_task_completed(self, scheduled=None, started=None, execution_context=None):
         if scheduled is None:
             scheduled = self.last_id - 1
 
@@ -159,11 +165,7 @@ class History(swf.models.History):
                     "decisionTaskCompletedEventAttributes": {
                         "startedEventId": started,
                         "scheduledEventId": scheduled,
-                        "executionContext": (
-                            json_dumps(execution_context)
-                            if execution_context is not None
-                            else None
-                        ),
+                        "executionContext": (json_dumps(execution_context) if execution_context is not None else None),
                     },
                 }
             )
@@ -171,9 +173,7 @@ class History(swf.models.History):
 
         return self
 
-    def add_decision_task_timed_out(
-        self, scheduled=None, started=None, timeout_type="START_TO_CLOSE"
-    ):
+    def add_decision_task_timed_out(self, scheduled=None, started=None, timeout_type="START_TO_CLOSE"):
         if scheduled is None:
             scheduled = self.last_id - 1
 
@@ -197,9 +197,7 @@ class History(swf.models.History):
 
         return self
 
-    def add_activity_task_schedule_failed(
-        self, activity_id, decision_id, activity_type, cause
-    ):
+    def add_activity_task_schedule_failed(self, activity_id, decision_id, activity_type, cause):
         self.events.append(
             EventFactory(
                 {
@@ -218,9 +216,7 @@ class History(swf.models.History):
 
         return self
 
-    def add_activity_task_scheduled(
-        self, activity, decision_id, activity_id=None, input=None, control=None
-    ):
+    def add_activity_task_scheduled(self, activity, decision_id, activity_id=None, input=None, control=None):
         if control is None:
             control = {}
 
@@ -231,10 +227,10 @@ class History(swf.models.History):
                     "eventType": "ActivityTaskScheduled",
                     "eventTimestamp": new_timestamp_string(),
                     "activityTaskScheduledEventAttributes": {
-                        "control": (
-                            json_dumps(control) if control is not None else None
-                        ),
-                        "taskList": {"name": activity.task_list,},
+                        "control": (json_dumps(control) if control is not None else None),
+                        "taskList": {
+                            "name": activity.task_list,
+                        },
                         "scheduleToCloseTimeout": activity.task_schedule_to_close_timeout,
                         "activityType": {
                             "name": activity.name,
@@ -242,9 +238,7 @@ class History(swf.models.History):
                         },
                         "heartbeatTimeout": activity.task_heartbeat_timeout,
                         "activityId": (
-                            activity_id
-                            if activity_id is not None
-                            else "{}-{}".format(activity.name, hash(activity.name))
+                            activity_id if activity_id is not None else f"{activity.name}-{hash(activity.name)}"
                         ),
                         "scheduleToStartTimeout": activity.task_schedule_to_start_timeout,
                         "decisionTaskCompletedEventId": decision_id,
@@ -308,12 +302,8 @@ class History(swf.models.History):
                     "activityTaskFailedEventAttributes": {
                         "reason": reason,
                         "details": details,
-                        "scheduledEventId": (
-                            scheduled if scheduled is not None else self.last_id - 1
-                        ),
-                        "startedEventId": (
-                            started if started is not None else self.last_id
-                        ),
+                        "scheduledEventId": (scheduled if scheduled is not None else self.last_id - 1),
+                        "startedEventId": (started if started is not None else self.last_id),
                     },
                 }
             )
@@ -358,16 +348,12 @@ class History(swf.models.History):
         cause=None,
         timeout_type="START_TO_CLOSE",
     ):
-        self.add_activity_task_scheduled(
-            activity, decision_id, activity_id, input, control
-        )
+        self.add_activity_task_scheduled(activity, decision_id, activity_id, input, control)
         if last_state == "scheduled":
             return self
 
         if last_state == "schedule_failed":
-            self.add_activity_task_schedule_failed(
-                activity_id, decision_id, activity_type, cause
-            )
+            self.add_activity_task_schedule_failed(activity_id, decision_id, activity_type, cause)
             return self
 
         scheduled_id = self.last_id
@@ -377,9 +363,7 @@ class History(swf.models.History):
 
         started_id = self.last_id
         if last_state == "completed":
-            self.add_activity_task_completed(
-                scheduled=scheduled_id, started=started_id, result=result
-            )
+            self.add_activity_task_completed(scheduled=scheduled_id, started=started_id, result=result)
         elif last_state == "failed":
             self.add_activity_task_failed(
                 scheduled=scheduled_id,
@@ -388,11 +372,9 @@ class History(swf.models.History):
                 details=details,
             )
         elif last_state == "timed_out":
-            self.add_activity_task_timed_out(
-                scheduled=scheduled_id, started=started_id, timeout_type=timeout_type
-            )
+            self.add_activity_task_timed_out(scheduled=scheduled_id, started=started_id, timeout_type=timeout_type)
         else:
-            raise ValueError("last state {} is not supported".format(last_state))
+            raise ValueError(f"last state {last_state} is not supported")
 
         return self
 
@@ -498,9 +480,7 @@ class History(swf.models.History):
 
         return self
 
-    def add_child_workflow_failed(
-        self, initiated_id, started_id, reason=None, details=None
-    ):
+    def add_child_workflow_failed(self, initiated_id, started_id, reason=None, details=None):
         initiated_event = self.events[initiated_id - 1]
         workflow_id = initiated_event.workflow_id
         workflow_type = initiated_event.workflow_type
@@ -650,10 +630,7 @@ class History(swf.models.History):
         )
 
         if last_state not in CHILD_WORKFLOW_STATES:
-            raise ValueError(
-                'last_state "{}" not supported for '
-                "a child workflow".format(last_state)
-            )
+            raise ValueError('last_state "{}" not supported for ' "a child workflow".format(last_state))
 
         if last_state == "start_initiated":
             return self
@@ -670,15 +647,19 @@ class History(swf.models.History):
             self.add_child_workflow_failed(initiated_id, started_id)
         elif last_state == "timed_out":
             self.add_child_workflow_timed_out(
-                initiated_id, started_id, "START_TO_CLOSE",
+                initiated_id,
+                started_id,
+                "START_TO_CLOSE",
             )
         elif last_state == "canceled":
             self.add_child_workflow_canceled(
-                initiated_id, started_id,
+                initiated_id,
+                started_id,
             )
         elif last_state == "terminated":
             self.add_child_workflow_terminated(
-                initiated_id, started_id,
+                initiated_id,
+                started_id,
             )
 
         return self

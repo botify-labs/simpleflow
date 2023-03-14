@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import inspect
 import os
 from typing import TYPE_CHECKING
 
+import boto.swf  # noqa
 from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
@@ -10,13 +13,7 @@ import simpleflow.command
 from simpleflow.utils import json_dumps
 from tests.utils import IntegrationTestCase
 
-import boto.swf  # noqa
-
-
-
 if TYPE_CHECKING:
-    from typing import List, Union
-
     from click.testing import Result
 
 
@@ -37,7 +34,10 @@ vcr = VCR(
     filter_headers=[
         (
             "Authorization",
-            "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar",
+            (
+                "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/"
+                "aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar"
+            ),
         ),  # noqa
     ],
     record_mode=os.getenv("SIMPLEFLOW_VCR_RECORD_MODE", "once"),
@@ -87,15 +87,12 @@ class VCRIntegrationTest(IntegrationTestCase):
             next_page = response.get("nextPageToken")
         return events
 
-    def invoke(self, arguments, catch_exceptions=True):
-        # type: (Union[str, List[str]], bool) -> Result
+    def invoke(self, arguments: str | list[str], catch_exceptions: bool = True) -> Result:
         if not hasattr(self, "runner"):
             self.runner = CliRunner()
         if isinstance(arguments, str):
             arguments = arguments.split(" ")
-        return self.runner.invoke(
-            simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions
-        )
+        return self.runner.invoke(simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions)
 
     def run_standalone(self, workflow_name, *args, **kwargs):
         input = json_dumps(dict(args=args, kwargs=kwargs))

@@ -1,6 +1,6 @@
-from itertools import chain
+from __future__ import annotations
 
-from future.utils import iteritems
+from itertools import chain
 
 
 def get_start_to_close_timing(event):
@@ -11,13 +11,13 @@ def get_start_to_close_timing(event):
         end = None
         duration = None
     else:
-        end = event["{}_timestamp".format(last_state)]
+        end = event[f"{last_state}_timestamp"]
         duration = (end - start).total_seconds()
 
     return last_state, scheduled, start, end, duration
 
 
-class WorkflowStats(object):
+class WorkflowStats:
     def __init__(self, history):
         self._history = history
 
@@ -52,12 +52,10 @@ class WorkflowStats(object):
         history.parse()
 
         events = chain(
-            iteritems(history._activities), iteritems(history._child_workflows),
+            history._activities.items(),
+            history._child_workflows.items(),
         )
-        return [
-            (name,) + get_start_to_close_timing(attributes)
-            for name, attributes in events
-        ]
+        return [(name,) + get_start_to_close_timing(attributes) for name, attributes in events]
 
     def get_timings_with_percentage(self):
         """
@@ -78,6 +76,5 @@ class WorkflowStats(object):
         total_time = self.total_time()
 
         return [
-            (vals + ((vals[timing] / total_time) * 100.0,) if vals[timing] else None)
-            for vals in self.get_timings()
+            (vals + ((vals[timing] / total_time) * 100.0,) if vals[timing] else None) for vals in self.get_timings()
         ]

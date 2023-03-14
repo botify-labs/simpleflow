@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import subprocess
 
 from simpleflow import Workflow, activity
@@ -18,16 +16,12 @@ class BasicWorkflow(Workflow):
 
     def run(self):
         binary = "how-is-simpleflow"
-        location_tpl = (
-            "s3://botify-labs-simpleflow/binaries/{version}/how_is_simpleflow"
-        )
+        location_tpl = "s3://botify-labs-simpleflow/binaries/{version}/how_is_simpleflow"
 
         # This shows how to map a dynamic binary version to an activity task.
         # Of course, the example is far-fetched ;-)
         for version in ["v1", "v2", "latest"]:
-            use_custom_binary.meta["binaries"] = {
-                binary: location_tpl.format(version=version)
-            }
+            use_custom_binary.meta["binaries"] = {binary: location_tpl.format(version=version)}
             msg = self.submit(use_custom_binary, [binary]).result
             print(colorize("BLUE", msg))
 

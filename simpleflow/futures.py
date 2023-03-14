@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from simpleflow import exceptions
 from simpleflow._decorators import deprecated
 
@@ -47,7 +48,7 @@ def wait(*fs):
     return [future.result for future in fs]
 
 
-class Future(object):
+class Future:
     def __init__(self):
         """Represents the state of a computation.
 
@@ -60,7 +61,7 @@ class Future(object):
         self._exception = None
 
     def __repr__(self):
-        return "<Future at %s state=%s%s>" % (
+        return "<Future at {} state={}{}>".format(
             hex(id(self)),
             _STATE_TO_DESCRIPTION_MAP[self._state],
             " exception=%r" % self._exception if self._exception else "",

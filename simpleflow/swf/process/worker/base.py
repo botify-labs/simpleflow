@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import json
-import multiprocessing
 import os
 import sys
 import traceback
 import uuid
 from base64 import b64decode
 
+import multiprocess
 import psutil
 
 import swf.actors
@@ -28,8 +30,9 @@ from swf.responses import Response
 class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
         self._poller = poller
-        super(Worker, self).__init__(
-            payload=self._poller.start, nb_children=nb_children,
+        super().__init__(
+            payload=self._poller.start,
+            nb_children=nb_children,
         )
 
 
@@ -69,16 +72,15 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         self.middlewares = middlewares
 
         self.process_mode = process_mode or "local"
-        assert (
-            self.process_mode in VALID_PROCESS_MODES
-        ), 'invalid process_mode "{}"'.format(self.process_mode)
+        if self.process_mode not in VALID_PROCESS_MODES:
+            raise AssertionError(f'invalid process_mode "{self.process_mode}"')
 
         self.poll_data = poll_data
-        super(ActivityPoller, self).__init__(domain, task_list)
+        super().__init__(domain, task_list)
 
     @property
     def name(self):
-        return "{}(task_list={})".format(self.__class__.__name__, self.task_list,)
+        return f"{self.__class__.__name__}(task_list={self.task_list})"
 
     @with_state("polling")
     def poll(self, task_list=None, identity=None):
@@ -92,7 +94,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     def fake_poll(self):
         polled_activity_data = json.loads(b64decode(self.poll_data))
         activity_task = BaseActivityTask.from_poll(
-            self.domain, self.task_list, polled_activity_data,
+            self.domain,
+            self.task_list,
+            polled_activity_data,
         )
         return Response(
             task_token=activity_task.task_token,
@@ -115,7 +119,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             except Exception as err:
                 logger.exception("spawn_kubernetes_job error")
                 reason = "cannot spawn kubernetes job for task {}: {} {}".format(
-                    task.activity_id, err.__class__.__name__, err,
+                    task.activity_id,
+                    err.__class__.__name__,
+                    err,
                 )
                 self.fail_with_retry(token, task, reason)
         else:
@@ -143,19 +149,18 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         """
         try:
             return swf.actors.ActivityWorker.fail(
-                self, token, reason=reason, details=details,
+                self,
+                token,
+                reason=reason,
+                details=details,
             )
         except Exception as err:
-            logger.error(
-                "cannot fail task {}: {}".format(task.activity_type.name, err,)
-            )
+            logger.error(f"cannot fail task {task.activity_type.name}: {err}")
 
     @property
     def identity(self):
         if self.process_mode == "kubernetes":
-            self.job_name = "{}--{}".format(
-                to_k8s_identifier(self.task_list), str(uuid.uuid4())
-            )
+            self.job_name = "{}--{}".format(to_k8s_identifier(self.task_list), str(uuid.uuid4()))
             return json_dumps(
                 {
                     "cluster": os.environ["K8S_CLUSTER"],
@@ -164,10 +169,10 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
                 }
             )
         else:
-            return super(ActivityPoller, self).identity
+            return super().identity
 
 
-class ActivityWorker(object):
+class ActivityWorker:
     def __init__(self, dispatcher=None):
         self._dispatcher = dispatcher or dynamic_dispatcher.Dispatcher()
 
@@ -194,7 +199,7 @@ class ActivityWorker(object):
         :param middlewares: Paths to middleware functions to execute before and after any Activity
         :type middlewares: Optional[Dict[str, str]]
         """
-        logger.debug("ActivityWorker.process() pid={}".format(os.getpid()))
+        logger.debug(f"ActivityWorker.process() pid={os.getpid()}")
         try:
             activity = self.dispatch(task)
             input = format.decode(task.input)
@@ -209,11 +214,11 @@ class ActivityWorker(object):
                 *args,
                 context=context,
                 simpleflow_middlewares=middlewares,
-                **kwargs
+                **kwargs,
             ).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.exception("process error: {}".format(str(exc_value)))
+            logger.exception(f"process error: {str(exc_value)}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
                 details = exc_value.args[0]
                 reason = format_exc(exc_value)  # FIXME json.loads and rebuild?
@@ -237,7 +242,9 @@ class ActivityWorker(object):
         except Exception as err:
             logger.exception("complete error")
             reason = "cannot complete task {}: {} {}".format(
-                task.activity_id, err.__class__.__name__, err,
+                task.activity_id,
+                err.__class__.__name__,
+                err,
             )
             poller.fail_with_retry(token, task, reason)
 
@@ -254,14 +261,14 @@ def process_task(poller, token, task, middlewares=None):
     :param middlewares: Paths to middleware functions to execute before and after any Activity
     :type middlewares: Optional[Dict[str, str]]
     """
-    logger.debug("process_task() pid={}".format(os.getpid()))
+    logger.debug(f"process_task() pid={os.getpid()}")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
     worker.process(poller, token, task, middlewares)
 
 
 def spawn_kubernetes_job(poller, swf_response):
-    logger.info("scheduling new kubernetes job name={}".format(poller.job_name))
+    logger.info(f"scheduling new kubernetes job name={poller.job_name}")
     job = KubernetesJob(poller.job_name, poller.domain.name, swf_response)
     job.schedule()
 
@@ -279,7 +286,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     """
 
     def on_terminate(p):
-        logger.info("process: terminated pid={} retcode={}".format(p.pid, p.returncode))
+        logger.info(f"process: terminated pid={p.pid} retcode={p.returncode}")
 
     if pid == os.getpid():
         raise RuntimeError("process: cannot terminate self!")
@@ -295,11 +302,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
     # Kill
     for p in alive:
-        logger.warning(
-            "process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL".format(
-                p.pid, p.status()
-            )
-        )
+        logger.warning("process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL".format(p.pid, p.status()))
         try:
             p.kill()
         except psutil.NoSuchProcess:
@@ -307,11 +310,7 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
     # Check
     _, alive = psutil.wait_procs(alive)
     for p in alive:
-        logger.error(
-            "process: pid={} status={} still alive. Giving up!".format(
-                p.pid, p.status()
-            )
-        )
+        logger.error("process: pid={} status={} still alive. Giving up!".format(p.pid, p.status()))
 
 
 def spawn(poller, token, task, middlewares=None, heartbeat=60):
@@ -332,14 +331,8 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.info(
-        "spawning new activity worker pid={} heartbeat={}".format(
-            os.getpid(), heartbeat
-        )
-    )
-    worker = multiprocessing.Process(
-        target=process_task, args=(poller, token, task, middlewares)
-    )
+    logger.info("spawning new activity worker pid={} heartbeat={}".format(os.getpid(), heartbeat))
+    worker = multiprocess.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
     def worker_alive():
@@ -354,27 +347,23 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
                 worker.join(timeout=0)
                 if worker.exitcode is None:
                     logger.warning(
-                        "process {} is dead but multiprocessing doesn't know it (simpleflow bug)".format(
-                            worker.pid
-                        )
+                        "process {} is dead but multiprocess doesn't know it (simpleflow bug)".format(worker.pid)
                     )
             if worker.exitcode != 0:
                 poller.fail_with_retry(
                     token,
                     task,
-                    reason="process {} died: exit code {}".format(
-                        worker.pid, worker.exitcode
-                    ),
+                    reason="process {} died: exit code {}".format(worker.pid, worker.exitcode),
                 )
             return
         try:
-            logger.debug("heartbeating for pid={} (token={})".format(worker.pid, token))
+            logger.debug(f"heartbeating for pid={worker.pid} (token={token})")
             response = poller.heartbeat(token)
         except swf.exceptions.DoesNotExistError as error:
             # Either the task or the workflow execution no longer exists,
             # let's kill the worker process.
-            logger.warning("heartbeat failed: {}".format(error))
-            logger.warning("killing (KILL) worker with pid={}".format(worker.pid))
+            logger.warning(f"heartbeat failed: {error}")
+            logger.warning(f"killing (KILL) worker with pid={worker.pid}")
             reap_process_tree(worker.pid)
             return
         except swf.exceptions.RateLimitExceededError as error:
@@ -390,11 +379,7 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
             # Let's crash if it cannot notify the heartbeat failed.  The
             # subprocess will become orphan and the heartbeat timeout may
             # eventually trigger on Amazon SWF side.
-            logger.error(
-                "cannot send heartbeat for task {}: {}".format(
-                    task.activity_type.name, error
-                )
-            )
+            logger.error("cannot send heartbeat for task {}: {}".format(task.activity_type.name, error))
             raise
 
         # Task cancelled.

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 import boto
@@ -32,7 +34,7 @@ class TestActor(unittest.TestCase):
 
     @mock_swf
     def test_poll_with_no_decision_to_take(self):
-        conn = self.make_swf_environment()
+        _ = self.make_swf_environment()
         with self.assertRaises(PollTimeout):
             self.actor.poll()
 

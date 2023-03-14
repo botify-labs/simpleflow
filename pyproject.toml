@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simpleflow"
+description = "Python library for dataflow programming with Amazon SWF"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT License" }
+authors = [
+    { name = "Greg Leclercq" },
+]
+maintainers = [
+    { "email" = "tech@botify.com" },
+]
+keywords = ["simpleflow", "amazon swf", "simple workflow"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dynamic = ["version"]
+
+dependencies = [
+    "attrs",
+    "boto>=2.49.0",
+    "dill>=0.3.6",
+    "diskcache>=4.1.0",
+    "Jinja2>=2.11.1",
+    "markupsafe>=2.1",
+    "multiprocess>=0.70.14",
+    "kubernetes>=3.0.0",
+    "lazy_object_proxy",
+    "lockfile>=0.9.1",
+    "tabulate>=0.8.2,<1.0.0",
+    "setproctitle",
+    "click",
+    "psutil",
+    "pytz",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flaky",
+    "invoke",
+    "moto<3.0.0",
+    "packaging",
+    "pre-commit",
+    "pytest",
+    "pytest-xdist>=3.2.0",
+    "ruff",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sure",
+    "typing-extensions",
+    "vcrpy",
+    "wheel",
+    "twine",
+]
+
+doc = [
+    "mkdocs",
+    "mkdocs-material",
+    "pygments",
+    "pymdown-extensions",
+    "markdown-include",
+]
+
+[project.urls]
+documentation = "https://botify-labs.github.io/simpleflow"
+repository = "https://github.com/botify-labs/simpleflow"
+changelog = "https://github.com/botify-labs/simpleflow/blob/main/CHANGELOG.md"
+
+[project.scripts]
+simpleflow = "simpleflow.command:cli"
+
+[tool.setuptools]
+zip-safe = false
+packages=["simpleflow", "swf"]
+
+[tool.setuptools.dynamic]
+version = { attr = "simpleflow.__version__" }
+
+[tool.ruff]
+line-length = 120
+
+[tool.black]
+line-length = 120
+target-version = ["py37", "py38", "py39", "py310", "py311"]
+
+[tool.bandit]
+exclude_dirs = ["/tests", "/examples", "/venv", "/build"]
+skips = ["B404"]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --ignore=setup.py --ignore=tasks.py --ignore=docs/ --ignore=build/ --ignore=examples/"

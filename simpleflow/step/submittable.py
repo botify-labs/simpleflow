@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from typing import TYPE_CHECKING
 
@@ -15,7 +17,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from typing import AnyStr, Optional, Sequence, Union
+    from typing import Sequence
 
     from simpleflow.base import Submittable
     from simpleflow.executor import Executor
@@ -25,15 +27,14 @@ if TYPE_CHECKING:
 class Step(SubmittableContainer):
     def __init__(
         self,
-        step_name,  # type: AnyStr
-        activities,  # type: Union[Submittable, SubmittableContainer]
-        force=False,  # type: bool
-        activities_if_step_already_done=None,  # type: Optional[Union[Submittable, SubmittableContainer]]
-        emit_signal=False,  # type: bool
-        force_steps_if_executed=None,  # type: Optional[Sequence[AnyStr]]
-        bubbles_exception_on_failure=False,  # type: bool
-    ):
-        # type: (...) -> None
+        step_name: str,
+        activities: Submittable | SubmittableContainer,
+        force: bool = False,
+        activities_if_step_already_done: Submittable | SubmittableContainer | None = None,
+        emit_signal: bool = False,
+        force_steps_if_executed: Sequence[str] | None = None,
+        bubbles_exception_on_failure: bool = False,
+    ) -> None:
         """
         :param step_name: Name of the step
         :param activities: submittable entity; not a list
@@ -51,8 +52,7 @@ class Step(SubmittableContainer):
         self.force_steps_if_executed = force_steps_if_executed or []
         self.bubbles_exception_on_failure = bubbles_exception_on_failure
 
-    def submit(self, executor):
-        # type: (Executor) -> Future
+    def submit(self, executor: Executor) -> Future:
         workflow = executor.workflow
         if workflow is None:
             raise ValueError("Executor has no associated workflow")
@@ -67,9 +67,7 @@ class Step(SubmittableContainer):
             chain = Chain()
             forced_steps = workflow.get_forced_steps()
             skipped_steps = workflow.get_skipped_steps()
-            if step_will_run(
-                self.step_name, forced_steps, skipped_steps, steps_done, self.force
-            ):
+            if step_will_run(self.step_name, forced_steps, skipped_steps, steps_done, self.force):
                 if step_is_forced(self.step_name, forced_steps, self.force):
                     marker["forced"] = True
                     marker["reasons"] = get_step_force_reasons(
@@ -79,16 +77,12 @@ class Step(SubmittableContainer):
                 marker_done = copy.copy(marker)
                 marker_done["status"] = "completed"
 
-                workflow.add_forced_steps(
-                    self.force_steps_if_executed, "Dep of {}".format(self.step_name)
-                )
+                workflow.add_forced_steps(self.force_steps_if_executed, f"Dep of {self.step_name}")
                 chain += (
                     workflow.record_marker("log.step", marker),
                     self.activities,
                     (
-                        activity.Activity(
-                            MarkStepDoneTask, **workflow._get_step_activity_params()
-                        ),
+                        activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
                         workflow.get_step_bucket(),
                         workflow.get_step_path_prefix(),
                         self.step_name,
@@ -110,9 +104,7 @@ class Step(SubmittableContainer):
                 chain.append(workflow.record_marker("log.step", marker))
 
             if self.emit_signal:
-                chain.append(
-                    workflow.signal("step.{}".format(self.step_name), propagate=False)
-                )
+                chain.append(workflow.signal(f"step.{self.step_name}", propagate=False))
             chain.bubbles_exception_on_failure = self.bubbles_exception_on_failure
             return chain
 

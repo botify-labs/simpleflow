@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 
 def mock_get_workflow_execution_history(*args, **kwargs):

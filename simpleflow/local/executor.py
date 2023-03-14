@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import collections
 import sys
 import traceback
 import uuid
-from typing import TYPE_CHECKING
 
 from simpleflow import exceptions, executor, futures, logger
 from simpleflow.activity import Activity
@@ -15,11 +16,6 @@ from simpleflow.utils import format_exc, format_exc_type, issubclass_, json_dump
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
 
-if TYPE_CHECKING:
-    from typing import Optional, Union
-
-    from simpleflow.history import History
-
 
 class Executor(executor.Executor):
     """
@@ -28,7 +24,7 @@ class Executor(executor.Executor):
     """
 
     def __init__(self, workflow_class, **kwargs):
-        super(Executor, self).__init__(workflow_class)
+        super().__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
         self.signals_sent = set()
@@ -36,13 +32,12 @@ class Executor(executor.Executor):
 
         self.wf_run_id = []
         self.wf_id = []
-        self._history = None  # type: Optional[Union[builder.History, History]]
+        self._history: builder.History | History | None = None
 
         self.middlewares = kwargs.pop("middlewares", None)
 
     @property
-    def history(self):
-        # type: () -> Optional[History]
+    def history(self) -> History | None:
         if not isinstance(self._history, History):
             history = History(self._history)
             history.parse()
@@ -69,9 +64,9 @@ class Executor(executor.Executor):
         self._history = builder.History(self._workflow_class, input=input)
 
     def on_new_workflow(self, task):
-        self.wf_run_id.append("{}".format(uuid.uuid4()))
+        self.wf_run_id.append(f"{uuid.uuid4()}")
         self.wf_id.append(
-            task.id if task.id else "local_{}".format(task.workflow.name.lower()),
+            task.id if task.id else f"local_{task.workflow.name.lower()}",
         )
 
     def on_completed_workflow(self):
@@ -79,7 +74,7 @@ class Executor(executor.Executor):
         self.wf_id.pop()
 
     def submit(self, func, *args, **kwargs):
-        logger.info("executing task {}(args={}, kwargs={})".format(func, args, kwargs))
+        logger.info(f"executing task {func}(args={args}, kwargs={kwargs})")
 
         future = futures.Future()
 
@@ -94,14 +89,10 @@ class Executor(executor.Executor):
             signal_name = func.signal_name
             if signal_name not in self.signals_sent:
                 raise NotImplementedError(
-                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(
-                        signal_name
-                    )
+                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(signal_name)
                 )
         elif isinstance(func, MarkerTask):
-            self._markers.setdefault(func.name, []).append(
-                Marker(func.name, func.details)
-            )
+            self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))
 
         if isinstance(func, Submittable):
             task = func  # *args, **kwargs already resolved.
@@ -113,7 +104,7 @@ class Executor(executor.Executor):
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)
         else:
-            raise TypeError("invalid type {} for {}".format(type(func), func))
+            raise TypeError(f"invalid type {type(func)} for {func}")
 
         if isinstance(task, WorkflowTask):
             self.on_new_workflow(task)
@@ -140,10 +131,8 @@ class Executor(executor.Executor):
                 ),
             )
             future.set_exception(task_failed)
-            logger.exception("rescuing exception: {}".format(exc_value))
-            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(
-                func, "raises_on_failure", None
-            ):
+            logger.exception(f"rescuing exception: {exc_value}")
+            if (isinstance(func, Activity) or issubclass_(func, Workflow)) and getattr(func, "raises_on_failure", None):
                 raise task_failed
             state = "failed"
         finally:

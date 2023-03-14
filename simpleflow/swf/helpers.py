@@ -1,13 +1,13 @@
-from __future__ import absolute_import
+from __future__ import annotations
 
 import copy
 import getpass
 import json
 import os
 import socket
+from typing import TYPE_CHECKING
 
 import psutil
-from future.utils import iteritems, itervalues
 
 import swf.exceptions
 import swf.models
@@ -17,6 +17,10 @@ from simpleflow.utils import json_dumps
 
 from .stats import pretty
 
+if TYPE_CHECKING:
+    from swf.models import WorkflowExecution
+
+
 __all__ = [
     "show_workflow_profile",
     "show_workflow_status",
@@ -25,7 +29,7 @@ __all__ = [
 ]
 
 
-def get_workflow_execution(domain_name, workflow_id, run_id=None):
+def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | None = None) -> WorkflowExecution:
     def filter_execution(*args, **kwargs):
         if "workflow_status" in kwargs:
             kwargs["status"] = kwargs.pop("workflow_status")
@@ -52,17 +56,29 @@ def get_workflow_execution(domain_name, workflow_id, run_id=None):
 
 
 def show_workflow_info(domain_name, workflow_id, run_id=None):
-    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id,)
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+        run_id,
+    )
     return pretty.info(workflow_execution)
 
 
 def show_workflow_profile(domain_name, workflow_id, run_id=None, nb_tasks=None):
-    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id,)
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+        run_id,
+    )
     return pretty.profile(workflow_execution, nb_tasks)
 
 
 def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
-    workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id,)
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+        run_id,
+    )
     return pretty.status(workflow_execution, nb_tasks)
 
 
@@ -82,7 +98,7 @@ def filter_workflow_executions(
     workflow_type_name,
     workflow_type_version,
     *args,
-    **kwargs
+    **kwargs,
 ):
     domain = swf.models.Domain(domain_name)
     query = swf.querysets.WorkflowExecutionQuerySet(domain)
@@ -93,7 +109,7 @@ def filter_workflow_executions(
         workflow_type_name,
         workflow_type_version,
         *args,
-        **kwargs
+        **kwargs,
     )
 
     return pretty.list_details(executions)
@@ -110,7 +126,7 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     :type input: Optional[dict[str, Any]]
     """
     found_activity = None
-    for params in itervalues(history.activities):
+    for params in history.activities.values():
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
@@ -144,7 +160,10 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
 
 
 def get_task(domain_name, workflow_id, task_id, details):
-    workflow_execution = get_workflow_execution(domain_name, workflow_id,)
+    workflow_execution = get_workflow_execution(
+        domain_name,
+        workflow_id,
+    )
     return pretty.get_task(workflow_execution, task_id, details)
 
 
@@ -164,11 +183,11 @@ def swf_identity():
             extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
         except Exception:
             extra_keys = {}
-        for key, value in iteritems(extra_keys):
+        for key, value in extra_keys.items():
             identity[key] = value
 
     # remove null values
-    identity = {k: v for k, v in iteritems(identity) if v is not None}
+    identity = {k: v for k, v in identity.items() if v is not None}
 
     # serialize the result
     return json_dumps(identity)

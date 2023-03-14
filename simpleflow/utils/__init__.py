@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING
 from zlib import adler32
-
-from simpleflow.compat import PY2
 
 from . import retry  # NOQA
 from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, Type, Union
+    from typing import Any
 
 
-def issubclass_(arg1, arg2):
-    # type: (Union[Type, Any], Type) -> bool
+def issubclass_(arg1: type | Any, arg2: type) -> bool:
     """
     Like issubclass but without exception.
     """
@@ -31,11 +30,10 @@ def hex_hash(s):
     if not s:
         return "0"
     s = s.encode("utf-8")
-    return "{:x}".format(adler32(s) & 0xFFFFFFFF)
+    return f"{adler32(s) & 0xFFFFFFFF:x}"
 
 
-def format_exc(exc):
-    # type: (Exception) -> AnyStr
+def format_exc(exc: Exception) -> str:
     """
     Copy-pasted from traceback._format_final_exc_line.
     :param exc: Exception value
@@ -45,12 +43,11 @@ def format_exc(exc):
     if exc is None or not valuestr:
         line = "%s" % etype
     else:
-        line = "%s: %s" % (etype, valuestr)
+        line = f"{etype}: {valuestr}"
     return line
 
 
-def _some_str(value):
-    # type: (Any) -> AnyStr
+def _some_str(value: Any) -> str:
     """
     Copy-pasted from traceback.
     """
@@ -60,12 +57,11 @@ def _some_str(value):
         return "<unprintable %s object>" % type(value).__name__
 
 
-def format_exc_type(exc_type):
-    # type: (Type) -> AnyStr
+def format_exc_type(exc_type: type) -> str:
     type_str = exc_type.__name__
     type_mod = exc_type.__module__
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
-        type_str = "%s.%s" % (type_mod, type_str)
+        type_str = f"{type_mod}.{type_str}"
     return type_str
 
 
@@ -78,8 +74,7 @@ def to_k8s_identifier(string):
     return string
 
 
-def import_from_module(path):
-    # type: (AnyStr) -> Any
+def import_from_module(path: str) -> Any:
     """
     Import a class or other object: either module.Foo or (builtin) Foo.
     :param path: object name
@@ -90,10 +85,9 @@ def import_from_module(path):
     return import_object_from_module(module_path, obj_name)
 
 
-def import_object_from_module(module_name, *object_names):
-    # type: (AnyStr, *AnyStr) -> Any
+def import_object_from_module(module_name: str, *object_names: str) -> Any:
     if not module_name:
-        module_name = "builtins" if not PY2 else "__builtin__"
+        module_name = "builtins"
     from importlib import import_module
 
     obj = import_module(module_name)
@@ -102,18 +96,16 @@ def import_object_from_module(module_name, *object_names):
     return obj
 
 
-def full_object_name(obj):
-    # type: (Any) -> AnyStr
+def full_object_name(obj: Any) -> str:
     # Adapted from https://stackoverflow.com/questions/2020014/get-fully-qualified-class-name-of-an-object-in-python
     if isinstance(obj, type):
         return full_class_name(obj)
     return full_class_name(obj.__class__)
 
 
-def full_class_name(klass):
-    # type: (Type) -> AnyStr
+def full_class_name(klass: type) -> str:
     module = klass.__module__
-    name = klass.__name__ if PY2 else klass.__qualname__
+    name = klass.__qualname__
     if module is None:
         return name
     return module + "." + name

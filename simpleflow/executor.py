@@ -1,20 +1,18 @@
+from __future__ import annotations
+
 import abc
 from typing import TYPE_CHECKING
-
-from future.utils import with_metaclass
 
 from ._decorators import deprecated
 
 if TYPE_CHECKING:
-    from typing import Optional, Type
-
     from simpleflow import Workflow
     from simpleflow.history import History
 
 __all__ = ["Executor"]
 
 
-class Executor(with_metaclass(abc.ABCMeta, object)):
+class Executor(metaclass=abc.ABCMeta):
     """
     Abstract class that describes the interface to manage the execution of
     a workflow.
@@ -34,8 +32,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     """
 
-    def __init__(self, workflow_class):
-        # type: (Type[Workflow]) -> None
+    def __init__(self, workflow_class: type[Workflow]) -> None:
         """
         Binds the workflow's definition.
 
@@ -45,11 +42,10 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
         """
         self._workflow_class = workflow_class
-        self._workflow = None  # type: Optional[Workflow]
+        self._workflow: Workflow | None = None
 
     @property
-    def workflow_class(self):
-        # type: () -> Type[Workflow]
+    def workflow_class(self) -> type[Workflow]:
         return self._workflow_class
 
     @property
@@ -58,8 +54,7 @@ class Executor(with_metaclass(abc.ABCMeta, object)):
 
     @property
     @abc.abstractmethod
-    def history(self):
-        # type: () -> Optional[History]
+    def history(self) -> History | None:
         pass
 
     def create_workflow(self):

@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 import unittest
 
@@ -18,7 +18,7 @@ class TestBaseModel(unittest.TestCase):
 
     def test_exists_not_implemented(self):
         with self.assertRaises(NotImplementedError):
-            dummy = self.obj.exists
+            _ = self.obj.exists
 
     def test_save_not_implemented(self):
         with self.assertRaises(NotImplementedError):

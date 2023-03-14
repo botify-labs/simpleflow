@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 import unittest
 from datetime import datetime
@@ -49,7 +49,7 @@ class TestHistory(unittest.TestCase):
 
     def test_get_by_invalid_index(self):
         with self.assertRaises(IndexError):
-            dummy = self.history[42]  # mocked event list doesn't have 43 indexes
+            _ = self.history[42]  # mocked event list doesn't have 43 indexes
 
     def test_get_by_valid_slice(self):
         val = self.history[0:1]
@@ -65,4 +65,4 @@ class TestHistory(unittest.TestCase):
 
     def test_get_by_invalid_index_type(self):
         with self.assertRaises(TypeError):
-            dummy = self.history["invalid, bitch"]
+            _ = self.history["invalid, bitch"]

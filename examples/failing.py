@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import time
+from typing import TYPE_CHECKING
 
 from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Group
@@ -7,24 +10,18 @@ from simpleflow.log import END, GREEN, ORANGE, RED, YELLOW
 from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
 
-if False:
-    from typing import Optional  # NOQA
+if TYPE_CHECKING:
+    pass
 
 
-@activity.with_attributes(
-    task_list="quickstart", version="example", retry=1, raises_on_failure=False
-)
+@activity.with_attributes(task_list="quickstart", version="example", retry=1, raises_on_failure=False)
 def fail_but_dont_raise():
     raise ValueError("This task had a problem but it's okay, YOU SHOULD NOT SEE THIS")
 
 
-@activity.with_attributes(
-    task_list="quickstart", version="example", raises_on_failure=True
-)
+@activity.with_attributes(task_list="quickstart", version="example", raises_on_failure=True)
 def fail_and_raise():
-    raise ValueError(
-        "This task had a problem and it will fail the workflow! (this is normal if you see this)"
-    )
+    raise ValueError("This task had a problem and it will fail the workflow! (this is normal if you see this)")
 
 
 @activity.with_attributes(
@@ -56,8 +53,7 @@ class FailingWorkflow(Workflow):
         else:
             futures.wait(x)
 
-    def on_task_failure(self, failure_context):
-        # type: (TaskFailureContext) -> Optional[TaskFailureContext]
+    def on_task_failure(self, failure_context: TaskFailureContext) -> TaskFailureContext | None:
         print(
             colorize(
                 YELLOW,
@@ -77,8 +73,8 @@ class NotFailingWorkflow(Workflow):
     task_list = "example"
 
     def run(self, *args, **kwargs):
-        print(colorize(GREEN, "NotFailingWorkflow args: {}".format(args)))
-        print(colorize(GREEN, "NotFailingWorkflow kwargs: {}".format(kwargs)))
+        print(colorize(GREEN, f"NotFailingWorkflow args: {args}"))
+        print(colorize(GREEN, f"NotFailingWorkflow kwargs: {kwargs}"))
         g = Group(raises_on_failure=False)
         g.append(FailingWorkflow)
         g.append(timeout_no_raise)
@@ -91,13 +87,9 @@ class NotFailingWorkflow(Workflow):
     def on_completed(self, history):
         print(colorize(GREEN, "NotFailingWorkflow: workflow completed!"))
 
-    def on_task_failure(self, failure_context):
-        # type: (TaskFailureContext) -> Optional[TaskFailureContext]
+    def on_task_failure(self, failure_context: TaskFailureContext) -> TaskFailureContext | None:
         # print(failure_context)
-        if (
-            isinstance(failure_context.a_task, WorkflowTask)
-            and failure_context.task_name == "failing"
-        ):
+        if isinstance(failure_context.a_task, WorkflowTask) and failure_context.task_name == "failing":
             print(
                 colorize(
                     GREEN,
@@ -119,7 +111,8 @@ class NotFailingWorkflow(Workflow):
                 colorize(
                     ORANGE,
                     "===> unhandled: {}, {!r}".format(
-                        failure_context.task_name, failure_context.exception,
+                        failure_context.task_name,
+                        failure_context.exception,
                     ),
                 )
             )

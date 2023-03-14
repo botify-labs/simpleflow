@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import os
 import signal
@@ -12,20 +14,16 @@ __all__ = ["Poller"]
 
 
 class Poller(swf.actors.Actor, NamedMixin):
-    """Multi-processing implementation of a SWF actor.
-
-    """
+    """Multi-processing implementation of a SWF actor."""
 
     def __init__(self, domain, task_list=None):
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
-        super(Poller, self).__init__(domain, task_list)
+        super().__init__(domain, task_list)
 
     def __repr__(self):
-        return "{}(domain={}, task_list={})".format(
-            self.__class__.__name__, self.domain.name, self.task_list
-        )
+        return "{}(domain={}, task_list={})".format(self.__class__.__name__, self.domain.name, self.task_list)
 
     @property
     def identity(self):
@@ -50,9 +48,7 @@ class Poller(swf.actors.Actor, NamedMixin):
 
         # NB: Function is nested to have a reference to *self*.
         def _handle_graceful_shutdown(signum, frame):
-            logger.info(
-                "process: caught signal signal=SIGTERM pid={}".format(os.getpid())
-            )
+            logger.info(f"process: caught signal signal=SIGTERM pid={os.getpid()}")
             self.stop_gracefully()
 
         # bind SIGTERM and SIGINT
@@ -145,7 +141,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         """
         Name of the poller, can be overriden in subclasses.
         """
-        return "{}()".format(self.__class__.__name__)
+        return f"{self.__class__.__name__}()"
 
     def poll_with_retry(self):
         """

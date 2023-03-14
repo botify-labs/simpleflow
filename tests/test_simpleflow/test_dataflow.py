@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import annotations
 
 import datetime
 import functools
-from builtins import range
+from unittest.mock import patch
 
 import boto
-from mock import patch
 
 import swf.models
 import swf.models.decision
@@ -20,9 +18,7 @@ from simpleflow.task import ActivityTask
 from simpleflow.utils import json_dumps
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import (
-    DOMAIN,
-    BaseTestWorkflow,
+from tests.data.activities import (
     Tetra,
     double,
     increment,
@@ -33,6 +29,8 @@ from tests.data import (
     raise_on_failure,
     triple,
 )
+from tests.data.constants import DOMAIN
+from tests.data.workflows import BaseTestWorkflow
 from tests.moto_compat import mock_swf
 
 
@@ -263,7 +261,7 @@ def test_workflow_with_after_replay(mock_decref_workflow):
 
     # The executor should only schedule the *increment* task.
     assert not hasattr(executor.workflow, "b")
-    decisions = executor.replay(Response(history=history, execution=None)).decisions
+    _ = executor.replay(Response(history=history, execution=None)).decisions
     assert executor.workflow.b == 5
     # Check that workflow is not marked as finished
     assert not hasattr(executor.workflow, "c")
@@ -432,9 +430,7 @@ def test_workflow_with_two_tasks_not_completed():
     # Let's now set the task as ``completed`` in the history.
     decision_id = history.last_id
     (
-        history.add_activity_task_completed(
-            scheduled=scheduled_id, started=scheduled_id + 1, result=result
-        )
+        history.add_activity_task_completed(scheduled=scheduled_id, started=scheduled_id + 1, result=result)
         .add_decision_task_scheduled()
         .add_decision_task_started()
     )
@@ -702,7 +698,7 @@ def test_workflow_map():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             input={"args": i},
             result=i + 1,
@@ -946,10 +942,7 @@ def test_workflow_with_child_workflow_timed_out():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason
-        == 'Workflow execution error in workflow-test_workflow: "TimeoutError(START_TO_CLOSE)"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TimeoutError(START_TO_CLOSE)"'
 
 
 def test_workflow_with_child_workflow_canceled():
@@ -977,9 +970,7 @@ def test_workflow_with_child_workflow_canceled():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason == 'Workflow execution error in workflow-test_workflow: "TaskCanceled()"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskCanceled()"'
 
 
 def test_workflow_with_child_workflow_terminated():
@@ -1007,10 +998,7 @@ def test_workflow_with_child_workflow_terminated():
     decision = decisions[0]
     assert decision.type == "FailWorkflowExecution"
     reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
-    assert (
-        reason
-        == 'Workflow execution error in workflow-test_workflow: "TaskTerminated()"'
-    )
+    assert reason == 'Workflow execution error in workflow-test_workflow: "TaskTerminated()"'
 
 
 class ATestDefinitionMoreThanMaxDecisions(BaseTestWorkflow):
@@ -1041,7 +1029,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             result=i + 1,
         )
@@ -1056,7 +1044,7 @@ def test_workflow_with_more_than_max_decisions():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="completed",
             result=i + 1,
         )
@@ -1100,7 +1088,7 @@ def test_workflow_with_big_decision_response():
     assert decisions[1].type == "StartTimer"
 
 
-class OnFailureMixin(object):
+class OnFailureMixin:
     failed = False
 
     def on_failure(self, history, reason, details=None):
@@ -1188,9 +1176,7 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
 
     workflow_failed = swf.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason="Workflow execution error in "
-        "activity-tests.data.activities.raise_on_failure: "
-        '"error"',
+        reason="Workflow execution error in " "activity-tests.data.activities.raise_on_failure: " '"error"',
         details=builder.DEFAULT_DETAILS,
     )
 
@@ -1439,7 +1425,7 @@ def test_more_than_1000_open_activities_scheduled():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="scheduled",
             result=i + 1,
         )
@@ -1473,7 +1459,7 @@ def test_more_than_1000_open_activities_scheduled_and_running():
         history.add_activity_task(
             increment,
             decision_id=decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state=get_random_state(),
             result=i + 1,
         )
@@ -1495,7 +1481,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=first_decision_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(i + 1),
+            activity_id=f"activity-tests.data.activities.increment-{i + 1}",
             last_state="scheduled",
             result=i + 1,
         )
@@ -1511,7 +1497,7 @@ def test_more_than_1000_open_activities_partial_max():
         history.add_activity_task(
             increment,
             decision_id=history.last_id,
-            activity_id="activity-tests.data.activities.increment-{}".format(id_),
+            activity_id=f"activity-tests.data.activities.increment-{id_}",
             last_state="scheduled",
             result=id_,
         )
@@ -1528,7 +1514,8 @@ def test_more_than_1000_open_activities_partial_max():
         scheduled_id = first_decision_id + i + 1
         history.add_activity_task_started(scheduled_id)
         history.add_activity_task_completed(
-            scheduled_id, started=history.last_id,
+            scheduled_id,
+            started=history.last_id,
         )
 
     (history.add_decision_task_scheduled().add_decision_task_started())
@@ -1636,9 +1623,7 @@ class ATestDefinitionParentWorkflow(BaseTestWorkflow):
     name = "test_parent_workflow"
 
     def run(self):
-        future = self.submit(
-            ATestDefinitionChildWithIdWorkflow, workflow_name="workflow-child-one-1"
-        )
+        future = self.submit(ATestDefinitionChildWithIdWorkflow, workflow_name="workflow-child-one-1")
         futures.wait(future)
 
 
@@ -1661,7 +1646,10 @@ def test_workflow_task_naming():
                     "version": "test_version",
                 },
                 "input": json_dumps(
-                    {"args": [], "kwargs": {"workflow_name": "workflow-child-one-1"},}
+                    {
+                        "args": [],
+                        "kwargs": {"workflow_name": "workflow-child-one-1"},
+                    }
                 ),
             },
         }
@@ -1702,7 +1690,12 @@ def test_workflow_idempotent_task_naming():
                     "name": "tests.test_simpleflow.test_dataflow.ATestDefinitionIdempotentChildWithIdWorkflow",
                     "version": "test_version",
                 },
-                "input": json_dumps({"args": [], "kwargs": {"a": 1},}),
+                "input": json_dumps(
+                    {
+                        "args": [],
+                        "kwargs": {"a": 1},
+                    }
+                ),
             },
         }
     ]
@@ -1718,9 +1711,7 @@ class ATestDefinitionWithMarkersWorkflow(BaseTestWorkflow):
             "what": "Details for second marker",
             "date": datetime.date(2018, 1, 1),
         }
-        m3 = self.submit(
-            self.record_marker("Second marker", details=self.second_marker_details)
-        )
+        m3 = self.submit(self.record_marker("Second marker", details=self.second_marker_details))
         futures.wait(m1, m2, m3)
 
 
@@ -1745,9 +1736,7 @@ def test_markers():
         {
             "decisionType": "RecordMarker",
             "recordMarkerDecisionAttributes": {
-                "details": json_dumps(
-                    {"what": "Details for second marker", "date": "2018-01-01"}
-                ),
+                "details": json_dumps({"what": "Details for second marker", "date": "2018-01-01"}),
                 "markerName": "Second marker",
             },
         },

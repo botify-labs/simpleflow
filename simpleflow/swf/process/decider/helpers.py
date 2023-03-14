@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import swf.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
@@ -35,11 +37,11 @@ def load_workflow_executor(
     :return: Executor for this workflow
     :rtype: Executor
     """
-    logger.debug('load_workflow_executor(workflow_name="{}")'.format(workflow_name))
+    logger.debug(f'load_workflow_executor(workflow_name="{workflow_name}")')
     workflow = import_from_module(workflow_name)
 
     if not isinstance(domain, swf.models.Domain):
-        raise ValueError("domain is a {}, not a Domain".format(type(domain).__name__))
+        raise ValueError(f"domain is a {type(domain).__name__}, not a Domain")
 
     return Executor(
         domain,

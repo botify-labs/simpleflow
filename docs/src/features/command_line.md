@@ -1,7 +1,8 @@
 Command Line
 ============
 
-Simpleflow comes with a `simpleflow` command-line utility that can be used to list workflows against SWF, boot decider or activity workers (with multiprocessing), and a few other goodies.
+Simpleflow comes with a `simpleflow` command-line utility that can be used to list workflows against SWF,
+boot decider or activity workers (with multiprocessing), and a few other goodies.
 
 
 List Workflow Executions
@@ -16,13 +17,13 @@ Workflow Execution Status
 
     $ simpleflow --header workflow.info TestDomain basic-example-1438722273
     domain      workflow_type.name    workflow_type.version      task_list  workflow_id               run_id                                          tag_list      execution_time  input
-    TestDomain  basic                 example                               basic-example-1438722273  22QFVi362TnCh6BdoFgkQFlocunh24zEOemo1L12Yl5Go=                          1.70  {u'args': [1], u'kwargs': {}}
+    TestDomain  basic                 example                               basic-example-1438722273  22QFVi362TnCh6BdoFgkQFlocunh24zEOemo1L12Yl5Go=                          1.70  {'args': [1], 'kwargs': {}}
 
 
 Tasks Status
 ------------
 
-You can check the status of the workflow execution with::
+You can check the status of the workflow execution with:
 
     $ simpleflow --header workflow.tasks DOMAIN WORKFLOW_ID [RUN_ID] --nb-tasks 3
     $ simpleflow --header workflow.tasks TestDomain basic-example-1438722273
@@ -38,7 +39,7 @@ You can check the status of the workflow execution with::
 Profiling
 ---------
 
-You can profile the execution of the workflow with::
+You can profile the execution of the workflow with:
 
     $ simpleflow --header workflow.profile TestDomain basic-example-1438722273
     Task                                 Last State    Scheduled           Time Scheduled  Start               Time Running  End                 Percentage of total time
@@ -57,7 +58,7 @@ The SWF domain is controlled by the `--domain` on most simpleflow commands. It c
 be set via the `SWF_DOMAIN` environment variable. In case both are supplied, the
 command-line value takes precedence over the environment variable.
 
-Note that some simpleflow commands expect the domain to be passed as a positionnal argument.
+Note that some simpleflow commands expect the domain to be passed as a positional argument.
 In that case the environment variable has no effect for now.
 
 The number of retries for accessing SWF can be controlled via `SWF_CONNECTION_RETRIES`

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 import boto
@@ -7,7 +9,7 @@ from moto.swf import swf_backend
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from swf.actors import Decider
-from tests.data import DOMAIN
+from tests.data.constants import DOMAIN
 from tests.moto_compat import mock_s3, mock_swf
 
 
@@ -39,9 +41,7 @@ class MockSWFTestCase(unittest.TestCase):
 
     def tearDown(self):
         swf_backend.reset()
-        assert not self.conn.list_domains("REGISTERED")[
-            "domainInfos"
-        ], "moto state incorrectly reset!"
+        assert not self.conn.list_domains("REGISTERED")["domainInfos"], "moto state incorrectly reset!"
 
     def register_activity_type(self, func, task_list):
         self.conn.register_activity_type(self.domain.name, func, task_list)
@@ -73,7 +73,9 @@ class MockSWFTestCase(unittest.TestCase):
 
     def get_workflow_execution_history(self):
         return self.conn.get_workflow_execution_history(
-            self.domain.name, workflow_id=self.workflow_id, run_id=self.run_id,
+            self.domain.name,
+            workflow_id=self.workflow_id,
+            run_id=self.run_id,
         )
 
     def process_activity_task(self):

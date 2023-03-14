@@ -1,9 +1,8 @@
-from __future__ import absolute_import
+from __future__ import annotations
 
 import unittest
 from collections import namedtuple
-
-from mock import patch
+from unittest.mock import patch
 
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from swf.models import ActivityTask, Domain

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from sure import expect
@@ -24,11 +26,7 @@ class TestProcessContext(unittest.TestCase):
         expect(ctx.get("event_id")).to.equal("4")
 
     def test_set_and_get_invalid_key(self):
-        (
-            expect(ctx.set)
-            .when.called_with("invalid_key", "bar")
-            .to.have.raised(KeyError)
-        )
+        (expect(ctx.set).when.called_with("invalid_key", "bar").to.have.raised(KeyError))
 
         (expect(ctx.get).when.called_with("invalid_key").to.have.raised(KeyError))
 

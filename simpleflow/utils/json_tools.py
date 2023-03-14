@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 import datetime
 import json
 import types
 from uuid import UUID
 
 import lazy_object_proxy
-from future.utils import iteritems
 
 from simpleflow.futures import Future
 
 
 def serialize_complex_object(obj):
-    if isinstance(
-        obj, bytes
-    ):  # Python 3 only (serialize_complex_object not called here in Python 2)
+    if isinstance(obj, bytes):  # Python 3 only (serialize_complex_object not called here in Python 2)
         return obj.decode("utf-8", errors="replace")
     if isinstance(obj, datetime.datetime):
         r = obj.isoformat()
@@ -39,14 +38,14 @@ def serialize_complex_object(obj):
     elif isinstance(obj, (set, frozenset)):
         return list(obj)
     raise TypeError(
-        "Type %s couldn't be serialized. This is a bug in simpleflow,"
-        " please file a new issue on GitHub!" % type(obj)
+        f"Type {type(obj).__name__} couldn't be serialized. This may be a bug in simpleflow,"
+        f" please file a new issue on GitHub!"
     )
 
 
 def _resolve_proxy(obj):
     if isinstance(obj, dict):
-        return {k: _resolve_proxy(v) for k, v in iteritems(obj)}
+        return {k: _resolve_proxy(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_resolve_proxy(v) for v in obj]
     if isinstance(obj, lazy_object_proxy.Proxy):

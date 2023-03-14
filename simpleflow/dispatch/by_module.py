@@ -1,7 +1,7 @@
 from . import exceptions
 
 
-class ModuleDispatcher(object):
+class ModuleDispatcher:
     """
     Dispatch in a given namespace.
     """
@@ -23,7 +23,7 @@ class ModuleDispatcher(object):
             try:
                 submodule_name = self._mapping[submodule_name]
             except KeyError:
-                raise exceptions.DispatchError("cannot dispatch {}".format(name))
+                raise exceptions.DispatchError(f"cannot dispatch {name}")
 
         submodule = getattr(self._module, submodule_name)
         return getattr(submodule, func_name)

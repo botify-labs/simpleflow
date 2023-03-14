@@ -2,7 +2,7 @@ Simpleflow
 ==========
 
 <p class=badges>
-[![Pypi Status](https://badge.fury.io/py/simpleflow.png)](http://badge.fury.io/py/simpleflow) [![Build Status](https://travis-ci.org/botify-labs/simpleflow.svg?branch=main)](https://travis-ci.org/botify-labs/simpleflow)
+[![Pypi Status](https://badge.fury.io/py/simpleflow.png)](https://badge.fury.io/py/simpleflow) [![Build Status](https://travis-ci.org/botify-labs/simpleflow.svg?branch=main)](https://travis-ci.org/botify-labs/simpleflow)
 </p>
 
 Simpleflow is a Python library that provides abstractions to write programs in
@@ -41,18 +41,18 @@ Please read and even run the `demo` script to have a quick glance of
 `simpleflow` commands. To run the `demo`  you will need to start decider
 and activity worker processes.
 
-Start a decider with::
+Start a decider with:
 
     $ simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
 
-Start an activity worker with::
+Start an activity worker with:
 
     $ simpleflow worker.start --domain TestDomain --task-list quickstart
 
 Then execute `./extras/demo`.
 
 
-More informations
------------------
+More information
+----------------
 
 Read the main documentation at https://botify-labs.github.io/simpleflow/.

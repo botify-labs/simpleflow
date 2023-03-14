@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from simpleflow import Workflow, activity
 
 
@@ -21,4 +19,4 @@ class BasicWorkflow(Workflow):
 
     def run(self, x, task_list, *args, **kwargs):
         result = self.submit(run_on(double, task_list), x).result
-        print("Result: {}".format(result))
+        print(f"Result: {result}")

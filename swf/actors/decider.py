@@ -1,54 +1,58 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import boto.exception
 
-from simpleflow import compat, format, logging_context
+from simpleflow import format, logging_context
 from simpleflow.utils import json_dumps
 from swf.actors.core import Actor
 from swf.exceptions import DoesNotExistError, PollTimeout, ResponseError
+from swf.models.decision.base import Decision
 from swf.models.history import History
 from swf.models.workflow import WorkflowExecution, WorkflowType
 from swf.responses import Response
+
+if TYPE_CHECKING:
+    from swf.models import Domain
 
 
 class Decider(Actor):
     """Decider actor implementation
 
     :param  domain: Domain the Actor should interact with
-    :type   domain: swf.models.Domain
-
     :param  task_list: task list the Actor should watch for tasks on
-    :type   task_list: str
     """
 
-    def __init__(self, domain, task_list):
-        super(Decider, self).__init__(domain, task_list)
+    def __init__(self, domain: Domain, task_list: str) -> None:
+        super().__init__(domain, task_list)
 
-    def complete(self, task_token, decisions=None, execution_context=None):
+    def complete(
+        self, task_token: str, decisions: list[Decision] | None = None, execution_context: str | Any | None = None
+    ):
         """Responds to ``swf`` decisions have been made about
         the task with `task_token``
 
         :param  task_token: completed decision task token
-        :type   task_token: str
 
         :param  decisions: The list of decisions (possibly empty)
                            made by the decider while processing this decision task
         :type   decisions: list[swf.models.decision.base.Decision]
         :param execution_context: User-defined context to add to workflow execution.
-        :type execution_context: str
         """
-        if execution_context is not None and not isinstance(
-            execution_context, compat.string_types
-        ):
+        if execution_context is not None and not isinstance(execution_context, str):
             execution_context = json_dumps(execution_context)
         try:
             self.connection.respond_decision_task_completed(
-                task_token, decisions, format.execution_context(execution_context),
+                task_token,
+                decisions,
+                format.execution_context(execution_context),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to complete decision task with token={}".format(task_token),
+                    f"Unable to complete decision task with token={task_token}",
                     message,
                 )
             raise ResponseError(message)
@@ -79,7 +83,7 @@ class Decider(Actor):
             self.domain.name,
             task_list=task_list,
             identity=format.identity(identity),
-            **kwargs
+            **kwargs,
         )
         token = task.get("taskToken")
         if not token:
@@ -98,13 +102,14 @@ class Decider(Actor):
                     task_list=task_list,
                     identity=format.identity(identity),
                     next_page_token=next_page,
-                    **kwargs
+                    **kwargs,
                 )
             except boto.exception.SWFResponseError as e:
                 message = self.get_error_message(e)
                 if e.error_code == "UnknownResourceFault":
                     raise DoesNotExistError(
-                        "Unable to poll decision task", message,
+                        "Unable to poll decision task",
+                        message,
                     )
 
                 raise ResponseError(message)

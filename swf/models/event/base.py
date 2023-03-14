@@ -1,20 +1,20 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Any
 
 import pytz
-from future.utils import iteritems
 
 from simpleflow import format
 from swf.utils import cached_property, camel_to_underscore
 
 
-class Event(object):
+class Event:
     """Simple workflow execution event wrapper base class
 
     Intends to be used as a base abstraction for the multiple amazon
@@ -32,62 +32,54 @@ class Event(object):
     name 'DecisionTaskScheduleFailed', id '1' and state 'failed'.
 
     :param  id: event id provided by amazon service
-    :type   id: string
-
     :param  state: event current state
-    :type   state: string
-
     :param  timestamp: event creation timestamp
-    :type   timestamp: float
-
     :param  raw_data: raw_event representation provided by amazon service
-    :type   raw_data: dict
     """
 
-    _type = None
-    _name = None
-    _attributes_key = None
+    _type: str | None = None
+    _name: str | None = None
+    _attributes_key: str | None = None
     _attributes = None
 
     excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
-    def __init__(self, id, state, timestamp, raw_data):
-        """
-        """
+    def __init__(self, id: int, state: str, timestamp: float, raw_data: dict | None):
+        """ """
         self._id = id
         self._state = state
         self._timestamp = timestamp
-        self._input = {}
-        self._control = None
+        self._input: dict = {}
+        self._control: dict | None = None
         self.raw = raw_data or {}
 
         self.process_attributes()
 
     def __repr__(self):
-        return "<Event %s %s : %s >" % (self.id, self.type, self.state)
+        return f"<Event {self.id} {self.type} : {self.state} >"
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def state(self):
+    def state(self) -> str:
         return self._state
 
     @cached_property
-    def timestamp(self):
+    def timestamp(self) -> datetime:
         return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)
 
     @property
-    def input(self):
+    def input(self) -> dict[str, Any]:
         return self._input
 
     @input.setter
@@ -95,7 +87,7 @@ class Event(object):
         self._input = format.decode(value)
 
     @property
-    def control(self):
+    def control(self) -> dict[str, Any] | None:
         return self._control
 
     @control.setter
@@ -105,5 +97,5 @@ class Event(object):
     def process_attributes(self):
         """Processes the event raw_data attributes_key elements
         and sets current instance attributes accordingly"""
-        for key, value in iteritems(self.raw[self._attributes_key]):
+        for key, value in self.raw[self._attributes_key].items():
             setattr(self, camel_to_underscore(key), value)

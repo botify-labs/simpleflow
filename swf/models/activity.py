@@ -1,18 +1,23 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
-from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
 
 from swf import exceptions
 from swf.constants import REGISTERED
 from swf.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
-from swf.models import BaseModel
-from swf.models.base import ModelDiff
+from swf.models.base import BaseModel, ModelDiff
 from swf.utils import immutable
+
+if TYPE_CHECKING:
+    from swf.models import Domain
+    from swf.models.workflow import WorkflowExecution
 
 
 class ActivityTypeDoesNotExist(Exception):
@@ -24,48 +29,28 @@ class ActivityType(BaseModel):
     """ActivityType wrapper
 
     :param  domain: Domain the workflow type should be registered in
-    :type   domain: swf.models.Domain
-
     :param  name: name of the ActivityType
-    :type   name: str
-
     :param  version: version of the ActivityType
-    :type   version: str
-
     :param  status: ActivityType status
     :type   status: swf.constants.{REGISTERED, DEPRECATED}
-
     :param  description: ActivityType description
-    :type   description: str | None
-
     :param   creation_date: creation date of the current ActivityType
     :type    creation_date: float (timestamp)
-
     :param   deprecation_date: deprecation date of ActivityType
     :type    deprecation_date: float (timestamp)
-
     :param  task_list: specifies the default task list to use for scheduling
                        tasks of this activity type.
-    :type   task_list: str
-
     :param  task_heartbeat_timeout: default maximum time before which a worker
                                     processing a task of this type must report
                                     progress by calling RecordActivityTaskHeartbeat.
-    :type   task_heartbeat_timeout: int
-
     :param  task_schedule_to_close_timeout: default maximum duration for a task
                                             of this activity type.
-    :type   task_schedule_to_close_timeout: int
-
     :param  task_schedule_to_start_timeout: default maximum duration that a
                                             task of this activity type can wait
                                             before being assigned to a worker.
-    :type   task_schedule_to_start_timeout: int
-
     :param   task_start_to_close_timeout: default maximum duration that a
                                           worker can take to process tasks of
                                           this activity type.
-    :type    task_start_to_close_timeout: int
     """
 
     kind = "type"
@@ -88,21 +73,20 @@ class ActivityType(BaseModel):
     def __init__(
         self,
         domain,
-        name,
-        version,
-        status=REGISTERED,
-        description=None,
-        creation_date=0.0,
-        deprecation_date=0.0,
-        task_list=None,
-        task_heartbeat_timeout=0,
-        task_schedule_to_close_timeout=0,
-        task_schedule_to_start_timeout=0,
-        task_start_to_close_timeout=0,
+        name: str,
+        version: str,
+        status: str = REGISTERED,
+        description: str | None = None,
+        creation_date: float = 0.0,
+        deprecation_date: float = 0.0,
+        task_list: str | None = None,
+        task_heartbeat_timeout: int = 0,
+        task_schedule_to_close_timeout: int = 0,
+        task_schedule_to_start_timeout: int = 0,
+        task_start_to_close_timeout: int = 0,
         *args,
-        **kwargs
-    ):
-
+        **kwargs,
+    ) -> None:
         self.domain = domain
         self.name = name
         self.version = version
@@ -122,18 +106,15 @@ class ActivityType(BaseModel):
         # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self):
+    def _diff(self) -> ModelDiff:
         """Checks for differences between ActivityType instance
         and upstream version
 
         :returns: A list (swf.models.base.ModelDiff) namedtuple describing
                   differences
-        :rtype: ModelDiff
         """
         try:
-            description = self.connection.describe_activity_type(
-                self.domain.name, self.name, self.version
-            )
+            description = self.connection.describe_activity_type(self.domain.name, self.name, self.version)
         except SWFResponseError as err:
             if err.error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote ActivityType does not exist")
@@ -183,14 +164,9 @@ class ActivityType(BaseModel):
             extract=exceptions.extract_resource,
         ),
     )
-    def exists(self):
-        """Checks if the ActivityType exists amazon-side
-
-        :rtype: bool
-        """
-        self.connection.describe_activity_type(
-            self.domain.name, self.name, self.version
-        )
+    def exists(self) -> bool:
+        """Checks if the ActivityType exists amazon-side"""
+        self.connection.describe_activity_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self):
@@ -202,19 +178,13 @@ class ActivityType(BaseModel):
                 self.version,
                 task_list=str(self.task_list),
                 default_task_heartbeat_timeout=str(self.task_heartbeat_timeout),
-                default_task_schedule_to_close_timeout=str(
-                    self.task_schedule_to_close_timeout
-                ),
-                default_task_schedule_to_start_timeout=str(
-                    self.task_schedule_to_start_timeout
-                ),
-                default_task_start_to_close_timeout=str(
-                    self.task_start_to_close_timeout
-                ),
+                default_task_schedule_to_close_timeout=str(self.task_schedule_to_close_timeout),
+                default_task_schedule_to_start_timeout=str(self.task_schedule_to_start_timeout),
+                default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description,
             )
-        except SWFTypeAlreadyExistsError as err:
-            raise AlreadyExistsError("{} already exists".format(self))
+        except SWFTypeAlreadyExistsError:
+            raise AlreadyExistsError(f"{self} already exists")
         except SWFResponseError as err:
             if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
                 raise DoesNotExistError(err.body["message"])
@@ -230,9 +200,7 @@ class ActivityType(BaseModel):
     )
     def delete(self):
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_activity_type(
-            self.domain.name, self.name, self.version
-        )
+        self.connection.deprecate_activity_type(self.domain.name, self.name, self.version)
 
     def upstream(self):
         from swf.querysets.activity import ActivityTypeQuerySet
@@ -263,18 +231,19 @@ class ActivityTask(BaseModel):
         "started_event_id",
     ]
 
+    # noinspection PyMissingConstructor
     def __init__(
         self,
-        domain,
-        task_list,
-        task_token=None,
-        activity_type=None,
-        workflow_execution=None,
-        input=None,
-        activity_id=None,
-        started_event_id=None,
-        context=None,
-    ):
+        domain: Domain,
+        task_list: str,
+        task_token: str | None = None,
+        activity_type: ActivityType | None = None,
+        workflow_execution: WorkflowExecution = None,
+        input: Any = None,
+        activity_id: int | None = None,
+        started_event_id: int | None = None,
+        context: dict[str, Any] = None,
+    ) -> None:
         self.domain = domain
         self.task_list = task_list
 
@@ -288,12 +257,10 @@ class ActivityTask(BaseModel):
         self.context = context
 
     @classmethod
-    def from_poll(cls, domain, task_list, data):
+    def from_poll(cls, domain: Domain, task_list: str, data: dict[str, Any]) -> ActivityTask:
         from .workflow import WorkflowExecution
 
-        activity_type = ActivityType(
-            domain, data["activityType"]["name"], data["activityType"]["version"]
-        )
+        activity_type = ActivityType(domain, data["activityType"]["name"], data["activityType"]["version"])
 
         workflow_execution = WorkflowExecution(
             domain,

@@ -1,14 +1,16 @@
 # Task Lists
 
-Task lists are often used to route different tasks to specific groups 
+Task lists are often used to route different tasks to specific groups
 of workers.
-For SWF tasks, the task list is typically specified with `@activity.with_attributes`:
+The decider and activity task lists are distinct, even if they have the same name.
+
+For SWF activities, the task list is typically specified with `@activity.with_attributes`:
 
 ```python
 from simpleflow import activity
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def double(x):
     return x * 2
 ```
@@ -30,10 +32,10 @@ def double(x):
 
 class MyWorkflow(Workflow):
     ...
-    
+
     def run(self, x, task_list, *args, **kwargs):
         result = self.submit(run_on(double, task_list), x).result
-        print("Result: {}".format(result))
+        print(f"Result: {result}")
 ```
 
 ```bash
@@ -42,8 +44,8 @@ class MyWorkflow(Workflow):
 [screen2]$ simpleflow workflow.start examples.dyn_task_list.BasicWorkflow --task-list foo-decider --input '{"args": [3, "foo-worker"]}'
 ```
 
-For SWF workflows, a static task list is usually defined as a class variable 
-in the `Workflow` subclass. Dynamic task lists are implemented by a 
+For SWF workflows, a static task list is usually defined as a class variable
+in the `Workflow` subclass. Dynamic task lists are implemented by a
 `get_task_list` class method:
 
 ```python
@@ -56,10 +58,10 @@ class MyWorkflow(Workflow):
     @classmethod
     def get_task_list(cls, task_list, *args, **kwargs):
         return task_list
-    
+
     def run(self, x, task_list, *args, **kwargs):
         ...
 ```
 
-In this example, `task_list` is a mandatory workflow argument; a more realistic 
+In this example, `task_list` is a mandatory workflow argument; a more realistic
 case would use a `kwarg`.

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import swf.models
 import swf.models.decision
 from simpleflow import Workflow, logger, task
 
 
-class SwfTask(object):
+class SwfTask:
     """
     simpleflow.swf task; useful for type checking.
     """
@@ -54,15 +56,21 @@ class ActivityTask(task.ActivityTask, SwfTask):
 
         if task_list is None:
             task_list = activity.task_list
-        task_timeout = kwargs.get("task_timeout", activity.task_start_to_close_timeout,)
+        task_timeout = kwargs.get(
+            "task_timeout",
+            activity.task_start_to_close_timeout,
+        )
         duration_timeout = kwargs.get(
-            "duration_timeout", activity.task_schedule_to_close_timeout,
+            "duration_timeout",
+            activity.task_schedule_to_close_timeout,
         )
         schedule_timeout = kwargs.get(
-            "schedule_timeout", activity.task_schedule_to_start_timeout,
+            "schedule_timeout",
+            activity.task_schedule_to_start_timeout,
         )
         heartbeat_timeout = kwargs.get(
-            "heartbeat_timeout", activity.task_heartbeat_timeout,
+            "heartbeat_timeout",
+            activity.task_heartbeat_timeout,
         )
         task_priority = kwargs.get("priority")
         control = kwargs.get("control")
@@ -95,8 +103,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return input
 
     @classmethod
-    def get_activity_type(cls, domain, name, version):
-        # type: (swf.models.Domain, str, str) -> swf.models.ActivityType
+    def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.
         :param domain:
@@ -111,7 +118,9 @@ class ActivityTask(task.ActivityTask, SwfTask):
         key = (domain.name, name, version)
         if key not in cls.cached_models:
             cls.cached_models[key] = swf.models.ActivityType(
-                domain, name, version=version,
+                domain,
+                name,
+                version=version,
             )
         return cls.cached_models[key]
 
@@ -146,7 +155,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def name(self):
-        return "workflow-{}".format(self.workflow.name)
+        return f"workflow-{self.workflow.name}"
 
     @property
     def payload(self):
@@ -182,18 +191,14 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         :rtype: list[swf.models.decision.Decision]
         """
         workflow = self.workflow
-        model = self.get_workflow_type(
-            domain, workflow.__module__ + "." + workflow.__name__, workflow.version
-        )
+        model = self.get_workflow_type(domain, workflow.__module__ + "." + workflow.__name__, workflow.version)
 
         input = self.get_input()
         control = kwargs.get("control")
 
         tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
-            tag_list = executor.get_run_context()[
-                "tag_list"
-            ]  # FIXME what about self.executor?
+            tag_list = executor.get_run_context()["tag_list"]  # FIXME what about self.executor?
 
         execution_timeout = getattr(workflow, "execution_timeout", None)
         decision = swf.models.decision.ChildWorkflowExecutionDecision(
@@ -218,8 +223,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return input
 
     @classmethod
-    def get_workflow_type(cls, domain, name, version):
-        # type: (swf.models.Domain, str, str) -> swf.models.WorkflowType
+    def get_workflow_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.WorkflowType:
         """
         Cache known WorkflowType's to remove useless latency.
         :param domain:
@@ -234,7 +238,9 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         key = (domain.name, name, version)
         if key not in cls.cached_models:
             cls.cached_models[key] = swf.models.WorkflowType(
-                domain, name, version=version,
+                domain,
+                name,
+                version=version,
             )
         return cls.cached_models[key]
 
@@ -255,13 +261,11 @@ class SignalTask(task.SignalTask, SwfTask):
             control,
             extra_input,
             *a_task.args,
-            **a_task.kwargs
+            **a_task.kwargs,
         )
 
-    def __init__(
-        self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs
-    ):
-        super(SignalTask, self).__init__(name, *args, **kwargs)
+    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
         self.control = control
@@ -316,18 +320,18 @@ class MarkerTask(task.MarkerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.MarkerTask) -> MarkerTask
+    def from_generic_task(cls, a_task: task.MarkerTask) -> MarkerTask:
         return cls(a_task.name, *a_task.args, **a_task.kwargs)
 
     def __init__(self, name, details=None):
-        super(MarkerTask, self).__init__(name, details)
+        super().__init__(name, details)
         self.id = None
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.MarkerDecision()
         decision.record(
-            self.name, self.details,
+            self.name,
+            self.details,
         )
         return [decision]
 
@@ -336,12 +340,11 @@ class TimerTask(task.TimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.TimerTask) -> TimerTask
+    def from_generic_task(cls, a_task: task.TimerTask) -> TimerTask:
         return cls(a_task.timer_id, a_task.timeout, a_task.control)
 
     def __init__(self, timer_id, timeout, control):
-        super(TimerTask, self).__init__(timer_id, timeout, control)
+        super().__init__(timer_id, timeout, control)
 
     def schedule(self, *args, **kwargs):
         decision = swf.models.decision.TimerDecision(
@@ -357,13 +360,15 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task):
-        # type: (task.CancelTimerTask) -> CancelTimerTask
+    def from_generic_task(cls, a_task: task.CancelTimerTask) -> CancelTimerTask:
         return cls(a_task.timer_id)
 
     def __init__(self, timer_id):
-        super(CancelTimerTask, self).__init__(timer_id)
+        super().__init__(timer_id)
 
     def schedule(self, *args, **kwargs):
-        decision = swf.models.decision.TimerDecision("cancel", id=self.timer_id,)
+        decision = swf.models.decision.TimerDecision(
+            "cancel",
+            id=self.timer_id,
+        )
         return [decision]

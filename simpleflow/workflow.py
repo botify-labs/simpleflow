@@ -1,4 +1,6 @@
-from __future__ import absolute_import
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from simpleflow.base import Submittable, SubmittableContainer
 from simpleflow.signal import WaitForSignal
@@ -9,9 +11,10 @@ from ._decorators import deprecated
 from .activity import Activity
 from .utils import issubclass_
 
-if False:
-    from typing import Any, List, Optional  # NOQA
-    from .marker import Marker  # NOQA
+if TYPE_CHECKING:
+    from typing import Any
+
+    from .marker import Marker
 
 
 class Workflow(Submittable):
@@ -68,9 +71,7 @@ class Workflow(Submittable):
         elif isinstance(submittable, SubmittableContainer):
             return submittable.submit(self._executor)
         else:
-            raise TypeError(
-                "Bad type for {} activity ({})".format(submittable, type(submittable))
-            )
+            raise TypeError(f"Bad type for {submittable} activity ({type(submittable)})")
 
     def map(self, activity, iterable):
         """
@@ -210,16 +211,13 @@ class Workflow(Submittable):
     def wait_signal(self, name):
         return self.executor.wait_signal(name)
 
-    def record_marker(self, name, details=None):
-        # type: (str, Any) -> Submittable
+    def record_marker(self, name: str, details: Any = None) -> Submittable:
         return self.executor.record_marker(name, details)
 
-    def list_markers(self, all=False):
-        # type: (bool) -> List[Marker]
+    def list_markers(self, all: bool = False) -> list[Marker]:
         return self.executor.list_markers(all)
 
-    def get_event_details(self, event_type, event_name):
-        # type: (str, str) -> Optional[dict]
+    def get_event_details(self, event_type: str, event_name: str) -> dict | None:
         """
         Get details about an event.
         Backend-dependent.
@@ -246,7 +244,8 @@ class Workflow(Submittable):
         return True
 
     def on_task_failure(
-        self, failure_context,  # type: TaskFailureContext
+        self,
+        failure_context: TaskFailureContext,
     ):
         """
         Called by the executor if a task or workflow failed.

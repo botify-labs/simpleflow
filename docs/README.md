@@ -7,12 +7,11 @@ This directory hosts simpleflow documentation.
 Installing
 ----------
 
-The following commands will install the python libraries needed
-for developing the on the docs website. You may want to activate
-a `virtualenv` before running the commands:
+The following command will install the python libraries needed
+for developing on the docs website. You may want to activate
+a `virtualenv` before running the command in the root directory:
 
-    pip install pip-tools
-    ./script/pip-sync
+    pip install .[doc]
 
 
 Running for development

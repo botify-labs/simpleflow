@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function
+from __future__ import annotations
 
-import multiprocessing
 import os
 import platform
 import signal
@@ -13,6 +11,7 @@ from uuid import uuid4
 
 import boto.connection
 import click
+import multiprocess
 
 import swf.exceptions
 import swf.models
@@ -30,7 +29,7 @@ from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, Dict, Text, Type
+    from typing import Any
 
     from swf.models import WorkflowType
 
@@ -65,9 +64,7 @@ def comma_separated_list(value):
 @click.option("--header/--no-header", default=False)
 @click.option(
     "--color",
-    type=click.Choice(
-        [log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]
-    ),
+    type=click.Choice([log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]),
     default=log.ColorModes.AUTO,
 )
 @click.version_option(version=__version__)
@@ -78,8 +75,7 @@ def cli(ctx, header, format, color):
     log.color_mode = color
 
 
-def get_workflow_type(domain_name, workflow_class):
-    # type: (Text, Type[Workflow]) -> WorkflowType
+def get_workflow_type(domain_name: str, workflow_class: type[Workflow]) -> WorkflowType:
     """
     Get or create the given workflow on SWF.
     :param domain_name:
@@ -156,9 +152,7 @@ def run_workflow_locally(workflow_class, wf_input, middlewares):
     required=False,
     help="Tags for the workflow execution.",
 )
-@click.option(
-    "--decision-tasks-timeout", required=False, help="Timeout for the decision tasks."
-)
+@click.option("--decision-tasks-timeout", required=False, help="Timeout for the decision tasks.")
 @click.option(
     "--execution-timeout",
     required=False,
@@ -166,13 +160,9 @@ def run_workflow_locally(workflow_class, wf_input, middlewares):
 )
 @click.option("--task-list", required=False, help="Task list for decision tasks.")
 @click.option("--workflow-id", required=False, help="ID of the workflow execution.")
-@click.option(
-    "--domain", "-d", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain."
-)
+@click.option("--domain", "-d", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain.")
 @click.argument("workflow")
-@cli.command(
-    "workflow.start", help="Start the workflow defined in the WORKFLOW module."
-)
+@cli.command("workflow.start", help="Start the workflow defined in the WORKFLOW module.")
 def start_workflow(
     workflow,
     domain,
@@ -189,7 +179,7 @@ def start_workflow(
 ):
     workflow_class = import_from_module(workflow)
 
-    wf_input = {}  # type: Dict[AnyStr, Any]
+    wf_input: dict[str, Any] = {}
     if input or input_file:
         wf_input = get_or_load_input(input_file, input)
 
@@ -361,9 +351,7 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
     type=click.Choice(["open", "closed"]),
     help="Open/Closed",
 )
-@click.option(
-    "--started-since", "-d", default=30, show_default=True, help="Started since N days."
-)
+@click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.pass_context
 def list_workflows(ctx, domain, status, started_since):
     print(
@@ -389,12 +377,8 @@ def list_workflows(ctx, domain, status, started_since):
 @click.option("--tag", default=None, help="Tag (multiple option).")  # , multiple=True
 @click.option("--workflow-id", default=None, help="Workflow ID.")
 @click.option("--workflow-type-name", default=None, help="Workflow Name.")
-@click.option(
-    "--workflow-type-version", default=None, help="Workflow Version (name needed)."
-)
-@click.option(
-    "--started-since", "-d", default=30, show_default=True, help="Started since N days."
-)
+@click.option("--workflow-type-version", default=None, help="Workflow Version (name needed).")
+@click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.pass_context
 def filter_workflows(
     ctx,
@@ -420,7 +404,7 @@ def filter_workflows(
             workflow_id=workflow_id,
             workflow_type_name=workflow_type_name,
             workflow_type_version=workflow_type_version,
-            **kwargs
+            **kwargs,
         )
     )
 
@@ -443,14 +427,10 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @click.argument("workflows", nargs=-1, required=False)
-@cli.command(
-    "decider.start", help="Start a decider process to manage workflow executions."
-)
+@cli.command("decider.start", help="Start a decider process to manage workflow executions.")
 def start_decider(workflows, domain, task_list, log_level, nb_processes):
     if log_level:
-        logger.warning(
-            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
-        )
+        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
     decider.command.start(
         workflows,
         domain,
@@ -472,9 +452,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     default="local",
     help="Whether to process the task locally or in a Kubernetes job (default=local)",
 )
-@click.option(
-    "--one-task", is_flag=True, help="Run only one task and shut down (no supervisor)."
-)
+@click.option("--one-task", is_flag=True, help="Run only one task and shut down (no supervisor).")
 @click.option(
     "--heartbeat",
     type=int,
@@ -500,16 +478,12 @@ def start_worker(
     middleware_post_execution,
 ):
     if log_level:
-        logger.warning(
-            "Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead"
-        )
+        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
 
     if process_mode == "kubernetes" and poll_data:
         # don't accept to have a worker that doesn't poll AND doesn't process
         # since it would be just a gate to a scheduling infinite loop
-        raise ValueError(
-            "--process-mode=kubernetes and --poll-data options are exclusive"
-        )
+        raise ValueError("--process-mode=kubernetes and --poll-data options are exclusive")
 
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
@@ -578,9 +552,7 @@ def create_unique_task_list(workflow_id=""):
     required=False,
     help="Tags identifying the workflow execution.",
 )
-@click.option(
-    "--decision-tasks-timeout", required=False, help="Decision tasks timeout."
-)
+@click.option("--decision-tasks-timeout", required=False, help="Decision tasks timeout.")
 @click.option(
     "--execution-timeout",
     required=False,
@@ -588,9 +560,7 @@ def create_unique_task_list(workflow_id=""):
 )
 @click.option("--workflow-id", required=False, help="ID of the workflow execution.")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain.")
-@click.option(
-    "--display-status", type=bool, required=False, help="Display execution status."
-)
+@click.option("--display-status", type=bool, required=False, help="Display execution status.")
 @click.option(
     "--repair",
     type=str,
@@ -653,9 +623,7 @@ def standalone(
             "retrieving history of previous execution: domain={} "
             "workflow_id={} run_id={}".format(domain, repair, repair_run_id)
         )
-        workflow_execution = get_workflow_execution(
-            domain, repair, run_id=repair_run_id
-        )
+        workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
         previous_history = History(workflow_execution.history())
         repair_run_id = workflow_execution.run_id
         previous_history.parse()
@@ -673,7 +641,7 @@ def standalone(
                 tags = get_tag_list(
                     workflow_class,
                     *wf_input.get("args", ()),
-                    **wf_input.get("kwargs", {})
+                    **wf_input.get("kwargs", {}),
                 )
             else:
                 tags = getattr(workflow_class, "tag_list", None)
@@ -681,8 +649,8 @@ def standalone(
                 tags = None
 
     task_list = create_unique_task_list(workflow_id)
-    logger.info("using task list {}".format(task_list))
-    decider_proc = multiprocessing.Process(
+    logger.info(f"using task list {task_list}")
+    decider_proc = multiprocess.Process(
         target=decider.command.start,
         args=(
             [workflow],
@@ -700,7 +668,7 @@ def standalone(
     )
     decider_proc.start()
 
-    worker_proc = multiprocessing.Process(
+    worker_proc = multiprocess.Process(
         target=worker.command.start,
         args=(
             domain,
@@ -717,7 +685,7 @@ def standalone(
     )
     worker_proc.start()
 
-    print("starting workflow {}".format(workflow), file=sys.stderr)
+    print(f"starting workflow {workflow}", file=sys.stderr)
     ex = start_workflow.callback(
         workflow,
         domain,
@@ -740,9 +708,9 @@ def standalone(
             ex.run_id,
         )
         if display_status:
-            print("status: {}".format(ex.status), file=sys.stderr)
+            print(f"status: {ex.status}", file=sys.stderr)
         if ex.status == ex.STATUS_CLOSED:
-            print("execution {} finished".format(ex.workflow_id), file=sys.stderr)
+            print(f"execution {ex.workflow_id} finished", file=sys.stderr)
             break
 
     os.kill(worker_proc.pid, signal.SIGTERM)
@@ -751,9 +719,7 @@ def standalone(
     decider_proc.join()
 
 
-@click.option(
-    "--domain", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain."
-)
+@click.option("--domain", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain.")
 @click.option("--workflow-id", required=True, help="ID of the workflow execution.")
 @click.option("--input", "-i", required=False, help="JSON input of the workflow.")
 @click.option("--run-id", required=False, help="Run ID of the workflow execution.")
@@ -785,9 +751,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     except (swf.exceptions.DoesNotExistError, IndexError):
         logger.error("Couldn't find execution, exiting.")
         sys.exit(1)
-    logger.info(
-        "Found execution: workflowId={} runId={}".format(wfe.workflow_id, wfe.run_id)
-    )
+    logger.info(f"Found execution: workflowId={wfe.workflow_id} runId={wfe.run_id}")
 
     # now rerun the specified activity
     history = History(wfe.history())
@@ -809,9 +773,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
         logger.debug(line)
     if input_override:
         logger.info("NB: input will be overriden with the passed one!")
-    logger.info(
-        "Will re-run: {}(*{}, **{}) [+meta={}]".format(task, args, kwargs, meta)
-    )
+    logger.info(f"Will re-run: {task}(*{args}, **{kwargs}) [+meta={meta}]")
 
     # download binaries if needed
     download_binaries(meta.get("binaries", {}))
@@ -821,7 +783,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     result = instance.execute()
     if hasattr(instance, "post_execute"):
         instance.post_execute()
-    logger.info("Result (JSON): {}".format(json_dumps(result, compact=False)))
+    logger.info(f"Result (JSON): {json_dumps(result, compact=False)}")
 
 
 @click.argument(
@@ -838,17 +800,17 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
 def info(sections):
     @contextmanager
     def section(title):
-        print(log.colorize("BLUE", "# {}".format(title)))
+        print(log.colorize("BLUE", f"# {title}"))
         yield
         print("")
 
     if "versions" in sections:
         with section("Versions"):
-            print("simpleflow: {}".format(__version__))
+            print(f"simpleflow: {__version__}")
             version, build = sys.version.split("\n", 1)
-            print("python_version: {}".format(version))
-            print("python_build: {}".format(build))
-            print("platform: {}".format(platform.platform()))
+            print(f"python_version: {version}")
+            print(f"python_build: {build}")
+            print(f"platform: {platform.platform()}")
 
     if "settings" in sections:
         with section("Settings"):
@@ -862,7 +824,7 @@ def info(sections):
                 value = os.environ[key]
                 if "SECRET" in key:
                     value = "<redacted>"
-                print("{}={}".format(key, value))
+                print(f"{key}={value}")
 
 
 @click.argument("locations", nargs=-1)
@@ -872,7 +834,7 @@ def info(sections):
     "It expects a list of locations as <binary>=<s3_location> arguments.",
 )
 def binaries_download(locations):
-    pool = multiprocessing.Pool(5)
+    pool = multiprocess.Pool(5)
     pool.map(_download_binary, locations)
 
 

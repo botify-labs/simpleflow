@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 import functools
 import time
-
-try:
-    from collections.abc import Sequence
-except ImportError:
-    from collections import Sequence
+from collections.abc import Sequence
 
 from simpleflow import logger
 
@@ -31,7 +29,7 @@ def exponential(value):
     """
     import random
 
-    return random.random() * (2 ** value) + 1
+    return random.random() * (2**value) + 1  # nosec
 
 
 def with_delay(
@@ -75,7 +73,9 @@ def with_delay(
                 except on_exceptions as error:
                     wait_delay = delay(nb_retries)
                     log_with(
-                        'error "%r": retrying in %.2f seconds', error, wait_delay,
+                        'error "%r": retrying in %.2f seconds',
+                        error,
+                        wait_delay,
                     )
                     time.sleep(wait_delay)
                     nb_retries += 1

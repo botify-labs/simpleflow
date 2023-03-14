@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sure import expect
 
 from simpleflow import activity
@@ -10,7 +12,7 @@ def show_context_func():
 
 
 @activity.with_attributes()
-class ShowContextCls(object):
+class ShowContextCls:
     def execute(self):
         return self.context
 

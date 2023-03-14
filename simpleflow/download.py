@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import errno
 import functools
 import hashlib
@@ -10,7 +12,7 @@ from simpleflow.settings import SIMPLEFLOW_BINARIES_DIRECTORY
 from simpleflow.storage import pull
 
 
-class RemoteBinary(object):
+class RemoteBinary:
     """
     This class identifies if binary is available in $PATH so it can be used.
     If the binary is not available, simpleflow will try to download it and
@@ -28,7 +30,8 @@ class RemoteBinary(object):
         self.name = name
 
         # limit ourselves to S3 for now
-        assert remote_location.startswith("s3://")
+        if not remote_location.startswith("s3://"):
+            raise NotImplementedError("We currently only support S3")
         self.remote_location = remote_location
         self.local_directory = self._compute_local_directory()
         self.local_location = self._compute_local_location()
@@ -50,30 +53,26 @@ class RemoteBinary(object):
                 raise
 
     def _compute_local_directory(self):
-        suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()
-        return os.path.join(
-            SIMPLEFLOW_BINARIES_DIRECTORY, "{}-{}".format(self.name, suffix)
-        )
+        # TODO python3.9+: add usedforsecurity=False
+        suffix = hashlib.md5(self.remote_location.encode("utf-8")).hexdigest()  # nosec
+        return os.path.join(SIMPLEFLOW_BINARIES_DIRECTORY, f"{self.name}-{suffix}")
 
     def _compute_local_location(self):
         return os.path.join(self.local_directory, self.name)
 
     def _compute_lock_location(self):
-        return os.path.join(self.local_directory, ".{}.lock".format(self.name))
+        return os.path.join(self.local_directory, f".{self.name}.lock")
 
     def _check_binary_present(self):
         return os.access(self.local_location, os.X_OK)
 
     def _download_binary(self):
-        logger.info(
-            "Downloading binary: {} -> {}".format(
-                self.remote_location, self.local_location
-            )
-        )
+        logger.info("Downloading binary: {} -> {}".format(self.remote_location, self.local_location))
         bucket, path = self.remote_location.replace("s3://", "", 1).split("/", 1)
         # with FileLock(dest):
         pull(bucket, path, self.local_location)
-        os.chmod(self.local_location, 0o755)
+        # Executable file, +x is deliberate
+        os.chmod(self.local_location, 0o755)  # nosec
 
 
 # convenience helpers
@@ -91,7 +90,6 @@ def with_binaries(binaries_map):
             download_binaries(binaries_map)
             return func(*args, **kwargs)
 
-        wrapped.__wrapped__ = func
         return wrapped
 
     return decorator

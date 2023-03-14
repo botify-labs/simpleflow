@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 from datetime import datetime
 
@@ -17,7 +17,10 @@ def mock_list_workflow_types(*args, **kwargs):
                 "deprecationDate": datetime_timestamp(datetime.now()),
                 "description": "mocked workflow type",
                 "status": REGISTERED,
-                "workflowType": {"name": "mocked-workflow type", "version": "0.1",},
+                "workflowType": {
+                    "name": "mocked-workflow type",
+                    "version": "0.1",
+                },
             }
         ]
     }

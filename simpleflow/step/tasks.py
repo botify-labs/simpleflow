@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 from typing import TYPE_CHECKING
@@ -7,36 +9,33 @@ from simpleflow import storage
 from .constants import UNKNOWN_CONTEXT
 
 if TYPE_CHECKING:
-    from typing import AnyStr, List
+    pass
 
 
-class GetStepsDoneTask(object):
+class GetStepsDoneTask:
     """
     List all the steps that are done by parsing
     S3 bucket + path.
     """
 
-    def __init__(self, bucket, path):
-        # type: (AnyStr, AnyStr) -> None
+    def __init__(self, bucket: str, path: str) -> None:
         self.bucket = bucket
         self.path = path
         self.path_len = len(path) + (1 if not path.endswith("/") else 0)
 
-    def execute(self):
-        # type: () -> List[AnyStr]
-        steps = []  # type: List[AnyStr]
+    def execute(self) -> list[str]:
+        steps: list[str] = []
         for f in storage.list_keys(self.bucket, self.path):
             steps.append(f.key[self.path_len :])
         return steps
 
 
-class MarkStepDoneTask(object):
+class MarkStepDoneTask:
     """
     Push a file called `step_name` into bucket/path.
     """
 
-    def __init__(self, bucket, path, step_name):
-        # type: (AnyStr, AnyStr, AnyStr) -> None
+    def __init__(self, bucket: str, path: str, step_name: str) -> None:
         self.bucket = bucket
         self.path = path
         self.step_name = step_name

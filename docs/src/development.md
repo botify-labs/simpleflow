@@ -5,10 +5,11 @@ Development
 Requirements
 ------------
 
-- CPython 2.7 or 3.6 (recommended)
-- Pypy 2.5+
+- CPython 3.7+
+- Pypy 3.7+
 
-NB about Pypy: all tests pass but some parts of the deciders may not work ; Pypy
+The codebase currently needs to be compatible with Python 3.7.
+Note about Pypy: all tests pass but some parts of the deciders might not work; Pypy
 support is mostly for activity workers where you need the performance boost.
 
 
@@ -52,16 +53,18 @@ simpleflow during tests:
   `tests/integration/README.md`
 
 
-Reproducing Travis failures
----------------------------
+Reproducing CI failures
+-----------------------
+
+*Note: we're currently migrating from Travis to GitHub CI*
 
 It might happen that a test fails on [Travis](https://travis-ci.org/botify-labs/simpleflow)
 and you want to reproduce locally. Travis has a [helpful section in their docs](https://docs.travis-ci.com/user/common-build-problems/#Running-a-Container-Based-Docker-Image-Locally)
-about reproducing such issues. As of 2017, simpleflow builds run on 12.04 containers on
+about reproducing such issues. Since 2022, simpleflow builds run on 20.04 containers on
 the Travis infrastructure. So you can get close to the Travis setup with something like:
 
     docker run -it \
-      -u travis \
+      -u focal \
       -e DEBIAN_FRONTEND=noninteractive \
       -e PYTHONDONTWRITEBYTECODE=true \
       -v $(pwd):/botify-labs/simpleflow \
@@ -83,7 +86,7 @@ For instance on pypy builds the commands look like:
 Release
 -------
 
-In order to release a new version, you'll need credentials on pypi.python.org for this
+In order to release a new version, you’ll need credentials on pypi.python.org for this
 software, as long as write access to this repository. Ask via an issue if needed.
 
 The release process is then automated behind a script:

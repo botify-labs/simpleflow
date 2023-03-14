@@ -1,13 +1,17 @@
-import unittest
+from __future__ import annotations
 
-import mock
+import unittest
+from unittest import mock
+
 from sure import expect
 
 from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
 from swf.models.history import builder
 from swf.responses import Response
-from tests.data import DOMAIN, BaseTestWorkflow, increment
+from tests.data.activities import increment
+from tests.data.constants import DOMAIN
+from tests.data.workflows import BaseTestWorkflow
 from tests.utils import MockSWFTestCase
 
 
@@ -46,9 +50,7 @@ class TestSimpleflowSwfExecutor(MockSWFTestCase):
         expect(decisions).to.have.length_of(5)
 
         def get_task_priority(decision):
-            return decision["scheduleActivityTaskDecisionAttributes"].get(
-                "taskPriority"
-            )
+            return decision["scheduleActivityTaskDecisionAttributes"].get("taskPriority")
 
         # default priority for the whole workflow
         expect(get_task_priority(decisions[0])).to.equal("12")
@@ -133,7 +135,7 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
 @activity.with_attributes(raises_on_failure=True)
 def print_me_n_times(s, n, raises=False):
     if raises:
-        raise ValueError("Number: {}".format(s * n))
+        raise ValueError(f"Number: {s * n}")
     return s * n
 
 
@@ -152,9 +154,7 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_are_replaced_correctly(self):
         # prepare
-        self.register_activity_type(
-            "tests.test_simpleflow.swf.test_executor.print_me_n_times", "default"
-        )
+        self.register_activity_type("tests.test_simpleflow.swf.test_executor.print_me_n_times", "default")
 
         # start execution
         self.start_workflow_execution(input='{"args": ["012345679", 10000]}')
@@ -179,9 +179,7 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
     @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_in_task_failed_is_decoded(self):
         # prepare execution
-        self.register_activity_type(
-            "tests.test_simpleflow.swf.test_executor.print_me_n_times", "default"
-        )
+        self.register_activity_type("tests.test_simpleflow.swf.test_executor.print_me_n_times", "default")
 
         # start execution
         self.start_workflow_execution(
@@ -202,12 +200,8 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskFailed"
         attrs = activity_result_evt["activityTaskFailedEventAttributes"]
-        expect(attrs["reason"]).to.match(
-            r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}"
-        )
-        expect(attrs["details"]).to.match(
-            r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}"
-        )
+        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
+        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 9\d{4}")
         details = format.decode(attrs["details"])
         expect(details["error"]).to.equal("ValueError")
         expect(len(details["message"])).to.be.greater_than(9 * 10000)

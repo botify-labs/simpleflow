@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from random import randrange
 
 from simpleflow import Workflow, activity, futures
@@ -19,7 +17,7 @@ from simpleflow import Workflow, activity, futures
 @activity.with_attributes(task_list="quickstart", version="example")
 def loudly_increment(x, whoami):
     result = x + 1
-    print("I am {} and I'll increment x={} : result={}".format(whoami, x, result))
+    print(f"I am {whoami} and I'll increment x={x} : result={result}")
     return result
 
 
@@ -49,9 +47,7 @@ class IdempotentChildWorkflow(Workflow):
     tag_list = Workflow.INHERIT_TAG_LIST
 
     def run(self, x):
-        y = self.submit(
-            ChildWorkflow, x, name="GRAND-CHILD", my_tag_list=["abc", "def=3"]
-        )
+        y = self.submit(ChildWorkflow, x, name="GRAND-CHILD", my_tag_list=["abc", "def=3"])
         return y.result + randrange(1000000)
 
 
@@ -66,11 +62,7 @@ class ChildWorkflowWithGetId(Workflow):
         return kwargs.get("my_id")
 
     def run(self, my_id=None):
-        print(
-            "ChildWorkflowWithGetId: id={}, workflow_id={}".format(
-                my_id, self.get_run_context().get("workflow_id")
-            )
-        )
+        print("ChildWorkflowWithGetId: id={}, workflow_id={}".format(my_id, self.get_run_context().get("workflow_id")))
 
 
 class ParentWorkflow(Workflow):
@@ -80,11 +72,11 @@ class ParentWorkflow(Workflow):
     tag_list = ["these", "are", "tags"]
 
     def __init__(self, executor):
-        super(ParentWorkflow, self).__init__(executor)
+        super().__init__(executor)
         self._futures = []
 
     def submit(self, submittable, *args, **kwargs):
-        future = super(ParentWorkflow, self).submit(submittable, *args, **kwargs)
+        future = super().submit(submittable, *args, **kwargs)
         self._futures.append(future)
         return future
 
@@ -102,6 +94,6 @@ class ParentWorkflow(Workflow):
         self.submit(ChildWorkflowWithGetId, my_id="child-workflow-43")
         self.submit(ChildWorkflowWithGetId)
         self.wait_all()
-        print("IdempotentChildWorkflow should be: {} = {}".format(u.result, v.result))
-        print("Final result should be: {} + 4 = {}".format(x, t.result))
+        print(f"IdempotentChildWorkflow should be: {u.result} = {v.result}")
+        print(f"Final result should be: {x} + 4 = {t.result}")
         return t.result

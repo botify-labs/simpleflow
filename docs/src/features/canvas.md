@@ -13,22 +13,24 @@ from simpleflow import activity, Workflow
 from simpleflow.canvas import Chain
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def task_a():
     return "Something"
 
-@activity.with_attributes(task_list='quickstart', version='example')
+
+@activity.with_attributes(task_list="quickstart", version="example")
 def task_b(x):
     return "Something Else", x
+
 
 class AWorkflow(Workflow):
     # ...
     def run(self, *args, **kwargs):
         futures = self.submit(Chain(task_a, (task_b, 42)))
-        print("Results: {}".format(futures.result))
+        print(f"Results: {futures.result}")
 ```
 
-The future's result is the list of each chained task result once they
+The future’s result is the list of each chained task result once they
 are finished.
 
 The `Chain.__init__` method takes a series of submittable objects or
@@ -49,7 +51,7 @@ class AWorkflow(Workflow):
         chain.append(task_a)
         chain.append(task_b, x=42)
         futures = self.submit(chain)
-        print("Results: {}".format(futures.result))
+        print(f"Results: {futures.result}")
 ```
 
 This allows the use of named arguments. Finally, appended tasks can
@@ -63,7 +65,7 @@ directly be `ActivityTask` or `WorkflowTask` for maximum flexibility.
 
 Each task in a chain can send its results to the next one, by using the
 `send_results=True` argument. The result is then added to the succeeding
-task's `*args`.
+task’s `*args`.
 
 
 ### Error Handling
@@ -76,14 +78,14 @@ exception up. This can be controlled with several arguments:
 * `bubbles_exception_on_failure` (default: False) — in a sub-chain,
   report the not-raised failure to the upper chain
 
-See `examples.canvas.CanvasWorkflow` for what's happening in the
+See `examples.canvas.CanvasWorkflow` for what’s happening in the
 different cases.
 
-`raises_on_failure` is propagated to the group's content if set. That is:
+`raises_on_failure` is propagated to the group’s content if set. That is:
 * `chain = Chain(raises_on_failure=False); chain.append(some_activity)`
   will propagate `raises_on_failure=False` to `some_activity`;
 * `chain = Chain(); chain.append(some_activity); chain.raises_on_failure = False`
-  will not. 
+  will not.
 
 The `break_on_failure=False` and `send_results=True` options are
 currently incompatible.
@@ -97,19 +99,21 @@ from simpleflow import activity, Workflow
 from simpleflow.canvas import Group
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def task_a():
     return "Something"
 
-@activity.with_attributes(task_list='quickstart', version='example')
+
+@activity.with_attributes(task_list="quickstart", version="example")
 def task_b(x):
     return "Something Else", x
+
 
 class AWorkflow(Workflow):
     # ...
     def run(self, *args, **kwargs):
         futures = self.submit(Group(task_a, (task_b, 42)))
-        print("Results: {}".format(futures.result))
+        print(f"Results: {futures.result}")
 ```
 
 Defining a Group is similar to a Chain. The `raises_on_failure` and
@@ -132,15 +136,16 @@ from simpleflow import activity, Workflow
 from simpleflow.canvas import Chain, FuncGroup, Group
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def partition_data(data_location):
     # Partition a list of things to do into parallelizable sub-parts
     pass
 
 
-@activity.with_attributes(task_list='quickstart', version='example')
+@activity.with_attributes(task_list="quickstart", version="example")
 def execute_on_sub_part(sub_part):
     pass
+
 
 class AWorkflow(Workflow):
     # ...
@@ -150,7 +155,7 @@ class AWorkflow(Workflow):
         chain.append(FuncGroup(lambda parts: Group(*[(execute_on_sub_part, sub_part) for sub_part in parts])))
 ```
 
-Here, `partition_data`'s result is passed to the `FuncGroup` lambda,
+Here, `partition_data`’s result is passed to the `FuncGroup` lambda,
 which returns a `Group` parallelizing its execution.
 
 

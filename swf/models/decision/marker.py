@@ -1,9 +1,11 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+
+from __future__ import annotations
+
+from typing import Any
 
 from simpleflow.utils import json_dumps
 from swf.models.decision.base import Decision, decision_action
@@ -13,7 +15,7 @@ class MarkerDecision(Decision):
     _base_type = "Marker"
 
     @decision_action
-    def record(self, name, details=None):
+    def record(self, name: str, details: dict[str, Any] | None = None) -> None:
         """Record marker decision builder
 
         :param  name: name of the marker

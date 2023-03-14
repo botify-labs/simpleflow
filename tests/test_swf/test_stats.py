@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import annotations
 
 from simpleflow import Workflow, activity
 from simpleflow.constants import HOUR, MINUTE
@@ -34,7 +34,10 @@ def test_last_state_times():
     activity_id = "activity-tests.test_simpleflow.test_dataflow.increment-1"
 
     history_builder.add_activity_task(
-        increment, decision_id=0, last_state=last_state, activity_id=activity_id,
+        increment,
+        decision_id=0,
+        last_state=last_state,
+        activity_id=activity_id,
     )
 
     history = History(history_builder)
@@ -60,12 +63,7 @@ def test_last_state_times():
     assert timings[TIMING_COMPLETED] == events[EV_COMPLETED].timestamp
 
     TIMING_DURATION = 5
-    assert (
-        timings[TIMING_DURATION]
-        == (
-            events[EV_COMPLETED].timestamp - events[EV_STARTED].timestamp
-        ).total_seconds()
-    )
+    assert timings[TIMING_DURATION] == (events[EV_COMPLETED].timestamp - events[EV_STARTED].timestamp).total_seconds()
 
     timings = stats.get_timings_with_percentage()[0]
     TIMING_TOTAL_TIME = -2

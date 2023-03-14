@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 from simpleflow.activity import Activity
 from simpleflow.utils import import_object_from_module
 
 from .exceptions import DispatchError
 
 
-class Dispatcher(object):
+class Dispatcher:
     """
     Dispatch by name, like simpleflow.swf.process.worker.dispatch.by_module.ModuleDispatcher
     but without a hierarchy.
@@ -27,7 +25,7 @@ class Dispatcher(object):
             activity = import_object_from_module(module_name, activity_name)
         except ImportError:
             # We were not able to import a function at all.
-            raise DispatchError("unable to import '{}'".format(name))
+            raise DispatchError(f"unable to import '{name}'")
         if not isinstance(activity, Activity):
             # We managed to import a function (or callable) but it's not an
             # "Activity". We will transform it into an Activity now. That way

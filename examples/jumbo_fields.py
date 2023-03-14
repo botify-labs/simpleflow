@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 
 from simpleflow import Workflow, activity
@@ -28,10 +26,8 @@ class JumboFieldsWorkflow(Workflow):
 
     def run(self, string):
         if "SIMPLEFLOW_JUMBO_FIELDS_BUCKET" not in os.environ:
-            print(
-                "Please define SIMPLEFLOW_JUMBO_FIELDS_BUCKET to run this example (see documentation)."
-            )
+            print("Please define SIMPLEFLOW_JUMBO_FIELDS_BUCKET to run this example (see documentation).")
             raise ValueError()
         long_string = self.submit(repeat50k, str(string))
         string_length = self.submit(length, long_string)
-        print("{} * 50k has a length of: {}".format(string, string_length.result))
+        print(f"{string} * 50k has a length of: {string_length.result}")

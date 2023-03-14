@@ -1,12 +1,12 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+from __future__ import annotations
+
 import os
 
-import boto.swf
+import boto.swf  # noqa
 from boto.exception import NoAuthHandlerFound
 
 # NB: import logger directly from simpleflow so we benefit from the logging
@@ -21,7 +21,7 @@ SETTINGS = settings.get()
 RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
 
 
-class ConnectedSWFObject(object):
+class ConnectedSWFObject:
     """Authenticated object interface
 
     Provides the instance attributes:
@@ -41,20 +41,14 @@ class ConnectedSWFObject(object):
         on_exceptions=(TypeError, NoAuthHandlerFound),
     )
     def __init__(self, *args, **kwargs):
-        self.region = (
-            SETTINGS.get("region")
-            or kwargs.get("region")
-            or boto.swf.layer1.Layer1.DefaultRegionName
-        )
+        self.region = SETTINGS.get("region") or kwargs.get("region") or boto.swf.layer1.Layer1.DefaultRegionName
         # Use settings-provided keys if available, otherwise pass empty
         # dictionary to boto SWF client, which will use its default credentials
         # chain provider.
         cred_keys = ["aws_access_key_id", "aws_secret_access_key"]
         creds_ = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
-        self.connection = kwargs.pop("connection", None) or boto.swf.connect_to_region(
-            self.region, **creds_
-        )
+        self.connection = kwargs.pop("connection", None) or boto.swf.connect_to_region(self.region, **creds_)
         if self.connection is None:
-            raise ValueError("invalid region: {}".format(self.region))
+            raise ValueError(f"invalid region: {self.region}")
 
-        logger.debug("initiated connection to region={}".format(self.region))
+        logger.debug(f"initiated connection to region={self.region}")

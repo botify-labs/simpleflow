@@ -1,9 +1,11 @@
-import multiprocessing
+from __future__ import annotations
+
 import os
 import signal
 import sys
 import time
 
+import multiprocess
 from flaky import flaky
 from psutil import Process
 from pytest import mark
@@ -41,21 +43,17 @@ class TestSupervisor(IntegrationTestCase):
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
-            setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+            setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 
         # create a supervisor sub-process
-        supervisor = Supervisor(
-            sleep_long, arguments=(30,), nb_children=2, background=True
-        )
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=2, background=True)
         supervisor.start()
 
         # we need to wait a little here so the process starts and gets its name set
         # TODO: find a non-sleep approach to this
         self.wait(0.5)
-        self.assertProcess(
-            r"simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)"
-        )
+        self.assertProcess(r"simpleflow Supervisor\(_payload_friendly_name=sleep_long, _nb_children=2\)")
         self.assertProcess(r"simpleflow Worker\(sleep_long, 30\)", count=2)
 
     @mark.skip("flaky test based on time.sleep")
@@ -97,7 +95,7 @@ class TestSupervisor(IntegrationTestCase):
         supervisor = Supervisor(foo, background=True)
         self.assertEqual(supervisor._payload_friendly_name, "foo")
 
-        class Foo(object):
+        class Foo:
             def bar(self):
                 pass
 
@@ -109,21 +107,15 @@ class TestSupervisor(IntegrationTestCase):
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
         # dummy function used in following tests
         def sleep_long(seconds):
-            setproctitle("simpleflow Worker(sleep_long, {})".format(seconds))
+            setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 
         # retrieve workers (not great; TODO: move it to Supervisor class)
         def workers():
-            return [
-                p
-                for p in Process().children(recursive=True)
-                if "Worker(sleep_long" in p.name()
-            ]
+            return [p for p in Process().children(recursive=True) if "Worker(sleep_long" in p.name()]
 
         # create a supervisor sub-process
-        supervisor = Supervisor(
-            sleep_long, arguments=(30,), nb_children=1, background=True
-        )
+        supervisor = Supervisor(sleep_long, arguments=(30,), nb_children=1, background=True)
         supervisor.start()
 
         # we need to wait a little here so the workers start
@@ -151,7 +143,7 @@ class TestSupervisor(IntegrationTestCase):
             self.wait(1)
 
         # check it ignores SIGTERM normally
-        p = multiprocessing.Process(target=foo)
+        p = multiprocess.Process(target=foo)
         p.start()
         # TODO: find a non-sleep approach to this
         self.wait(0.5)
@@ -161,7 +153,7 @@ class TestSupervisor(IntegrationTestCase):
 
         # check it fails with the decorator (meaning that SIGTERM is not ignored
         # anymore)
-        p = multiprocessing.Process(target=reset_signal_handlers(foo))
+        p = multiprocess.Process(target=reset_signal_handlers(foo))
         p.start()
         # TODO: find a non-sleep approach to this
         self.wait(0.5)

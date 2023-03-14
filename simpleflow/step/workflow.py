@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import abc
 import copy
 import os
 from collections import defaultdict
 from typing import TYPE_CHECKING
-
-from future.utils import with_metaclass
 
 from simpleflow import activity, settings, task
 
@@ -13,59 +13,49 @@ from .submittable import Step
 from .tasks import GetStepsDoneTask
 
 if TYPE_CHECKING:
-    from typing import Any, AnyStr, DefaultDict, Dict, List, Optional, Sequence, Set
+    from typing import Any, DefaultDict, Sequence
 
 
-class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
-    def get_step_bucket(self):
-        # type: () -> AnyStr
+class WorkflowStepMixin(metaclass=abc.ABCMeta):
+    def get_step_bucket(self) -> str:
         """
         Return the S3 bucket where to store the steps files.
         """
         return "/".join((settings.SIMPLEFLOW_S3_HOST, settings.STEP_BUCKET))
 
-    def get_step_path_prefix(self):
-        # type: () -> AnyStr
+    def get_step_path_prefix(self) -> str:
         """
         Return the S3 bucket's path prefix where to store the steps files.
         """
-        return os.path.join(
-            self.get_run_context().get("workflow_id", "default"), "steps/"
-        )
+        return os.path.join(self.get_run_context().get("workflow_id", "default"), "steps/")
 
-    def get_step_activity_params(self):
-        # type: () -> Dict[AnyStr, Any]
+    def get_step_activity_params(self) -> dict[str, Any]:
         """
         Returns extra params for GetStepsDoneTask and MarkStepAsDone activities.
         Will be merged with the default ones.
         """
         return {}
 
-    def add_forced_steps(self, steps, reason=None):
-        # type: (Sequence[AnyStr], Optional[AnyStr]) -> None
+    def add_forced_steps(self, steps: Sequence[str], reason: str | None = None) -> None:
         """
         Add steps to force.
         """
         if not hasattr(self, "steps_forced"):
-            self.steps_forced = set()  # type: Set[AnyStr]
-            self.steps_forced_reasons = defaultdict(
-                set
-            )  # type: DefaultDict[AnyStr, set]
+            self.steps_forced: set[str] = set()
+            self.steps_forced_reasons: DefaultDict[str, set] = defaultdict(set)
         steps = set(steps)
         self.steps_forced |= steps
         if reason:
             for step in steps:
                 self.steps_forced_reasons[step].add(reason)
 
-    def get_forced_steps(self):
-        # type: () -> List[AnyStr]
+    def get_forced_steps(self) -> list[str]:
         """
         Return the list of forced steps.
         """
         return list(getattr(self, "steps_forced", []))
 
-    def add_skipped_steps(self, steps, reason=None):
-        # type: (Sequence[AnyStr], Optional[AnyStr]) -> None
+    def add_skipped_steps(self, steps: Sequence[str], reason: str | None = None) -> None:
         """
         Add steps to skip.
         """
@@ -78,15 +68,13 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
             for step in steps:
                 self.steps_skipped_reasons[step].add(reason)
 
-    def get_skipped_steps(self):
-        # type: () -> List[AnyStr]
+    def get_skipped_steps(self) -> list[str]:
         """
         Return the list of skipped steps.
         """
         return list(getattr(self, "steps_skipped", []))
 
-    def _get_step_activity_params(self):
-        # type: () -> Dict[AnyStr, Any]
+    def _get_step_activity_params(self) -> dict[str, Any]:
         """
         Return the merged version between self.get_step_activity_params()
         and the default STEP_ACTIVITY_PARAMS_DEFAULT, plus the workflow
@@ -100,15 +88,13 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
             activity_params_merged.update(activity_params)
         return activity_params_merged
 
-    def step(self, *args, **kwargs):
-        # type: (*Any, **Any) -> Step
+    def step(self, *args: Any, **kwargs: Any) -> Step:
         """
         Return a Step instance.
         """
         return Step(*args, **kwargs)
 
-    def get_steps_done_activity(self):
-        # type: () -> task.ActivityTask
+    def get_steps_done_activity(self) -> task.ActivityTask:
         """
         Return a Submittable returning the list of steps done.
         """
@@ -118,8 +104,7 @@ class WorkflowStepMixin(with_metaclass(abc.ABCMeta, object)):
             self.get_step_path_prefix(),
         )
 
-    def get_steps_done(self):
-        # type: () -> List[AnyStr]
+    def get_steps_done(self) -> list[str]:
         """
         Return the list of steps done.
         """

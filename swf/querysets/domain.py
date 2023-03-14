@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
-from boto.swf.exceptions import SWFResponseError
+from __future__ import annotations
+
+from boto.swf.exceptions import SWFResponseError  # noqa
 
 from swf.constants import REGISTERED
 from swf.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
@@ -20,11 +20,10 @@ class DomainQuerySet(BaseQuerySet):
     through a django-queryset like interface
     """
 
-    def get(self, name, *args, **kwargs):
+    def get(self, name: str, *args, **kwargs) -> Domain:
         """Fetches the Domain with `name`
 
         :param      name:  name of the domain to fetch
-        :type       name: string
 
         A typical Amazon response looks like:
 
@@ -64,13 +63,13 @@ class DomainQuerySet(BaseQuerySet):
 
     def get_or_create(
         self,
-        name,
-        status=REGISTERED,
-        description=None,
-        retention_period=30,
+        name: str,
+        status: str = REGISTERED,
+        description: str | None = None,
+        retention_period: int = 30,
         *args,
-        **kwargs
-    ):
+        **kwargs,
+    ) -> Domain:
         """Fetches, or creates the Domain with `name`
 
         When fetching trying to fetch a matching domain, only
@@ -79,38 +78,27 @@ class DomainQuerySet(BaseQuerySet):
         made with specific values, just provide it.
 
         :param      name:  name of the domain to fetch or create
-        :type       name: string
-
         :param      retention_period: Domain's workflow executions records retention in days
-        :type       retention_period: Integer
-
         :param      status: Specifies the registration status of the
                             workflow types to list. Valid values are:
                             * ``swf.constants.REGISTERED``
                             * ``swf.constants.DEPRECATED``
-
-        :type       status: string
-
         :param      description: Textual description of the domain
-        :type       description: string
 
         :returns: Fetched or created Domain model object
-        :rtype: Domain
         """
         try:
             return self.get(name)
         except DoesNotExistError:
             return self.create(name, status, description, retention_period)
 
-    def all(self, registration_status=REGISTERED, *args, **kwargs):
-        """Retrieves every domains
+    def all(self, registration_status: str = REGISTERED, *args, **kwargs) -> list[Domain]:
+        """Retrieves all domains
 
         :param      registration_status: domain registration status to match,
                                          Valid values are:
                                          * ``swf.constants.REGISTERED``
                                          * ``swf.constants.DEPRECATED``
-
-        :type       registration_status: string
 
         A typical Amazon response looks like:
 
@@ -130,42 +118,30 @@ class DomainQuerySet(BaseQuerySet):
         def get_domains():
             response = {"nextPageToken": None}
             while "nextPageToken" in response:
-                response = self.connection.list_domains(
-                    registration_status, next_page_token=response["nextPageToken"]
-                )
+                response = self.connection.list_domains(registration_status, next_page_token=response["nextPageToken"])
 
-                for domain_info in response["domainInfos"]:
-                    yield domain_info
+                yield from response["domainInfos"]
 
-        return [
-            Domain(d["name"], d["status"], d.get("description")) for d in get_domains()
-        ]
+        return [Domain(d["name"], d["status"], d.get("description")) for d in get_domains()]
 
     def create(
         self,
-        name,
-        status=REGISTERED,
-        description=None,
-        retention_period=30,
+        name: str,
+        status: str = REGISTERED,
+        description: str | None = None,
+        retention_period: int = 30,
         *args,
-        **kwargs
-    ):
+        **kwargs,
+    ) -> Domain:
         """Creates a new remote domain and returns the Domain model instance
 
         :param      name: Name of the domain to register (unique)
-        :type       name: string
-
         :param      retention_period: Domain's workflow executions records retention in days
-        :type       retention_period: Integer
-
         :param      status: Specifies the registration status of the
                             workflow types to list. Valid values are:
                             * ``swf.constants.REGISTERED``
                             * ``swf.constants.DEPRECATED``
-        :type       status: string
-
         :param      description: Textual description of the domain
-        :type       description: string
         """
 
         domain = Domain(

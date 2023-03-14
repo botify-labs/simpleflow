@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import annotations
 
 import time
 import uuid
@@ -18,13 +18,13 @@ from simpleflow.task import ActivityTask
     raises_on_failure=True,
 )
 def sleep(seconds):
-    print("will sleep {}s".format(seconds))
+    print(f"will sleep {seconds}s")
     time.sleep(seconds)
     print("good sleep")
     # return a complex object so we can visually test the json-ified version of
     # it is displayed in "simpleflow activity.rerun" ; unfortunately hard to
     # include in a unit or integration test...
-    return {"result": "slept {}s".format(seconds)}
+    return {"result": f"slept {seconds}s"}
 
 
 @activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
@@ -47,9 +47,7 @@ def double(y):
 @activity.with_attributes(task_list="quickstart", version="example")
 def send_unrequested_signal():
     context = send_unrequested_signal.context
-    ex = get_workflow_execution(
-        context["domain_name"], context["workflow_id"], context["run_id"]
-    )
+    ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
     ex.connection.signal_workflow_execution(
         ex.domain.name,
         "unexpected",
@@ -89,9 +87,7 @@ class ATestDefinitionWithIdempotentTask(Workflow):
 
     def run(self):
         results = [self.submit(get_uuid) for _ in range(10)]
-        results.append(
-            self.submit(get_uuid, results[0].result)  # Changed arguments, must submit
-        )
+        results.append(self.submit(get_uuid, results[0].result))  # Changed arguments, must submit
         futures.wait(*results)
         assert all(r.result == results[0].result for r in results[1:-1])
         assert results[0].result != results[-1].result
@@ -125,12 +121,10 @@ class ChainTestWorkflow(Workflow):
     task_list = "example"
 
     def run(self, x=5):
-        future = self.submit(
-            Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True)
-        )
-        print("Future: {}".format(future))
+        future = self.submit(Chain(ActivityTask(increment, x), ActivityTask(double), send_result=True))
+        print(f"Future: {future}")
         futures.wait(future)
-        print("Result: {}".format(future.result))  # future.result == [6, 12]
+        print(f"Result: {future.result}")  # future.result == [6, 12]
 
         return future.result
 
@@ -148,7 +142,7 @@ class TestRunChild(Workflow):
 
     def run(self):
         future = self.submit(ChainTestWorkflow)
-        print("Result: {}".format(future.result))
+        print(f"Result: {future.result}")
         return future.result
 
 
@@ -164,7 +158,10 @@ class TimerWorkflow(Workflow):
         future = self.submit(
             Group(
                 self.start_timer("timer 2", t2),
-                Chain(self.start_timer("timer 1", t1), self.cancel_timer("timer 2"),),
+                Chain(
+                    self.start_timer("timer 1", t1),
+                    self.cancel_timer("timer 2"),
+                ),
             )
         )
         if future.pending:
@@ -200,7 +197,7 @@ class WorkflowToCancel(Workflow):
             agree = input["args"][0]
         else:
             agree = input.get("kwargs", {}).get("agree", True)
-        print("should_cancel called! agree? {}".format(agree))
+        print(f"should_cancel called! agree? {agree}")
         return agree
 
 
@@ -208,11 +205,12 @@ class WorkflowToCancel(Workflow):
 def wait_and_signal(name="signal"):
     time.sleep(1 + len(name))  # Hoping to be deterministic
     context = wait_and_signal.context
-    ex = get_workflow_execution(
-        context["domain_name"], context["workflow_id"], context["run_id"]
-    )
+    ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
     ex.connection.signal_workflow_execution(
-        ex.domain.name, name, ex.workflow_id, run_id=ex.run_id,
+        ex.domain.name,
+        name,
+        ex.workflow_id,
+        run_id=ex.run_id,
     )
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from . import registry, settings
@@ -13,7 +15,7 @@ __all__ = [
 ]
 
 
-class NotSet(object):
+class NotSet:
     def __repr__(self):
         return "<Priority Not Set>"
 
@@ -34,8 +36,7 @@ def with_attributes(
     heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
     idempotent=None,
     meta=None,
-):
-    # type: (...) -> Callable[[Callable], Activity]
+) -> Callable[[Callable], Activity]:
     """
     Decorator: wrap a function/class into an Activity.
 
@@ -65,8 +66,7 @@ def with_attributes(
 
     """
 
-    def wrap(func):
-        # type: (Callable) -> Activity
+    def wrap(func: Callable) -> Activity:
         return Activity(
             func,
             name,
@@ -86,7 +86,7 @@ def with_attributes(
     return wrap
 
 
-class Activity(object):
+class Activity:
     def __init__(
         self,
         callable,
@@ -149,9 +149,7 @@ class Activity(object):
         return ".".join([prefix, name])
 
     def __repr__(self):
-        return "Activity(name={}, version={}, task_list={})".format(
-            self.name, self.version, self.task_list
-        )
+        return "Activity(name={}, version={}, task_list={})".format(self.name, self.version, self.task_list)
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)

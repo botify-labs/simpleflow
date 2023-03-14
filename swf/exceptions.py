@@ -1,26 +1,22 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 import re
-
-try:
-    from collections.abc import Sequence  # noqa
-except ImportError:
-    from collections import Sequence
-
+from collections.abc import Sequence
 from functools import partial, wraps
+from typing import Any, Callable
 
-import boto.swf.exceptions
+import boto.exception
 
-from simpleflow import compat, logger
+from simpleflow import logger
 
 
 class SWFError(Exception):
-    def __init__(self, message, raw_error="", *args, **kwargs):
+    def __init__(self, message: str, raw_error: str = "", *args) -> None:
         """
         Examples:
 
@@ -59,7 +55,7 @@ class SWFError(Exception):
         'details'
 
         """
-        Exception.__init__(self, message, *args, **kwargs)
+        Exception.__init__(self, message, *args)
 
         values = raw_error.split(":", 1)
 
@@ -79,7 +75,7 @@ class SWFError(Exception):
         msg = self.message.strip()
 
         if self.kind and self.details:
-            msg += "\nReason: {}, {}".format(self.kind, self.details)
+            msg += f"\nReason: {self.kind}, {self.details}"
 
         return msg
 
@@ -87,7 +83,7 @@ class SWFError(Exception):
         msg = self.message
 
         if self.kind and self.details:
-            msg += "\nReason: {}, {}".format(self.kind, self.details)
+            msg += f"\nReason: {self.kind}, {self.details}"
 
         return msg
 
@@ -149,7 +145,7 @@ def match_equals(regex, string, values):
     if not matched:
         return False
 
-    if isinstance(values, compat.basestring) and not isinstance(values, Sequence):
+    if isinstance(values, str) and not isinstance(values, Sequence):
         values = (values,)
     return matched[0] in values
 
@@ -162,7 +158,7 @@ def is_swf_response_error(error):
     :type  error: Exception.
 
     """
-    return isinstance(error, boto.swf.exceptions.SWFResponseError)
+    return isinstance(error, boto.exception.SWFResponseError)
 
 
 def is_unknown_resource_raised(error, *args, **kwargs):
@@ -173,7 +169,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     :type  error: Exception
 
     """
-    if not isinstance(error, boto.swf.exceptions.SWFResponseError):
+    if not isinstance(error, boto.exception.SWFResponseError):
         return False
 
     return getattr(error, "error_code", None) == "UnknownResourceFault"
@@ -195,7 +191,7 @@ def is_unknown(resource):
         if not is_unknown_resource_raised(error, *args, **kwargs):
             return False
         if getattr(error, "error_code", None) != "UnknownResourceFault":
-            raise ValueError("cannot extract resource from {}".format(error))
+            raise ValueError(f"cannot extract resource from {error}")
 
         message = error.body.get("message")
         if match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution")):
@@ -234,14 +230,14 @@ def always(value):
 
 def extract_resource(error):
     if getattr(error, "error_code", None) != "UnknownResourceFault":
-        raise ValueError("cannot extract resource from {}".format(error))
+        raise ValueError(f"cannot extract resource from {error}")
 
     message = error.body.get("message")
     resource = REGEX_UNKNOWN_RESOURCE.findall(message) if message else None
     return "Resource {} does not exist".format(resource[0] if resource else "unknown")
 
 
-def raises(exception, when, extract=str):
+def raises(exception, when, extract: Callable[[Any], str] = str):
     """
     :param exception: to raise when the predicate is True.
     :type  exception: type(Exception)
@@ -367,7 +363,7 @@ def catch(exceptions, handle_with=None, log=False):
                 return func(*args, **kwargs)
             except exceptions as err:
                 if log is True:
-                    logger.error("call to {} raised: {}".format(func.__name__, err))
+                    logger.error(f"call to {func.__name__} raised: {err}")
 
                 if handle_with is None:
                     raise

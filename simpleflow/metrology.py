@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 import abc
 import json
 import os
 import re
 import time
+from abc import ABC
 from collections import OrderedDict
-
-try:
-    from urllib.parse import quote_plus  # py 3.x
-except ImportError:
-    from urllib import quote_plus  # py 2.x
+from typing import Any
+from urllib.parse import quote_plus
 
 from . import settings, storage
 from .swf.stats.pretty import dump_history_to_json
@@ -17,7 +17,7 @@ from .workflow import Workflow
 ACTIVITY_KEY_RE = re.compile(r"activity\.(.+)\.json")
 
 
-class StepIO(object):
+class StepIO:
     def __init__(self):
         self.bytes = 0
         self.records = 0
@@ -41,7 +41,7 @@ class StepIO(object):
         )
 
 
-class Step(object):
+class Step:
     def __init__(self, name, task):
         self.name = name
         self.task = task
@@ -71,22 +71,25 @@ class Step(object):
         return stats
 
     def mset_metadata(self, kvs):
-        for (k, v) in kvs:
+        for k, v in kvs:
             self.metadata[k] = v
 
 
-class StepExecution(object):
+class StepExecution:
     def __init__(self, step):
         self.step = step
 
     def __enter__(self):
         return self.step
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.step.done()
 
 
-class MetrologyTask(object):
+class MetrologyTask:
+    context: dict[str, Any]
+    steps: list[Step]
+
     def can_upload(self):
         if not hasattr(self, "context"):
             return False
@@ -140,9 +143,9 @@ class MetrologyTask(object):
         self.upload_stats()
 
 
-class MetrologyWorkflow(Workflow):
+class MetrologyWorkflow(Workflow, ABC):
     def after_closed(self, history):
-        super(MetrologyWorkflow, self).after_closed(history)
+        super().after_closed(history)
         return self.push_metrology(history)
 
     @property
@@ -160,10 +163,7 @@ class MetrologyWorkflow(Workflow):
         """
         Fetch workflow history and merge it with metrology
         """
-        activity_keys = [
-            obj
-            for obj in storage.list_keys(settings.METROLOGY_BUCKET, self.metrology_path)
-        ]
+        activity_keys = [obj for obj in storage.list_keys(settings.METROLOGY_BUCKET, self.metrology_path)]
         history_dumped = dump_history_to_json(history)
         history = json.loads(history_dumped)
 

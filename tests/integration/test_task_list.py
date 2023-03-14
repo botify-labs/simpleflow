@@ -1,8 +1,10 @@
-import multiprocessing
+from __future__ import annotations
+
 import os
 import signal
 import time
 
+import multiprocess
 from sure import expect
 
 from simpleflow.command import start_workflow
@@ -14,7 +16,7 @@ from tests.integration import VCRIntegrationTest, vcr
 class TestTaskLists(VCRIntegrationTest):
     @vcr.use_cassette
     def test_not_standalone(self):
-        decider_proc = multiprocessing.Process(
+        decider_proc = multiprocess.Process(
             target=decider.command.start,
             args=(
                 [
@@ -33,10 +35,16 @@ class TestTaskLists(VCRIntegrationTest):
         )
         decider_proc.start()
 
-        worker_proc = multiprocessing.Process(
+        worker_proc = multiprocess.Process(
             target=worker.command.start,
-            args=(self.domain, "quickstart",),
-            kwargs={"nb_processes": 1, "heartbeat": 10,},
+            args=(
+                self.domain,
+                "quickstart",
+            ),
+            kwargs={
+                "nb_processes": 1,
+                "heartbeat": 10,
+            },
         )
         worker_proc.start()
 
@@ -56,7 +64,11 @@ class TestTaskLists(VCRIntegrationTest):
         )
         while True:
             time.sleep(1)
-            ex = helpers.get_workflow_execution(self.domain, ex.workflow_id, ex.run_id,)
+            ex = helpers.get_workflow_execution(
+                self.domain,
+                ex.workflow_id,
+                ex.run_id,
+            )
             if ex.status == ex.STATUS_CLOSED:
                 break
 

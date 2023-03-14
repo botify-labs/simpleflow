@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import unittest
+from unittest.mock import patch
 
 import boto
-from mock import patch
 from sure import expect
 
 from simpleflow.exceptions import TaskFailed
@@ -34,7 +36,5 @@ class TestTaskFailed(unittest.TestCase):
             "simpleflow+s3://jumbo-bucket/my-details 17",
         )
         # TODO: maybe override __str__() ourselves to get rid of those ugly u'' in python 2.x
-        expect(str(failure)).to.match(
-            r"^\('message', u?'reason decoded!', u?'details decoded!'\)$"
-        )
+        expect(str(failure)).to.match(r"^\('message', u?'reason decoded!', u?'details decoded!'\)$")
         expect(repr(failure)).to.equal('TaskFailed (message, "reason decoded!")')

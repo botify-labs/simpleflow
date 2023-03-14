@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from simpleflow import Workflow
@@ -28,8 +30,8 @@ executor._workflow = MyWorkflow(executor)
 
 class TestRunContext(unittest.TestCase):
     def test_run_context_for_child_workflows(self):
-        """ Test that the local executor adds a different run_id for each
-            child workflows.
+        """Test that the local executor adds a different run_id for each
+        child workflows.
         """
 
         class ChildWorkflow3(Workflow):
@@ -58,9 +60,7 @@ class TestRunContext(unittest.TestCase):
             name = "ChildWorkflow"
 
             def run(self, *args, **kwargs):
-                results = (
-                    Chain(ChildWorkflow2, (to_int, "2")).submit(self.executor).result
-                )
+                results = Chain(ChildWorkflow2, (to_int, "2")).submit(self.executor).result
                 return {
                     "workflow_id": self.get_run_context()["workflow_id"],
                     "run_id": self.get_run_context()["run_id"],

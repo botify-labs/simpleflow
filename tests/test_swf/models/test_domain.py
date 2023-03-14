@@ -1,11 +1,11 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from boto.swf.layer1 import Layer1
-from mock import Mock, patch
 
 import swf.settings
 from swf.constants import DEPRECATED
@@ -13,9 +13,8 @@ from swf.exceptions import AlreadyExistsError, ResponseError
 from swf.models.domain import Domain, DomainDoesNotExist
 from swf.querysets.domain import DomainQuerySet
 from swf.querysets.workflow import WorkflowTypeQuerySet
-
-from ..mocks import MiniMock
-from ..mocks.domain import mock_describe_domain
+from tests.test_swf.mocks.base import MiniMock
+from tests.test_swf.mocks.domain import mock_describe_domain
 
 swf.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 
@@ -43,7 +42,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain__diff_with_different_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             domain = Domain("different-domain", status=DEPRECATED, description="blabla")
             diffs = domain._diff()
@@ -57,16 +58,16 @@ class TestDomain(unittest.TestCase):
 
     def test_domain__diff_with_identical_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             mocked = mock_describe_domain()
             domain = Domain(
                 mocked["domainInfo"]["name"],
                 status=mocked["domainInfo"]["status"],
                 description=mocked["domainInfo"]["description"],
-                retention_period=mocked["configuration"][
-                    "workflowExecutionRetentionPeriodInDays"
-                ],
+                retention_period=mocked["configuration"]["workflowExecutionRetentionPeriodInDays"],
             )
 
             diffs = domain._diff()
@@ -99,7 +100,7 @@ class TestDomain(unittest.TestCase):
                     "mocking exception",
                     {"__type": "WhateverError", "message": "Whatever"},
                 )
-                dummy = self.domain.exists
+                _ = self.domain.exists
 
     def test_domain_is_synced_with_unsynced_domain(self):
         pass
@@ -114,7 +115,9 @@ class TestDomain(unittest.TestCase):
 
     def test_domain_changes_with_different_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             domain = Domain("different-domain", status=DEPRECATED, description="blabla")
             diffs = domain.changes
@@ -128,16 +131,16 @@ class TestDomain(unittest.TestCase):
 
     def test_domain_changes_with_identical_domain(self):
         with patch.object(
-            Layer1, "describe_domain", mock_describe_domain,
+            Layer1,
+            "describe_domain",
+            mock_describe_domain,
         ):
             mocked = mock_describe_domain()
             domain = Domain(
                 mocked["domainInfo"]["name"],
                 status=mocked["domainInfo"]["status"],
                 description=mocked["domainInfo"]["description"],
-                retention_period=mocked["configuration"][
-                    "workflowExecutionRetentionPeriodInDays"
-                ],
+                retention_period=mocked["configuration"]["workflowExecutionRetentionPeriodInDays"],
             )
 
             diffs = domain.changes

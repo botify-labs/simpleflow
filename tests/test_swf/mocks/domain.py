@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
 
 from swf.constants import REGISTERED
 

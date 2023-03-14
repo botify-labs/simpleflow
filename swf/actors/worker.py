@@ -1,4 +1,6 @@
-# -*- coding:utf-8 -*-
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import boto.exception
 
@@ -13,6 +15,9 @@ from swf.exceptions import (
 from swf.models import ActivityTask
 from swf.responses import Response
 
+if TYPE_CHECKING:
+    from swf.models import Domain
+
 
 class ActivityWorker(Actor):
     """Activity task worker actor implementation
@@ -22,49 +27,44 @@ class ActivityWorker(Actor):
     or crashes for some reason.
 
     :param  domain: Domain the Actor should interact with
-    :type   domain: swf.models.Domain
 
     :param  task_list: task list the Actor should watch for tasks on
-    :type   task_list: string
 
     :param  identity: Identity of the worker making the request,
                       which is recorded in the ActivityTaskStarted
                       event in the workflow history. This enables
                       diagnostic tracing when problems arise.
                       The form of this identity is user defined.
-    :type   identity: string
     """
 
-    def __init__(self, domain, task_list, identity=None):
-        super(ActivityWorker, self).__init__(domain, task_list)
+    def __init__(self, domain: Domain, task_list: str, identity: str | None = None):
+        super().__init__(domain, task_list)
 
         self._identity = identity
 
-    def cancel(self, task_token, details=None):
+    def cancel(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Responds to ``swf`` that the activity task was canceled
 
         :param  task_token: canceled activity task token
-        :type   task_token: string
-
         :param  details: provided details about cancel
-        :type   details: string
         """
         try:
             return self.connection.respond_activity_task_canceled(
-                task_token, details=format.details(details),
+                task_token,
+                details=format.details(details),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to cancel activity task with token={}".format(task_token),
+                    f"Unable to cancel activity task with token={task_token}",
                     message,
                 )
             raise ResponseError(message)
         finally:
             logging_context.reset()
 
-    def complete(self, task_token, result=None):
+    def complete(self, task_token: str, result: str | None = None) -> dict[str, Any] | None:
         """Responds to ``swf`` that the activity task is completed
 
         :param  task_token: completed activity task token
@@ -75,27 +75,24 @@ class ActivityWorker(Actor):
         """
         try:
             return self.connection.respond_activity_task_completed(
-                task_token, format.result(result),
+                task_token,
+                format.result(result),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to complete activity task with token={}".format(task_token),
+                    f"Unable to complete activity task with token={task_token}",
                     message,
                 )
 
             raise ResponseError(message)
 
-    def fail(self, task_token, details=None, reason=None):
+    def fail(self, task_token: str, details: str | None = None, reason: str | None = None) -> dict[str, Any] | None:
         """Replies to ``swf`` that the activity task failed
 
         :param  task_token: canceled activity task token
-        :type   task_token: string
-
         :param  details: provided details about the failure
-        :type   details: string
-
         :param  reason: Description of the error that may assist in diagnostics
         :type   reason: string
         """
@@ -109,44 +106,40 @@ class ActivityWorker(Actor):
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to fail activity task with token={}".format(task_token),
+                    f"Unable to fail activity task with token={task_token}",
                     message,
                 )
 
             raise ResponseError(message)
 
-    def heartbeat(self, task_token, details=None):
+    def heartbeat(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Records activity task heartbeat
 
         :param  task_token: canceled activity task token
-        :type   task_token: str
-
         :param  details: provided details about task progress
-        :type   details: string
         """
         try:
             return self.connection.record_activity_task_heartbeat(
-                task_token, format.heartbeat_details(details),
+                task_token,
+                format.heartbeat_details(details),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to send heartbeat with token={}".format(task_token),
+                    f"Unable to send heartbeat with token={task_token}",
                     message,
                 )
 
             if e.error_code == "ThrottlingException":
                 raise RateLimitExceededError(
-                    "Rate exceeded when sending heartbeat with token={}".format(
-                        task_token
-                    ),
+                    "Rate exceeded when sending heartbeat with token={}".format(task_token),
                     message,
                 )
 
             raise ResponseError(message)
 
-    def poll(self, task_list=None, identity=None):
+    def poll(self, task_list: str | None = None, identity: str | None = None) -> Response:
         """Polls for an activity task to process from current
         actor's instance defined ``task_list``
 
@@ -154,19 +147,15 @@ class ActivityWorker(Actor):
         exception.
 
         :param  task_list: task list the Actor should watch for tasks on
-        :type   task_list: string
-
         :param  identity: Identity of the worker making the request,
                           which is recorded in the ActivityTaskStarted
                           event in the workflow history. This enables
                           diagnostic tracing when problems arise.
                           The form of this identity is user defined.
-        :type   identity: string
 
         :raises: PollTimeout
 
         :returns: task token, polled activity task
-        :rtype: (str, ActivityTask)
         """
         logging_context.reset()
         task_list = task_list or self.task_list
@@ -174,13 +163,16 @@ class ActivityWorker(Actor):
 
         try:
             task = self.connection.poll_for_activity_task(
-                self.domain.name, task_list, identity=format.identity(identity),
+                self.domain.name,
+                task_list,
+                identity=format.identity(identity),
             )
         except boto.exception.SWFResponseError as e:
             message = self.get_error_message(e)
             if e.error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
-                    "Unable to poll activity task", message,
+                    "Unable to poll activity task",
+                    message,
                 )
 
             raise ResponseError(message)
@@ -193,7 +185,11 @@ class ActivityWorker(Actor):
         logging_context.set("event_id", task["startedEventId"])
         logging_context.set("activity_id", task["activityId"])
 
-        activity_task = ActivityTask.from_poll(self.domain, self.task_list, task,)
+        activity_task = ActivityTask.from_poll(
+            self.domain,
+            self.task_list,
+            task,
+        )
 
         return Response(
             task_token=activity_task.task_token,

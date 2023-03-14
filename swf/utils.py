@@ -1,60 +1,44 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
 
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from functools import wraps
 from itertools import chain, islice
 from time import mktime
+from typing import Any
 
-from simpleflow import compat
 
-
-def decapitalize(s):
+def decapitalize(s: str) -> str:
     """
-    De-capitalize a string (lower first character)
-    :param s:
-    :type s:
-    :return:
-    :rtype:
+    De-capitalize a string (lower first character).
     """
     return s[:1].lower() + s[1:] if s else ""
 
 
-def past_day(days):
+def past_day(days: int) -> datetime:
     """
-    Get a datetime in the past
-    :param days: how many days in the past
-    :type days: int
-    :return:
-    :rtype: datetime
+    Get a datetime in the past.
     """
     return datetime.now() - timedelta(days=days)
 
 
-def datetime_timestamp(dt):
+def datetime_timestamp(dt: datetime) -> float:
     """
-    Get a datetime timestamp
-    :param dt:
-    :type dt: datetime
-    :return:
-    :rtype: int
+    Get a datetime timestamp.
     """
     return mktime(dt.timetuple())
 
 
-def get_subkey(d, key_path):
+def get_subkey(d: dict[Any, dict], key_path: list) -> Any | None:
     """Gets a sub-dict key, and return None if either
-    the parent or child dict key does not exist
+    the parent or child dict key does not exist.
 
     :param  d: dict to operate over
-    :type   d: dict of dicts
-
     :param  key_path: dict keys path list representation
-    :type   key_path: list
 
     Example
     -------
@@ -65,20 +49,20 @@ def get_subkey(d, key_path):
     ...     '2': 3,
     ...   }
     ... }
-    >>> # FIXME commented-out: order unspecified, depend on python version
-    >>> # >>> get_subkey(d, ['a'])
-    >>> # {'1': 2, '2': 3}
+    >>> get_subkey(d, ['a'])
+    {'1': 2, '2': 3}
     >>> get_subkey(d, ['a', '1'])
     2
     >>> get_subkey(d, ['a', '3'])
 
     """
+    first_item = d.get(key_path[0])
     if len(key_path) > 1:
-        if d.get(key_path[0]) is None:
+        if first_item is None:
             return None
-        return get_subkey(d[key_path[0]], key_path[1:])
+        return get_subkey(first_item, key_path[1:])
     else:
-        return d.get(key_path[0])
+        return first_item
 
 
 class _CachedProperty(property):
@@ -93,7 +77,7 @@ class _CachedProperty(property):
 
     def __init__(self, fget, fset=None, fdel=None, doc=None):
         """Initializes the cached property."""
-        self._cache_name = "_{name}_cache".format(name=fget.__name__,)
+        self._cache_name = f"_{fget.__name__}_cache"
         # Wrap the accessors.
         fget = self._wrap_fget(fget)
         if callable(fset):
@@ -101,7 +85,7 @@ class _CachedProperty(property):
         if callable(fdel):
             fdel = self._wrap_fdel(fdel)
         # Create the property.
-        super(_CachedProperty, self).__init__(fget, fset, fdel, doc)
+        super().__init__(fget, fset, fdel, doc)
 
     def _wrap_fget(self, fget):
         @wraps(fget)
@@ -136,13 +120,13 @@ cached_property = _CachedProperty
 
 
 def immutable(mutableclass):
-    """ Decorator for making a slot-based class immutable
+    """Decorator for making a slot-based class immutable
 
     Source: http://code.activestate.com/recipes/578233-immutable-class-decorator/
     """
 
     if not isinstance(type(mutableclass), type):
-        raise TypeError("@immutable: must be applied to a new-style class")
+        raise TypeError("@immutable: must be applied to a class")
     if not hasattr(mutableclass, "__slots__"):
         raise TypeError("@immutable: class must have __slots__")
 
@@ -169,9 +153,9 @@ def immutable(mutableclass):
     return immutableclass
 
 
-def camel_to_underscore(string):
-    """Translates amazon Camelcased strings to
-    lowercased underscored strings"""
+def camel_to_underscore(string: str) -> str:
+    """Translates amazon Camelcase strings to
+    lowercase underscored strings"""
     res = []
 
     for index, char in enumerate(string):
@@ -183,7 +167,7 @@ def camel_to_underscore(string):
     return "".join(res)
 
 
-def underscore_to_camel(string):
+def underscore_to_camel(string: str) -> str:
     """
 
     >>> underscore_to_camel('')
@@ -210,9 +194,7 @@ def underscore_to_camel(string):
             [string[0].upper()],
             (
                 (c.upper() if p == "_" else c) if c != "_" else ""
-                for p, c in compat.izip(
-                    islice(string, 0, None), islice(string, 1, None)
-                )
+                for p, c in zip(islice(string, 0, None), islice(string, 1, None))
             ),
         )
     )

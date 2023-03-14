@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 
 from setproctitle import setproctitle
@@ -15,21 +17,16 @@ def with_state(state):
     def wrapper(method):
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
-            logger.debug(
-                "entering state {}: {}(args={}, kwargs={})".format(
-                    state, method.__name__, args, kwargs
-                )
-            )
+            logger.debug("entering state {}: {}(args={}, kwargs={})".format(state, method.__name__, args, kwargs))
             self.state = state
             return method(self, *args, **kwargs)
 
-        wrapped.__wrapped__ = method
         return wrapped
 
     return wrapper
 
 
-class NamedMixin(object):
+class NamedMixin:
     """
     NamedMixin in conjunction with the "with_state()" decorator allows to change
     the process name depending on the worker state.
@@ -67,6 +64,6 @@ class NamedMixin(object):
         klass = self.__class__.__name__
         properties = []
         for prop in getattr(self, "_named_mixin_properties", []):
-            properties.append("{}={}".format(prop, getattr(self, prop)))
+            properties.append(f"{prop}={getattr(self, prop)}")
         name = "{}({})".format(klass, ", ".join(properties))
-        setproctitle("simpleflow {}[{}]".format(name, self.state))
+        setproctitle(f"simpleflow {name}[{self.state}]")

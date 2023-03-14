@@ -18,7 +18,7 @@ In this mode, your local machine will act as:
   if successful, or via `RespondActivityTaskFailed` if not.
 
 
-Usually you'll want to tune the number of decider and worker processes that
+Usually you’ll want to tune the number of decider and worker processes that
 will be spawned by the command. The command will look like:
 ```bash
 simpleflow standalone --domain TestDomain \
@@ -43,5 +43,5 @@ Under your command, you now see 2 subprocesses:
 - a **Decider supervisor** process, that forks to one or more **DeciderPoller** processes
 - a **Worker supervisor** process, that forks to one or more **ActivityPoller** processes
 
-Each poller then forks when doing real work related to SWF. Here we're in the middle of
+Each poller then forks when doing real work related to SWF. Here we’re in the middle of
 a decision for the workflow, and no activity task is running.

@@ -1,4 +1,4 @@
-class RegistryDispatcher(object):
+class RegistryDispatcher:
     """
     Map a name to a task handler wrt a task registry.
 

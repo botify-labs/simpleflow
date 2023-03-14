@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from psutil import Process
@@ -40,6 +42,4 @@ class TestNamedMixin(unittest.TestCase):
         # tests
         inst = Example()
         inst.run()
-        expect(Process().name()).to.equal(
-            "simpleflow Example(task_list=test-tl)[running]"
-        )
+        expect(Process().name()).to.equal("simpleflow Example(task_list=test-tl)[running]")

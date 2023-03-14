@@ -1,9 +1,9 @@
-# -*- coding:utf-8 -*-
-
 # Copyright (c) 2013, Theo Crevon
 # Copyright (c) 2013, Greg Leclercq
 #
 # See the file LICENSE for copying permission.
+
+from __future__ import annotations
 
 from swf.models.event import Event
 
@@ -16,11 +16,11 @@ class TransitionError(Exception):
     pass
 
 
-class Stateful(object):
+class Stateful:
     """Base stateful object implementation"""
 
-    states = ()
-    transitions = {}
+    states: tuple[str, ...] = ()
+    transitions: dict[str, tuple[str, ...]] = {}
 
 
 class CompiledEvent(Event, Stateful):
@@ -53,7 +53,7 @@ class CompiledEvent(Event, Stateful):
 
     """
 
-    initial_state = None
+    initial_state: str | None = None
 
     def __init__(self, event):
         """Builds a  CompiledEvent from provided ``event``
@@ -66,25 +66,20 @@ class CompiledEvent(Event, Stateful):
         """
         if event.state != self.initial_state:
             raise InconsistentStateError(
-                "Provided event is in {0} state "
-                "when attended intial state is {1}".format(
-                    event.state, self.initial_state
-                )
+                "Provided event is in {} state "
+                "when attended intial state is {}".format(event.state, self.initial_state)
             )
         self.__dict__ = event.__dict__.copy()
 
     def __repr__(self):
-        return "<CompiledEvent %s %s>" % (self.type, self.state)
+        return f"<CompiledEvent {self.type} {self.state}>"
 
     @property
-    def next_states(self):
-        """Returns attended next compiled event states
-
-        :rtype: list
-        """
+    def next_states(self) -> tuple[str, ...]:
+        """Returns attended next compiled event states"""
         return self.transitions[self.state]
 
-    def transit(self, event):
+    def transit(self, event: Event):
         """Tries to apply CompiledEvent transition to the provided ``event``
         state
 
