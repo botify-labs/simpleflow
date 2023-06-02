@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import traceback
@@ -8,6 +9,7 @@ import uuid
 from base64 import b64decode
 
 import multiprocess
+import multiprocess.util
 import psutil
 
 import swf.actors
@@ -237,10 +239,18 @@ class ActivityWorker:
             return poller.fail_with_retry(token, task, reason=reason, details=details)
 
         try:
-            logger.info("completing activity")
+            logger.info(
+                "completing activity id=%s worker pid=%d",
+                task.activity_id,
+                os.getpid(),
+            )
             poller.complete_with_retry(token, result)
         except Exception as err:
-            logger.exception("complete error")
+            logger.exception(
+                "failed to complete activity id=%s worker pid=%d",
+                task.activity_id,
+                os.getpid(),
+            )
             reason = "cannot complete task {}: {} {}".format(
                 task.activity_id,
                 err.__class__.__name__,
@@ -331,7 +341,13 @@ def spawn(poller, token, task, middlewares=None, heartbeat=60):
     :param heartbeat: heartbeat delay (seconds)
     :type heartbeat: int
     """
-    logger.info("spawning new activity worker pid={} heartbeat={}".format(os.getpid(), heartbeat))
+    logger.info(
+        "spawning new activity id=%s worker pid=%d heartbeat=%s",
+        task.activity_id,
+        os.getpid(),
+        heartbeat,
+    )
+    multiprocess.util.log_to_stderr(logging.INFO)
     worker = multiprocess.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
