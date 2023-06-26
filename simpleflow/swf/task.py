@@ -5,7 +5,8 @@ from typing import Any
 
 import swf.models
 import swf.models.decision
-from simpleflow import Workflow, logger, task
+from simpleflow import Workflow, logger, settings, task
+from simpleflow.swf.utils import set_workflow_class_name
 
 if typing.TYPE_CHECKING:
     if hasattr(typing, "Self"):
@@ -230,6 +231,32 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
                 version=version,
             )
         return cls.cached_models[key]
+
+
+class ContinueAsNewWorkflowTask(WorkflowTask):
+    def schedule(
+        self, domain: swf.models.Domain, task_list: str | None = None, executor: Executor | None = None, **kwargs
+    ) -> list[swf.models.decision.Decision]:
+        workflow = self.workflow
+        tag_list = self.tag_list
+        if tag_list == Workflow.INHERIT_TAG_LIST:
+            tag_list = executor.get_run_context()["tag_list"]
+        execution_timeout = getattr(workflow, "execution_timeout", None)
+
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        input = self.get_input()
+        set_workflow_class_name(input, workflow)
+        logger.debug(f"ContinueAsNewWorkflowTask: input={input}")
+        decision.continue_as_new(
+            child_policy=getattr(workflow, "child_policy", None),
+            execution_timeout=str(execution_timeout) if execution_timeout else None,
+            task_timeout=settings.WORKFLOW_DEFAULT_DECISION_TASK_TIMEOUT,
+            input=input,
+            tag_list=tag_list,
+            task_list=task_list or self.task_list,
+            workflow_type_version=getattr(workflow, "version", None),
+        )
+        return [decision]
 
 
 class SignalTask(task.SignalTask, SwfTask):
