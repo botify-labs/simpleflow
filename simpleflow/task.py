@@ -18,7 +18,9 @@ from .activity import Activity
 if TYPE_CHECKING:
     from typing import Any
 
+    from simpleflow import Workflow
     from simpleflow.exceptions import TaskFailed
+    from simpleflow.executor import Executor
 
 
 def get_actual_value(value):
@@ -35,28 +37,24 @@ class Task(Submittable, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def name(self):
+    def name(self) -> str:
         raise NotImplementedError()
 
     @staticmethod
-    def resolve_args(*args):
+    def resolve_args(*args) -> list[Any]:
         return [get_actual_value(arg) for arg in args]
 
     @staticmethod
-    def resolve_kwargs(**kwargs):
+    def resolve_kwargs(**kwargs) -> dict[str, Any]:
         return {key: get_actual_value(val) for key, val in kwargs.items()}
 
 
 class ActivityTask(Task):
     """
     Activity task.
-
-    :type activity: Activity
-    :type idempotent: Optional[bool]
-    :type id: Optional[str]
     """
 
-    def __init__(self, activity, *args, **kwargs):
+    def __init__(self, activity: Activity, *args, **kwargs):
         if not isinstance(activity, Activity):
             raise TypeError(f"Wrong value for `activity`, got {type(activity)} instead")
 
@@ -73,7 +71,7 @@ class ActivityTask(Task):
 
         self.activity = activity
         self.idempotent = activity.idempotent
-        self.context = kwargs.pop("context", None)
+        self.context: dict[str, Any] | None = kwargs.pop("context", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id = None
@@ -146,13 +144,9 @@ class ActivityTask(Task):
 class WorkflowTask(Task):
     """
     Child workflow.
-
-    :type executor: type(simpleflow.executor.Executor)
-    :type workflow: type(simpleflow.workflow.Workflow)
-    :type id: Optional[str]
     """
 
-    def __init__(self, executor, workflow, *args, **kwargs):
+    def __init__(self, executor: Executor | None, workflow: type[Workflow], *args, **kwargs) -> None:
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.WorkflowTask.from_generic_task() factory
@@ -161,13 +155,13 @@ class WorkflowTask(Task):
 
         self.executor = executor
         self.workflow = workflow
-        self.idempotent = getattr(workflow, "idempotent", False)
+        self.idempotent: bool = getattr(workflow, "idempotent", False)
         get_workflow_id = getattr(workflow, "get_workflow_id", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
 
         if get_workflow_id:
-            self.id = get_workflow_id(workflow, *self.args, **self.kwargs)
+            self.id: str | None = get_workflow_id(workflow, *self.args, **self.kwargs)
         else:
             self.id = None
 
@@ -176,19 +170,16 @@ class WorkflowTask(Task):
         return f"workflow-{self.workflow.name}"
 
     def __repr__(self):
-        return "{}(workflow={}, args={}, kwargs={}, id={})".format(
-            self.__class__.__name__,
-            self.workflow.__module__ + "." + self.workflow.__name__,
-            self.args,
-            self.kwargs,
-            self.id,
+        return (
+            f"{self.__class__.__name__}(workflow={self.workflow.__module__ + '.' + self.workflow.__name__},"
+            f" args={self.args}, kwargs={self.kwargs}, id={self.id})"
         )
 
-    def execute(self):
+    def execute(self) -> Any:
         workflow = self.workflow(self.executor)
         return workflow.run(*self.args, **self.kwargs)
 
-    def propagate_attribute(self, attr, val):
+    def propagate_attribute(self, attr: str, val: Any) -> None:
         """
         Propagate to the workflow.
         """
@@ -201,7 +192,7 @@ class ChildWorkflowTask(WorkflowTask):
     (yet).
     """
 
-    def __init__(self, workflow, *args, **kwargs):
+    def __init__(self, workflow: type[Workflow], *args, **kwargs) -> None:
         super().__init__(None, workflow, *args, **kwargs)
 
 
@@ -210,18 +201,13 @@ class SignalTask(Task):
     Signal.
     """
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name: str, *args, **kwargs) -> None:
         self._name = name
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
 
     @property
-    def name(self):
-        """
-
-        :return:
-        :rtype: str
-        """
+    def name(self) -> str:
         return self._name
 
     def execute(self):
@@ -229,7 +215,7 @@ class SignalTask(Task):
 
 
 class MarkerTask(Task):
-    def __init__(self, name, details):
+    def __init__(self, name, details: str | futures.Future | None):
         """
         :param name: Marker name
         :param details: Serializable marker details
@@ -239,16 +225,11 @@ class MarkerTask(Task):
         self.kwargs = {}
 
     @property
-    def name(self):
-        """
-
-        :return:
-        :rtype: str
-        """
+    def name(self) -> str:
         return self._name
 
     @property
-    def details(self):
+    def details(self) -> str | None:
         return self.args[0]
 
     def execute(self):
@@ -260,27 +241,29 @@ class TimerTask(Task):
     Timer.
     """
 
-    def __init__(self, timer_id, timeout, control=None):
+    def __init__(self, timer_id: str, timeout: str | int, control: dict[str, Any] | None = None) -> None:
         self.timer_id = timer_id
         self.timeout = timeout
         self.control = control
-        self.args = ()
-        self.kwargs = {}
+        self.args: tuple = ()
+        self.kwargs: dict[str, Any] = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.timer_id
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.timer_id
 
-    def __repr__(self):
-        return '<{} timer_id="{}" timeout={}>'.format(self.__class__.__name__, self.timer_id, self.timeout)
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} timer_id="{self.timer_id}" timeout={self.timeout}>'
 
     def execute(self):
         # Local execution
-        time.sleep(self.timeout)
+        timeout = int(self.timeout) if isinstance(self.timeout, str) else self.timeout
+        if timeout:
+            time.sleep(timeout)
 
 
 class CancelTimerTask(Task):
@@ -288,23 +271,23 @@ class CancelTimerTask(Task):
     Timer cancellation.
     """
 
-    def __init__(self, timer_id):
+    def __init__(self, timer_id: str) -> None:
         self.timer_id = timer_id
-        self.args = ()
-        self.kwargs = {}
+        self.args: tuple = ()
+        self.kwargs: dict[str, Any] = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.timer_id
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.timer_id
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{self.__class__.__name__} timer_id="{self.timer_id}">'
 
-    def execute(self):
+    def execute(self) -> None:
         # Local execution: no-op
         return
 

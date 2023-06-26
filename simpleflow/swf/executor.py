@@ -969,26 +969,7 @@ class Executor(executor.Executor):
 
             return self._decisions_and_context
         except (exceptions.TaskException, exceptions.WorkflowException) as err:
-
-            def _extract_reason(err):
-                if hasattr(err.exception, "reason"):
-                    raw = err.exception.reason
-                    # don't parse eventual json object here, since we will cast
-                    # the result to a string anyway, better keep a json representation
-                    return format.decode(raw, parse_json=False, use_proxy=False)
-                return repr(err.exception)
-
-            reason = 'Workflow execution error in {}: "{}"'.format(err.payload.name, _extract_reason(err))
-            logger.exception("%s", reason)  # Don't let logger try to interpolate the message
-
-            details = getattr(err.exception, "details", None)
-            self.on_failure(reason, details)
-
-            decision = swf.models.decision.WorkflowExecutionDecision()
-            decision.fail(
-                reason=reason,
-                details=details,
-            )
+            decision = self.handle_replay_swf_exception(err)
             self.after_closed()
             if decref_workflow:
                 self.decref_workflow()
@@ -1024,6 +1005,28 @@ class Executor(executor.Executor):
         if decref_workflow:
             self.decref_workflow()
         return DecisionsAndContext([decision])
+
+    def handle_replay_swf_exception(
+        self, err: exceptions.TaskException | exceptions.WorkflowException
+    ) -> swf.models.decision.WorkflowExecutionDecision:
+        def _extract_reason():
+            if hasattr(err.exception, "reason"):
+                raw = err.exception.reason
+                # don't parse a potential json object here, since we will cast
+                # the result to a string anyway, better keep a json representation
+                return format.decode(raw, parse_json=False, use_proxy=False)
+            return repr(err.exception)
+
+        reason = 'Workflow execution error in {}: "{}"'.format(err.payload.name, _extract_reason())
+        logger.exception("%s", reason)  # Don't let logger try to interpolate the message
+        details = getattr(err.exception, "details", None)
+        self.on_failure(reason, details)
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision.fail(
+            reason=reason,
+            details=details,
+        )
+        return decision
 
     def maybe_clear_execution_context(self):
         """
