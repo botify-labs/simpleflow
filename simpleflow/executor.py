@@ -182,3 +182,7 @@ class Executor(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_event_details(self, event_type, event_name):
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def continue_as_new(self, workflow: type[Workflow], *args, **kwargs):
+        raise NotImplementedError

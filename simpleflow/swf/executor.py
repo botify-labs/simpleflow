@@ -22,7 +22,16 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
-from simpleflow.swf.task import ActivityTask, CancelTimerTask, MarkerTask, SignalTask, SwfTask, TimerTask, WorkflowTask
+from simpleflow.swf.task import (
+    ActivityTask,
+    CancelTimerTask,
+    ContinueAsNewWorkflowTask,
+    MarkerTask,
+    SignalTask,
+    SwfTask,
+    TimerTask,
+    WorkflowTask,
+)
 from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
@@ -1274,3 +1283,6 @@ class Executor(executor.Executor):
             pass
         decision.cancel()
         return [decision]
+
+    def continue_as_new(self, workflow: type[Workflow], *args, **kwargs):
+        return ContinueAsNewWorkflowTask(executor=self, workflow=workflow, *args, **kwargs)

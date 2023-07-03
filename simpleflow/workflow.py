@@ -243,6 +243,9 @@ class Workflow(Submittable):
         """
         return True
 
+    def continue_as_new(self, *args, **kwargs):
+        return self.executor.continue_as_new(workflow=type(self), *args, **kwargs)
+
     def on_task_failure(
         self,
         failure_context: TaskFailureContext,
