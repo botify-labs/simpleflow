@@ -48,7 +48,7 @@ def run(self):
         self.process(my_signal.result)
 ```
 
-A workflow can choose to have signals not propagated signals to its parent by defining
+A workflow can choose to have signals not propagated to its parent by defining
 `propagate_signals_to_parent = False`.
 
 Limitations
