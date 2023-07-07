@@ -339,3 +339,39 @@ class WorkflowWithTwoChildren(Workflow):
                 ChildWorkflowSendingSignals,
             )
         ).result
+
+
+class ChildWorkflowSendingSignalsToParent(Workflow):
+    name = "child"
+    version = "example"
+    task_list = "example"
+
+    def run(self):
+        run_context = self.get_run_context()
+        parent_workflow_id = run_context["parent_workflow_id"]
+        print(f"child: sending signals to parent={parent_workflow_id}")
+        return self.submit(
+            Chain(
+                Group(
+                    ChildWorkflowWaitingSignals,
+                    self.signal("signal", workflow_id=parent_workflow_id, propagate=False),
+                    self.signal("signal 2", workflow_id=parent_workflow_id, propagate=False),
+                ),
+            )
+        ).result
+
+
+class WorkflowWithChildrenSignalingIt(Workflow):
+    name = "parent"
+    version = "example"
+    task_list = "example"
+
+    def run(self, *args, **kwargs):
+        self.submit(
+            Group(
+                ChildWorkflowSendingSignalsToParent,
+            )
+        )
+        print("Created child workflow; waiting for its signals")
+        futures.wait(self.submit(self.wait_signal("signal 2")), self.submit(self.wait_signal("signal")))
+        print("Signals received!")

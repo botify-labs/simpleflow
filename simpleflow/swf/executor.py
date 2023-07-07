@@ -1140,19 +1140,12 @@ class Executor(executor.Executor):
     def _run_id(self):
         return self._run_context.get("run_id")
 
-    def signal(self, name, *args, **kwargs):
+    def signal(self, name, *args, workflow_id: str = None, run_id: str = None, propagate: bool = True, **kwargs):
         """
         Send a signal.
         Pop workflow_id, run_id and propagate (default: True) from the kwargs.
         If workflow_id is not set or falsy, use the current workflow_id/run_id.
-        :param name:
-        :param args:
-        :param kwargs:
-        :return:
         """
-        workflow_id = kwargs.pop("workflow_id", None)
-        run_id = kwargs.pop("run_id", None)
-        propagate = kwargs.pop("propagate", True)
         logger.debug(
             "signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}".format(
                 name=name,
@@ -1186,7 +1179,7 @@ class Executor(executor.Executor):
             return
 
         known_workflows_ids = []
-        if self._run_context.get("parent_workflow_id"):
+        if self._run_context.get("parent_workflow_id") and getattr(self.workflow, "propagate_signals_to_parent", True):
             known_workflows_ids.append(
                 (
                     self._run_context["parent_workflow_id"],
