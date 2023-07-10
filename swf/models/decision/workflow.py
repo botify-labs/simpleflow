@@ -71,17 +71,19 @@ class WorkflowExecutionDecision(Decision):
         input: dict[str, Any] | None = None,
         tag_list: list[str] | None = None,
         task_list: str | None = None,
+        task_priority: str | None = None,
         workflow_type_version: str | None = None,
     ):
-        """Coninue as new workflow execution decision builder
+        """Continue as new workflow execution decision builder
         :param  child_policy: specifies the policy to use for the
                               child workflow executions of the new execution
         :param  execution_timeout: specifies the total duration for this workflow execution
         :param  input: The input provided to the new workflow execution
         :param  tag_list: list of tags to associate with the new workflow execution
         :param  task_list: task list name
+        :param  task_priority:
         :param  task_timeout: maximum duration of decision tasks for the new workflow execution
-        :param  workflow_type_version: workflow type version the execution shold belong to
+        :param  workflow_type_version: workflow type version the execution should belong to
         """
         if input is not None:
             input = format.input(input)
@@ -93,7 +95,10 @@ class WorkflowExecutionDecision(Decision):
                 "taskStartToCloseTimeout": task_timeout,
                 "input": input,
                 "tagList": tag_list,
-                "taskList": task_list,
+                "taskList": {
+                    "name": task_list,
+                },
+                "taskPriority": task_priority,
                 "workflowTypeVersion": workflow_type_version,
             }
         )

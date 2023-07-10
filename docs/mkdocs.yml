@@ -75,6 +75,7 @@ nav:
       - Task Lists: features/task_lists.md
       - Tags: features/tags.md
       - Error Handling: features/error_handling.md
+      - Continue As New: features/continue_as_new.md
       - Middleware: features/middleware.md
   - Development: development.md
   - Contributing: contributing.md

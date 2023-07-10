@@ -1,8 +1,21 @@
 from __future__ import annotations
 
+import typing
+from typing import Any
+
 import swf.models
 import swf.models.decision
-from simpleflow import Workflow, logger, task
+from simpleflow import Workflow, logger, settings, task
+from simpleflow.swf.utils import set_workflow_class_name
+
+if typing.TYPE_CHECKING:
+    if hasattr(typing, "Self"):
+        Self = typing.Self
+    else:
+        from typing_extensions import Self
+
+    from simpleflow.activity import Activity
+    from simpleflow.swf.executor import Executor
 
 
 class SwfTask:
@@ -20,10 +33,10 @@ class ActivityTask(task.ActivityTask, SwfTask):
     Activity task managed on SWF.
     """
 
-    cached_models = {}
+    cached_models: dict[tuple[str, str, str], swf.models.ActivityType] = {}
 
     @classmethod
-    def from_generic_task(cls, task):
+    def from_generic_task(cls, task: task.ActivityTask) -> Self:
         """
         Casts a generic simpleflow.task.ActivityTask into a SWF one.
         """
@@ -37,17 +50,11 @@ class ActivityTask(task.ActivityTask, SwfTask):
     def task_list(self):
         return self.activity.task_list
 
-    def schedule(self, domain, task_list=None, **kwargs):
+    def schedule(
+        self, domain: swf.models.Domain, task_list: str | None = None, **kwargs
+    ) -> list[swf.models.decision.Decision]:
         """
         Schedule an activity.
-
-        :param domain:
-        :type domain: swf.models.Domain
-        :param task_list:
-        :type task_list: Optional[str]
-        :param kwargs:
-        :return:
-        :rtype: list[swf.models.decision.Decision]
         """
         activity = self.activity
         model = self.get_activity_type(domain, activity.name, activity.version)
@@ -95,7 +102,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
 
         return [decision]
 
-    def get_input(self):
+    def get_input(self) -> dict[str, Any] | list[Any]:
         input = {
             "args": self.args,
             "kwargs": self.kwargs,
@@ -106,14 +113,6 @@ class ActivityTask(task.ActivityTask, SwfTask):
     def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.
-        :param domain:
-        :type domain:
-        :param name:
-        :type name:
-        :param version:
-        :type version:
-        :return:
-        :rtype:
         """
         key = (domain.name, name, version)
         if key not in cls.cached_models:
@@ -130,12 +129,12 @@ class NonPythonicActivityTask(ActivityTask):
     ActivityTask that pass raw kwargs or args as input, without "args" and "kwargs" subkeys.
     """
 
-    def __init__(self, activity, *args, **kwargs):
+    def __init__(self, activity: Activity, *args, **kwargs) -> None:
         if args and kwargs:
             raise ValueError("This task type doesn't support both *args and **kwargs")
         super(ActivityTask, self).__init__(activity, *args, **kwargs)
 
-    def get_input(self):
+    def get_input(self) -> dict[str, Any] | list[Any]:
         return self.kwargs or self.args
 
 
@@ -144,10 +143,10 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     WorkflowTask managed on SWF.
     """
 
-    cached_models = {}
+    cached_models: dict[tuple[str, str, str], swf.models.WorkflowType] = {}
 
     @classmethod
-    def from_generic_task(cls, task):
+    def from_generic_task(cls, task: task.WorkflowTask) -> Self:
         """
         Casts a generic simpleflow.task.WorkflowTask into a SWF one.
         """
@@ -162,7 +161,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return self.workflow
 
     @property
-    def task_list(self):
+    def task_list(self) -> str | None:
         get_task_list = getattr(self.workflow, "get_task_list", None)
         if get_task_list:
             return get_task_list(self.workflow, *self.args, **self.kwargs)
@@ -170,25 +169,22 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return getattr(self.workflow, "task_list", None)
 
     @property
-    def tag_list(self):
+    def tag_list(self) -> list[str] | None:
         get_tag_list = getattr(self.workflow, "get_tag_list", None)
         if get_tag_list:
             return get_tag_list(self.workflow, *self.args, **self.kwargs)
 
         return getattr(self.workflow, "tag_list", None)
 
-    def schedule(self, domain, task_list=None, executor=None, **kwargs):
+    def schedule(
+        self,
+        domain: swf.models.Domain,
+        task_list: str | None = None,
+        executor: Executor | None = None,
+        **kwargs,
+    ) -> list[swf.models.decision.Decision]:
         """
         Schedule a child workflow.
-
-        :param domain:
-        :type domain: swf.models.Domain
-        :param task_list:
-        :type task_list: Optional[str]
-        :param executor:
-        :type executor: simpleflow.swf.executor.Executor
-        :return:
-        :rtype: list[swf.models.decision.Decision]
         """
         workflow = self.workflow
         model = self.get_workflow_type(domain, workflow.__module__ + "." + workflow.__name__, workflow.version)
@@ -215,7 +211,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
         return [decision]
 
-    def get_input(self):
+    def get_input(self) -> dict[str, Any]:
         input = {
             "args": self.args,
             "kwargs": self.kwargs,
@@ -226,14 +222,6 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     def get_workflow_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.WorkflowType:
         """
         Cache known WorkflowType's to remove useless latency.
-        :param domain:
-        :type domain:
-        :param name:
-        :type name:
-        :param version:
-        :type version:
-        :return:
-        :rtype:
         """
         key = (domain.name, name, version)
         if key not in cls.cached_models:
@@ -245,6 +233,32 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return cls.cached_models[key]
 
 
+class ContinueAsNewWorkflowTask(WorkflowTask):
+    def schedule(
+        self, domain: swf.models.Domain, task_list: str | None = None, executor: Executor | None = None, **kwargs
+    ) -> list[swf.models.decision.Decision]:
+        workflow = self.workflow
+        tag_list = self.tag_list
+        if tag_list == Workflow.INHERIT_TAG_LIST:
+            tag_list = executor.get_run_context()["tag_list"]
+        execution_timeout = getattr(workflow, "execution_timeout", None)
+
+        decision = swf.models.decision.WorkflowExecutionDecision()
+        input = self.get_input()
+        set_workflow_class_name(input, workflow)
+        logger.debug(f"ContinueAsNewWorkflowTask: input={input}")
+        decision.continue_as_new(
+            child_policy=getattr(workflow, "child_policy", None),
+            execution_timeout=str(execution_timeout) if execution_timeout else None,
+            task_timeout=settings.WORKFLOW_DEFAULT_DECISION_TASK_TIMEOUT,
+            input=input,
+            tag_list=tag_list,
+            task_list=task_list or self.task_list,
+            workflow_type_version=getattr(workflow, "version", None),
+        )
+        return [decision]
+
+
 class SignalTask(task.SignalTask, SwfTask):
     """
     Signal "task" on SWF.
@@ -253,7 +267,14 @@ class SignalTask(task.SignalTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task, workflow_id, run_id, control, extra_input):
+    def from_generic_task(
+        cls,
+        a_task: task.SignalTask,
+        workflow_id: str,
+        run_id: str,
+        control: dict[str, Any] | str | None = None,
+        extra_input: dict[str, Any] | None = None,
+    ) -> Self:
         return cls(
             a_task.name,
             workflow_id,
@@ -264,7 +285,16 @@ class SignalTask(task.SignalTask, SwfTask):
             **a_task.kwargs,
         )
 
-    def __init__(self, name, workflow_id, run_id, control=None, extra_input=None, *args, **kwargs):
+    def __init__(
+        self,
+        name: str,
+        workflow_id: str,
+        run_id: str,
+        control: dict[str, Any] | str | None = None,
+        extra_input: dict[str, Any] | None = None,
+        *args,
+        **kwargs,
+    ) -> None:
         super().__init__(name, *args, **kwargs)
         self.workflow_id = workflow_id
         self.run_id = run_id
@@ -276,18 +306,14 @@ class SignalTask(task.SignalTask, SwfTask):
         return self._name
 
     def __repr__(self):
-        return "{}(name={}, workflow_id={}, run_id={}, control={}, args={}, kwargs={})".format(
-            self.__class__.__name__,
-            self.name,
-            self.workflow_id,
-            self.run_id,
-            self.control,
-            self.args,
-            self.kwargs,
+        return (
+            f"{self.__class__.__name__}(name={self.name},"
+            f" workflow_id={self.workflow_id}, run_id={self.run_id}, control={self.control},"
+            f" args={self.args}, kwargs={self.kwargs})"
         )
 
-    def schedule(self, *args, **kwargs):
-        input = {
+    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
+        input: dict[str, Any] = {
             "args": self.args,
             "kwargs": self.kwargs,
         }
@@ -320,14 +346,14 @@ class MarkerTask(task.MarkerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task: task.MarkerTask) -> MarkerTask:
+    def from_generic_task(cls, a_task: task.MarkerTask) -> Self:
         return cls(a_task.name, *a_task.args, **a_task.kwargs)
 
-    def __init__(self, name, details=None):
+    def __init__(self, name: str, details: str | None = None) -> None:
         super().__init__(name, details)
         self.id = None
 
-    def schedule(self, *args, **kwargs):
+    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
         decision = swf.models.decision.MarkerDecision()
         decision.record(
             self.name,
@@ -340,13 +366,13 @@ class TimerTask(task.TimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task: task.TimerTask) -> TimerTask:
+    def from_generic_task(cls, a_task: task.TimerTask) -> Self:
         return cls(a_task.timer_id, a_task.timeout, a_task.control)
 
-    def __init__(self, timer_id, timeout, control):
+    def __init__(self, timer_id: str, timeout: int | str, control: dict[str, Any] | None) -> None:
         super().__init__(timer_id, timeout, control)
 
-    def schedule(self, *args, **kwargs):
+    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
         decision = swf.models.decision.TimerDecision(
             "start",
             id=self.timer_id,
@@ -360,13 +386,13 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
     idempotent = True
 
     @classmethod
-    def from_generic_task(cls, a_task: task.CancelTimerTask) -> CancelTimerTask:
+    def from_generic_task(cls, a_task: task.CancelTimerTask) -> Self:
         return cls(a_task.timer_id)
 
-    def __init__(self, timer_id):
+    def __init__(self, timer_id: str) -> None:
         super().__init__(timer_id)
 
-    def schedule(self, *args, **kwargs):
+    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
         decision = swf.models.decision.TimerDecision(
             "cancel",
             id=self.timer_id,

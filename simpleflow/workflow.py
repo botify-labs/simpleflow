@@ -205,8 +205,8 @@ class Workflow(Submittable):
         """
         return self.executor.get_run_context()
 
-    def signal(self, name, *args, **kwargs):
-        return self.executor.signal(name, *args, **kwargs)
+    def signal(self, name, *args, workflow_id: str = None, run_id: str = None, propagate: bool = True, **kwargs):
+        return self.executor.signal(name, *args, workflow_id=workflow_id, run_id=run_id, propagate=propagate, **kwargs)
 
     def wait_signal(self, name):
         return self.executor.wait_signal(name)
@@ -242,6 +242,9 @@ class Workflow(Submittable):
         :return:
         """
         return True
+
+    def continue_as_new(self, *args, **kwargs):
+        return self.executor.continue_as_new(workflow=type(self), *args, **kwargs)
 
     def on_task_failure(
         self,

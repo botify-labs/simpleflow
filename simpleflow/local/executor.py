@@ -200,3 +200,15 @@ class Executor(executor.Executor):
 
     def get_event_details(self, event_type, event_name):
         return None  # To be implemented if needed
+
+    def continue_as_new(self, workflow: type[Workflow], *args, **kwargs):
+        self.workflow_class = workflow
+        self.update_workflow_class()
+        self.nb_activities = 0
+        self.signals_sent = set()
+        self._markers = collections.OrderedDict()
+
+        self.wf_run_id = []
+        self.wf_id = []
+        self._history = None
+        return self.run(input={"args": args, "kwargs": kwargs})

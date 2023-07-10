@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from . import registry, settings
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from typing import Any, Callable
 
 
 __all__ = [
@@ -24,45 +24,34 @@ PRIORITY_NOT_SET = NotSet()
 
 
 def with_attributes(
-    name=None,
-    version=settings.ACTIVITY_DEFAULT_VERSION,
-    task_list=settings.ACTIVITY_DEFAULT_TASK_LIST,
-    task_priority=PRIORITY_NOT_SET,
-    retry=0,
-    raises_on_failure=False,
-    start_to_close_timeout=settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
-    schedule_to_close_timeout=settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
-    schedule_to_start_timeout=settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
-    heartbeat_timeout=settings.ACTIVITY_HEARTBEAT_TIMEOUT,
-    idempotent=None,
-    meta=None,
+    name: str | None = None,
+    version: str = settings.ACTIVITY_DEFAULT_VERSION,
+    task_list: str = settings.ACTIVITY_DEFAULT_TASK_LIST,
+    task_priority: str | NotSet = PRIORITY_NOT_SET,
+    retry: int | Any = 0,
+    raises_on_failure: bool = False,
+    start_to_close_timeout: int | str | None = settings.ACTIVITY_START_TO_CLOSE_TIMEOUT,
+    schedule_to_close_timeout: int | str | None = settings.ACTIVITY_SCHEDULE_TO_CLOSE_TIMEOUT,
+    schedule_to_start_timeout: int | str | None = settings.ACTIVITY_SCHEDULE_TO_START_TIMEOUT,
+    heartbeat_timeout: int | str | None = settings.ACTIVITY_HEARTBEAT_TIMEOUT,
+    idempotent: bool | None = None,
+    meta: dict[str, Any] | str | None = None,
 ) -> Callable[[Callable], Activity]:
     """
     Decorator: wrap a function/class into an Activity.
 
     :param name: name of the activity.
-    :type  name: str.
     :param version: optional version.
-    :type version: str
     :param task_list: optional task list.
-    :type task_list: str
+    :param task_priority: optional priority.
     :param retry: retry count.
-    :type retry: int
     :param raises_on_failure: whether to raise on failure.
-    :type raises_on_failure: bool
     :param start_to_close_timeout:
-    :type start_to_close_timeout: str | int
     :param schedule_to_close_timeout:
-    :type schedule_to_close_timeout: str | int
     :param schedule_to_start_timeout:
-    :type schedule_to_start_timeout: str | int
     :param heartbeat_timeout:
-    :type heartbeat_timeout: str | int
     :param idempotent: True if the activity is idempotent.
-    :type idempotent: Optional[bool]
     :param meta:
-    :type meta: str
-    :rtype: () -> Activity[()]
 
     """
 
@@ -89,19 +78,19 @@ def with_attributes(
 class Activity:
     def __init__(
         self,
-        callable,
-        name=None,
-        version=None,
-        task_list=None,
-        retry=0,
-        raises_on_failure=False,
-        start_to_close_timeout=None,
-        schedule_to_close_timeout=None,
-        schedule_to_start_timeout=None,
-        heartbeat_timeout=None,
-        task_priority=PRIORITY_NOT_SET,
-        idempotent=None,
-        meta=None,
+        callable: Callable | type,
+        name: str | None = None,
+        version: str | None = None,
+        task_list: str | None = None,
+        retry: int | Any = 0,
+        raises_on_failure: bool = False,
+        start_to_close_timeout: int | str | None = None,
+        schedule_to_close_timeout: int | str | None = None,
+        schedule_to_start_timeout: int | str | None = None,
+        heartbeat_timeout: int | str | None = None,
+        task_priority: str | NotSet = PRIORITY_NOT_SET,
+        idempotent: bool | None = None,
+        meta: dict[str, Any] | str | None = None,
     ):
         self._callable = callable
 

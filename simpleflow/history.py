@@ -18,29 +18,25 @@ class History:
     History data.
     """
 
-    def __init__(self, history):
-        self._history: swf.models.history.History = history
+    def __init__(self, history: swf.models.history.History) -> None:
+        self._history = history
         self._activities: dict[int, ActivityTaskEventDict] = {}
-        self._child_workflows = {}
-        self._external_workflows_signaling = {}
-        self._external_workflows_canceling = {}
-        self._signals = {}
+        self._child_workflows: dict[int, dict[str, Any]] = {}
+        self._external_workflows_signaling: dict[int, dict[str, Any]] = {}
+        self._external_workflows_canceling: dict[int, dict[str, Any]] = {}
+        self._signals: dict[str, dict[str, Any]] = {}
         self._signaled_workflows = collections.defaultdict(list)
-        self._markers = {}
-        self._timers = {}
-        self._tasks = []
-        self._cancel_requested = None
-        self._cancel_failed = None
-        self.started_decision_id = None
-        self.completed_decision_id = None
+        self._markers: dict[str, list[dict[str, Any]]] = {}
+        self._timers: dict[int, dict[str, Any]] = {}
+        self._tasks: list[dict[str, Any]] = []
+        self._cancel_requested: dict[str, Any] | None = None
+        self._cancel_failed: dict[str, Any] | None = None
+        self.started_decision_id: int | None = None
+        self.completed_decision_id: int | None = None
+        self.last_event_id: int | None = None
 
     @property
-    def swf_history(self):
-        """
-
-        :return: SWF history
-        :rtype: swf.models.history.History
-        """
+    def swf_history(self) -> swf.models.history.History:
         return self._history
 
     @property
@@ -51,10 +47,9 @@ class History:
         return self._activities
 
     @property
-    def child_workflows(self):
+    def child_workflows(self) -> dict[int, dict[str, Any]]:
         """
         :return: child WFs
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._child_workflows
 
@@ -62,7 +57,6 @@ class History:
     def external_workflows_signaling(self):
         """
         :return: external WFs
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._external_workflows_signaling
 
@@ -70,7 +64,6 @@ class History:
     def signals(self):
         """
         :return: signals
-        :rtype: collections.OrderedDict[str, dict[str, Any]]
         """
         return self._signals
 
@@ -78,7 +71,6 @@ class History:
     def cancel_requested(self):
         """
         :return: Last cancel requested event, if any.
-        :rtype: Optional[dict]
         """
         return self._cancel_requested
 
@@ -86,7 +78,6 @@ class History:
     def cancel_failed(self):
         """
         :return: Last cancel failed event, if any.
-        :rtype: Optional[dict]
         """
         return self._cancel_failed
 
@@ -94,7 +85,6 @@ class History:
     def cancel_requested_id(self):
         """
         :return: ID of last cancel requested event, if any.
-        :rtype: Optional[int]
         """
         return self._cancel_requested["event_id"] if self._cancel_requested else None
 
@@ -102,7 +92,6 @@ class History:
     def cancel_failed_decision_task_completed_event_id(self):
         """
         :return: ID of last cancel failed event, if any.
-        :rtype: Optional[int]
         """
         return self._cancel_failed["decision_task_completed_event_id"] if self._cancel_failed else None
 
@@ -110,7 +99,6 @@ class History:
     def signaled_workflows(self):
         """
         :return: signaled workflows
-        :rtype: defaultdict(list)
         """
         return self._signaled_workflows
 
@@ -119,24 +107,19 @@ class History:
         """
 
         :return: Markers
-        :rtype: collections.OrderedDict[str, list[dict[str, Any]]]
         """
         return self._markers
 
     @property
-    def timers(self) -> dict[str, dict[str, Any]]:
+    def timers(self) -> dict[int, dict[str, Any]]:
         return self._timers
 
     @property
     def tasks(self):
-        """
-        :return:
-         :rtype: list[dict[str, Any]]
-        """
         return self._tasks
 
     @property
-    def events(self) -> list[swf.models.event.Event]:
+    def events(self) -> list[Event]:
         return self._history.events
 
     def parse_activity_event(self, events: list[ActivityTaskEvent], event: ActivityTaskEvent):
@@ -148,7 +131,6 @@ class History:
             """
             Return a reference to the corresponding activity.
             :return: mutable activity
-            :rtype: dict[str, Any]
             """
             scheduled_event = events[event.scheduled_event_id - 1]
             return self._activities[scheduled_event.activity_id]
@@ -273,7 +255,7 @@ class History:
             else:
                 self._activities[event.activity_id].update(activity)
 
-    def parse_child_workflow_event(self, events, event):
+    def parse_child_workflow_event(self, events: list[Event], event: Event) -> None:
         """Aggregate all the attributes of a workflow in a single entry.
 
         See http://docs.aws.amazon.com/amazonswf/latest/apireference/API_HistoryEvent.html
@@ -297,11 +279,6 @@ class History:
           by this workflow execution, was canceled and closed.
         - ChildWorkflowExecutionTerminated: A child workflow execution, started
           by this workflow execution, was terminated.
-
-        :param events:
-        :type events: list[swf.models.event.Event]
-        :param event:
-        :type event: swf.models.event.Event
         """
 
         def get_workflow():
@@ -433,11 +410,9 @@ class History:
                 }
             )
 
-    def parse_workflow_event(self, events, event):
+    def parse_workflow_event(self, events: list[Event], event: Event):
         """
         Parse a workflow event.
-        :param events:
-        :param event:
         """
         if event.state == "signaled":
             signal = {
@@ -474,7 +449,7 @@ class History:
             }
             self._cancel_failed = cancel_failed
 
-    def parse_external_workflow_event(self, events, event):
+    def parse_external_workflow_event(self, events: list[Event], event: Event):
         """
         Parse an external workflow event.
         :param events:
@@ -564,7 +539,7 @@ class History:
                 }
             )
 
-    def parse_marker_event(self, events, event):
+    def parse_marker_event(self, events: list[Event], event: Event):
         if event.state == "recorded":
             marker = {
                 "type": "marker",
@@ -586,7 +561,7 @@ class History:
             }
             self._markers.setdefault(event.marker_name, []).append(marker)
 
-    def parse_timer_event(self, events, event):
+    def parse_timer_event(self, events: list[Event], event: Event):
         if event.state == "started":
             timer = {
                 "type": "timer",
@@ -652,7 +627,7 @@ class History:
                 }
             )
 
-    def parse_decision_event(self, events, event):
+    def parse_decision_event(self, events: list[Event], event: Event):
         if event.state == "started":
             self.started_decision_id = event.id
         if event.state == "completed":
@@ -679,6 +654,8 @@ class History:
             parser = self.TYPE_TO_PARSER.get(event.type)
             if parser:
                 parser(self, events, event)
+        if events:
+            self.last_event_id = events[-1].id
 
     @staticmethod
     def get_event_id(event: dict[str, Any]) -> int | None:
