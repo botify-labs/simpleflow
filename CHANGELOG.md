@@ -1,6 +1,28 @@
 Changelog
 =========
 
+0.31.0
+------
+
+* Merge pull request #414 from botify-labs/task/DATA-17843/Simpleflow-implement-ContinueAsNew
+* Unrelated: Improve typing
+* Create ContinueAsNewWorkflowTask
+* Executors, Workflow: add continue_as_new
+* simpleflow/history.py: add last_event_id
+* Document continue_as_new, add example
+* Review fix: try improving the documentation
+* Unrelated: `import annotations` in script/release
+* Update ci.yml
+
+    Cancel GitHub actions when pushing new commits.
+* Add propagate_signals_to_parent
+
+    This is sometimes needed to prevent the parent workflow being confused
+    by unknown signals.
+* Unpin Jinja2 and markupsafe
+  * markupsafe has breaking changes for callers expecting v0.x.
+* Update docs/src/features/signals.md
+
 0.21.18
 -------
 
