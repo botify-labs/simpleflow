@@ -11,7 +11,7 @@ from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
-from simpleflow.task import ActivityTask, MarkerTask, SignalTask, WorkflowTask
+from simpleflow.task import ActivityTask, MarkerTask, SignalTask, TaskFailureContext, WorkflowTask
 from simpleflow.utils import format_exc, format_exc_type, issubclass_, json_dumps
 from simpleflow.workflow import Workflow
 from swf.models.history import builder
@@ -212,3 +212,10 @@ class Executor(executor.Executor):
         self.wf_id = []
         self._history = None
         return self.run(input={"args": args, "kwargs": kwargs})
+
+    def make_task_id(self, a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask, *args, **kwargs) -> None:
+        pass  # Unused, compat with SWF
+
+    @staticmethod
+    def default_failure_handling(failure_context: TaskFailureContext) -> TaskFailureContext:
+        return failure_context  # Unused, compat with SWF
