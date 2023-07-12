@@ -314,8 +314,32 @@ class TaskFailureContext:
     history: History | None = attr.ib(default=None)
     decision: Decision | None = attr.ib(default=Decision.none)
     retry_wait_timeout: int | None = attr.ib(default=None)
-    _task_error: str | None = attr.ib(default=None)
-    _task_error_type: type[Exception] | None = attr.ib(default=None)
+    reason: str | None = attr.ib(default=None)
+    details: Any = attr.ib(default=None)
+    task_error: str | None = attr.ib(default=None)
+    task_error_type: type[Exception] | None = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        from simpleflow.exceptions import TaskFailed
+        from simpleflow.utils import import_from_module, json_loads_or_raw
+
+        exception = self.exception
+        if isinstance(exception, TaskFailed):
+            if exception.reason:
+                self.reason = exception.reason
+            if exception.details:
+                details = json_loads_or_raw(exception.details)
+                self.details = details
+                if isinstance(details, dict):
+                    if "error" in details:
+                        self.task_error = details["error"]
+                    if "error_type" in details:
+                        try:
+                            self.task_error_type = import_from_module(details["error_type"])
+                        except Exception:  # nosec
+                            pass
+        else:
+            self.reason = str(exception)
 
     @property
     def retry_count(self) -> int | None:
@@ -324,6 +348,10 @@ class TaskFailureContext:
     @property
     def attempt_number(self) -> int:
         return self.event.get("retry", 0) + 1
+
+    @property
+    def payload(self) -> Task | None:
+        return getattr(self.a_task, "payload", None)
 
     @property
     def task_name(self) -> str | None:
@@ -346,37 +374,8 @@ class TaskFailureContext:
         return self.history.completed_decision_id if self.history else None
 
     @property
-    def task_error(self) -> str:
-        if self._task_error is None:
-            self._cache_error()
-        return self._task_error
-
-    @property
-    def task_error_type(self) -> type[Exception] | None:
-        if self._task_error is None:
-            self._cache_error()
-        return self._task_error_type
-
-    def _cache_error(self):
-        from simpleflow.exceptions import TaskFailed
-        from simpleflow.utils import import_from_module, json_loads_or_raw
-
-        self._task_error = ""  # falsy value different from None
-        if isinstance(self.exception, TaskFailed) and self.exception.details:
-            details = json_loads_or_raw(self.exception.details)
-            if isinstance(details, dict):
-                if "error" in details:
-                    self._task_error = details["error"]
-                if "error_type" in details:
-                    try:
-                        self._task_error_type = import_from_module(details["error_type"])
-                    except Exception:  # nosec
-                        pass
-
-    @property
     def id(self) -> int | None:
-        event = self.event
-        return History.get_event_id(event)
+        return History.get_event_id(self.event)
 
     def decide_abort(self) -> TaskFailureContext:
         self.decision = self.Decision.abort
