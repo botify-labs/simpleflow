@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Group
@@ -9,9 +8,6 @@ from simpleflow.constants import MINUTE
 from simpleflow.log import END, GREEN, ORANGE, RED, YELLOW
 from simpleflow.swf.task import WorkflowTask
 from simpleflow.task import TaskFailureContext
-
-if TYPE_CHECKING:
-    pass
 
 
 @activity.with_attributes(task_list="quickstart", version="example", retry=1, raises_on_failure=False)
@@ -31,10 +27,10 @@ def fail_and_raise():
     raises_on_failure=False,
 )
 def timeout_no_raise():
-    time.sleep(120)
+    time.sleep(2 * MINUTE)
 
 
-def colorize(color, message):
+def colorize(color: str, message: str) -> str:
     return "".join([color, message, END])
 
 
@@ -44,7 +40,7 @@ class FailingWorkflow(Workflow):
     task_list = "example"
     retry = 1
 
-    def run(self, fail=True):
+    def run(self, fail: bool = True) -> None:
         x = self.submit(fail_but_dont_raise)
         if fail:
             y = self.submit(fail_and_raise)
@@ -57,11 +53,8 @@ class FailingWorkflow(Workflow):
         print(
             colorize(
                 YELLOW,
-                "FailingWorkflow.on_task_failure: {}: {!r} (started_id: {})".format(
-                    failure_context.task_name,
-                    failure_context.exception,
-                    failure_context.event.get("started_id"),
-                ),
+                f"FailingWorkflow.on_task_failure: {failure_context.task_name}: {failure_context.exception!r}"
+                f" (started_id: {failure_context.event.get('started_id')})",
             )
         )
         return None  # no specific handling
@@ -88,32 +81,23 @@ class NotFailingWorkflow(Workflow):
         print(colorize(GREEN, "NotFailingWorkflow: workflow completed!"))
 
     def on_task_failure(self, failure_context: TaskFailureContext) -> TaskFailureContext | None:
-        # print(failure_context)
         if isinstance(failure_context.a_task, WorkflowTask) and failure_context.task_name == "failing":
             print(
                 colorize(
                     GREEN,
-                    "NotFailingWorkflow.on_task_failure: {}: {!r}: retry_count={}".format(
-                        failure_context.task_name,
-                        failure_context.exception,
-                        failure_context.retry_count,
-                    ),
+                    f"NotFailingWorkflow.on_task_failure: {failure_context.task_name}:"
+                    f" {failure_context.exception!r}: retry_count={failure_context.retry_count}",
                 )
             )
             if failure_context.retry_count < 2:  # maximum 2 retries
-                failure_context.decision = failure_context.Decision.retry_later
-                failure_context.retry_wait_timeout = 1 * MINUTE
                 if failure_context.retry_count == 1:  # don't fail on this retry
                     failure_context.a_task.kwargs = {"fail": False}
-                return failure_context
+                return failure_context.decide_retry(1 * MINUTE)
         else:
             print(
                 colorize(
                     ORANGE,
-                    "===> unhandled: {}, {!r}".format(
-                        failure_context.task_name,
-                        failure_context.exception,
-                    ),
+                    f"===> unhandled: {failure_context.task_name}, {failure_context.exception!r}",
                 )
             )
         return None
