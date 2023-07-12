@@ -10,11 +10,11 @@ import sys
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
 else:
-    from typing import TypedDict, Any
+    from typing import TypedDict
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from swf.models.event.base import Event
+from swf.models.event.base import Event, TaskList
 from swf.models.event.compiler import CompiledEvent
 
 if TYPE_CHECKING:
@@ -26,15 +26,11 @@ class ActivityType(TypedDict):
     version: str
 
 
-class TaskList(TypedDict):
-    name: str
-
-
 class ActivityTaskEvent(Event):
     _type = "ActivityTask"
 
     scheduled_event_id: int
-    activity_id: int
+    activity_id: str
     activity_type: ActivityType
     task_list: TaskList
     decision_task_completed_event_id: int
@@ -51,6 +47,17 @@ class ActivityTaskEventDict(TypedDict):
     state: str
     scheduled_id: int
     scheduled_timestamp: datetime
+    started_id: int
+    started_timestamp: datetime
+    completed_id: int
+    completed_timestamp: datetime
+    failed_id: int
+    failed_timestamp: datetime
+    timeout_type: str
+    timeout_value: int
+    timed_out_id: int
+    timed_out_timestamp: datetime
+    identity: Any
     input: dict
     task_list: str
     control: dict | None
@@ -58,10 +65,12 @@ class ActivityTaskEventDict(TypedDict):
     scheduled_event_id: int
     activity_id: int
     activity_type: ActivityType
+    retry: int | None
     cause: str
     result: Any
     reason: str | None
     details: str | None
+    cancelled_timestamp: datetime
 
 
 class CompiledActivityTaskEvent(CompiledEvent):
@@ -74,7 +83,7 @@ class CompiledActivityTaskEvent(CompiledEvent):
         "failed",  # An activity worker failed an activity task
         "timed_out",  # The activity task timed out
         "canceled",  # The activity task was successfully canceled
-        "cancel_requested",  # A request_cancel decision was received by the system
+        "cancel_requested",  # The system received a request_cancel decision
         "request_cancel_failed",  # Failed to process request_cancel decision
     )
 

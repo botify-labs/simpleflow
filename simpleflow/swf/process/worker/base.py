@@ -7,6 +7,7 @@ import sys
 import traceback
 import uuid
 from base64 import b64decode
+from typing import TYPE_CHECKING, Any
 
 import multiprocess
 import multiprocess.util
@@ -28,6 +29,10 @@ from simpleflow.utils import format_exc, format_exc_type, json_dumps, to_k8s_ide
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
 
+if TYPE_CHECKING:
+    from simpleflow.activity import Activity
+    from swf.models import Domain
+
 
 class Worker(Supervisor):
     def __init__(self, poller, nb_children=None):
@@ -41,30 +46,20 @@ class Worker(Supervisor):
 class ActivityPoller(Poller, swf.actors.ActivityWorker):
     """
     Polls an activity and handles it in the worker.
-
     """
 
     def __init__(
         self,
-        domain,
-        task_list,
-        middlewares=None,
-        heartbeat=60,
-        process_mode=None,
-        poll_data=None,
-    ):
+        domain: Domain,
+        task_list: str | None,
+        middlewares: dict[str, str] | None = None,
+        heartbeat: int = 60,
+        process_mode: str | None = None,
+        poll_data: str | None = None,
+    ) -> None:
         """
-
-        :param domain:
-        :type domain:
-        :param task_list:
-        :type task_list:
         :param middlewares: Paths to middleware functions to execute before and after any Activity
-        :type middlewares: Optional[Dict[str, str]]
-        :param heartbeat:
-        :type heartbeat:
         :param process_mode: Whether to process locally (default) or spawn a Kubernetes job.
-        :type process_mode: Optional[str]
         """
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
@@ -85,7 +80,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         return f"{self.__class__.__name__}(task_list={self.task_list})"
 
     @with_state("polling")
-    def poll(self, task_list=None, identity=None):
+    def poll(self, task_list: str | None = None, identity: str | None = None) -> Response:
         if self.poll_data:
             # the poll data has been passed as input
             return self.fake_poll()
@@ -107,11 +102,9 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         )
 
     @with_state("processing")
-    def process(self, response):
+    def process(self, response: Response) -> None:
         """
-        Process a swf.actors.ActivityWorker poll response..
-        :param response:
-        :type response: swf.responses.Response
+        Process a swf.actors.ActivityWorker poll response.
         """
         token = response.task_token
         task = response.activity_task
@@ -130,24 +123,16 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             spawn(self, token, task, self.middlewares, self._heartbeat)
 
     @with_state("completing")
-    def complete(self, token, result=None):
+    def complete(self, token: str, result: str | None = None) -> None:
         swf.actors.ActivityWorker.complete(self, token, result)
 
     # noinspection PyMethodOverriding
     @with_state("failing")
-    def fail(self, token, task, reason=None, details=None):
+    def fail(
+        self, token: str, task: ActivityTask, reason: str | None = None, details: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Fail the activity, log and ignore exceptions.
-        :param token:
-        :type token:
-        :param task:
-        :type task:
-        :param reason:
-        :type reason:
-        :param details:
-        :type details:
-        :return:
-        :rtype:
         """
         try:
             return swf.actors.ActivityWorker.fail(
@@ -178,29 +163,13 @@ class ActivityWorker:
     def __init__(self, dispatcher=None):
         self._dispatcher = dispatcher or dynamic_dispatcher.Dispatcher()
 
-    def dispatch(self, task):
-        """
-
-        :param task:
-        :type task: swf.models.ActivityTask
-        :return:
-        :rtype: simpleflow.activity.Activity
-        """
+    def dispatch(self, task: ActivityTask) -> Activity:
         name = task.activity_type.name
         return self._dispatcher.dispatch_activity(name)
 
-    def process(self, poller, token, task, middlewares=None):
-        """
-
-        :param poller:
-        :type poller: ActivityPoller
-        :param token:
-        :type token: str
-        :param task:
-        :type task: swf.models.ActivityTask
-        :param middlewares: Paths to middleware functions to execute before and after any Activity
-        :type middlewares: Optional[Dict[str, str]]
-        """
+    def process(
+        self, poller: ActivityPoller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None
+    ) -> Any:
         logger.debug(f"ActivityWorker.process() pid={os.getpid()}")
         try:
             activity = self.dispatch(task)
@@ -259,18 +228,7 @@ class ActivityWorker:
             poller.fail_with_retry(token, task, reason)
 
 
-def process_task(poller, token, task, middlewares=None):
-    """
-
-    :param poller:
-    :type poller: ActivityPoller
-    :param token:
-    :type token: str
-    :param task:
-    :type task: swf.models.ActivityTask
-    :param middlewares: Paths to middleware functions to execute before and after any Activity
-    :type middlewares: Optional[Dict[str, str]]
-    """
+def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None) -> None:
     logger.debug(f"process_task() pid={os.getpid()}")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
@@ -283,16 +241,11 @@ def spawn_kubernetes_job(poller, swf_response):
     job.schedule()
 
 
-def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
+def reap_process_tree(pid: int, wait_timeout: float = settings.ACTIVITY_SIGTERM_WAIT_SEC) -> None:
     """
     TERMinates (and KILLs) if necessary a process and its descendants.
 
     See also: https://psutil.readthedocs.io/en/latest/#kill-process-tree.
-
-    :param pid: Process ID
-    :type pid: int
-    :param wait_timeout: Wait timeout
-    :type wait_timeout: float
     """
 
     def on_terminate(p):
@@ -323,23 +276,18 @@ def reap_process_tree(pid, wait_timeout=settings.ACTIVITY_SIGTERM_WAIT_SEC):
         logger.error("process: pid={} status={} still alive. Giving up!".format(p.pid, p.status()))
 
 
-def spawn(poller, token, task, middlewares=None, heartbeat=60):
+def spawn(
+    poller: ActivityPoller,
+    token: str,
+    task: ActivityTask,
+    middlewares: dict[str, str] | None = None,
+    heartbeat: int = 60,
+) -> None:
     """
     Spawn a process and wait for it to end, sending heartbeats to SWF.
 
     On activity timeouts and termination, we reap the worker process and its
     children.
-
-    :param poller:
-    :type poller: ActivityPoller
-    :param token:
-    :type token: str
-    :param task:
-    :type task: swf.models.ActivityTask
-    :param middlewares: Paths to middleware functions to execute before and after any Activity
-    :type middlewares: Optional[Dict[str, str]]
-    :param heartbeat: heartbeat delay (seconds)
-    :type heartbeat: int
     """
     logger.info(
         "spawning new activity id=%s worker pid=%d heartbeat=%s",

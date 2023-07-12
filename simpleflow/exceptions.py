@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from simpleflow import Workflow
+    from simpleflow.task import Task
+
 
 class ExecutionBlocked(Exception):
     pass
@@ -8,13 +14,11 @@ class ExecutionBlocked(Exception):
 class TaskException(Exception):
     """
     Wrap an exception raised by a task.
-
     """
 
-    def __init__(self, task, exception):
+    def __init__(self, task: Task, exception: TaskFailed):
         """
         :param exception: raised by a task.
-        :type  exception: TaskFailed.
 
         """
         self.task = task
@@ -38,11 +42,9 @@ class WorkflowException(Exception):
 
     """
 
-    def __init__(self, workflow, exception):
+    def __init__(self, workflow: Workflow, exception: TaskFailed):
         """
         :param exception: raised by a workflow.
-        :type  exception: TaskFailed.
-
         """
         self.workflow = workflow
         self.exception = exception
@@ -61,18 +63,15 @@ class WorkflowException(Exception):
 
 class TaskFailed(Exception):
     """
-    Wrap the error's *reason* and *details* for an task that failed.
+    Wrap the error's *reason* and *details* for a task that failed.
 
     :param name: of the task that failed.
-    :type name: str.
     :param reason: of the failure.
-    :type  reason: str.
     :param details: of the failure.
-    :type  details: str.
 
     """
 
-    def __init__(self, name, reason, details=None):
+    def __init__(self, name: str, reason: str | None, details: str | None = None):
         # NB: this is late imported else we have a circular dependency that's hard to fix
         from simpleflow.format import decode
 
@@ -87,7 +86,7 @@ class TaskFailed(Exception):
 
 
 class TimeoutError(Exception):
-    def __init__(self, timeout_type="unknown timeout", timeout_value=None):
+    def __init__(self, timeout_type: str = "unknown timeout", timeout_value: int | None = None):
         self.timeout_type = timeout_type
         self.timeout_value = timeout_value
 
@@ -96,7 +95,7 @@ class TimeoutError(Exception):
 
 
 class TaskCanceled(Exception):
-    def __init__(self, details=None):
+    def __init__(self, details: str | None = None):
         self.details = details
 
     def __repr__(self):
@@ -112,21 +111,18 @@ class TaskTerminated(Exception):
 class AggregateException(Exception):
     """
     Class containing a list of exceptions.
-
-    :type exceptions: list[Exception]
     """
 
-    def __init__(self, exceptions):
+    def __init__(self, exceptions: list[Exception]):
         self.exceptions = exceptions
 
-    def append(self, ex):
+    def append(self, ex: Exception):
         self.exceptions.append(ex)
 
-    def handle(self, handler, *args, **kwargs):
+    def handle(self, handler: callable[[Exception, ...], bool], *args, **kwargs):
         """
         Invoke a user-defined handler on each exception.
         :param handler: Predicate accepting an exception and returning True if it's been handled.
-        :type handler: (Exception, ...) -> bool
         :param args: args for the handler
         :param kwargs: kwargs for the handler
         :raise: new AggregateException with the unhandled exceptions, if any
@@ -138,18 +134,16 @@ class AggregateException(Exception):
         if unhandled_exceptions:
             raise AggregateException(unhandled_exceptions)
 
-    def flatten(self):
+    def flatten(self) -> AggregateException:
         """
         Flatten the AggregateException. Return a new instance without inner AggregateException.
-        :return:
-        :rtype: AggregateException
         """
         flattened_exceptions = []
         self._flatten(self, flattened_exceptions)
         return AggregateException(flattened_exceptions)
 
     @staticmethod
-    def _flatten(exception, exceptions):
+    def _flatten(exception: Exception, exceptions: list[Exception]) -> None:
         if isinstance(exception, AggregateException):
             for ex in exception.exceptions:
                 if ex:
@@ -172,7 +166,7 @@ class ExecutionError(Exception):
 
 
 class ExecutionTimeoutError(Exception):
-    def __init__(self, command, timeout_value):
+    def __init__(self, command: str, timeout_value: int | float | None):
         self.timeout_command = command
         self.timeout_value = timeout_value
 

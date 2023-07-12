@@ -74,7 +74,7 @@ class ActivityTask(Task):
         self.context: dict[str, Any] | None = kwargs.pop("context", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
-        self.id = None
+        self.id: str | None = None
 
     def load_middlewares(self, middlewares):
         if not middlewares:

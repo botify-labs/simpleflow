@@ -9,4 +9,5 @@ from swf.models.event.factory import CompiledEventFactory, EventFactory  # NOQA
 from swf.models.event.marker import MarkerEvent  # NOQA
 from swf.models.event.task import ActivityTaskEvent, DecisionTaskEvent  # NOQA
 from swf.models.event.timer import TimerEvent  # NOQA
+from swf.models.event.workflow import ChildWorkflowExecutionEvent  # NOQA
 from swf.models.event.workflow import WorkflowExecutionEvent  # NOQA

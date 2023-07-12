@@ -610,7 +610,9 @@ class Executor(executor.Executor):
             else:  # TODO: handle
                 logger.warning('Unexpected timer state for timer "{}": {}'.format(timer["id"], timer["state"]))
 
-        failure_context = base_task.TaskFailureContext(swf_task, event, future, exception_class, self._history)
+        failure_context = base_task.TaskFailureContext(
+            a_task=swf_task, event=event, future=future, exception_class=exception_class, history=self._history
+        )
         if hasattr(self.workflow, "on_task_failure"):
             new_failure_context: base_task.TaskFailureContext = self.workflow.on_task_failure(failure_context)
             if new_failure_context:

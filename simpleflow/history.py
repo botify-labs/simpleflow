@@ -5,12 +5,20 @@ from typing import TYPE_CHECKING, Callable
 
 import swf.models.history
 from simpleflow import logger
+from swf.models.event.task import ActivityTaskEventDict
+from swf.models.event.workflow import ExternalWorkflowExecutionEvent
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from swf.models.event import ActivityTaskEvent, Event
-    from swf.models.event.task import ActivityTaskEventDict
+    from swf.models.event import (
+        ActivityTaskEvent,
+        ChildWorkflowExecutionEvent,
+        Event,
+        MarkerEvent,
+        TimerEvent,
+        WorkflowExecutionEvent,
+    )
 
 
 class History:
@@ -20,14 +28,14 @@ class History:
 
     def __init__(self, history: swf.models.history.History) -> None:
         self._history = history
-        self._activities: dict[int, ActivityTaskEventDict] = {}
-        self._child_workflows: dict[int, dict[str, Any]] = {}
+        self._activities: dict[str, ActivityTaskEventDict] = {}
+        self._child_workflows: dict[str, dict[str, Any]] = {}
         self._external_workflows_signaling: dict[int, dict[str, Any]] = {}
-        self._external_workflows_canceling: dict[int, dict[str, Any]] = {}
+        self._external_workflows_canceling: dict[str, dict[str, Any]] = {}
         self._signals: dict[str, dict[str, Any]] = {}
         self._signaled_workflows = collections.defaultdict(list)
         self._markers: dict[str, list[dict[str, Any]]] = {}
-        self._timers: dict[int, dict[str, Any]] = {}
+        self._timers: dict[str, dict[str, Any]] = {}
         self._tasks: list[dict[str, Any]] = []
         self._cancel_requested: dict[str, Any] | None = None
         self._cancel_failed: dict[str, Any] | None = None
@@ -40,14 +48,14 @@ class History:
         return self._history
 
     @property
-    def activities(self) -> dict[int, ActivityTaskEventDict]:
+    def activities(self) -> dict[str, ActivityTaskEventDict]:
         """
         :return: activities
         """
         return self._activities
 
     @property
-    def child_workflows(self) -> dict[int, dict[str, Any]]:
+    def child_workflows(self) -> dict[str, dict[str, Any]]:
         """
         :return: child WFs
         """
@@ -111,7 +119,7 @@ class History:
         return self._markers
 
     @property
-    def timers(self) -> dict[int, dict[str, Any]]:
+    def timers(self) -> dict[str, dict[str, Any]]:
         return self._timers
 
     @property
@@ -122,7 +130,7 @@ class History:
     def events(self) -> list[Event]:
         return self._history.events
 
-    def parse_activity_event(self, events: list[ActivityTaskEvent], event: ActivityTaskEvent):
+    def parse_activity_event(self, events: list[Event | ActivityTaskEvent], event: ActivityTaskEvent):
         """
         Aggregate all the attributes of an activity in a single entry.
         """
@@ -132,7 +140,7 @@ class History:
             Return a reference to the corresponding activity.
             :return: mutable activity
             """
-            scheduled_event = events[event.scheduled_event_id - 1]
+            scheduled_event = events[event.scheduled_event_id - 1]  # ids start at 1
             return self._activities[scheduled_event.activity_id]
 
         if event.state == "scheduled":
@@ -255,7 +263,9 @@ class History:
             else:
                 self._activities[event.activity_id].update(activity)
 
-    def parse_child_workflow_event(self, events: list[Event], event: Event) -> None:
+    def parse_child_workflow_event(
+        self, events: list[Event | ChildWorkflowExecutionEvent], event: ChildWorkflowExecutionEvent
+    ) -> None:
         """Aggregate all the attributes of a workflow in a single entry.
 
         See http://docs.aws.amazon.com/amazonswf/latest/apireference/API_HistoryEvent.html
@@ -410,7 +420,7 @@ class History:
                 }
             )
 
-    def parse_workflow_event(self, events: list[Event], event: Event):
+    def parse_workflow_event(self, events: list[Event], event: WorkflowExecutionEvent):
         """
         Parse a workflow event.
         """
@@ -449,7 +459,9 @@ class History:
             }
             self._cancel_failed = cancel_failed
 
-    def parse_external_workflow_event(self, events: list[Event], event: Event):
+    def parse_external_workflow_event(
+        self, events: list[Event | ExternalWorkflowExecutionEvent], event: ExternalWorkflowExecutionEvent
+    ):
         """
         Parse an external workflow event.
         :param events:
@@ -539,7 +551,7 @@ class History:
                 }
             )
 
-    def parse_marker_event(self, events: list[Event], event: Event):
+    def parse_marker_event(self, events: list[Event], event: MarkerEvent):
         if event.state == "recorded":
             marker = {
                 "type": "marker",
@@ -561,7 +573,7 @@ class History:
             }
             self._markers.setdefault(event.marker_name, []).append(marker)
 
-    def parse_timer_event(self, events: list[Event], event: Event):
+    def parse_timer_event(self, events: list[Event], event: TimerEvent):
         if event.state == "started":
             timer = {
                 "type": "timer",

@@ -12,6 +12,9 @@ from swf.models.event.compiler import CompiledEvent
 class MarkerEvent(Event):
     _type = "Marker"
 
+    marker_name: str
+    cause: str
+
 
 class CompiledMarkerEvent(CompiledEvent):
     _type = "Marker"

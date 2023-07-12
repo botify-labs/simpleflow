@@ -5,13 +5,23 @@
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from typing import Any
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 import pytz
 
 from simpleflow import format
 from swf.utils import cached_property, camel_to_underscore
+
+
+class TaskList(TypedDict):
+    name: str
 
 
 class Event:
