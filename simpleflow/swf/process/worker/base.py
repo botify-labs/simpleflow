@@ -170,7 +170,7 @@ class ActivityWorker:
     def process(
         self, poller: ActivityPoller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None
     ) -> Any:
-        logger.debug(f"ActivityWorker.process() pid={os.getpid()}")
+        logger.debug("ActivityWorker.process()")
         try:
             activity = self.dispatch(task)
             input = format.decode(task.input)
@@ -208,18 +208,10 @@ class ActivityWorker:
             return poller.fail_with_retry(token, task, reason=reason, details=details)
 
         try:
-            logger.info(
-                "completing activity id=%s worker pid=%d",
-                task.activity_id,
-                os.getpid(),
-            )
+            logger.info("completing activity id=%s", task.activity_id)
             poller.complete_with_retry(token, result)
         except Exception as err:
-            logger.exception(
-                "failed to complete activity id=%s worker pid=%d",
-                task.activity_id,
-                os.getpid(),
-            )
+            logger.exception("failed to complete activity id=%s", task.activity_id)
             reason = "cannot complete task {}: {} {}".format(
                 task.activity_id,
                 err.__class__.__name__,
@@ -229,7 +221,7 @@ class ActivityWorker:
 
 
 def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None) -> None:
-    logger.debug(f"process_task() pid={os.getpid()}")
+    logger.debug("process_task()")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
     worker.process(poller, token, task, middlewares)
@@ -289,12 +281,7 @@ def spawn(
     On activity timeouts and termination, we reap the worker process and its
     children.
     """
-    logger.info(
-        "spawning new activity id=%s worker pid=%d heartbeat=%s",
-        task.activity_id,
-        os.getpid(),
-        heartbeat,
-    )
+    logger.info("spawning new activity id=%s worker heartbeat=%s", task.activity_id, heartbeat)
     multiprocess.util.log_to_stderr(logging.INFO)
     worker = multiprocess.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
