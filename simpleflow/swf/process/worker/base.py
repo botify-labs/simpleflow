@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import sys
 import traceback
@@ -10,7 +9,6 @@ from base64 import b64decode
 from typing import TYPE_CHECKING, Any
 
 import multiprocess
-import multiprocess.util
 import psutil
 
 import swf.actors
@@ -282,7 +280,6 @@ def spawn(
     children.
     """
     logger.info("spawning new activity id=%s worker heartbeat=%s", task.activity_id, heartbeat)
-    multiprocess.util.log_to_stderr(logging.INFO)
     worker = multiprocess.Process(target=process_task, args=(poller, token, task, middlewares))
     worker.start()
 
