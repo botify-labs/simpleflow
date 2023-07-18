@@ -363,7 +363,7 @@ class TaskFailureContext:
 
     @property
     def exception(self) -> Exception | TaskFailed | None:
-        return self.future.exception
+        return self.future.exception if self.future.done else None
 
     @property
     def current_started_decision_id(self) -> int | None:
