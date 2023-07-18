@@ -122,10 +122,6 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         except Exception as err:
             logger.error(f"cannot fail task {task.activity_type.name}: {err}")
 
-    @property
-    def identity(self):
-        return super().identity
-
 
 class ActivityWorker:
     def __init__(self, dispatcher=None):
