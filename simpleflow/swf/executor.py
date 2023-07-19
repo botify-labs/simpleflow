@@ -40,7 +40,6 @@ from swf.core import ConnectedSWFObject
 if TYPE_CHECKING:
     from swf.models import Domain
 
-
 __all__ = ["Executor"]
 
 
@@ -610,7 +609,9 @@ class Executor(executor.Executor):
             else:  # TODO: handle
                 logger.warning('Unexpected timer state for timer "{}": {}'.format(timer["id"], timer["state"]))
 
-        failure_context = base_task.TaskFailureContext(swf_task, event, future, exception_class, self._history)
+        failure_context = base_task.TaskFailureContext(
+            a_task=swf_task, event=event, future=future, exception_class=exception_class, history=self._history
+        )
         if hasattr(self.workflow, "on_task_failure"):
             new_failure_context: base_task.TaskFailureContext = self.workflow.on_task_failure(failure_context)
             if new_failure_context:
@@ -764,19 +765,14 @@ class Executor(executor.Executor):
         If in repair mode, we may fake the task to repair from the previous history.
         :raise: exceptions.ExecutionBlocked if open activities limit reached
         """
-        is_repair = bool(self.repair_with)
 
-        if not a_task.id:  # Can be already set (WorkflowTask)
-            if is_repair:
-                workflow_id, run_id = self._repair_workflow_id, self._repair_run_id
-            else:
-                workflow_id, run_id = self._workflow_id, self._run_id
-            a_task.id = self._make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
+        self.make_task_id(a_task, *args, **kwargs)
         event = self.find_event(a_task, self._history)
         logger.debug(f"executor: resume {a_task}, event={event}")
         future = None
 
         # in repair mode, check if we absolutely want to re-execute this task
+        is_repair = bool(self.repair_with)
         force_execution = self.force_activities and self.force_activities.search(a_task.id)
 
         # try to fill in the blanks with the workflow we're trying to repair if any
@@ -818,6 +814,17 @@ class Executor(executor.Executor):
             raise exceptions.ExecutionBlocked
 
         return future
+
+    def make_task_id(self, a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask, *args, **kwargs) -> None:
+        if a_task.id:  # Can be already set (WorkflowTask)
+            return
+
+        is_repair = bool(self.repair_with)
+        if is_repair:
+            workflow_id, run_id = self._repair_workflow_id, self._repair_run_id
+        else:
+            workflow_id, run_id = self._workflow_id, self._run_id
+        a_task.id = self._make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
 
     def _compute_priority(self, priority_set_on_submit, a_task):
         """

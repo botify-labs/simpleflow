@@ -110,6 +110,11 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return input
 
     @classmethod
+    def is_known_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> bool:
+        key = (domain.name, name, version)
+        return key in cls.cached_models
+
+    @classmethod
     def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.

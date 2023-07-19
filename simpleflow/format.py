@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from sqlite3 import OperationalError
+from typing import Any
 from uuid import uuid4
 
 import lazy_object_proxy
@@ -11,14 +12,14 @@ from simpleflow import constants, logger, storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
 from simpleflow.utils import json_dumps, json_loads_or_raw
 
-JUMBO_FIELDS_MEMORY_CACHE = {}
+JUMBO_FIELDS_MEMORY_CACHE: dict[str, str] = {}
 
 
 class JumboTooLargeError(ValueError):
     pass
 
 
-def _jumbo_fields_bucket():
+def _jumbo_fields_bucket() -> str | None:
     # wrapped into a function so easier to override for tests
     bucket = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
     if not bucket:
@@ -29,7 +30,7 @@ def _jumbo_fields_bucket():
     return bucket
 
 
-def decode(content, parse_json=True, use_proxy=True):
+def decode(content: str | None, parse_json: bool = True, use_proxy: bool = True) -> Any:
     if content is None:
         return content
     if content.startswith(constants.JUMBO_FIELDS_PREFIX):
@@ -51,7 +52,7 @@ def decode(content, parse_json=True, use_proxy=True):
     return content
 
 
-def encode(message, max_length, allow_jumbo_fields=True):
+def encode(message: str | None, max_length: int, allow_jumbo_fields: bool = True) -> str | None:
     if not message:
         return message
 
@@ -77,7 +78,7 @@ def encode(message, max_length, allow_jumbo_fields=True):
     return message
 
 
-def _get_cached(path):
+def _get_cached(path: str) -> str | None:
     # 1/ memory cache
     if path in JUMBO_FIELDS_MEMORY_CACHE:
         return JUMBO_FIELDS_MEMORY_CACHE[path]
@@ -103,7 +104,7 @@ def _get_cached(path):
     return
 
 
-def _set_cached(path, content):
+def _set_cached(path: str, content: str) -> None:
     # 1/ memory cache
     JUMBO_FIELDS_MEMORY_CACHE[path] = content
 
@@ -118,7 +119,7 @@ def _set_cached(path, content):
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 
 
-def _push_jumbo_field(message):
+def _push_jumbo_field(message: str) -> str:
     size = len(message)
     uuid = str(uuid4())
     bucket_with_dir = _jumbo_fields_bucket()
@@ -135,7 +136,7 @@ def _push_jumbo_field(message):
     return f"{constants.JUMBO_FIELDS_PREFIX}{bucket}/{path} {size}"
 
 
-def _pull_jumbo_field(location):
+def _pull_jumbo_field(location: str) -> str:
     bucket, path = location.replace(constants.JUMBO_FIELDS_PREFIX, "").split("/", 1)
 
     cached_value = _get_cached(path)

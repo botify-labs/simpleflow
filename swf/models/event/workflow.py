@@ -5,12 +5,33 @@
 
 from __future__ import annotations
 
-from swf.models.event.base import Event
+import sys
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
+
+from swf.models.event.base import Event, TaskList
 from swf.models.event.compiler import CompiledEvent
+
+
+class WorkflowType(TypedDict):
+    name: str
+    version: str
+
+
+class WorkflowExecution(TypedDict):
+    runId: str
+    workflowId: str
 
 
 class WorkflowExecutionEvent(Event):
     _type = "WorkflowExecution"
+
+    initiated_event_id: int
+    signal_name: str
+    decision_task_completed_event_id: int
 
 
 class CompiledWorkflowExecutionEvent(CompiledEvent):
@@ -52,6 +73,19 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
 class ChildWorkflowExecutionEvent(Event):
     _type = "ChildWorkflowExecution"
 
+    workflow_id: str
+    workflow_type: WorkflowType
+    initiated_event_id: int
+    child_policy: str
+    task_list: TaskList
+    decision_task_completed_event_id: int
+    # tag_list: NotRequired[list[str]]
+
+    cause: str
+    workflow_execution: WorkflowExecution
+
+    timeout_type: str
+
 
 class CompiledChildWorkflowExecutionEvent(CompiledEvent):
     _type = "ChildWorkflowExecution"
@@ -78,6 +112,12 @@ class CompiledChildWorkflowExecutionEvent(CompiledEvent):
 
 class ExternalWorkflowExecutionEvent(Event):
     _type = "ExternalWorkflowExecution"
+
+    initiated_event_id: int
+    workflow_id: str
+    signal_name: str
+    cause: str
+    workflow_execution: WorkflowExecution
 
 
 class CompiledExternalWorkflowExecutionEvent(CompiledEvent):

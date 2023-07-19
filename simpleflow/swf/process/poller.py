@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import os
 import signal
+from typing import TYPE_CHECKING, Any
 
 import swf.actors
 import swf.exceptions
@@ -10,13 +11,16 @@ from simpleflow import logger, utils
 from simpleflow.process import NamedMixin, with_state
 from simpleflow.swf.helpers import swf_identity
 
+if TYPE_CHECKING:
+    from swf.models import Domain
+
 __all__ = ["Poller"]
 
 
 class Poller(swf.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor."""
 
-    def __init__(self, domain, task_list=None):
+    def __init__(self, domain: Domain, task_list: str | None = None) -> None:
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
@@ -26,7 +30,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         return "{}(domain={}, task_list={})".format(self.__class__.__name__, self.domain.name, self.task_list)
 
     @property
-    def identity(self):
+    def identity(self) -> str:
         """Identity when polling decision task.
 
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html
@@ -78,7 +82,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         """
         Run the main poller process and exits after first task is processed.
         """
-        logger.info("starting %s on domain %s", self.name, self.domain.name)
+        logger.info("runnning %s once on domain %s", self.name, self.domain.name)
         self.bind_signal_handlers()
         self.is_alive = True
         self.set_process_name()
@@ -98,15 +102,10 @@ class Poller(swf.actors.Actor, NamedMixin):
         logger.info("stopping %s", self.name)
         self.is_alive = False  # No longer take requests.
 
-    def complete_with_retry(self, token, response):
+    def complete_with_retry(self, token: str, response: Any) -> None:
         """
         Complete with retry.
-        :param token:
-        :type token: str
-        :param response: response: decision list, JSON result, ...
-        :type response: Any
-        :return:
-        :rtype:
+        response: decision list, JSON result, ...
         """
         try:
             complete = utils.retry.with_delay(
@@ -136,7 +135,8 @@ class Poller(swf.actors.Actor, NamedMixin):
     def process(self, request):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         """
         Name of the poller, can be overriden in subclasses.

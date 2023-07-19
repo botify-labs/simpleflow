@@ -12,6 +12,11 @@ from swf.models.event.compiler import CompiledEvent
 class TimerEvent(Event):
     _type = "Timer"
 
+    timer_id: str
+    start_to_fire_timeout: str
+    cause: str
+    decision_task_completed_event_id: int
+
 
 class CompiledTimerEvent(CompiledEvent):
     _type = "Timer"

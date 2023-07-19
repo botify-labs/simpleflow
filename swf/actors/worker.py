@@ -6,12 +6,7 @@ import boto.exception
 
 from simpleflow import format, logging_context
 from swf.actors import Actor
-from swf.exceptions import (
-    DoesNotExistError,
-    PollTimeout,
-    RateLimitExceededError,
-    ResponseError,
-)
+from swf.exceptions import DoesNotExistError, PollTimeout, RateLimitExceededError, ResponseError
 from swf.models import ActivityTask
 from swf.responses import Response
 
@@ -64,14 +59,11 @@ class ActivityWorker(Actor):
         finally:
             logging_context.reset()
 
-    def complete(self, task_token: str, result: str | None = None) -> dict[str, Any] | None:
+    def complete(self, task_token: str, result: Any = None) -> dict[str, Any] | None:
         """Responds to ``swf`` that the activity task is completed
 
         :param  task_token: completed activity task token
-        :type   task_token: string
-
         :param  result: The result of the activity task.
-        :type   result: string
         """
         try:
             return self.connection.respond_activity_task_completed(
@@ -94,7 +86,6 @@ class ActivityWorker(Actor):
         :param  task_token: canceled activity task token
         :param  details: provided details about the failure
         :param  reason: Description of the error that may assist in diagnostics
-        :type   reason: string
         """
         try:
             return self.connection.respond_activity_task_failed(
