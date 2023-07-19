@@ -21,7 +21,6 @@ from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
 from simpleflow.swf import helpers
-from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import decider, worker
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
@@ -446,12 +445,6 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     "--poll-data",
     help="Provide a base64 encoded json dump of the SWF poll response, instead of polling SWF",
 )
-@click.option(
-    "--process-mode",
-    type=click.Choice(VALID_PROCESS_MODES),
-    default="local",
-    help="Whether to process the task locally or in a Kubernetes job (default=local)",
-)
 @click.option("--one-task", is_flag=True, help="Run only one task and shut down (no supervisor).")
 @click.option(
     "--heartbeat",
@@ -472,18 +465,12 @@ def start_worker(
     nb_processes,
     heartbeat,
     one_task,
-    process_mode,
     poll_data,
     middleware_pre_execution,
     middleware_post_execution,
 ):
     if log_level:
         logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
-
-    if process_mode == "kubernetes" and poll_data:
-        # don't accept to have a worker that doesn't poll AND doesn't process
-        # since it would be just a gate to a scheduling infinite loop
-        raise ValueError("--process-mode=kubernetes and --poll-data options are exclusive")
 
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
@@ -494,14 +481,13 @@ def start_worker(
     }
 
     worker.command.start(
-        domain,
-        task_list,
-        middlewares,
-        nb_processes,
-        heartbeat,
-        one_task,
-        process_mode,
-        poll_data,
+        domain=domain,
+        task_list=task_list,
+        middlewares=middlewares,
+        nb_processes=nb_processes,
+        heartbeat=heartbeat,
+        one_task=one_task,
+        poll_data=poll_data,
     )
 
 

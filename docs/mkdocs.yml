@@ -60,7 +60,6 @@ nav:
   - Architecture:
     - Standalone: architecture/standalone.md
     - Multiprocess: architecture/multiprocess.md
-    - Kubernetes: architecture/kubernetes.md
   - Quickstart: quickstart.md
   - Features:
     - Settings: features/settings.md

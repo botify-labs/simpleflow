@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 from zlib import adler32
 
@@ -63,15 +62,6 @@ def format_exc_type(exc_type: type) -> str:
     if type_mod not in ("__main__", "__builtin__", "exceptions", "builtins"):
         type_str = f"{type_mod}.{type_str}"
     return type_str
-
-
-def to_k8s_identifier(string):
-    # NB: K8S identifiers are only lc letters + "." + "-"
-    # and we use "." as a separator in many names
-    string = string.lower()
-    string = re.sub(r"[^a-z-]", "-", string)
-    string = re.sub(r"--+", "-", string)
-    return string
 
 
 def import_from_module(path: str) -> Any:

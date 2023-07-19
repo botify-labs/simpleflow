@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import traceback
-import uuid
 from base64 import b64decode
 from typing import TYPE_CHECKING, Any
 
@@ -17,13 +16,11 @@ from simpleflow import format, logger, settings
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.exceptions import ExecutionError
-from simpleflow.job import KubernetesJob
 from simpleflow.process import Supervisor, with_state
-from simpleflow.swf.constants import VALID_PROCESS_MODES
 from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
-from simpleflow.utils import format_exc, format_exc_type, json_dumps, to_k8s_identifier
+from simpleflow.utils import format_exc, format_exc_type, json_dumps
 from swf.models import ActivityTask as BaseActivityTask
 from swf.responses import Response
 
@@ -52,12 +49,11 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         task_list: str | None,
         middlewares: dict[str, str] | None = None,
         heartbeat: int = 60,
-        process_mode: str | None = None,
         poll_data: str | None = None,
     ) -> None:
         """
         :param middlewares: Paths to middleware functions to execute before and after any Activity
-        :param process_mode: Whether to process locally (default) or spawn a Kubernetes job.
+        :param process_mode: Whether to process locally (default)
         """
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
@@ -65,10 +61,6 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         # this as "no timeout"
         self._heartbeat = heartbeat or None
         self.middlewares = middlewares
-
-        self.process_mode = process_mode or "local"
-        if self.process_mode not in VALID_PROCESS_MODES:
-            raise AssertionError(f'invalid process_mode "{self.process_mode}"')
 
         self.poll_data = poll_data
         super().__init__(domain, task_list)
@@ -106,19 +98,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         """
         token = response.task_token
         task = response.activity_task
-        if self.process_mode == "kubernetes":
-            try:
-                spawn_kubernetes_job(self, response.raw_response)
-            except Exception as err:
-                logger.exception("spawn_kubernetes_job error")
-                reason = "cannot spawn kubernetes job for task {}: {} {}".format(
-                    task.activity_id,
-                    err.__class__.__name__,
-                    err,
-                )
-                self.fail_with_retry(token, task, reason)
-        else:
-            spawn(self, token, task, self.middlewares, self._heartbeat)
+        spawn(self, token, task, self.middlewares, self._heartbeat)
 
     @with_state("completing")
     def complete(self, token: str, result: str | None = None) -> None:
@@ -141,20 +121,6 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             )
         except Exception as err:
             logger.error(f"cannot fail task {task.activity_type.name}: {err}")
-
-    @property
-    def identity(self):
-        if self.process_mode == "kubernetes":
-            self.job_name = "{}--{}".format(to_k8s_identifier(self.task_list), str(uuid.uuid4()))
-            return json_dumps(
-                {
-                    "cluster": os.environ["K8S_CLUSTER"],
-                    "namespace": os.environ["K8S_NAMESPACE"],
-                    "job": self.job_name,
-                }
-            )
-        else:
-            return super().identity
 
 
 class ActivityWorker:
@@ -223,12 +189,6 @@ def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, 
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
     worker.process(poller, token, task, middlewares)
-
-
-def spawn_kubernetes_job(poller, swf_response):
-    logger.info(f"scheduling new kubernetes job name={poller.job_name}")
-    job = KubernetesJob(poller.job_name, poller.domain.name, swf_response)
-    job.schedule()
 
 
 def reap_process_tree(pid: int, wait_timeout: float = settings.ACTIVITY_SIGTERM_WAIT_SEC) -> None:
