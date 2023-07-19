@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.32.0
+------
+
+-  (Merge pull request #417 from botify-labs/task/DATA-17957/Simpleflow-remove-kubernetes-support)
+-  (Merge pull request #415 from botify-labs/improvement/DATA-16022/Simpleflow-Improve-error-handling-and-helpers-for-failed-tasks)
+
 0.31.0
 ------
 
