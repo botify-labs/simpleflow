@@ -326,9 +326,10 @@ def main():
 
     # push package to pypi
     step("Generate and push package to {}".format(args.repository or args.repository_url or "pypi"))
-    execute(["python", "-m", "build", "--wheel"], log=True)
+    execute(["python", "-m", "build"], log=True)
     wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
-    cmd = ["twine", "upload", wheel]
+    tar_gz = f"dist/simpleflow-{new_version}.tar.gz"
+    cmd = ["twine", "upload", wheel, tar_gz]
     if args.repository:
         cmd += ["--repository", args.repository]
     elif args.repository_url:
