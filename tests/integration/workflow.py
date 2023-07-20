@@ -5,7 +5,7 @@ import uuid
 
 from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Chain, Group
-from simpleflow.constants import HOUR, MINUTE
+from simpleflow.constants import HOUR, JUMBO_FIELDS_MAX_SIZE, MINUTE
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.task import ActivityTask
 
@@ -66,6 +66,19 @@ def cancel_workflow():
     domain_name = context["domain_name"]
     workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     workflow_execution.request_cancel()
+
+
+@activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
+def pingpong_activity(d: str, n: float | int) -> str:
+    return pingpong(d, n)
+
+
+def pingpong(d, n):
+    if n == 1:
+        return d
+    if n < 1:
+        return d[0 : int(len(d) * n)]
+    return d * n
 
 
 class SleepWorkflow(Workflow):
@@ -244,3 +257,41 @@ class WorkflowWithWaitSignal(Workflow):
             )
         )
         futures.wait(future)
+
+
+class WorkflowWithTooBigData(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+
+    def run(self, *args, **kwargs):
+        group = Chain(break_on_failure=False)
+        group.append(pingpong_activity, "ab", JUMBO_FIELDS_MAX_SIZE)
+        group.append(pingpong_activity, "ab" * JUMBO_FIELDS_MAX_SIZE, 0.25)
+        fut = self.submit(group)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
+
+
+class PingPingWorkflow(Workflow):
+    name = "pingpong"
+    version = "example"
+    task_list = "example"
+
+    def run(self, d, n):
+        return pingpong(d, n)
+
+
+class WorkflowWithTooBigDataInWorkflow(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self, *args, **kwargs):
+        group = Chain(break_on_failure=False, raises_on_failure=False)
+        group.append(PingPingWorkflow, "ab", JUMBO_FIELDS_MAX_SIZE)
+        group.append(PingPingWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE, 0.25)
+        fut = self.submit(group)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
