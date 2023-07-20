@@ -124,7 +124,7 @@ class ActivityWorker(Actor):
 
             if e.error_code == "ThrottlingException":
                 raise RateLimitExceededError(
-                    "Rate exceeded when sending heartbeat with token={}".format(task_token),
+                    f"Rate exceeded when sending heartbeat with token={task_token}",
                     message,
                 )
 

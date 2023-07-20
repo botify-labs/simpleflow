@@ -179,4 +179,4 @@ class Domain(BaseModel):
         return []
 
     def __repr__(self):
-        return "<{} name={} status={}>".format(self.__class__.__name__, self.name, self.status)
+        return f"<{self.__class__.__name__} name={self.name} status={self.status}>"

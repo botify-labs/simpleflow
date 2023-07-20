@@ -28,5 +28,5 @@ class IntegrationTestCase(unittest.TestCase):
         self.assertEqual(
             len(matching),
             count,
-            "Expected {} processes matching {}, found {} in {}.".format(count, regex, len(matching), children),
+            f"Expected {count} processes matching {regex}, found {len(matching)} in {children}.",
         )

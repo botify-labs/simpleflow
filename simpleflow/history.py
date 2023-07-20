@@ -320,11 +320,9 @@ class History:
                 if self._child_workflows[event.workflow_id]["state"] == "start_initiated":
                     # Should not happen anymore
                     logger.warning(
-                        "start_initiated again for workflow {} (initiated @{}, we're @{})".format(
-                            event.workflow_id,
-                            self._child_workflows[event.workflow_id]["initiated_event_id"],
-                            event.id,
-                        )
+                        f"start_initiated again for workflow {event.workflow_id}"
+                        f" (initiated @{self._child_workflows[event.workflow_id]['initiated_event_id']},"
+                        f" we're @{event.id})"
                     )
                 self._child_workflows[event.workflow_id].update(workflow)
         elif event.state == "start_failed":
@@ -522,11 +520,9 @@ class History:
                 self._external_workflows_canceling[event.workflow_id] = workflow
             else:
                 logger.warning(
-                    "request_cancel_initiated again for workflow {} (initiated @{}, we're @{})".format(
-                        event.workflow_id,
-                        self._external_workflows_canceling[event.workflow_id]["initiated_event_id"],
-                        event.id,
-                    )
+                    f"request_cancel_initiated again for workflow {event.workflow_id}"
+                    f" (initiated @{self._external_workflows_canceling[event.workflow_id]['initiated_event_id']},"
+                    f" we're @{event.id})"
                 )
                 self._external_workflows_canceling[event.workflow_id].update(workflow)
         elif event.state == "request_cancel_execution_failed":

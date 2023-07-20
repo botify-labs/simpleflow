@@ -206,12 +206,7 @@ def start_workflow(
         tag_list=tags,
         decision_tasks_timeout=decision_tasks_timeout,
     )
-    print(
-        "{workflow_id} {run_id}".format(
-            workflow_id=execution.workflow_id,
-            run_id=execution.run_id,
-        )
-    )
+    print(f"{execution.workflow_id} {execution.run_id}")
     return execution
 
 
@@ -252,12 +247,7 @@ def restart_workflow(domain, workflow_id, run_id):
         tag_list=ex.tag_list,
         decision_tasks_timeout=ex.decision_tasks_timeout,
     )
-    print(
-        "{workflow_id} {run_id}".format(
-            workflow_id=new_ex.workflow_id,
-            run_id=new_ex.run_id,
-        )
-    )
+    print(f"{new_ex.workflow_id} {new_ex.run_id}")
 
 
 def with_format(ctx):

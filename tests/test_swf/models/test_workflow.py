@@ -13,10 +13,7 @@ from swf.models.history import History
 from swf.models.workflow import WorkflowExecution, WorkflowType
 
 from ..mocks.event import mock_get_workflow_execution_history
-from ..mocks.workflow import (
-    mock_describe_workflow_execution,
-    mock_describe_workflow_type,
-)
+from ..mocks.workflow import mock_describe_workflow_execution, mock_describe_workflow_type
 
 
 class CustomAssertions:
@@ -24,7 +21,7 @@ class CustomAssertions:
         self.assertEqual(
             len(a_list),
             count,
-            "Expected length to be {}, got {}. Object: {}".format(count, len(a_list), a_list),
+            f"Expected length to be {count}, got {len(a_list)}. Object: {a_list}",
         )
 
 

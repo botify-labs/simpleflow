@@ -26,9 +26,9 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # start a workflow
         result = self.invoke(
-            "workflow.start --workflow-id {} --task-list test --input null "
-            "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
+            f"workflow.start --workflow-id {self.workflow_id} --task-list test"
+            f" --input null --execution-timeout 300 --decision-tasks-timeout 30"
+            f" tests.integration.workflow.SleepWorkflow",
         )
 
         # check response form: "<workflow id> <run-id>"
@@ -52,9 +52,9 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # start a workflow
         self.invoke(
-            "workflow.start --workflow-id {} --task-list test --input null "
-            "--execution-timeout 300 --decision-tasks-timeout 30 "
-            "tests.integration.workflow.SleepWorkflow".format(self.workflow_id),
+            f"workflow.start --workflow-id {self.workflow_id} --task-list test"
+            f" --input null --execution-timeout 300 --decision-tasks-timeout 30"
+            f" tests.integration.workflow.SleepWorkflow",
         )
 
         # now try to terminate it

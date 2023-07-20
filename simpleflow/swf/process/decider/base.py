@@ -78,7 +78,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         :type  workflow_executors: list[simpleflow.swf.executor.Executor]
 
         """
-        self.workflow_name = "{}".format(",".join([ex.workflow_class.name for ex in workflow_executors]))
+        self.workflow_name = f"{','.join([ex.workflow_class.name for ex in workflow_executors])}"
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
@@ -104,24 +104,18 @@ class DeciderPoller(Poller, swf.actors.Decider):
         super().__init__(domain, self.task_list)
 
     def __repr__(self):
-        return "{cls}({domain}, {task_list}, {workflows})".format(
-            cls=self.__class__.__name__,
-            domain=self.domain.name,
-            task_list=self.task_list,
-            workflows=",".join(self._workflow_executors),
-        )
+        return f"{self.__class__.__name__}({self.domain.name}, {self.task_list}, {','.join(self._workflow_executors)})"
 
     def _check_all_domains_identical(self):
         for ex in self._workflow_executors.values():
             if ex.domain.name != self.domain.name:
-                raise ValueError('all workflows must be in the same domain "{}"'.format(self.domain.name))
+                raise ValueError(f'all workflows must be in the same domain "{self.domain.name}"')
 
     def _check_all_task_lists_identical(self):
         for ex in self._workflow_executors.values():
             if ex.workflow_class.task_list != self.task_list:
                 raise ValueError(
-                    "all workflows must have the same task list "
-                    '"{}" unless you specify it explicitly'.format(self.task_list)
+                    f'all workflows must have the same task list "{self.task_list}" unless you specify it explicitly'
                 )
 
     @property

@@ -101,8 +101,9 @@ class ActivityTask(Task):
         return f"activity-{self.activity.name}"
 
     def __repr__(self):
-        return "{}(activity={}, args={}, kwargs={}, id={})".format(
-            self.__class__.__name__, self.activity, self.args, self.kwargs, self.id
+        return (
+            f"{self.__class__.__name__}(activity={self.activity}, args={self.args}, kwargs={self.kwargs},"
+            f" id={self.id})"
         )
 
     def execute(self):

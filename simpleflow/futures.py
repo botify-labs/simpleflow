@@ -61,10 +61,9 @@ class Future:
         self._exception = None
 
     def __repr__(self):
-        return "<Future at {} state={}{}>".format(
-            hex(id(self)),
-            _STATE_TO_DESCRIPTION_MAP[self._state],
-            " exception=%r" % self._exception if self._exception else "",
+        return (
+            f"<Future at {hex(id(self))} state={_STATE_TO_DESCRIPTION_MAP[self._state]}"
+            f"{' exception=%r' % self._exception if self._exception else ''}>"
         )
 
     def wait(self):

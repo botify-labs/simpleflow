@@ -630,7 +630,7 @@ class History(swf.models.History):
         )
 
         if last_state not in CHILD_WORKFLOW_STATES:
-            raise ValueError('last_state "{}" not supported for ' "a child workflow".format(last_state))
+            raise ValueError(f'last_state "{last_state}" not supported for a child workflow')
 
         if last_state == "start_initiated":
             return self

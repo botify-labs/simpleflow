@@ -89,7 +89,7 @@ class Executor(executor.Executor):
             signal_name = func.signal_name
             if signal_name not in self.signals_sent:
                 raise NotImplementedError(
-                    "wait_signal({}) before signal was sent: unsupported by the local executor".format(signal_name)
+                    f"wait_signal({signal_name}) before signal was sent: unsupported by the local executor"
                 )
         elif isinstance(func, MarkerTask):
             self._markers.setdefault(func.name, []).append(Marker(func.name, func.details))

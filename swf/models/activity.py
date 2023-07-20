@@ -209,12 +209,9 @@ class ActivityType(BaseModel):
         return qs.get(self.name, self.version)
 
     def __repr__(self):
-        return "<{} domain={} name={} version={} status={}>".format(
-            self.__class__.__name__,
-            self.domain.name,
-            self.name,
-            self.version,
-            self.status,
+        return (
+            f"<{self.__class__.__name__} domain={self.domain.name} name={self.name} version={self.version}"
+            f" status={self.status}>"
         )
 
 

@@ -62,7 +62,7 @@ class ChildWorkflowWithGetId(Workflow):
         return kwargs.get("my_id")
 
     def run(self, my_id=None):
-        print("ChildWorkflowWithGetId: id={}, workflow_id={}".format(my_id, self.get_run_context().get("workflow_id")))
+        print(f"ChildWorkflowWithGetId: id={my_id}, workflow_id={self.get_run_context().get('workflow_id')}")
 
 
 class ParentWorkflow(Workflow):

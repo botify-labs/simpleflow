@@ -29,11 +29,7 @@ class TaskException(Exception):
         return self.task
 
     def __repr__(self):
-        return "{}(task={}, exception={})".format(
-            self.__class__.__name__,
-            self.task,
-            self.exception,
-        )
+        return f"{self.__class__.__name__}(task={self.task}, exception={self.exception})"
 
 
 class WorkflowException(Exception):
@@ -54,11 +50,7 @@ class WorkflowException(Exception):
         return self.workflow
 
     def __repr__(self):
-        return "{}(workflow={}, exception={})".format(
-            self.__class__.__name__,
-            self.workflow,
-            self.exception,
-        )
+        return f"{self.__class__.__name__}(workflow={self.workflow}, exception={self.exception})"
 
 
 class TaskFailed(Exception):
@@ -152,10 +144,10 @@ class AggregateException(Exception):
             exceptions.append(exception)
 
     def __repr__(self):
-        return "<{} {}>".format(self.__class__.__name__, repr([repr(ex) for ex in self.exceptions]))
+        return f"<{self.__class__.__name__} {repr([repr(ex) for ex in self.exceptions])}>"
 
     def __str__(self):
-        return "{}({})".format(self.__class__.__name__, str([str(ex) for ex in self.exceptions]))
+        return f"{self.__class__.__name__}({str([str(ex) for ex in self.exceptions])})"
 
     def __eq__(self, other):
         return self.exceptions == other.exceptions
@@ -171,7 +163,7 @@ class ExecutionTimeoutError(Exception):
         self.timeout_value = timeout_value
 
     def __repr__(self):
-        return "{} after {} seconds ({})".format(self.__class__.__name__, self.timeout_value, self.timeout_command)
+        return f"{self.__class__.__name__} after {self.timeout_value} seconds ({self.timeout_command})"
 
     def __str__(self):
         return self.__repr__()

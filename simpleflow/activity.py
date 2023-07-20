@@ -138,7 +138,7 @@ class Activity:
         return ".".join([prefix, name])
 
     def __repr__(self):
-        return "Activity(name={}, version={}, task_list={})".format(self.name, self.version, self.task_list)
+        return f"Activity(name={self.name}, version={self.version}, task_list={self.task_list})"
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)

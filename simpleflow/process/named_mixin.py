@@ -17,7 +17,7 @@ def with_state(state):
     def wrapper(method):
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
-            logger.debug("entering state {}: {}(args={}, kwargs={})".format(state, method.__name__, args, kwargs))
+            logger.debug(f"entering state {state}: {method.__name__}(args={args}, kwargs={kwargs})")
             self.state = state
             return method(self, *args, **kwargs)
 
@@ -65,5 +65,5 @@ class NamedMixin:
         properties = []
         for prop in getattr(self, "_named_mixin_properties", []):
             properties.append(f"{prop}={getattr(self, prop)}")
-        name = "{}({})".format(klass, ", ".join(properties))
+        name = f"{klass}({', '.join(properties)})"
         setproctitle(f"simpleflow {name}[{self.state}]")

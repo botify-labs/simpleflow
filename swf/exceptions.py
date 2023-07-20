@@ -234,7 +234,7 @@ def extract_resource(error):
 
     message = error.body.get("message")
     resource = REGEX_UNKNOWN_RESOURCE.findall(message) if message else None
-    return "Resource {} does not exist".format(resource[0] if resource else "unknown")
+    return f"Resource {resource[0] if resource else 'unknown'} does not exist"
 
 
 def raises(exception, when, extract: Callable[[Any], str] = str):
