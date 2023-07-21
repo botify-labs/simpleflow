@@ -68,17 +68,22 @@ def cancel_workflow():
     workflow_execution.request_cancel()
 
 
+def get_some_data(*args, **kwargs) -> None:
+    raise Exception("Shouldn't even be called")
+
+
+def returns_too_big_data():
+    return "ab" * JUMBO_FIELDS_MAX_SIZE
+
+
 @activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
-def pingpong_activity(d: str, n: float | int) -> str:
-    return pingpong(d, n)
+def get_some_data_activity(*args, **kwargs) -> None:
+    return get_some_data(*args, **kwargs)
 
 
-def pingpong(d, n):
-    if n == 1:
-        return d
-    if n < 1:
-        return d[0 : int(len(d) * n)]
-    return d * n
+@activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
+def returns_too_big_data_activity():
+    return returns_too_big_data()
 
 
 class SleepWorkflow(Workflow):
@@ -259,39 +264,70 @@ class WorkflowWithWaitSignal(Workflow):
         futures.wait(future)
 
 
-class WorkflowWithTooBigData(Workflow):
+class WorkflowWithTooBigOutput(Workflow):
     name = "example"
     version = "example"
     task_list = "example"
 
-    def run(self, *args, **kwargs):
-        group = Chain(break_on_failure=False)
-        group.append(pingpong_activity, "ab", JUMBO_FIELDS_MAX_SIZE)
-        group.append(pingpong_activity, "ab" * JUMBO_FIELDS_MAX_SIZE, 0.25)
-        fut = self.submit(group)
+    def run(self):
+        chain = Chain(break_on_failure=False)
+        chain.append(returns_too_big_data_activity)
+        fut = self.submit(chain)
         futures.wait(fut)
         print(f"Result: {fut.result} Exception: {fut.exception}")
 
 
-class PingPingWorkflow(Workflow):
-    name = "pingpong"
+class WorkflowWithTooBigInput(Workflow):
+    name = "example"
     version = "example"
     task_list = "example"
 
-    def run(self, d, n):
-        return pingpong(d, n)
+    def run(self):
+        chain = Chain(break_on_failure=False)
+        chain.append(get_some_data_activity, "ab" * JUMBO_FIELDS_MAX_SIZE)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
 
 
-class WorkflowWithTooBigDataInWorkflow(Workflow):
+class ChildReturnsTooBigDataWorkflow(Workflow):
+    name = "returns_too_big_data"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self):
+        return returns_too_big_data()
+
+
+class ChildWouldTakeTooMuWorkflow(Workflow):
+    def run(self, *args):
+        return get_some_data()
+
+
+class WorkflowWithTooBigOutputInChild(Workflow):
     name = "example"
     version = "example"
     task_list = "example"
     raises_on_failure = False
 
     def run(self, *args, **kwargs):
-        group = Chain(break_on_failure=False, raises_on_failure=False)
-        group.append(PingPingWorkflow, "ab", JUMBO_FIELDS_MAX_SIZE)
-        group.append(PingPingWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE, 0.25)
-        fut = self.submit(group)
+        chain = Chain(break_on_failure=False, raises_on_failure=False)
+        chain.append(ChildReturnsTooBigDataWorkflow)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
+
+
+class WorkflowWithTooBigInputInChild(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self, *args, **kwargs):
+        chain = Chain(break_on_failure=False, raises_on_failure=False)
+        chain.append(ChildWouldTakeTooMuWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE)
+        fut = self.submit(chain)
         futures.wait(fut)
         print(f"Result: {fut.result} Exception: {fut.exception}")

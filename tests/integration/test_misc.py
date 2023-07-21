@@ -25,8 +25,8 @@ class TestMisc(VCRIntegrationTest):
 
 class TestJumboErrors(VCRIntegrationTest):
     @vcr.use_cassette
-    def test_failing_activity(self):
-        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigData")
+    def test_failing_activity_output(self):
+        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigOutput")
         failures = [e for e in events if e["eventType"] == "ActivityTaskFailed"]
         expect(failures).to.have.length_of(1)
         expect(failures[0]).to.have.key("activityTaskFailedEventAttributes").should.have.key(
@@ -34,10 +34,28 @@ class TestJumboErrors(VCRIntegrationTest):
         ).being.with_value.match(r"Message too long", re.IGNORECASE)
 
     @vcr.use_cassette
-    def test_failing_workflow(self):
-        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigDataInWorkflow")
+    def test_failing_activity_input(self):
+        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigInput")
+        failures = [e for e in events if e["eventType"] == "WorkflowExecutionFailed"]
+        expect(failures).to.have.length_of(1)
+        expect(failures[0]).to.have.key("workflowExecutionFailedEventAttributes").should.have.key(
+            "reason"
+        ).being.with_value.match(r"Message too long", re.IGNORECASE)
+
+    @vcr.use_cassette
+    def test_failing_workflow_output(self):
+        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigOutputInChild")
         failures = [e for e in events if e["eventType"] == "ChildWorkflowExecutionFailed"]
         expect(failures).to.have.length_of(1)
         expect(failures[0]).to.have.key("childWorkflowExecutionFailedEventAttributes").should.have.key(
+            "reason"
+        ).being.with_value.match(r"Message too long", re.IGNORECASE)
+
+    @vcr.use_cassette
+    def test_failing_workflow_input(self):
+        events = self.run_standalone("tests.integration.workflow.WorkflowWithTooBigInputInChild")
+        failures = [e for e in events if e["eventType"] == "WorkflowExecutionFailed"]
+        expect(failures).to.have.length_of(1)
+        expect(failures[0]).to.have.key("workflowExecutionFailedEventAttributes").should.have.key(
             "reason"
         ).being.with_value.match(r"Message too long", re.IGNORECASE)
