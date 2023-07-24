@@ -300,7 +300,7 @@ class ChildReturnsTooBigDataWorkflow(Workflow):
         return returns_too_big_data()
 
 
-class ChildWouldTakeTooMuWorkflow(Workflow):
+class ChildWouldTakeTooMuchWorkflow(Workflow):
     def run(self, *args):
         return get_some_data()
 
@@ -327,7 +327,7 @@ class WorkflowWithTooBigInputInChild(Workflow):
 
     def run(self, *args, **kwargs):
         chain = Chain(break_on_failure=False, raises_on_failure=False)
-        chain.append(ChildWouldTakeTooMuWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE)
+        chain.append(ChildWouldTakeTooMuchWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE)
         fut = self.submit(chain)
         futures.wait(fut)
         print(f"Result: {fut.result} Exception: {fut.exception}")
