@@ -26,10 +26,14 @@ The `TaskFailureContext` currently have these members:
 * task_name: activity or workflow name
 * exception_class: `TaskException` or `WorkflowException`
 * exception: raised exception (shortcut to future.exception); None for unfinished tasks
+
+    For a TaskFailed exception:
+  * reason: `TaskFailed.reason`
+  * details: `TaskFailed.details` dict
+  * task_error: name of the inner exception
+  * task_error_type: class of the inner exception
+  * task_message: exception message
 * retry_count: current retry count (0 for first retry)
-* task_error: for a TaskFailed exception, name of the inner exception if available
-* reason: `TaskFailed.reason` or `str(exception)`
-* details: `TaskFailed.details` or None
 * future: failed future
 * event: quite opaque dict, experimental
 * history: History object, experimental
