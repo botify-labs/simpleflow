@@ -137,7 +137,7 @@ class SyslogFormatter(logging.Formatter):
         workflow_id = logging_context.get("workflow_id")[0:64]
         if workflow_id:
             msg.append(workflow_id + ":")
-            msg.append("{}#{}".format(logging_context.get("task_type"), logging_context.get("event_id")))
+            msg.append(f"{logging_context.get('task_type')}#{logging_context.get('event_id')}")
 
         msg.append(record.levelname)
         msg.append(f"pid={record.process}")

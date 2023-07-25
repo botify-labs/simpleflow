@@ -10,12 +10,7 @@ from typing import Any
 from boto.swf.exceptions import SWFResponseError  # noqa
 
 from swf.constants import MAX_WORKFLOW_AGE, REGISTERED
-from swf.exceptions import (
-    AlreadyExistsError,
-    DoesNotExistError,
-    InvalidKeywordArgumentError,
-    ResponseError,
-)
+from swf.exceptions import AlreadyExistsError, DoesNotExistError, InvalidKeywordArgumentError, ResponseError
 from swf.models import Domain
 from swf.models.workflow import CHILD_POLICIES, WorkflowExecution, WorkflowType
 from swf.querysets.base import BaseQuerySet
@@ -569,7 +564,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         invalid_kwargs = self._validate_status_parameters(status, kwargs)
 
         if invalid_kwargs:
-            err_msg = "Invalid keyword arguments supplied: {}".format(", ".join(invalid_kwargs))
+            err_msg = f"Invalid keyword arguments supplied: {', '.join(invalid_kwargs)}"
             raise InvalidKeywordArgumentError(err_msg)
 
         if status == WorkflowExecution.STATUS_OPEN:

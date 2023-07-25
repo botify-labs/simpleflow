@@ -71,9 +71,7 @@ class DecisionsAndContext:
         self.execution_context: dict[str, Any] = execution_context
 
     def __repr__(self):
-        return "<{} decisions={}, execution_context={}>".format(
-            self.__class__.__name__, self.decisions, self.execution_context
-        )
+        return f"<{self.__class__.__name__} decisions={self.decisions}, execution_context={self.execution_context}>"
 
     def append_decision(self, decision: Decision) -> None:
         """

@@ -55,7 +55,7 @@ def execute(command: list[str], ignore: bool = False, log: bool = False, dry_run
     :return: command output
     """
     if log or dry_run:
-        print("{}execute: {}".format("would " if dry_run else "", " ".join(quote(c) for c in command)))
+        print(f"{'would ' if dry_run else ''}execute: {' '.join(quote(c) for c in command)}")
     if dry_run:
         return ""
     env = os.environ.copy()
@@ -254,7 +254,7 @@ def input_new_version(current: Version) -> Version:
             try:
                 new_version = Version(new_version_str)
             except InvalidVersion as ex:
-                print("{}; Should be PEP 440-compatible (for instance in the form: 1.2.3)".format(ex))
+                print(f"{ex}; Should be PEP 440-compatible (for instance in the form: 1.2.3)")
         else:
             new_version = default_new_version
     return new_version
@@ -325,10 +325,11 @@ def main():
     release_tag(new_version, changes, dry_run)
 
     # push package to pypi
-    step("Generate and push package to {}".format(args.repository or args.repository_url or "pypi"))
-    execute(["python", "-m", "build", "--wheel"], log=True)
+    step(f"Generate and push package to {args.repository or args.repository_url or 'pypi'}")
+    execute(["python", "-m", "build"], log=True)
     wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
-    cmd = ["twine", "upload", wheel]
+    tar_gz = f"dist/simpleflow-{new_version}.tar.gz"
+    cmd = ["twine", "upload", wheel, tar_gz]
     if args.repository:
         cmd += ["--repository", args.repository]
     elif args.repository_url:

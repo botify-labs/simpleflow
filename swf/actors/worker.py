@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any
 import boto.exception
 
 from simpleflow import format, logging_context
+from simpleflow.format import JumboTooLargeError
+from simpleflow.utils import format_exc
 from swf.actors import Actor
 from swf.exceptions import DoesNotExistError, PollTimeout, RateLimitExceededError, ResponseError
 from swf.models import ActivityTask
@@ -79,6 +81,8 @@ class ActivityWorker(Actor):
                 )
 
             raise ResponseError(message)
+        except JumboTooLargeError as e:
+            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def fail(self, task_token: str, details: str | None = None, reason: str | None = None) -> dict[str, Any] | None:
         """Replies to ``swf`` that the activity task failed
@@ -102,6 +106,8 @@ class ActivityWorker(Actor):
                 )
 
             raise ResponseError(message)
+        except JumboTooLargeError as e:
+            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def heartbeat(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Records activity task heartbeat
@@ -124,7 +130,7 @@ class ActivityWorker(Actor):
 
             if e.error_code == "ThrottlingException":
                 raise RateLimitExceededError(
-                    "Rate exceeded when sending heartbeat with token={}".format(task_token),
+                    f"Rate exceeded when sending heartbeat with token={task_token}",
                     message,
                 )
 

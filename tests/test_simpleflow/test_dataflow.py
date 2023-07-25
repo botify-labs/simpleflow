@@ -1367,8 +1367,8 @@ def raise_already_exists(activity):
     @functools.wraps(raise_already_exists)
     def wrapped(*args):
         raise swf.exceptions.AlreadyExistsError(
-            "<ActivityType domain={} name={} version={} status=REGISTERED> "
-            "already exists".format(DOMAIN.name, activity.name, activity.version)
+            f"<ActivityType domain={DOMAIN.name} name={activity.name} version={activity.version} status=REGISTERED>"
+            f" already exists"
         )
 
     return wrapped

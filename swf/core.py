@@ -22,18 +22,12 @@ RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
 
 
 class ConnectedSWFObject:
-    """Authenticated object interface
-
-    Provides the instance attributes:
-
-    :ivar region: name of the AWS region
-    :type region: str
-    :ivar connection: connection to the SWF endpoint
-    :type connection: boto.swf.layer1.Layer1
-
-    """
+    """Authenticated object interface"""
 
     __slots__ = ["region", "connection"]
+
+    region: str
+    connection: boto.swf.layer1.Layer1
 
     @retry.with_delay(
         nb_times=RETRIES,

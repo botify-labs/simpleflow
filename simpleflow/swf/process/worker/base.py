@@ -176,11 +176,7 @@ class ActivityWorker:
             poller.complete_with_retry(token, result)
         except Exception as err:
             logger.exception("failed to complete activity id=%s", task.activity_id)
-            reason = "cannot complete task {}: {} {}".format(
-                task.activity_id,
-                err.__class__.__name__,
-                err,
-            )
+            reason = f"cannot complete task {task.activity_id}: {err.__class__.__name__} {err}"
             poller.fail_with_retry(token, task, reason)
 
 
@@ -215,7 +211,7 @@ def reap_process_tree(pid: int, wait_timeout: float = settings.ACTIVITY_SIGTERM_
     _, alive = psutil.wait_procs(procs, timeout=wait_timeout, callback=on_terminate)
     # Kill
     for p in alive:
-        logger.warning("process: pid={} status={} did not respond to SIGTERM. Trying SIGKILL".format(p.pid, p.status()))
+        logger.warning(f"process: pid={p.pid} status={p.status()} did not respond to SIGTERM. Trying SIGKILL")
         try:
             p.kill()
         except psutil.NoSuchProcess:
@@ -223,7 +219,7 @@ def reap_process_tree(pid: int, wait_timeout: float = settings.ACTIVITY_SIGTERM_
     # Check
     _, alive = psutil.wait_procs(alive)
     for p in alive:
-        logger.error("process: pid={} status={} still alive. Giving up!".format(p.pid, p.status()))
+        logger.error(f"process: pid={p.pid} status={p.status()} still alive. Giving up!")
 
 
 def spawn(
@@ -254,14 +250,12 @@ def spawn(
                 # race condition, try and re-join
                 worker.join(timeout=0)
                 if worker.exitcode is None:
-                    logger.warning(
-                        "process {} is dead but multiprocess doesn't know it (simpleflow bug)".format(worker.pid)
-                    )
+                    logger.warning(f"process {worker.pid} is dead but multiprocess doesn't know it (simpleflow bug)")
             if worker.exitcode != 0:
                 poller.fail_with_retry(
                     token,
                     task,
-                    reason="process {} died: exit code {}".format(worker.pid, worker.exitcode),
+                    reason=f"process {worker.pid} died: exit code {worker.exitcode}",
                 )
             return
         try:
@@ -278,16 +272,15 @@ def spawn(
             # ignore rate limit errors: high chances the next heartbeat will be
             # ok anyway, so it would be stupid to break the task for that
             logger.warning(
-                'got a "ThrottlingException / Rate exceeded" when heartbeating for task {}: {}'.format(
-                    task.activity_type.name, error
-                )
+                f'got a "ThrottlingException / Rate exceeded" when heartbeating for task {task.activity_type.name}:'
+                f" {error}"
             )
             continue
         except Exception as error:
             # Let's crash if it cannot notify the heartbeat failed.  The
             # subprocess will become orphan and the heartbeat timeout may
             # eventually trigger on Amazon SWF side.
-            logger.error("cannot send heartbeat for task {}: {}".format(task.activity_type.name, error))
+            logger.error(f"cannot send heartbeat for task {task.activity_type.name}: {error}")
             raise
 
         # Task cancelled.

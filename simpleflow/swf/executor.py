@@ -104,7 +104,7 @@ def run_fake_task_worker(domain, task_list, former_event):
             },
         )
     else:
-        raise Exception("Wrong event type {}".format(former_event["type"]))
+        raise Exception(f"Wrong event type {former_event['type']}")
 
     worker_proc.start()
 
@@ -241,22 +241,16 @@ class Executor(executor.Executor):
             if event["cause"] == "ACTIVITY_TYPE_DOES_NOT_EXIST" and (name, version) not in self.created_activity_types:
                 self.created_activity_types.add((name, version))
                 activity_type = swf.models.ActivityType(self.domain, name=name, version=version)
-                logger.info("creating activity type {} in domain {}".format(activity_type.name, self.domain.name))
+                logger.info(f"creating activity type {activity_type.name} in domain {self.domain.name}")
                 try:
                     activity_type.save()
                 except swf.exceptions.AlreadyExistsError:
                     logger.info(
-                        "oops: Activity type {} in domain {} already exists, creation failed, continuing...".format(
-                            activity_type.name, self.domain.name
-                        )
+                        f"oops: Activity type {activity_type.name} in domain {self.domain.name} already exists,"
+                        f" creation failed, continuing..."
                     )
                 return None
-            logger.info(
-                "failed to schedule {}: {}".format(
-                    name,
-                    event["cause"],
-                )
-            )
+            logger.info(f"failed to schedule {name}: {event['cause']}")
             return None
         elif state == "started":
             future.set_running()
@@ -274,7 +268,7 @@ class Executor(executor.Executor):
         else:
             logger.info(
                 "unhandled state for activity %s: %s",
-                event.get("name", "#{}".format(event["id"])),
+                event.get("name", f"#{event['id']}"),
                 state,
             )
 
@@ -299,12 +293,7 @@ class Executor(executor.Executor):
                     name=event["name"],
                     version=event["version"],
                 )
-                logger.info(
-                    "Creating workflow type {} in domain {}".format(
-                        workflow_type.name,
-                        self.domain.name,
-                    )
-                )
+                logger.info(f"Creating workflow type {workflow_type.name} in domain {self.domain.name}")
                 try:
                     workflow_type.save()
                 except swf.exceptions.AlreadyExistsError:
@@ -348,7 +337,7 @@ class Executor(executor.Executor):
         else:
             logger.info(
                 "unhandled state for workflow %s: %s",
-                event.get("name", "#{}".format(event["id"])),
+                event.get("name", f"#{event['id']}"),
                 state,
             )
 
@@ -597,17 +586,17 @@ class Executor(executor.Executor):
             if not isinstance(control, dict):
                 control = {}
             if timer["state"] == "started":
-                logger.debug('handle_failure: timer {} started, "pending" future'.format(timer["id"]))
+                logger.debug(f'handle_failure: timer {timer["id"]} started, "pending" future')
                 return futures.Future(), swf_task  # mark as pending
             elif timer["state"] in ("fired", "canceled"):
-                logger.debug("handle_failure: timer {} fired or canceled, retrying".format(timer["id"]))
+                logger.debug(f"handle_failure: timer {timer['id']} fired or canceled, retrying")
                 swf_task.args = control.get("args", ())
                 swf_task.kwargs = control.get("kwargs", {})
                 return None, swf_task
             elif timer["state"] == "start_failed":
                 raise exceptions.TaskFailed("timer", timer["id"], timer["cause"])
             else:  # TODO: handle
-                logger.warning('Unexpected timer state for timer "{}": {}'.format(timer["id"], timer["state"]))
+                logger.warning(f'Unexpected timer state for timer "{timer["id"]}": {timer["state"]}')
 
         failure_context = base_task.TaskFailureContext(
             a_task=swf_task, event=event, future=future, exception_class=exception_class, history=self._history
@@ -648,7 +637,7 @@ class Executor(executor.Executor):
             elif failure_context.decision == base_task.TaskFailureContext.Decision.handled:
                 return future, swf_task
             if failure_context.decision != base_task.TaskFailureContext.Decision.none:
-                raise ValueError("Unexpected TaskFailureValue decision: {}".format(failure_context.decision))
+                raise ValueError(f"Unexpected TaskFailureValue decision: {failure_context.decision}")
 
         new_failure_context = self.default_failure_handling(failure_context)
         return new_failure_context.future
@@ -781,7 +770,7 @@ class Executor(executor.Executor):
             former_event = self.find_event(a_task, self.repair_with)
             # ... but only keep the event if the task was successful
             if former_event and former_event["state"] == "completed":
-                logger.info("faking task completed successfully in previous " "workflow: {}".format(former_event["id"]))
+                logger.info(f"faking task completed successfully in previous workflow: {former_event['id']}")
                 json_hash = hashlib.md5(json_dumps(former_event).encode("utf-8")).hexdigest()  # nosec
                 fake_task_list = "FAKE-" + json_hash
 
@@ -810,7 +799,7 @@ class Executor(executor.Executor):
             future = futures.Future()  # return a pending future.
 
         if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
-            logger.warning("limit of {} open activities reached".format(constants.MAX_OPEN_ACTIVITY_COUNT))
+            logger.warning(f"limit of {constants.MAX_OPEN_ACTIVITY_COUNT} open activities reached")
             raise exceptions.ExecutionBlocked
 
         return future
@@ -892,15 +881,14 @@ class Executor(executor.Executor):
                 a_task = WorkflowTask(self, func, *args, **kwargs)
             elif isinstance(func, WaitForSignal):
                 future = self.get_future_from_signal(func.signal_name)
-                logger.debug("submitted WaitForSignalTask({}): future={}".format(func.signal_name, future))
+                logger.debug(f"submitted WaitForSignalTask({func.signal_name}): future={future}")
                 if not future.done:
                     self._decisions_and_context.append_kv_to_set_context("waiting_signals", func.signal_name)
                 return future
             elif isinstance(func, Submittable):
                 raise TypeError(
-                    "invalid type Submittable {} for {} (you probably wanted a simpleflow.swf.task.*Task)".format(
-                        type(func), func
-                    )
+                    f"invalid type Submittable {type(func)} for {func}"
+                    f" (you probably wanted a simpleflow.swf.task.*Task)"
                 )
             else:
                 raise TypeError(f"invalid type {type(func)} for {func}")
@@ -969,10 +957,7 @@ class Executor(executor.Executor):
             result = self.run_workflow(*args, **kwargs)
         except exceptions.ExecutionBlocked:
             logger.info(
-                "{} open activities ({} decisions)".format(
-                    self._open_activity_count,
-                    len(self._decisions_and_context.decisions),
-                )
+                f"{self._open_activity_count} open activities ({len(self._decisions_and_context.decisions)} decisions)"
             )
             self.after_replay()
             if decref_workflow:
@@ -992,10 +977,7 @@ class Executor(executor.Executor):
             return DecisionsAndContext([decision])
 
         except Exception as err:
-            reason = "Cannot replay the workflow: {}({})".format(
-                err.__class__.__name__,
-                err,
-            )
+            reason = f"Cannot replay the workflow: {err.__class__.__name__}({err})"
 
             tb = traceback.format_exc()
             details = f"Traceback:\n{tb}"
@@ -1033,7 +1015,7 @@ class Executor(executor.Executor):
                 return format.decode(raw, parse_json=False, use_proxy=False)
             return repr(err.exception)
 
-        reason = 'Workflow execution error in {}: "{}"'.format(err.payload.name, _extract_reason())
+        reason = f'Workflow execution error in {err.payload.name}: "{_extract_reason()}"'
         logger.exception("%s", reason)  # Don't let logger try to interpolate the message
         details = getattr(err.exception, "details", None)
         self.on_failure(reason, details)
@@ -1154,12 +1136,8 @@ class Executor(executor.Executor):
         If workflow_id is not set or falsy, use the current workflow_id/run_id.
         """
         logger.debug(
-            "signal: name={name}, workflow_id={workflow_id}, run_id={run_id}, propagate={propagate}".format(
-                name=name,
-                workflow_id=workflow_id if workflow_id else self._workflow_id,
-                run_id=run_id if workflow_id else self._run_id,
-                propagate=propagate,
-            )
+            f"signal: name={name}, workflow_id={workflow_id if workflow_id else self._workflow_id},"
+            f" run_id={run_id if workflow_id else self._run_id}, propagate={propagate}"
         )
 
         extra_input = {"__propagate": propagate if isinstance(propagate, bool) else str(propagate)}
@@ -1254,7 +1232,7 @@ class Executor(executor.Executor):
         else:
             raise ValueError(f"Unimplemented type {event_type!r} for get_event_details")
 
-    def handle_cancel_requested(self):
+    def handle_cancel_requested(self) -> list[swf.models.decision.WorkflowExecutionDecision] | None:
         decision = swf.models.decision.WorkflowExecutionDecision()
         is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
         should_cancel = self._workflow.should_cancel(self._history)

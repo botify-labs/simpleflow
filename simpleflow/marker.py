@@ -7,8 +7,4 @@ class Marker:
         self.details = details
 
     def __repr__(self):
-        return "<{klass} {name!r} details={details!r}>".format(
-            klass=self.__class__.__name__,
-            name=self.name,
-            details=self.details,
-        )
+        return f"<{self.__class__.__name__} {self.name!r} details={self.details!r}>"

@@ -192,7 +192,7 @@ class Supervisor(NamedMixin):
         def _handle_graceful_shutdown(signum, frame):
             signals_map = {2: "SIGINT", 15: "SIGTERM"}
             signal_name = signals_map.get(signum, signum)
-            logger.info("process: caught signal signal={} pid={}".format(signal_name, os.getpid()))
+            logger.info(f"process: caught signal signal={signal_name} pid={os.getpid()}")
             self.terminate()
 
         # bind SIGTERM and SIGINT

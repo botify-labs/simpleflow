@@ -107,13 +107,9 @@ class GroupFuture(futures.Future):
         return sum(1 if a.finished else 0 for a in self.futures)
 
     def __repr__(self):
-        return "<{} at {:#x}, state={state}, exception={exception}, activities={activities}, futures={futures}>".format(
-            self.__class__.__name__,
-            id(self),
-            state=self._state,
-            exception=self._exception,
-            activities=self.activities,
-            futures=self.futures,
+        return (
+            f"<{self.__class__.__name__} at {id(self):#x}, state={self._state}, exception={self._exception},"
+            f" activities={self.activities}, futures={self.futures}>"
         )
 
 
@@ -185,7 +181,7 @@ class Group(SubmittableContainer):
         )
 
     def __repr__(self):
-        return "<{} at {:#x}, activities={!r}>".format(self.__class__.__name__, id(self), self.activities)
+        return f"<{self.__class__.__name__} at {id(self):#x}, activities={self.activities!r}>"
 
     def propagate_attribute(self, attr, val):
         """

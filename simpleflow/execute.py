@@ -226,7 +226,7 @@ def python(
                 result = format.decode(result_str)
                 return result
             except BaseException as ex:
-                logger.exception("Exception in python.execute: {} {}".format(ex.__class__.__name__, ex))
+                logger.exception(f"Exception in python.execute: {ex.__class__.__name__} {ex}")
                 logger.warning("%r", result_str)
 
         execute.add_context_in_kwargs = True

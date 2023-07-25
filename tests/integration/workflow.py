@@ -5,7 +5,7 @@ import uuid
 
 from simpleflow import Workflow, activity, futures
 from simpleflow.canvas import Chain, Group
-from simpleflow.constants import HOUR, MINUTE
+from simpleflow.constants import HOUR, JUMBO_FIELDS_MAX_SIZE, MINUTE
 from simpleflow.swf.utils import get_workflow_execution
 from simpleflow.task import ActivityTask
 
@@ -66,6 +66,24 @@ def cancel_workflow():
     domain_name = context["domain_name"]
     workflow_execution = get_workflow_execution(domain_name, workflow_id, run_id)
     workflow_execution.request_cancel()
+
+
+def get_some_data(*args, **kwargs) -> None:
+    raise Exception("Shouldn't even be called")
+
+
+def returns_too_big_data():
+    return "ab" * JUMBO_FIELDS_MAX_SIZE
+
+
+@activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
+def get_some_data_activity(*args, **kwargs) -> None:
+    return get_some_data(*args, **kwargs)
+
+
+@activity.with_attributes(task_list="quickstart", version="example", idempotent=True)
+def returns_too_big_data_activity():
+    return returns_too_big_data()
 
 
 class SleepWorkflow(Workflow):
@@ -244,3 +262,72 @@ class WorkflowWithWaitSignal(Workflow):
             )
         )
         futures.wait(future)
+
+
+class WorkflowWithTooBigOutput(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+
+    def run(self):
+        chain = Chain(break_on_failure=False)
+        chain.append(returns_too_big_data_activity)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
+
+
+class WorkflowWithTooBigInput(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+
+    def run(self):
+        chain = Chain(break_on_failure=False)
+        chain.append(get_some_data_activity, "ab" * JUMBO_FIELDS_MAX_SIZE)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
+
+
+class ChildReturnsTooBigDataWorkflow(Workflow):
+    name = "returns_too_big_data"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self):
+        return returns_too_big_data()
+
+
+class ChildWouldTakeTooMuchWorkflow(Workflow):
+    def run(self, *args):
+        return get_some_data()
+
+
+class WorkflowWithTooBigOutputInChild(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self, *args, **kwargs):
+        chain = Chain(break_on_failure=False, raises_on_failure=False)
+        chain.append(ChildReturnsTooBigDataWorkflow)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
+
+
+class WorkflowWithTooBigInputInChild(Workflow):
+    name = "example"
+    version = "example"
+    task_list = "example"
+    raises_on_failure = False
+
+    def run(self, *args, **kwargs):
+        chain = Chain(break_on_failure=False, raises_on_failure=False)
+        chain.append(ChildWouldTakeTooMuchWorkflow, "ab" * JUMBO_FIELDS_MAX_SIZE)
+        fut = self.submit(chain)
+        futures.wait(fut)
+        print(f"Result: {fut.result} Exception: {fut.exception}")
