@@ -318,6 +318,7 @@ class TaskFailureContext:
     reason: str | None = attr.ib(default=None)
     details: Any = attr.ib(default=None)
     task_error: str | None = attr.ib(default=None)
+    task_message: str | None = attr.ib(default=None)
     task_error_type: type[Exception] | None = attr.ib(default=None)
 
     def __attrs_post_init__(self):
@@ -334,6 +335,8 @@ class TaskFailureContext:
                 if isinstance(details, dict):
                     if "error" in details:
                         self.task_error = details["error"]
+                    if "message" in details:
+                        self.task_message = details["message"]
                     if "error_type" in details:
                         try:
                             self.task_error_type = import_from_module(details["error_type"])

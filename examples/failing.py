@@ -54,7 +54,9 @@ class FailingWorkflow(Workflow):
             colorize(
                 YELLOW,
                 f"FailingWorkflow.on_task_failure: {failure_context.task_name}: {failure_context.exception!r}"
-                f" (started_id: {failure_context.event.get('started_id')})",
+                f" (started_id: {failure_context.event.get('started_id')})"
+                f" message: {failure_context.task_message!r}"
+                f" {failure_context.task_error!r} ({failure_context.task_error_type})",
             )
         )
         return None  # no specific handling
