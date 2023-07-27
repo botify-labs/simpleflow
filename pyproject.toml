@@ -49,7 +49,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black",
-    "build",
     "flaky",
     "invoke",
     "moto<3.0.0",
