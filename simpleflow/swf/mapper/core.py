@@ -4,16 +4,18 @@
 # See the file LICENSE for copying permission.
 from __future__ import annotations
 
+from datetime import datetime
 import os
 
 import boto.swf  # noqa
+import boto3
 from boto.exception import NoAuthHandlerFound
 
 # NB: import logger directly from simpleflow so we benefit from the logging
 # config hosted in simpleflow. This wouldn't be the case with a standard
 # "logging.getLogger(__name__)" which would write logs under the "swf" namespace
 from simpleflow import logger
-from simpleflow.utils import retry
+from simpleflow.utils import retry, remove_none
 
 from . import settings
 
@@ -24,10 +26,11 @@ RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
 class ConnectedSWFObject:
     """Authenticated object interface"""
 
-    __slots__ = ["region", "connection"]
+    __slots__ = ["region", "connection", "boto3_client"]
 
     region: str
     connection: boto.swf.layer1.Layer1
+    boto3_client: boto3.client
 
     @retry.with_delay(
         nb_times=RETRIES,
@@ -41,8 +44,112 @@ class ConnectedSWFObject:
         # chain provider.
         cred_keys = ["aws_access_key_id", "aws_secret_access_key"]
         creds_ = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
+
         self.connection = kwargs.pop("connection", None) or boto.swf.connect_to_region(self.region, **creds_)
         if self.connection is None:
             raise ValueError(f"invalid region: {self.region}")
 
+        self.boto3_client = kwargs.pop("boto3_client", None)
+        if not self.boto3_client:
+            session = boto3.session.Session(region_name=self.region)
+            # raises EndpointConnectionError if region is wrong
+            self.boto3_client = session.client("swf", **creds_)
+
         logger.debug(f"initiated connection to region={self.region}")
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_open_workflow_executions
+    # written with boto3.
+    def list_open_workflow_executions(
+        self,
+        domain: str,
+        oldest_date: int,  # timestamp
+        latest_date: int | None = None,  # timestamp
+        tag: str | None = None,
+        workflow_id: str | None = None,
+        workflow_name: str | None = None,
+        workflow_version: str | None = None,
+        maximum_page_size: int | None = None,
+        next_page_token: str | None = None,
+        reverse_order: bool | None = None,
+    ):
+        kwargs = {
+            "domain": domain,
+            "startTimeFilter": {
+                "oldestDate": datetime.fromtimestamp(oldest_date),
+                "latestDate": datetime.fromtimestamp(latest_date) if latest_date is not None else None,
+            },
+            "nextPageToken": next_page_token,
+            "maximumPageSize": maximum_page_size,
+            "reverseOrder": reverse_order,
+        }
+        if workflow_name:
+            kwargs["typeFilter"] = {
+                "name": workflow_name,
+                "version": workflow_version,
+            }
+        if tag:
+            kwargs["tagFilter"] = {
+                "name": tag,
+            }
+        if workflow_id:
+            kwargs["executionFilter"] = {
+                "workflowId": workflow_id,
+            }
+
+        return self.boto3_client.list_open_workflow_executions(
+            **remove_none(kwargs),
+        )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_closed_workflow_executions
+    # written with boto3's https://boto3.amazonaws.com/v1/documentation/api/1.28.20/reference/services/simpleflow/swf/mapper/client/list_open_workflow_executions.html
+    def list_closed_workflow_executions(
+        self,
+        domain: str,
+        start_latest_date: int | None = None,  # timestamp
+        start_oldest_date: int | None = None,  # timestamp
+        close_latest_date: int | None = None,  # timestamp
+        close_oldest_date: int | None = None,  # timestamp
+        close_status: str | None = None,
+        tag: str | None = None,
+        workflow_id: str | None = None,
+        workflow_name: str | None = None,
+        workflow_version: str | None = None,
+        maximum_page_size: int | None = None,
+        next_page_token: str | None = None,
+        reverse_order: bool | None = None,
+    ):
+        kwargs = {
+            "domain": domain,
+            "nextPageToken": next_page_token,
+            "maximumPageSize": maximum_page_size,
+            "reverseOrder": reverse_order,
+        }
+        if start_oldest_date is not None:
+            kwargs["startTimeFilter"] = {
+                "oldestDate": datetime.fromtimestamp(start_oldest_date),
+                "latestDate": datetime.fromtimestamp(start_latest_date) if start_latest_date is not None else None,
+            }
+        if close_oldest_date is not None:
+            kwargs["closeTimeFilter"] = {
+                "oldestDate": datetime.fromtimestamp(close_oldest_date),
+                "latestDate": datetime.fromtimestamp(close_latest_date) if close_latest_date is not None else None,
+            }
+        if close_status:
+            kwargs["closeStatusFilter"] = {
+                "status": close_status,
+            }
+        if workflow_name:
+            kwargs["typeFilter"] = {
+                "name": workflow_name,
+                "version": workflow_version,
+            }
+        if tag:
+            kwargs["tagFilter"] = {
+                "name": tag,
+            }
+        if workflow_id:
+            kwargs["executionFilter"] = {
+                "workflowId": workflow_id,
+            }
+
+        return self.boto3_client.list_closed_workflow_executions(**remove_none(kwargs))

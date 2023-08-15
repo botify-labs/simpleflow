@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 import boto.swf  # noqa
+import boto3
 from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
@@ -66,6 +67,13 @@ class VCRIntegrationTest(IntegrationTestCase):
         if not hasattr(self, "_conn"):
             self._conn = boto.swf.connect_to_region(self.region)
         return self._conn
+
+    @property
+    def boto3_client(self):
+        if not hasattr(self, "_boto3_client"):
+            session = boto3.session.Session(region_name=self.region)
+            self._boto3_client = session.client("swf")
+        return self._boto3_client
 
     def get_events(self, run_id):
         response = self.conn.get_workflow_execution_history(

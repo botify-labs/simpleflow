@@ -206,7 +206,7 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
 
     def test_list_open_workflows_executions_with_start_oldest_date(self):
         with patch.object(
-            self.weq.connection,
+            self.weq,
             "list_open_workflow_executions",
             mock_list_open_workflow_executions,
         ):
@@ -222,7 +222,7 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
 
     def test_list_closed_workflows_executions(self):
         with patch.object(
-            self.weq.connection,
+            self.weq,
             "list_closed_workflow_executions",
             mock_list_closed_workflow_executions,
         ):

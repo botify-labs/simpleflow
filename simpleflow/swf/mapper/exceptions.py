@@ -7,8 +7,6 @@ from typing import Any, Callable
 
 import boto.exception
 
-from simpleflow import logger
-
 
 class SWFError(Exception):
     def __init__(self, message: str, raw_error: str = "", *args) -> None:
@@ -350,6 +348,7 @@ def catch(exceptions, handle_with=None, log=False):
     >>> func()
 
     """
+    from simpleflow import logger
 
     def wrap(func):
         @wraps(func)

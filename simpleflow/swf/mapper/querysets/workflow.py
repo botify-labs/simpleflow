@@ -424,17 +424,18 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             WorkflowExecution.STATUS_CLOSED: "closed",
         }
 
+        if status not in statuses:
+            raise ValueError("Unknown status provided: %s" % status)
+
         # boto.swf.list_closed_workflow_executions awaits a `start_oldest_date`
         # MANDATORY kwarg, when boto.swf.list_open_workflow_executions awaits a
         # `oldest_date` mandatory arg.
+        # TODO: remove this quirk or handle start_latest_date too
         if status == WorkflowExecution.STATUS_OPEN:
             kwargs["oldest_date"] = kwargs.pop("start_oldest_date")
 
-        try:
-            method = f"list_{statuses[status]}_workflow_executions"
-            return getattr(self.connection, method)(*args, **kwargs)
-        except KeyError:
-            raise ValueError("Unknown status provided: %s" % status)
+        method = f"list_{statuses[status]}_workflow_executions"
+        return getattr(self, method)(*args, **kwargs)
 
     def get_workflow_type(self, execution_info):
         workflow_type = execution_info["workflowType"]
