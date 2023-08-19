@@ -5,6 +5,7 @@ from zlib import adler32
 
 from . import retry  # NOQA
 from ._json import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
+from ._dict import remove_none  # NOQA
 
 if TYPE_CHECKING:
     from typing import Any
