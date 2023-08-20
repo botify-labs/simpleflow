@@ -153,3 +153,24 @@ class ConnectedSWFObject:
             }
 
         return self.boto3_client.list_closed_workflow_executions(**remove_none(kwargs))
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_workflow_types
+    # written with boto3.
+    def list_workflow_types(
+        self,
+        domain: str,
+        registration_status: str,
+        maximum_page_size: int | None = None,
+        name: str | None = None,
+        next_page_token: str | None = None,
+        reverse_order: bool | None = None,
+    ):
+        kwargs = {
+            "domain": domain,
+            "registrationStatus": registration_status,
+            "name": name,
+            "nextPageToken": next_page_token,
+            "maximumPageSize": maximum_page_size,
+            "reverseOrder": reverse_order,
+        }
+        return self.boto3_client.list_workflow_types(**remove_none(kwargs))

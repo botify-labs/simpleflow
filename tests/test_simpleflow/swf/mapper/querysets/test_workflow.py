@@ -111,7 +111,7 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
                 self.assertIsInstance(workflow_type, WorkflowType)
 
     def test__list_non_empty_workflow_types(self):
-        with patch.object(self.wtq.connection, "list_workflow_types", mock_list_workflow_types):
+        with patch.object(self.wtq, "list_workflow_types", mock_list_workflow_types):
             wt = self.wtq._list()
             self.assertIsNotNone(wt)
             self.assertIsInstance(wt, dict)
@@ -122,7 +122,7 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
     def test_filter_with_registered_status(self):
         # Nota: mock_list_workfflow_types returned
         # values are REGISTERED
-        with patch.object(self.wtq.connection, "list_workflow_types", mock_list_workflow_types):
+        with patch.object(self.wtq, "list_workflow_types", mock_list_workflow_types):
             types = self.wtq.filter(registration_status=REGISTERED)
             self.assertIsNotNone(types)
             self.assertIsInstance(types, list)

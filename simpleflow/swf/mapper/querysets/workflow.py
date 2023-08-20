@@ -72,7 +72,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     _infos_plural = "typeInfos"
 
     def to_WorkflowType(self, domain, workflow_info, **kwargs):
-        # Not using get_subkey in order for it to explictly
+        # Not using get_subkey in order for it to explicitly
         # raise when workflowType name doesn't exist for example
         return WorkflowType(
             domain,
@@ -252,7 +252,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                 )
 
     def _list(self, *args, **kwargs):
-        return self.connection.list_workflow_types(*args, **kwargs)
+        return self.list_workflow_types(*args, **kwargs)
 
     def filter(
         self,
