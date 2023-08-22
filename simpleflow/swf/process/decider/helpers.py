@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import swf.models
+import simpleflow.swf.mapper.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
 from simpleflow.utils import import_from_module
@@ -21,7 +21,7 @@ def load_workflow_executor(
     Load a workflow executor.
 
     :param domain:
-    :type domain: swf.models.Domain
+    :type domain: simpleflow.swf.mapper.models.Domain
     :param workflow_name:
     :type workflow_name: str
     :param task_list:
@@ -40,7 +40,7 @@ def load_workflow_executor(
     logger.debug(f'load_workflow_executor(workflow_name="{workflow_name}")')
     workflow = import_from_module(workflow_name)
 
-    if not isinstance(domain, swf.models.Domain):
+    if not isinstance(domain, simpleflow.swf.mapper.models.Domain):
         raise ValueError(f"domain is a {type(domain).__name__}, not a Domain")
 
     return Executor(
@@ -91,7 +91,7 @@ def make_decider_poller(
         # definition, seems like good practice (?)
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
-    domain = swf.models.Domain(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain)
     executors = [
         load_workflow_executor(
             domain,

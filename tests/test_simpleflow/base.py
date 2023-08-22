@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from simpleflow.swf.executor import Executor
-from swf.models import Domain
-from swf.models.history import builder
-from swf.responses import Response
+from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.models.history import builder
+from simpleflow.swf.mapper.responses import Response
 
 
 class TestWorkflowMixin:

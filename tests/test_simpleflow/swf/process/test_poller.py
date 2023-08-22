@@ -10,7 +10,7 @@ from pytest import mark
 from sure import expect
 
 from simpleflow.swf.process import Poller
-from swf.models import Domain
+from simpleflow.swf.mapper.models import Domain
 from tests.utils import IntegrationTestCase
 
 

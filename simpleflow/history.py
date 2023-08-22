@@ -3,15 +3,15 @@ from __future__ import annotations
 import collections
 from typing import TYPE_CHECKING, Callable
 
-import swf.models.history
+import simpleflow.swf.mapper.models.history
 from simpleflow import logger
-from swf.models.event.task import ActivityTaskEventDict
-from swf.models.event.workflow import ExternalWorkflowExecutionEvent
+from simpleflow.swf.mapper.models.event.task import ActivityTaskEventDict
+from simpleflow.swf.mapper.models.event.workflow import ExternalWorkflowExecutionEvent
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from swf.models.event import (
+    from simpleflow.swf.mapper.models.event import (
         ActivityTaskEvent,
         ChildWorkflowExecutionEvent,
         Event,
@@ -26,7 +26,7 @@ class History:
     History data.
     """
 
-    def __init__(self, history: swf.models.history.History) -> None:
+    def __init__(self, history: simpleflow.swf.mapper.models.history.History) -> None:
         self._history = history
         self._activities: dict[str, ActivityTaskEventDict] = {}
         self._child_workflows: dict[str, dict[str, Any]] = {}
@@ -44,7 +44,7 @@ class History:
         self.last_event_id: int | None = None
 
     @property
-    def swf_history(self) -> swf.models.history.History:
+    def swf_history(self) -> simpleflow.swf.mapper.models.history.History:
         return self._history
 
     @property

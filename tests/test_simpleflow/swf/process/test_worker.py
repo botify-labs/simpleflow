@@ -5,7 +5,7 @@ from collections import namedtuple
 from unittest.mock import patch
 
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
-from swf.models import ActivityTask, Domain
+from simpleflow.swf.mapper.models import ActivityTask, Domain
 from tests.moto_compat import mock_swf
 
 FakeActivityType = namedtuple("FakeActivityType", ["name"])

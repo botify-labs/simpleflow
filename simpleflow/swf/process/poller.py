@@ -5,19 +5,19 @@ import os
 import signal
 from typing import TYPE_CHECKING, Any
 
-import swf.actors
-import swf.exceptions
+import simpleflow.swf.mapper.actors
+import simpleflow.swf.mapper.exceptions
 from simpleflow import logger, utils
 from simpleflow.process import NamedMixin, with_state
 from simpleflow.swf.helpers import swf_identity
 
 if TYPE_CHECKING:
-    from swf.models import Domain
+    from simpleflow.swf.mapper.models import Domain
 
 __all__ = ["Poller"]
 
 
-class Poller(swf.actors.Actor, NamedMixin):
+class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor."""
 
     def __init__(self, domain: Domain, task_list: str | None = None) -> None:
@@ -73,7 +73,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         while self.is_alive:
             try:
                 response = self.poll_with_retry()
-            except swf.exceptions.PollTimeout:
+            except simpleflow.swf.mapper.exceptions.PollTimeout:
                 continue
             self.process(response)
 
@@ -89,7 +89,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         while self.is_alive:
             try:
                 response = self.poll_with_retry()
-            except swf.exceptions.PollTimeout:
+            except simpleflow.swf.mapper.exceptions.PollTimeout:
                 continue
             self.process(response)
             break
@@ -112,7 +112,7 @@ class Poller(swf.actors.Actor, NamedMixin):
                 nb_times=self.nb_retries,
                 delay=utils.retry.exponential,
                 log_with=logger.exception,
-                except_on=swf.exceptions.DoesNotExistError,
+                except_on=simpleflow.swf.mapper.exceptions.DoesNotExistError,
             )(
                 self.complete
             )  # Exponential backoff on errors.
@@ -153,7 +153,7 @@ class Poller(swf.actors.Actor, NamedMixin):
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_RequestSyntax
 
         :returns:
-        :rtype: swf.responses.Response
+        :rtype:  simpleflow.swf.mapper.responses.Response
         """
         task_list = self.task_list
         identity = self.identity
@@ -163,7 +163,7 @@ class Poller(swf.actors.Actor, NamedMixin):
             nb_times=self.nb_retries,
             delay=utils.retry.exponential,
             log_with=logger.exception,
-            on_exceptions=swf.exceptions.ResponseError,
+            on_exceptions=simpleflow.swf.mapper.exceptions.ResponseError,
         )(self.poll)
         response = poll(task_list, identity=identity)
         return response
@@ -178,7 +178,7 @@ class Poller(swf.actors.Actor, NamedMixin):
             nb_times=self.nb_retries,
             delay=utils.retry.exponential,
             log_with=logger.exception,
-            on_exceptions=swf.exceptions.ResponseError,
+            on_exceptions=simpleflow.swf.mapper.exceptions.ResponseError,
         )(self.fail)
         response = fail(*args, **kwargs)
         return response

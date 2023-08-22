@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import swf.models
+import simpleflow.swf.mapper.models
 
 from .base import ActivityPoller, Worker
 
@@ -15,7 +15,7 @@ def make_worker_poller(
     """
     Make a worker poller for the domain and task list.
     """
-    domain = swf.models.Domain(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain)
     return ActivityPoller(
         domain=domain,
         task_list=task_list,

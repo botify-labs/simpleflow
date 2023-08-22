@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Any
 import multiprocess
 import psutil
 
-import swf.actors
-import swf.exceptions
+import simpleflow.swf.mapper.actors
+import simpleflow.swf.mapper.exceptions
 from simpleflow import format, logger, settings
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
@@ -21,12 +21,12 @@ from simpleflow.swf.process import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, format_exc_type, json_dumps
-from swf.models import ActivityTask as BaseActivityTask
-from swf.responses import Response
+from simpleflow.swf.mapper.models import ActivityTask as BaseActivityTask
+from simpleflow.swf.mapper.responses import Response
 
 if TYPE_CHECKING:
     from simpleflow.activity import Activity
-    from swf.models import Domain
+    from simpleflow.swf.mapper.models import Domain
 
 
 class Worker(Supervisor):
@@ -38,7 +38,7 @@ class Worker(Supervisor):
         )
 
 
-class ActivityPoller(Poller, swf.actors.ActivityWorker):
+class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
     """
     Polls an activity and handles it in the worker.
     """
@@ -76,7 +76,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
             return self.fake_poll()
         else:
             # we need to poll SWF's PollForActivityTask
-            return swf.actors.ActivityWorker.poll(self, task_list, identity)
+            return simpleflow.swf.mapper.actors.ActivityWorker.poll(self, task_list, identity)
 
     def fake_poll(self):
         polled_activity_data = json.loads(b64decode(self.poll_data))
@@ -94,7 +94,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
     @with_state("processing")
     def process(self, response: Response) -> None:
         """
-        Process a swf.actors.ActivityWorker poll response.
+        Process a simpleflow.swf.mapper.actors.ActivityWorker poll response.
         """
         token = response.task_token
         task = response.activity_task
@@ -102,7 +102,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
 
     @with_state("completing")
     def complete(self, token: str, result: str | None = None) -> None:
-        swf.actors.ActivityWorker.complete(self, token, result)
+        simpleflow.swf.mapper.actors.ActivityWorker.complete(self, token, result)
 
     # noinspection PyMethodOverriding
     @with_state("failing")
@@ -113,7 +113,7 @@ class ActivityPoller(Poller, swf.actors.ActivityWorker):
         Fail the activity, log and ignore exceptions.
         """
         try:
-            return swf.actors.ActivityWorker.fail(
+            return simpleflow.swf.mapper.actors.ActivityWorker.fail(
                 self,
                 token,
                 reason=reason,
@@ -261,14 +261,14 @@ def spawn(
         try:
             logger.debug(f"heartbeating for pid={worker.pid} (token={token})")
             response = poller.heartbeat(token)
-        except swf.exceptions.DoesNotExistError as error:
+        except simpleflow.swf.mapper.exceptions.DoesNotExistError as error:
             # Either the task or the workflow execution no longer exists,
             # let's kill the worker process.
             logger.warning(f"heartbeat failed: {error}")
             logger.warning(f"killing (KILL) worker with pid={worker.pid}")
             reap_process_tree(worker.pid)
             return
-        except swf.exceptions.RateLimitExceededError as error:
+        except simpleflow.swf.mapper.exceptions.RateLimitExceededError as error:
             # ignore rate limit errors: high chances the next heartbeat will be
             # ok anyway, so it would be stupid to break the task for that
             logger.warning(
