@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from simpleflow import Workflow
+    from simpleflow.workflow import Workflow
     from simpleflow.task import Task
 
 

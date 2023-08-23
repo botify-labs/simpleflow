@@ -12,10 +12,10 @@ from tabulate import tabulate
 from simpleflow.history import History
 from simpleflow.utils import json_dumps
 
-from . import WorkflowStats
+from .base import WorkflowStats
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import WorkflowExecution
+    from simpleflow.swf.mapper.models.workflow import WorkflowExecution
 
 
 TEMPLATE = """

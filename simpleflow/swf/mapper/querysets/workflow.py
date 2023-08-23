@@ -16,7 +16,7 @@ from simpleflow.swf.mapper.exceptions import (
     InvalidKeywordArgumentError,
     ResponseError,
 )
-from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.workflow import CHILD_POLICIES, WorkflowExecution, WorkflowType
 from simpleflow.swf.mapper.querysets.base import BaseQuerySet
 from simpleflow.swf.mapper.utils import datetime_timestamp, get_subkey, past_day

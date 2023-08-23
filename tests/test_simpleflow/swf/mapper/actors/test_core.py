@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 
 import simpleflow.swf.mapper.settings
-from simpleflow.swf.mapper.actors import Actor
-from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.actors.core import Actor
+from simpleflow.swf.mapper.models.domain import Domain
 
 simpleflow.swf.mapper.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from simpleflow.swf.executor import Executor
-from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
 

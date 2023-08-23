@@ -17,16 +17,16 @@ from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.exceptions import ExecutionError
 from simpleflow.process import Supervisor, with_state
-from simpleflow.swf.process import Poller
+from simpleflow.swf.process.poller import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, format_exc_type, json_dumps
-from simpleflow.swf.mapper.models import ActivityTask as BaseActivityTask
+from simpleflow.swf.mapper.models.activity import ActivityTask as BaseActivityTask
 from simpleflow.swf.mapper.responses import Response
 
 if TYPE_CHECKING:
     from simpleflow.activity import Activity
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 
 class Worker(Supervisor):

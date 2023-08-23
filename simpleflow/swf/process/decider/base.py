@@ -10,7 +10,7 @@ import simpleflow.swf.mapper.exceptions
 import simpleflow.swf.mapper.models.decision
 from simpleflow import format, logger
 from simpleflow.process import Supervisor, with_state
-from simpleflow.swf.process import Poller
+from simpleflow.swf.process.poller import Poller
 from simpleflow.swf.utils import DecisionsAndContext, get_name_from_event
 
 if TYPE_CHECKING:

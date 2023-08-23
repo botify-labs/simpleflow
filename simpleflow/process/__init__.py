@@ -1,2 +1,2 @@
-from .named_mixin import NamedMixin, with_state  # NOQA
-from .supervisor import Supervisor, reset_signal_handlers  # NOQA
+from ._named_mixin import NamedMixin, with_state  # NOQA
+from ._supervisor import Supervisor, reset_signal_handlers  # NOQA

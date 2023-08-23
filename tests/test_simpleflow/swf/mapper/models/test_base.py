@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from simpleflow.swf.mapper.models import BaseModel
+from simpleflow.swf.mapper.models.base import BaseModel
 
 
 class TestBaseModel(unittest.TestCase):

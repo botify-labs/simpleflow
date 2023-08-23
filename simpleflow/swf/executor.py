@@ -38,7 +38,7 @@ from simpleflow.workflow import Workflow
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 __all__ = ["Executor"]
 

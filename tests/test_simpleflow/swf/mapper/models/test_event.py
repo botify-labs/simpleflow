@@ -6,8 +6,8 @@ from datetime import datetime
 import pytz
 
 import simpleflow.swf.mapper.constants
-from simpleflow.swf.mapper.models.event import Event
-from simpleflow.swf.mapper.models.history import History
+from simpleflow.swf.mapper.models.event.base import Event
+from simpleflow.swf.mapper.models.history.base import History
 
 from ..mocks.event import mock_get_workflow_execution_history
 

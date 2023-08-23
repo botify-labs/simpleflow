@@ -12,12 +12,12 @@ from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError  #
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
 from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
-from simpleflow.swf.mapper.models import BaseModel
-from simpleflow.swf.mapper.models.base import ModelDiff
+from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import ActivityType, WorkflowType
+    from simpleflow.swf.mapper.models.activity import ActivityType
+    from simpleflow.swf.mapper.models.workflow import WorkflowType
 
 
 class DomainDoesNotExist(DoesNotExistError):

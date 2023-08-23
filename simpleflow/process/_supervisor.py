@@ -11,7 +11,7 @@ import psutil
 
 from simpleflow import logger
 
-from .named_mixin import NamedMixin, with_state
+from ._named_mixin import NamedMixin, with_state
 
 
 def reset_signal_handlers(func):

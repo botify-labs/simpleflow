@@ -6,7 +6,8 @@ from unittest.mock import patch
 import boto.swf.exceptions
 from boto.swf.layer1 import Layer1
 
-from simpleflow.swf.mapper.models import ActivityType, Domain
+from simpleflow.swf.mapper.models.activity import ActivityType
+from simpleflow.swf.mapper.models.domain import Domain
 
 from ..mocks.activity import mock_describe_activity_type
 

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from simpleflow.swf.mapper.models import ActivityType, Domain
+from simpleflow.swf.mapper.models.activity import ActivityType
 from simpleflow.swf.mapper.models.decision import ActivityTaskDecision
+from simpleflow.swf.mapper.models.domain import Domain
 
 
 class TestActivityTaskDecision(unittest.TestCase):

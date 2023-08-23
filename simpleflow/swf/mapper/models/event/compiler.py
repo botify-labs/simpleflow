@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from simpleflow.swf.mapper.models.event import Event
+from simpleflow.swf.mapper.models.event.base import Event
 
 
 class InconsistentStateError(Exception):

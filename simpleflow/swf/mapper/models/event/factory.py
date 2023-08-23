@@ -27,7 +27,8 @@ from simpleflow.swf.mapper.models.event.workflow import (
 from simpleflow.swf.mapper.utils import camel_to_underscore, decapitalize
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models.event import CompiledEvent, Event
+    from simpleflow.swf.mapper.models.event.base import Event
+    from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
 
 EVENTS = collections.OrderedDict(
     [

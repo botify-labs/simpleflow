@@ -9,7 +9,7 @@ from boto.swf.layer1 import Layer1
 
 from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError
 from simpleflow.swf.mapper.models.domain import Domain
-from simpleflow.swf.mapper.models.history import History
+from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.models.workflow import WorkflowExecution, WorkflowType
 
 from ..mocks.event import mock_get_workflow_execution_history

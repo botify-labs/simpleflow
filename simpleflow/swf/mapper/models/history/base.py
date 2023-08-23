@@ -8,7 +8,9 @@ from __future__ import annotations
 from itertools import groupby
 from typing import Any, Iterator
 
-from simpleflow.swf.mapper.models.event import CompiledEvent, CompiledEventFactory, Event, EventFactory
+from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
+from simpleflow.swf.mapper.models.event.base import Event
+from simpleflow.swf.mapper.models.event.factory import CompiledEventFactory, EventFactory
 from simpleflow.swf.mapper.models.event.workflow import WorkflowExecutionEvent
 from simpleflow.swf.mapper.utils import cached_property
 

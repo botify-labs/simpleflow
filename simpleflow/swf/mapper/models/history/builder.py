@@ -7,7 +7,7 @@ from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.models.event.factory import EventFactory
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import WorkflowType
+    from simpleflow.swf.mapper.models.workflow import WorkflowType
 
 
 DEFAULT_DECIDER_IDENTITY = "test_decider"

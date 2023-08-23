@@ -130,7 +130,7 @@ class Group(SubmittableContainer):
         self.extend(activities)
 
     def append(self, submittable, *args, **kwargs):
-        from simpleflow import Workflow
+        from simpleflow.workflow import Workflow
 
         if isinstance(submittable, (Submittable, SubmittableContainer)):
             if args or kwargs:

@@ -84,7 +84,7 @@ class _ImportFromSourceChecker(NodeVisitor):
         # Actually import the module and iterate through all the objects potentially exported by it.
         module = import_module(module_to_import)
         for alias in node.names:
-            assert hasattr(module, alias.name)
+            assert hasattr(module, alias.name), f"Module {module} has no attribute {alias.name}"
             attr = getattr(module, alias.name)
 
             # For some objects (pretty much everything except for classes and functions), we are not able to figure
@@ -98,6 +98,11 @@ class _ImportFromSourceChecker(NodeVisitor):
             # Figure out where we should be importing this class from, and assert that the *actual* import we found
             # matches the place we *should* import from.
             should_import_from = self._get_module_should_import(module_to_import=attribute_module)
+
+            # click-decorated commands are buggy with this system, probably a problem in click decorators
+            if should_import_from == "click.core":
+                continue
+
             assert module_to_import == should_import_from, (
                 f"Imported {alias.name} from {module_to_import}, which is not the public module where this object "
                 f"is defined. Please import from {should_import_from} instead."
@@ -156,9 +161,7 @@ def add_module_organization_tests(
     """
     params = []
     for module_name in module_names:
-        params.extend(
-            list(_recurse_modules(module_name, ignore_tests=True, packages_only=False))
-        )
+        params.extend(list(_recurse_modules(module_name, ignore_tests=True, packages_only=False)))
 
     setattr(
         sys.modules[test_module],

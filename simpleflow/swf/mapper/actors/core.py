@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from simpleflow.swf.mapper.core import ConnectedSWFObject
-from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.models.domain import Domain
 
 if TYPE_CHECKING:
     from boto.exception import SWFResponseError

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from zlib import adler32
 
 from . import retry  # NOQA
-from .json_tools import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
+from ._json import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
 if TYPE_CHECKING:
     from typing import Any

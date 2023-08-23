@@ -11,7 +11,7 @@ from simpleflow import format
 from simpleflow.swf.mapper.models.decision.base import Decision, decision_action
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import ActivityType
+    from simpleflow.swf.mapper.models.activity import ActivityType
 
 
 class ActivityTaskDecision(Decision):

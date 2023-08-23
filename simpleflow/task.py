@@ -18,7 +18,7 @@ from .activity import Activity
 if TYPE_CHECKING:
     from typing import Any
 
-    from simpleflow import Workflow
+    from simpleflow.workflow import Workflow
     from simpleflow.exceptions import TaskFailed
     from simpleflow.executor import Executor
 

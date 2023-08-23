@@ -15,9 +15,9 @@ from simpleflow import format
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
 from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
-from simpleflow.swf.mapper.models import BaseModel, Domain
-from simpleflow.swf.mapper.models.base import ModelDiff
-from simpleflow.swf.mapper.models.history import History
+from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
+from simpleflow.swf.mapper.models.domain import Domain
+from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.utils import immutable
 
 if TYPE_CHECKING:

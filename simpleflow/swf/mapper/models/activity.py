@@ -16,7 +16,7 @@ from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
     from simpleflow.swf.mapper.models.workflow import WorkflowExecution
 
 

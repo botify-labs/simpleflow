@@ -6,7 +6,7 @@ import boto
 
 from simpleflow.swf.mapper.actors import Decider
 from simpleflow.swf.mapper.exceptions import PollTimeout
-from simpleflow.swf.mapper.models import Domain
+from simpleflow.swf.mapper.models.domain import Domain
 from tests.moto_compat import mock_swf
 
 

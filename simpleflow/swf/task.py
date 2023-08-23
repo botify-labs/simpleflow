@@ -5,8 +5,9 @@ from typing import Any
 
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.models.decision
-from simpleflow import Workflow, logger, settings, task
+from simpleflow import logger, settings, task
 from simpleflow.swf.utils import set_workflow_class_name
+from simpleflow.workflow import Workflow
 
 if typing.TYPE_CHECKING:
     if hasattr(typing, "Self"):

@@ -9,12 +9,12 @@ from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.actors.core import Actor
 from simpleflow.swf.mapper.exceptions import DoesNotExistError, PollTimeout, ResponseError
 from simpleflow.swf.mapper.models.decision.base import Decision
-from simpleflow.swf.mapper.models.history import History
+from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.models.workflow import WorkflowExecution, WorkflowType
 from simpleflow.swf.mapper.responses import Response
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 
 class Decider(Actor):

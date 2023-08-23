@@ -18,7 +18,7 @@ from simpleflow.utils import json_dumps
 from .stats import pretty
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import WorkflowExecution
+    from simpleflow.swf.mapper.models.workflow import WorkflowExecution
 
 
 __all__ = [

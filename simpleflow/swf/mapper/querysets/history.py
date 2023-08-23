@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from simpleflow.swf.mapper.models import History
+from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.querysets.base import BaseQuerySet
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 
 class HistoryQuerySet(BaseQuerySet):

@@ -11,14 +11,11 @@ from simpleflow.swf.mapper.models.event.workflow import ExternalWorkflowExecutio
 if TYPE_CHECKING:
     from typing import Any
 
-    from simpleflow.swf.mapper.models.event import (
-        ActivityTaskEvent,
-        ChildWorkflowExecutionEvent,
-        Event,
-        MarkerEvent,
-        TimerEvent,
-        WorkflowExecutionEvent,
-    )
+    from simpleflow.swf.mapper.models.event.base import Event
+    from simpleflow.swf.mapper.models.event.marker import MarkerEvent
+    from simpleflow.swf.mapper.models.event.task import ActivityTaskEvent
+    from simpleflow.swf.mapper.models.event.timer import TimerEvent
+    from simpleflow.swf.mapper.models.event.workflow import ChildWorkflowExecutionEvent, WorkflowExecutionEvent
 
 
 class History:

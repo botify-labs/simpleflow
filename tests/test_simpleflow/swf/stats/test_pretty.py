@@ -5,7 +5,7 @@ import unittest
 
 from simpleflow.history import History
 from simpleflow.swf.stats.pretty import dump_history_to_json
-from simpleflow.swf.mapper.models import History as BasicHistory
+from simpleflow.swf.mapper.models.history.base import History as BasicHistory
 
 
 def fake_history():

@@ -7,13 +7,13 @@ import boto.exception
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
 from simpleflow.utils import format_exc
-from simpleflow.swf.mapper.actors import Actor
+from simpleflow.swf.mapper.actors.core import Actor
 from simpleflow.swf.mapper.exceptions import DoesNotExistError, PollTimeout, RateLimitExceededError, ResponseError
-from simpleflow.swf.mapper.models import ActivityTask
+from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.responses import Response
 
 if TYPE_CHECKING:
-    from simpleflow.swf.mapper.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 
 class ActivityWorker(Actor):

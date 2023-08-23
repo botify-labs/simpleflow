@@ -16,7 +16,8 @@ import multiprocess
 import simpleflow.swf.mapper.exceptions
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.querysets
-from simpleflow import Workflow, __version__, format, log, logger
+from simpleflow.workflow import Workflow
+from simpleflow import __version__, format, log, logger
 from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
@@ -30,7 +31,7 @@ from simpleflow.utils import import_from_module, json_dumps
 if TYPE_CHECKING:
     from typing import Any
 
-    from simpleflow.swf.mapper.models import WorkflowType
+    from simpleflow.swf.mapper.models.workflow import WorkflowType
 
 
 def disable_boto_connection_pooling():
@@ -124,7 +125,7 @@ def transform_input(wf_input):
 
 
 def run_workflow_locally(workflow_class, wf_input, middlewares):
-    from .local import Executor
+    from .local.executor import Executor
 
     Executor(workflow_class, middlewares=middlewares).run(wf_input)
 
