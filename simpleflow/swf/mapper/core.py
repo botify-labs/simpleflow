@@ -196,3 +196,10 @@ class ConnectedSWFObject:
                 "runId": run_id,
             },
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_domain
+    # written with boto3.
+    def describe_domain(self, name: str):
+        return self.boto3_client.describe_domain(
+            name=name,
+        )

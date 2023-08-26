@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
@@ -80,12 +80,13 @@ class Domain(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_domain(self.name)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
+            description = self.describe_domain(self.name)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(e.args[0])
 
         domain_info = description["domainInfo"]
         domain_config = description["configuration"]
@@ -103,10 +104,10 @@ class Domain(BaseModel):
         )
 
     @property
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.is_not(DomainDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
@@ -118,7 +119,12 @@ class Domain(BaseModel):
 
         :rtype: bool
         """
-        self.connection.describe_domain(self.name)
+        try:
+            self.describe_domain(self.name)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "UnknownResourceFault":
+                return False
         return True
 
     def save(self) -> None:

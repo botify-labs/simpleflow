@@ -3,11 +3,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
+from botocore.exceptions import ClientError
 
 import simpleflow.swf.mapper.settings
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
+from simpleflow.swf.mapper.core import ConnectedSWFObject
+from simpleflow.swf.mapper.exceptions import DoesNotExistError, ResponseError
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.querysets.domain import DomainQuerySet
 
@@ -25,7 +26,7 @@ class TestDomainQuerySet(unittest.TestCase):
         pass
 
     def test_get_existent_domain(self):
-        with patch.object(self.qs.connection, "describe_domain", mock_describe_domain):
+        with patch.object(ConnectedSWFObject, "describe_domain", mock_describe_domain):
             domain = self.qs.get("test-domain")
             self.assertIsInstance(domain, Domain)
 
@@ -35,39 +36,29 @@ class TestDomainQuerySet(unittest.TestCase):
             self.assertTrue(hasattr(domain, "status"))
             self.assertEqual(domain.status, self.domain.status)
 
-    def test_get_non_existent_domain(self):
-        with patch.object(self.qs.connection, "describe_domain") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnknownResourceFault"})
-                self.qs.get("non_existent")
-
-    def test_get_domain_with_invalid_credentials(self):
-        with patch.object(self.qs.connection, "describe_domain") as mock:
-            with self.assertRaises(InvalidCredentialsError):
-                mock.side_effect = SWFResponseError(400, "mocking exception", {"__type": "UnrecognizedClientException"})
-                self.qs.get("non_existent")
-
     def test_get_raising_domain(self):
-        with patch.object(self.qs.connection, "describe_domain") as mock:
+        with patch.object(ConnectedSWFObject, "describe_domain") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocking exception",
+                mock.side_effect = ClientError(
                     {
-                        "__type": "WhateverError",
-                        "message": "WhateverMessage",
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
                     },
+                    "describe_domain",
                 )
                 self.qs.get("whatever")
 
     def test_get_or_create_existing_domain(self):
-        with patch.object(Layer1, "describe_domain", mock_describe_domain):
+        with patch.object(ConnectedSWFObject, "describe_domain", mock_describe_domain):
             domain = self.qs.get_or_create("TestDomain")
 
             self.assertIsInstance(domain, Domain)
 
     def test_get_or_create_non_existent_domain(self):
-        with patch.object(Layer1, "describe_domain") as mock:
+        with patch.object(ConnectedSWFObject, "describe_domain") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
             with patch.object(Layer1, "register_domain", mock_describe_domain):

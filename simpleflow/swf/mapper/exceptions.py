@@ -86,10 +86,6 @@ class PollTimeout(SWFError):
     pass
 
 
-class InvalidCredentialsError(SWFError):
-    pass
-
-
 class ResponseError(SWFError):
     pass
 
