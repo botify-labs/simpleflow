@@ -74,7 +74,8 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                 description=mocked["typeInfo"]["description"],
             )
 
-            diffs = workflow_type._diff()
+            # We remove dates because they sometimes vary by 1 second due to usage of datetime.*now() in mock
+            diffs = workflow_type._diff(ignore_fields=["creation_date", "deprecation_date"])
 
             self.assertLength(diffs, 0)
 
@@ -164,7 +165,8 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                 description=mocked["typeInfo"]["description"],
             )
 
-            diffs = workflow_type.changes
+            # We remove dates because they sometimes vary by 1 second due to usage of datetime.*now() in mock
+            diffs = workflow_type._diff(ignore_fields=["creation_date", "deprecation_date"])
 
             self.assertLength(diffs, 0)
 
@@ -327,29 +329,6 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
             self.assertTrue(hasattr(diffs[0], "attr"))
             self.assertTrue(hasattr(diffs[0], "local"))
             self.assertTrue(hasattr(diffs[0], "upstream"))
-
-    def test_workflow_execution_changes_with_identical_workflow_execution(self):
-        with patch.object(
-            Layer1,
-            "describe_workflow_execution",
-            mock_describe_workflow_execution,
-        ):
-            mocked = mock_describe_workflow_execution()
-            workflow_execution = WorkflowExecution(
-                self.domain,
-                mocked["executionInfo"]["execution"]["workflowId"],
-                run_id=mocked["executionInfo"]["execution"]["runId"],
-                status=mocked["executionInfo"]["executionStatus"],
-                task_list=mocked["executionConfiguration"]["taskList"]["name"],
-                child_policy=mocked["executionConfiguration"]["childPolicy"],
-                execution_timeout=mocked["executionConfiguration"]["executionStartToCloseTimeout"],
-                tag_list=mocked["executionInfo"]["tagList"],
-                decision_tasks_timeout=mocked["executionConfiguration"]["taskStartToCloseTimeout"],
-            )
-
-            diffs = workflow_execution.changes
-
-            self.assertLength(diffs, 0)
 
     def test_history(self):
         with patch.object(

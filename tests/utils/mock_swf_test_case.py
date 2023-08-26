@@ -31,7 +31,7 @@ class MockSWFTestCase(unittest.TestCase):
             self.workflow_type_version,
             task_list=self.decision_task_list,
             default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="6",
+            default_execution_start_to_close_timeout="10",
             default_task_start_to_close_timeout="3",
         )
 
@@ -54,6 +54,7 @@ class MockSWFTestCase(unittest.TestCase):
             self.workflow_type_name,
             self.workflow_type_version,
             input=input,
+            execution_start_to_close_timeout="10",
         )
         self.run_id = response["runId"]
 

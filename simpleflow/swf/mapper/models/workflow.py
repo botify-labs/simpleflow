@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
 
@@ -117,7 +117,7 @@ class WorkflowType(BaseModel):
 
         self.child_policy = policy
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between WorkflowType instance
         and upstream version
 
@@ -158,6 +158,7 @@ class WorkflowType(BaseModel):
                 workflow_config["defaultTaskStartToCloseTimeout"],
             ),
             ("description", self.description, workflow_info["description"]),
+            ignore_fields=ignore_fields,
         )
 
     @property
@@ -368,7 +369,7 @@ class WorkflowExecution(BaseModel):
         # so have to use generice self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between WorkflowExecution instance
         and upstream version
 
@@ -407,6 +408,7 @@ class WorkflowExecution(BaseModel):
                 self.decision_tasks_timeout,
                 execution_config["taskStartToCloseTimeout"],
             ),
+            ignore_fields=ignore_fields,
         )
 
     @property

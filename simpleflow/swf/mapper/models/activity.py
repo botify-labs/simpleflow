@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
 
@@ -106,7 +106,7 @@ class ActivityType(BaseModel):
         # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between ActivityType instance
         and upstream version
 
@@ -152,6 +152,7 @@ class ActivityType(BaseModel):
                 self.task_start_to_close_timeout,
                 config["defaultTaskStartToCloseTimeout"],
             ),
+            ignore_fields=ignore_fields,
         )
 
     @property

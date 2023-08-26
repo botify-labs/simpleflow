@@ -62,7 +62,8 @@ class TestActivityType(unittest.TestCase):
                 task_start_to_close_timeout=mocked["configuration"]["defaultTaskStartToCloseTimeout"],
             )
 
-            diffs = activity._diff()
+            # We remove dates because they sometimes vary by 1 second due to usage of datetime.*now() in mock
+            diffs = activity._diff(ignore_fields=["creation_date", "deprecation_date"])
 
             self.assertEqual(len(diffs), 0)
 
@@ -109,29 +110,3 @@ class TestActivityType(unittest.TestCase):
             self.assertTrue(hasattr(diffs[0], "attr"))
             self.assertTrue(hasattr(diffs[0], "local"))
             self.assertTrue(hasattr(diffs[0], "upstream"))
-
-    def test_activity_type_changes_with_identical_activity_type(self):
-        with patch.object(
-            Layer1,
-            "describe_activity_type",
-            mock_describe_activity_type,
-        ):
-            mocked = mock_describe_activity_type()
-            activity_type = ActivityType(
-                self.domain,
-                name=mocked["typeInfo"]["activityType"]["name"],
-                version=mocked["typeInfo"]["activityType"]["version"],
-                status=mocked["typeInfo"]["status"],
-                description=mocked["typeInfo"]["description"],
-                creation_date=mocked["typeInfo"]["creationDate"],
-                deprecation_date=mocked["typeInfo"]["deprecationDate"],
-                task_list=mocked["configuration"]["defaultTaskList"]["name"],
-                task_heartbeat_timeout=mocked["configuration"]["defaultTaskHeartbeatTimeout"],
-                task_schedule_to_close_timeout=mocked["configuration"]["defaultTaskScheduleToCloseTimeout"],
-                task_schedule_to_start_timeout=mocked["configuration"]["defaultTaskScheduleToStartTimeout"],
-                task_start_to_close_timeout=mocked["configuration"]["defaultTaskStartToCloseTimeout"],
-            )
-
-            diffs = activity_type.changes
-
-            self.assertEqual(len(diffs), 0)

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError  # noqa
 
@@ -72,7 +72,7 @@ class Domain(BaseModel):
         if not isinstance(domain, cls) or not hasattr(domain, "name") or not isinstance(domain.name, str):
             raise TypeError(f"invalid type {type(domain)} for domain")
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between Domain instance
         and upstream version
 
@@ -99,6 +99,7 @@ class Domain(BaseModel):
                 self.retention_period,
                 domain_config["workflowExecutionRetentionPeriodInDays"],
             ),
+            ignore_fields=ignore_fields,
         )
 
     @property

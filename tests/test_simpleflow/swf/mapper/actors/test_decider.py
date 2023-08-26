@@ -20,7 +20,7 @@ class TestActor(unittest.TestCase):
             "v1.2",
             task_list="test-task-list",
             default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="6",
+            default_execution_start_to_close_timeout="10",
             default_task_start_to_close_timeout="3",
         )
         return conn

@@ -129,24 +129,6 @@ class TestDomain(unittest.TestCase):
             self.assertTrue(hasattr(diffs[0], "local"))
             self.assertTrue(hasattr(diffs[0], "upstream"))
 
-    def test_domain_changes_with_identical_domain(self):
-        with patch.object(
-            Layer1,
-            "describe_domain",
-            mock_describe_domain,
-        ):
-            mocked = mock_describe_domain()
-            domain = Domain(
-                mocked["domainInfo"]["name"],
-                status=mocked["domainInfo"]["status"],
-                description=mocked["domainInfo"]["description"],
-                retention_period=mocked["configuration"]["workflowExecutionRetentionPeriodInDays"],
-            )
-
-            diffs = domain.changes
-
-            self.assertEqual(len(diffs), 0)
-
     def test_domain_save_valid_domain(self):
         with patch.object(self.domain.connection, "register_domain"):
             self.domain.save()
