@@ -183,7 +183,7 @@ class ActivityType(BaseModel):
     def save(self):
         """Creates the activity type amazon side"""
         try:
-            self.connection.register_activity_type(
+            self.register_activity_type(
                 self.domain.name,
                 self.name,
                 self.version,
@@ -194,11 +194,13 @@ class ActivityType(BaseModel):
                 default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description,
             )
-        except SWFTypeAlreadyExistsError:
-            raise AlreadyExistsError(f"{self} already exists")
-        except SWFResponseError as err:
-            if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
-                raise DoesNotExistError(err.body["message"])
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "TypeAlreadyExistsFault":
+                raise AlreadyExistsError(f"{self} already exists")
+            if error_code in ("UnknownResourceFault", "TypeDeprecatedFault"):
+                raise DoesNotExistError(f"{error_code}: {message}")
             raise
 
     @exceptions.catch(

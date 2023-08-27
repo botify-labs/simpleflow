@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from boto.swf.layer1 import Layer1
 from botocore.exceptions import ClientError
 
 import simpleflow.swf.mapper.settings
@@ -44,7 +43,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
         with patch.object(ConnectedSWFObject, "describe_activity_type") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
-            with patch.object(Layer1, "register_activity_type", mock_describe_activity_type):
+            with patch.object(ConnectedSWFObject, "register_activity_type", mock_describe_activity_type):
                 activity_type = self.atq.get_or_create("TestDomain", "testversion")
 
                 self.assertIsInstance(activity_type, ActivityType)
@@ -119,7 +118,7 @@ class TestActivityTypeQuerySet(unittest.TestCase):
                 self.atq.get("blah", "test")
 
     def test_create(self):
-        with patch.object(Layer1, "register_activity_type"):
+        with patch.object(ConnectedSWFObject, "register_activity_type"):
             new_activity_type = ActivityType(self.domain, "TestActivityType", "0.test")
 
             self.assertIsNotNone(new_activity_type)

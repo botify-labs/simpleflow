@@ -283,3 +283,34 @@ class ConnectedSWFObject:
             workflowExecutionRetentionPeriodInDays=workflow_execution_retention_period_in_days,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_activity_type
+    # written with boto3.
+    def register_activity_type(
+        self,
+        domain: str,
+        name: str,
+        version: str,
+        task_list: str | None = None,
+        default_task_schedule_to_close_timeout: str | None = None,
+        default_task_schedule_to_start_timeout: str | None = None,
+        default_task_start_to_close_timeout: str | None = None,
+        default_task_heartbeat_timeout: str | None = None,
+        description: str | None = None,
+    ):
+        kwargs = {
+            "defaultTaskList": {
+                "name": task_list,
+            },
+            "defaultTaskScheduleToCloseTimeout": default_task_schedule_to_close_timeout,
+            "defaultTaskScheduleToStartTimeout": default_task_schedule_to_start_timeout,
+            "defaultTaskStartToCloseTimeout": default_task_start_to_close_timeout,
+            "defaultTaskHeartbeatTimeout": default_task_heartbeat_timeout,
+            "description": description,
+        }
+        return self.boto3_client.register_activity_type(
+            domain=domain,
+            name=name,
+            version=version,
+            **remove_none(kwargs),
+        )
