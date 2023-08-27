@@ -209,10 +209,12 @@ class WorkflowType(BaseModel):
     def delete(self) -> None:
         """Deprecates the workflow type amazon-side"""
         try:
-            self.connection.deprecate_workflow_type(self.domain.name, self.name, self.version)
-        except SWFResponseError as e:
-            if e.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
-                raise DoesNotExistError(e.body["message"])
+            self.deprecate_workflow_type(self.domain.name, self.name, self.version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
+                raise DoesNotExistError(message)
 
     def upstream(self) -> WorkflowType:
         from simpleflow.swf.mapper.querysets.workflow import WorkflowTypeQuerySet

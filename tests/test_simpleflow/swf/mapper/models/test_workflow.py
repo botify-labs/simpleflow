@@ -201,22 +201,32 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
                 self.wt.save()
 
     def test_delete_non_existent_type(self):
-        with patch.object(self.wt.connection, "deprecate_workflow_type") as mock:
+        with patch.object(self.wt, "deprecate_workflow_type") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
-                    {"__type": "UnknownResourceFault", "message": "Whatever"},
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+                            "Code": "UnknownResourceFault",
+                        },
+                        "message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+                    },
+                    "deprecate_workflow_type",
                 )
                 self.wt.delete()
 
     def test_delete_deprecated_type(self):
-        with patch.object(self.wt.connection, "deprecate_workflow_type") as mock:
+        with patch.object(self.wt, "deprecate_workflow_type") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
-                    {"__type": "TypeDeprecatedFault", "message": "Whatever"},
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "...",
+                            "Code": "TypeDeprecatedFault",
+                        },
+                        "message": "...",
+                    },
+                    "deprecate_workflow_type",
                 )
                 self.wt.delete()
 

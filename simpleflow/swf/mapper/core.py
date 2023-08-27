@@ -225,3 +225,14 @@ class ConnectedSWFObject:
                 "version": version,
             },
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_workflow_type
+    # written with boto3.
+    def deprecate_workflow_type(self, domain: str, name: str, version: str):
+        return self.boto3_client.deprecate_workflow_type(
+            domain=domain,
+            workflowType={
+                "name": name,
+                "version": version,
+            },
+        )
