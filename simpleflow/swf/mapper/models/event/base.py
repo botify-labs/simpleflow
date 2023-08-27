@@ -54,7 +54,13 @@ class Event:
 
     excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
-    def __init__(self, id: int, state: str, timestamp: float, raw_data: dict | None):
+    def __init__(
+        self,
+        id: int,
+        state: str,
+        timestamp: float | datetime,
+        raw_data: dict | None,
+    ):
         """ """
         self._id = id
         self._state = state
@@ -86,6 +92,10 @@ class Event:
 
     @cached_property
     def timestamp(self) -> datetime:
+        # boto2 returns floats, boto3 returns datetimes (in local timezone)
+        # -> we convert both to UTC datetimes
+        if isinstance(self._timestamp, datetime):
+            return self._timestamp.astimezone(pytz.UTC)
         return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)
 
     @property

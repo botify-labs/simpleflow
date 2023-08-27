@@ -343,3 +343,30 @@ class ConnectedSWFObject:
             version=version,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.poll_for_decision_task
+    # written with boto3.
+    def poll_for_decision_task(
+        self,
+        domain: str,
+        task_list: str,
+        identity: str | None = None,
+        maximum_page_size: int | None = None,
+        next_page_token: str | None = None,
+        reverse_order: bool | None = None,
+        start_at_previous_started_event: bool = False,
+    ):
+        kwargs = {
+            "identity": identity,
+            "maximumPageSize": maximum_page_size,
+            "nextPageToken": next_page_token,
+            "reverseOrder": reverse_order,
+            "startAtPreviousStartedEvent": start_at_previous_started_event,
+        }
+        return self.boto3_client.poll_for_decision_task(
+            domain=domain,
+            taskList={
+                "name": task_list,
+            },
+            **remove_none(kwargs),
+        )
