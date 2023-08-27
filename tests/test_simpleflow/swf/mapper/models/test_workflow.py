@@ -186,18 +186,32 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
             self.assertLength(diffs, 0)
 
     def test_save_already_existing_type(self):
-        with patch.object(self.wt.connection, "register_workflow_type") as mock:
+        with patch.object(self.wt, "register_workflow_type") as mock:
             with self.assertRaises(AlreadyExistsError):
-                mock.side_effect = SWFTypeAlreadyExistsError(400, "mocked exception")
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "WorkflowType=[name=TestType, version=1.0]",
+                            "Code": "TypeAlreadyExistsFault",
+                        },
+                        "message": "WorkflowType=[name=TestType, version=1.0]",
+                    },
+                    "register_workflow_type",
+                )
                 self.wt.save()
 
     def test_save_with_response_error(self):
-        with patch.object(self.wt.connection, "register_workflow_type") as mock:
+        with patch.object(self.wt, "register_workflow_type") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
-                    {"__type": "UnknownResourceFault", "message": "Whatever"},
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "...",
+                            "Code": "UnknownResourceFault",
+                        },
+                        "message": "...",
+                    },
+                    "register_workflow_type",
                 )
                 self.wt.save()
 

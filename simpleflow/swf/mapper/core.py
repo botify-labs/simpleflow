@@ -314,3 +314,32 @@ class ConnectedSWFObject:
             version=version,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_workflow_type
+    # written with boto3.
+    def register_workflow_type(
+        self,
+        domain: str,
+        name: str,
+        version: str,
+        task_list: str | None = None,
+        default_child_policy: str | None = None,
+        default_execution_start_to_close_timeout: str | None = None,
+        default_task_start_to_close_timeout: str | None = None,
+        description: str | None = None,
+    ):
+        kwargs = {
+            "defaultTaskList": {
+                "name": task_list,
+            },
+            "defaultChildPolicy": default_child_policy,
+            "defaultExecutionStartToCloseTimeout": default_execution_start_to_close_timeout,
+            "defaultTaskStartToCloseTimeout": default_task_start_to_close_timeout,
+            "description": description,
+        }
+        return self.boto3_client.register_workflow_type(
+            domain=domain,
+            name=name,
+            version=version,
+            **remove_none(kwargs),
+        )

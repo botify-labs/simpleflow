@@ -190,7 +190,7 @@ class WorkflowType(BaseModel):
     def save(self) -> None:
         """Creates the workflow type amazon side"""
         try:
-            self.connection.register_workflow_type(
+            self.register_workflow_type(
                 self.domain.name,
                 self.name,
                 self.version,
@@ -200,11 +200,14 @@ class WorkflowType(BaseModel):
                 default_task_start_to_close_timeout=str(self.decision_tasks_timeout),
                 description=self.description,
             )
-        except SWFTypeAlreadyExistsError:
-            raise AlreadyExistsError("Workflow type %s already exists amazon-side" % self.name)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.body["message"])
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "TypeAlreadyExistsFault":
+                raise AlreadyExistsError("Workflow type %s already exists amazon-side" % self.name)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
+            raise
 
     def delete(self) -> None:
         """Deprecates the workflow type amazon-side"""

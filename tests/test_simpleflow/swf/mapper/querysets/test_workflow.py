@@ -3,11 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import Mock, patch
 
-import boto3
-from boto.exception import SWFResponseError
-from boto.swf.layer1 import Layer1
 from botocore.exceptions import ClientError
-from moto import mock_swf
 
 from simpleflow.swf.mapper.constants import REGISTERED
 from simpleflow.swf.mapper.core import ConnectedSWFObject
@@ -114,7 +110,7 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
         with patch.object(self.wtq, "describe_workflow_type") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
-            with patch.object(Layer1, "register_workflow_type", mock_describe_workflow_type):
+            with patch.object(ConnectedSWFObject, "register_workflow_type", mock_describe_workflow_type):
                 workflow_type = self.wtq.get_or_create("TestDomain", "testversion")
 
                 self.assertIsInstance(workflow_type, WorkflowType)
@@ -141,7 +137,7 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
                 self.assertEqual(wt.status, REGISTERED)
 
     def test_create_workflow_type(self):
-        with patch.object(Layer1, "register_workflow_type"):
+        with patch.object(ConnectedSWFObject, "register_workflow_type"):
             new_wt = self.wtq.create(
                 self.domain,
                 "TestWorkflowType",
