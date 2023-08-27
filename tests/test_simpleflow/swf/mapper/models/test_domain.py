@@ -3,9 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import Mock, patch
 
-from boto.exception import SWFResponseError
+import boto3
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
-from boto.swf.layer1 import Layer1
 from moto import mock_swf
 
 import simpleflow.swf.mapper.settings
@@ -115,23 +114,26 @@ class TestDomain(unittest.TestCase):
                 mock.side_effect = SWFDomainAlreadyExistsError(400, "mocking exception")
                 self.domain.save()
 
+    @mock_swf
     def test_domain_delete_existing_domain(self):
-        with patch.object(self.domain.connection, "deprecate_domain"):
-            self.domain.delete()
+        client = boto3.client("swf", region_name="us-east-1")
+        client.register_domain(
+            name="test-domain",
+            workflowExecutionRetentionPeriodInDays="10",
+        )
 
-    def test_domain_delete_non_existent_domain(self):
-        with patch.object(self.domain.connection, "deprecate_domain") as mock:
-            with self.assertRaises(DomainDoesNotExist):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "Bad Request",
-                    {
-                        "message": "Unknown domain: does not exist",
-                        "__type": "com.amazonaws.swf.base.model#UnknownResourceFault",
-                    },
-                    "UnknownResourceFault",
-                )
-                self.domain.delete()
+        def list_domains():
+            return client.list_domains(
+                registrationStatus="REGISTERED",
+            )["domainInfos"]
+
+        # existent domain
+        assert len(list_domains()) == 1
+        Domain("test-domain").delete()
+        assert len(list_domains()) == 0
+
+        with self.assertRaises(DomainDoesNotExist):
+            Domain("non-existent-domain").delete()
 
     def test_domain_workflows_without_existent_workflows(self):
         with patch.object(WorkflowTypeQuerySet, "all") as all_method:

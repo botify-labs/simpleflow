@@ -136,9 +136,9 @@ class Domain(BaseModel):
         except SWFDomainAlreadyExistsError:
             raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
 
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
@@ -147,7 +147,7 @@ class Domain(BaseModel):
     )
     def delete(self) -> None:
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_domain(self.name)
+        self.deprecate_domain(self.name)
 
     def upstream(self) -> Domain:
         from simpleflow.swf.mapper.querysets.domain import DomainQuerySet

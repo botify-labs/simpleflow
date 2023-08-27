@@ -259,3 +259,10 @@ class ConnectedSWFObject:
             workflowId=workflow_id,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_domain
+    # written with boto3.
+    def deprecate_domain(self, name: str):
+        return self.boto3_client.deprecate_domain(
+            name=name,
+        )
