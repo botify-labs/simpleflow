@@ -236,3 +236,26 @@ class ConnectedSWFObject:
                 "version": version,
             },
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.terminate_workflow_execution
+    # written with boto3.
+    def terminate_workflow_execution(
+        self,
+        domain: str,
+        workflow_id: str,
+        run_id: str | None = None,
+        child_policy: str | None = None,
+        details: str | None = None,
+        reason: str | None = None,
+    ):
+        kwargs = {
+            "runId": run_id,
+            "childPolicy": child_policy,
+            "details": details,
+            "reason": reason,
+        }
+        return self.boto3_client.terminate_workflow_execution(
+            domain=domain,
+            workflowId=workflow_id,
+            **remove_none(kwargs),
+        )

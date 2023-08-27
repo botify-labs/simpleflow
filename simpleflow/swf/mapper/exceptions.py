@@ -110,8 +110,8 @@ def ignore(*args, **kwargs):
     return
 
 
-REGEX_UNKNOWN_RESOURCE = re.compile(r"^[^ ]+\s+([^ :]+)")
-REGEX_NESTED_RESOURCE = re.compile(r"Unknown (?:type|execution):\s*([^=]+)=\[")
+REGEX_UNKNOWN_RESOURCE = re.compile(r"^Unknown ([^ :,]+)")
+REGEX_NESTED_RESOURCE = re.compile(r"Unknown (?:type|execution)[:,]\s*([^ =]+)\s*=")
 
 
 def match_equals(regex, string, values):
@@ -165,7 +165,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     return extract_error_code(error) == "UnknownResourceFault"
 
 
-def is_unknown(resource):
+def is_unknown(resource: str | Sequence[str]):
     """
     Return a function that checks if *error* is an unknown *resource* fault.
 
@@ -186,9 +186,13 @@ def is_unknown(resource):
             raise ValueError(f"cannot extract resource from {error}")
 
         message = extract_message(error)
-        if match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution")):
-            return match_equals(REGEX_NESTED_RESOURCE, message, resource)
-        return match_equals(REGEX_UNKNOWN_RESOURCE, message, resource)
+        has_nested_resource = match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution"))
+        if has_nested_resource:
+            matching = match_equals(REGEX_NESTED_RESOURCE, message, resource)
+        else:
+            matching = match_equals(REGEX_UNKNOWN_RESOURCE, message, resource)
+
+        return matching
 
     return wrapped
 

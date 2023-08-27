@@ -17,7 +17,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
     def cleanup_sleep_workflow(self):
         # ideally this should be in a tearDown() or setUp() call, but those
         # calls play badly with VCR since they only happen "sometimes"... :-/
-        self.conn.terminate_workflow_execution(self.domain, self.workflow_id)
+        self.boto3_client.terminate_workflow_execution(domain=self.domain, workflowId=self.workflow_id)
 
     @vcr.use_cassette
     def test_simpleflow_workflow_start(self):

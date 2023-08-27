@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import boto3
+import pytest
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFTypeAlreadyExistsError
 from boto.swf.layer1 import Layer1
@@ -367,3 +368,53 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
         ):
             history = self.we.history()
             self.assertIsInstance(history, History)
+
+    @mock_swf
+    def test_terminate(self):
+        client = boto3.client("swf", region_name="us-east-1")
+        client.register_domain(name="test-domain", workflowExecutionRetentionPeriodInDays="1")
+        client.register_workflow_type(
+            domain="test-domain",
+            name="test-workflow-type",
+            version="1.0",
+            defaultTaskList={"name": "test-task-list"},
+            defaultChildPolicy="TERMINATE",
+            defaultExecutionStartToCloseTimeout="300",
+            defaultTaskStartToCloseTimeout="300",
+        )
+        client.start_workflow_execution(
+            domain="test-domain",
+            workflowId="test-workflow-execution",
+            workflowType={"name": "test-workflow-type", "version": "1.0"},
+            taskList={"name": "test-task-list"},
+        )
+
+        def list_workflows():
+            return client.list_open_workflow_executions(
+                domain="test-domain",
+                startTimeFilter={"oldestDate": 0},
+                executionFilter={"workflowId": "test-workflow-execution"},
+            )["executionInfos"]
+
+        # non existing workflow
+        with pytest.raises(DoesNotExistError):
+            WorkflowExecution(
+                domain=Domain("test-domain"),
+                workflow_id="non-existent",
+            ).terminate()
+
+        # wrong run_id
+        with pytest.raises(DoesNotExistError):
+            WorkflowExecution(
+                domain=Domain("test-domain"),
+                workflow_id="test-workflow-execution",
+                run_id="wrong-run-id",
+            ).terminate()
+
+        # existing workflow
+        assert len(list_workflows()) == 1
+        WorkflowExecution(
+            domain=Domain("test-domain"),
+            workflow_id="test-workflow-execution",
+        ).terminate()
+        assert len(list_workflows()) == 0

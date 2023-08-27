@@ -530,12 +530,12 @@ class WorkflowExecution(BaseModel):
         """Requests the workflow execution cancel"""
         self.connection.request_cancel_workflow_execution(self.domain.name, self.workflow_id, run_id=self.run_id)
 
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             WorkflowExecutionDoesNotExist,
-            when=exceptions.is_unknown("domain"),
+            when=exceptions.is_unknown(("WorkflowExecution", "workflowId")),
             extract=exceptions.generate_resource_not_found_message,
         ),
     )
@@ -543,7 +543,7 @@ class WorkflowExecution(BaseModel):
         self, child_policy: CHILD_POLICIES | None = None, details: str | None = None, reason: str | None = None
     ) -> None:
         """Terminates the workflow execution"""
-        self.connection.terminate_workflow_execution(
+        self.terminate_workflow_execution(
             self.domain.name,
             self.workflow_id,
             run_id=self.run_id,

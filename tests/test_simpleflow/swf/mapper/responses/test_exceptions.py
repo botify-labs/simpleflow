@@ -36,3 +36,8 @@ def test_is_unknown():
             domain="existent", execution={"workflowId": "non-existent", "runId": "non-existent"}
         )
     assert is_unknown("WorkflowExecution")(exception.value)
+
+    # WorkflowExecution termination
+    with pytest.raises(ClientError) as exception:
+        client.terminate_workflow_execution(domain="existent", workflowId="non-existent")
+    assert is_unknown("workflowId")(exception.value)
