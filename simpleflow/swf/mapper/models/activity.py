@@ -202,7 +202,7 @@ class ActivityType(BaseModel):
             raise
 
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
@@ -211,7 +211,7 @@ class ActivityType(BaseModel):
     )
     def delete(self):
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_activity_type(self.domain.name, self.name, self.version)
+        self.deprecate_activity_type(self.domain.name, self.name, self.version)
 
     def upstream(self):
         from simpleflow.swf.mapper.querysets.activity import ActivityTypeQuerySet

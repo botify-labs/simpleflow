@@ -214,3 +214,14 @@ class ConnectedSWFObject:
                 "version": version,
             },
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_activity_type
+    # written with boto3.
+    def deprecate_activity_type(self, domain: str, name: str, version: str):
+        return self.boto3_client.deprecate_activity_type(
+            domain=domain,
+            activityType={
+                "name": name,
+                "version": version,
+            },
+        )
