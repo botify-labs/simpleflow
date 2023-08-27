@@ -266,3 +266,20 @@ class ConnectedSWFObject:
         return self.boto3_client.deprecate_domain(
             name=name,
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_domain
+    # written with boto3.
+    def register_domain(
+        self,
+        name: str,
+        workflow_execution_retention_period_in_days: str,
+        description: str | None = None,
+    ):
+        kwargs = {
+            "description": description,
+        }
+        return self.boto3_client.register_domain(
+            name=name,
+            workflowExecutionRetentionPeriodInDays=workflow_execution_retention_period_in_days,
+            **remove_none(kwargs),
+        )

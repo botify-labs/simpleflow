@@ -7,13 +7,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from boto.exception import SWFResponseError
-from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
+from simpleflow.swf.mapper.exceptions import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    ResponseError,
+    raises,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
@@ -132,9 +137,13 @@ class Domain(BaseModel):
     def save(self) -> None:
         """Creates the domain amazon side"""
         try:
-            self.connection.register_domain(self.name, str(self.retention_period), self.description)
-        except SWFDomainAlreadyExistsError:
-            raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
+            self.register_domain(self.name, str(self.retention_period), self.description)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "DomainAlreadyExistsFault":
+                raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
+            raise ResponseError(message)
 
     @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(

@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import boto3
 from boto.swf.exceptions import SWFDomainAlreadyExistsError
+from botocore.exceptions import ClientError
 from moto import mock_swf
 
 import simpleflow.swf.mapper.settings
@@ -105,13 +106,19 @@ class TestDomain(unittest.TestCase):
             self.assertTrue(hasattr(diffs[0], "upstream"))
 
     def test_domain_save_valid_domain(self):
-        with patch.object(self.domain.connection, "register_domain"):
+        with patch.object(self.domain, "register_domain"):
             self.domain.save()
 
     def test_domain_save_already_existing_domain(self):
-        with patch.object(self.domain.connection, "register_domain") as mock:
+        with patch.object(self.domain, "register_domain") as mock:
             with self.assertRaises(AlreadyExistsError):
-                mock.side_effect = SWFDomainAlreadyExistsError(400, "mocking exception")
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {"Message": "testdomain", "Code": "DomainAlreadyExistsFault"},
+                        "message": "testdomain",
+                    },
+                    "register_domain",
+                )
                 self.domain.save()
 
     @mock_swf

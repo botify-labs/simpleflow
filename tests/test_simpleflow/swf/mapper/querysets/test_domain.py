@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from boto.swf.layer1 import Layer1
 from botocore.exceptions import ClientError
 
 import simpleflow.swf.mapper.settings
@@ -61,7 +60,7 @@ class TestDomainQuerySet(unittest.TestCase):
         with patch.object(ConnectedSWFObject, "describe_domain") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
-            with patch.object(Layer1, "register_domain", mock_describe_domain):
+            with patch.object(ConnectedSWFObject, "register_domain", mock_describe_domain):
                 domain = self.qs.get_or_create("TestDomain")
 
                 self.assertIsInstance(domain, Domain)
@@ -73,7 +72,7 @@ class TestDomainQuerySet(unittest.TestCase):
             self.assertIsInstance(domains[0], Domain)
 
     def test_create_domain(self):
-        with patch.object(Layer1, "register_domain"):
+        with patch.object(ConnectedSWFObject, "register_domain"):
             new_domain = self.qs.create("TestDomain")
 
             self.assertIsNotNone(new_domain)
