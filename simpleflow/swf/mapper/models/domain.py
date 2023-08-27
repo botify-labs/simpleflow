@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
+from boto.exception import SWFResponseError
+from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions

@@ -8,10 +8,18 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
+from simpleflow.swf.mapper.exceptions import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    ResponseError,
+    raises,
+    extract_message,
+    extract_error_code,
+)
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
@@ -114,12 +122,14 @@ class ActivityType(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_activity_type(self.domain.name, self.name, self.version)
-        except SWFResponseError as err:
-            if err.error_code == "UnknownResourceFault":
+            description = self.describe_activity_type(self.domain.name, self.name, self.version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote ActivityType does not exist")
 
-            raise ResponseError(err.body["message"])
+            raise ResponseError(message)
 
         info = description["typeInfo"]
         config = description["configuration"]
@@ -158,7 +168,7 @@ class ActivityType(BaseModel):
     @property
     @exceptions.is_not(ActivityTypeDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
@@ -167,7 +177,7 @@ class ActivityType(BaseModel):
     )
     def exists(self) -> bool:
         """Checks if the ActivityType exists amazon-side"""
-        self.connection.describe_activity_type(self.domain.name, self.name, self.version)
+        self.describe_activity_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self):

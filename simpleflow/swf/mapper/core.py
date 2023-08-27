@@ -203,3 +203,14 @@ class ConnectedSWFObject:
         return self.boto3_client.describe_domain(
             name=name,
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_activity_type
+    # written with boto3.
+    def describe_activity_type(self, domain: str, name: str, version: str):
+        return self.boto3_client.describe_activity_type(
+            domain=domain,
+            activityType={
+                "name": name,
+                "version": version,
+            },
+        )
