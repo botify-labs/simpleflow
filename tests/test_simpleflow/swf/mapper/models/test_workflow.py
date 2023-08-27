@@ -238,7 +238,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test___diff_with_different_workflow_execution(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_execution",
             mock_describe_workflow_execution,
         ):
@@ -258,7 +258,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_workflow_execution__diff_with_identical_workflow_execution(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_execution",
             mock_describe_workflow_execution,
         ):
@@ -280,32 +280,37 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
             self.assertLength(diffs, 0)
 
     def test_exists_with_existing_workflow_execution(self):
-        with patch.object(Layer1, "describe_workflow_execution"):
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution"):
             self.assertTrue(self.we.exists)
 
     def test_exists_with_non_existent_workflow_execution(self):
-        with patch.object(self.we.connection, "describe_workflow_execution") as mock:
-            mock.side_effect = SWFResponseError(
-                400,
-                "Bad Request:",
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
+            mock.side_effect = ClientError(
                 {
-                    "__type": "com.amazonaws.swf.base.model#UnknownResourceFault",
+                    "Error": {
+                        "Message": "Unknown execution: WorkflowExecution=[workflowId=blah, runId=test]",
+                        "Code": "UnknownResourceFault",
+                    },
                     "message": "Unknown execution: WorkflowExecution=[workflowId=blah, runId=test]",
                 },
-                "UnknownResourceFault",
+                "describe_workflow_execution",
             )
-
             self.assertFalse(self.we.exists)
 
     # TODO: fix test when no network (probably hits real SWF endpoints)
     @unittest.skip("Skip it in case there's no network connection.")
     def test_workflow_execution_exists_with_whatever_error(self):
-        with patch.object(self.we.connection, "describe_workflow_execution") as mock:
+        with patch.object(self.we, "describe_workflow_execution") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocking exception",
-                    {"__type": "WhateverError", "message": "Whatever"},
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
+                    },
+                    "describe_workflow_execution",
                 )
                 _ = self.domain.exists
 
@@ -316,7 +321,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
         pass
 
     def test_is_synced_over_non_existent_workflow_execution(self):
-        with patch.object(Layer1, "describe_workflow_execution", mock_describe_workflow_execution):
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution", mock_describe_workflow_execution):
             workflow_execution = WorkflowExecution(
                 self.domain,
                 WorkflowType(self.domain, "NonExistentTestType", "1.0"),
@@ -326,7 +331,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_changes_with_different_workflow_execution(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_execution",
             mock_describe_workflow_execution,
         ):

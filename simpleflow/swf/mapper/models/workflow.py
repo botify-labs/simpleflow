@@ -387,12 +387,14 @@ class WorkflowExecution(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
+            description = self.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         execution_info = description["executionInfo"]
         execution_config = description["executionConfiguration"]
@@ -422,19 +424,19 @@ class WorkflowExecution(BaseModel):
         )
 
     @property
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.is_not(WorkflowExecutionDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             WorkflowExecutionDoesNotExist,
-            when=exceptions.is_unknown("WorkflowExecution"),
+            when=exceptions.is_unknown(("WorkflowExecution", "workflowId")),
             extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
         """Checks if the WorkflowExecution exists amazon-side"""
-        self.connection.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
+        self.describe_workflow_execution(self.domain.name, self.run_id, self.workflow_id)
         return True
 
     def upstream(self) -> WorkflowExecution:

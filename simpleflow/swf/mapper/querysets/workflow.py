@@ -476,12 +476,14 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
     def get(self, workflow_id, run_id, *args, **kwargs):
         """ """
         try:
-            response = self.connection.describe_workflow_execution(self.domain.name, run_id, workflow_id)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.body["message"])
+            response = self.describe_workflow_execution(self.domain.name, run_id, workflow_id)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         execution_info = response[self._infos]
         execution_config = response["executionConfiguration"]

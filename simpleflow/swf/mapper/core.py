@@ -185,3 +185,14 @@ class ConnectedSWFObject:
                 "version": version,
             },
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_workflow_execution
+    # written with boto3.
+    def describe_workflow_execution(self, domain: str, run_id: str, workflow_id: str):
+        return self.boto3_client.describe_workflow_execution(
+            domain=domain,
+            execution={
+                "workflowId": workflow_id,
+                "runId": run_id,
+            },
+        )

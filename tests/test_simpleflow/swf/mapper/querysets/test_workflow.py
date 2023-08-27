@@ -26,6 +26,7 @@ from ..mocks.workflow import (
     mock_list_closed_workflow_executions,
     mock_list_open_workflow_executions,
     mock_list_workflow_types,
+    mock_describe_workflow_execution,
 )
 
 
@@ -262,39 +263,38 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
             self.assertTrue(wt.name == execution_info["workflowType"]["name"])
 
     def test_get_valid_workflow_execution(self):
-        pass
-        # with patch.object(
-        #     self.weq.connection,
-        #     'describe_workflow_execution',
-        #     mock_describe_workflow_execution
-        # ):
-        #     we = self.weq.get("mocked-workflow-id", "mocked-run-id")
-        #     self.assertIsNotNone(we)
-        #     self.assertIsInstance(we, WorkflowExecution)
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution", mock_describe_workflow_execution):
+            we = self.weq.get("mocked-workflow-id", "mocked-run-id")
+            self.assertIsNotNone(we)
+            self.assertIsInstance(we, WorkflowExecution)
 
     def test_get_non_existent_workflow_execution(self):
-        with patch.object(self.weq.connection, "describe_workflow_execution") as mock:
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
             with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
+                mock.side_effect = ClientError(
                     {
-                        "__type": "UnknownResourceFault",
-                        "message": "Whatever",
+                        "Error": {
+                            "Message": "Unknown execution: WorkflowExecution=[workflowId=mocked-workflow-id, runId=mocked-run-id]",
+                            "Code": "UnknownResourceFault",
+                        },
+                        "message": "Unknown execution: WorkflowExecution=[workflowId=mocked-workflow-id, runId=mocked-run-id]",
                     },
+                    "describe_workflow_execution",
                 )
                 self.weq.get("mocked-workflow-id", "mocked-run-id")
 
     def test_get_invalid_workflow_execution(self):
-        with patch.object(self.weq.connection, "describe_workflow_execution") as mock:
+        with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
+                mock.side_effect = ClientError(
                     {
-                        "__type": "WhateverFault",
-                        "message": "Whatever",
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
                     },
+                    "describe_workflow_execution",
                 )
                 self.weq.get("mocked-workflow-id", "mocked-run-id")
 
