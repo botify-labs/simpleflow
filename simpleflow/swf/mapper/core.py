@@ -15,7 +15,7 @@ from boto.exception import NoAuthHandlerFound
 # config hosted in simpleflow. This wouldn't be the case with a standard
 # "logging.getLogger(__name__)" which would write logs under the "swf" namespace
 from simpleflow import logger
-from simpleflow.utils import retry, remove_none
+from simpleflow.utils import remove_none, retry
 
 from . import settings
 
@@ -174,3 +174,14 @@ class ConnectedSWFObject:
             "reverseOrder": reverse_order,
         }
         return self.boto3_client.list_workflow_types(**remove_none(kwargs))
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_workflow_type
+    # written with boto3.
+    def describe_workflow_type(self, domain: str, name: str, version: str):
+        return self.boto3_client.describe_workflow_type(
+            domain=domain,
+            workflowType={
+                "name": name,
+                "version": version,
+            },
+        )

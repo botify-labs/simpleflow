@@ -162,7 +162,7 @@ class ActivityType(BaseModel):
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
@@ -196,7 +196,7 @@ class ActivityType(BaseModel):
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def delete(self):

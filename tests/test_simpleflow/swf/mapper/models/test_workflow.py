@@ -3,10 +3,14 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+import boto3
 from boto.exception import SWFResponseError
 from boto.swf.exceptions import SWFTypeAlreadyExistsError
 from boto.swf.layer1 import Layer1
+from botocore.exceptions import ClientError
+from moto import mock_swf
 
+from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.history.base import History
@@ -39,7 +43,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test___diff_with_different_workflow_type(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_type",
             mock_describe_workflow_type,
         ):
@@ -55,7 +59,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_workflow_type__diff_with_identical_workflow_type(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_type",
             mock_describe_workflow_type,
         ):
@@ -80,34 +84,44 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
             self.assertLength(diffs, 0)
 
     def test_exists_with_existing_workflow_type(self):
-        with patch.object(Layer1, "describe_workflow_type"):
+        with patch.object(ConnectedSWFObject, "describe_workflow_type"):
             self.assertTrue(self.wt.exists)
 
+    @mock_swf
     def test_exists_with_non_existent_workflow_type(self):
-        with patch.object(self.wt.connection, "describe_workflow_type") as mock:
-            mock.side_effect = SWFResponseError(
-                400,
-                "Bad Request:",
+        with patch.object(self.wt, "describe_workflow_type") as mock:
+            mock.side_effect = ClientError(
                 {
-                    "__type": "com.amazonaws.swf.base.model#UnknownResourceFault",
-                    "message": "Unknown type: WorkflowType=[workflowId=blah, runId=test]",
+                    "Error": {
+                        "Message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+                        "Code": "UnknownResourceFault",
+                    },
+                    "message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
                 },
-                "UnknownResourceFault",
+                "describe_workflow_type",
             )
 
             self.assertFalse(self.wt.exists)
 
-    # TODO: fix test when no network (probably hits real SWF endpoints)
-    @unittest.skip("Skip it in case there's no network connection.")
+        client = boto3.client("swf", region_name="us-east-1")
+        client.register_domain(name="test-domain", workflowExecutionRetentionPeriodInDays="1")
+        assert not self.wt.exists
+
+    @mock_swf
     def test_workflow_type_exists_with_whatever_error(self):
-        with patch.object(self.wt.connection, "describe_workflow_type") as mock:
+        with patch.object(self.wt, "describe_workflow_type") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocking exception",
-                    {"__type": "WhateverError", "message": "Whatever"},
+                mock.side_effect = ClientError(
+                    {
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
+                    },
+                    "describe_workflow_type",
                 )
-                _ = self.domain.exists
+                _ = self.wt.exists
 
     def test_is_synced_with_unsynced_workflow_type(self):
         pass
@@ -116,7 +130,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
         pass
 
     def test_is_synced_over_non_existent_workflow_type(self):
-        with patch.object(Layer1, "describe_workflow_type", mock_describe_workflow_type):
+        with patch.object(self.wt, "describe_workflow_type", mock_describe_workflow_type):
             workflow_type = WorkflowType(
                 self.domain,
                 "non-existent-workflow-type",
@@ -126,7 +140,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_changes_with_different_workflow_type(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_type",
             mock_describe_workflow_type,
         ):
@@ -146,7 +160,7 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     def test_workflow_type_changes_with_identical_workflow_type(self):
         with patch.object(
-            Layer1,
+            ConnectedSWFObject,
             "describe_workflow_type",
             mock_describe_workflow_type,
         ):

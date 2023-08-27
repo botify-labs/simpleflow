@@ -110,7 +110,7 @@ class Domain(BaseModel):
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
@@ -134,7 +134,7 @@ class Domain(BaseModel):
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def delete(self) -> None:

@@ -3,10 +3,14 @@ from __future__ import annotations
 import unittest
 from unittest.mock import Mock, patch
 
+import boto3
 from boto.exception import SWFResponseError
 from boto.swf.layer1 import Layer1
+from botocore.exceptions import ClientError
+from moto import mock_swf
 
 from simpleflow.swf.mapper.constants import REGISTERED
+from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.exceptions import DoesNotExistError, ResponseError
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.workflow import WorkflowExecution, WorkflowType
@@ -64,45 +68,49 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
         pass
 
     def test_valid_workflow_type(self):
-        with patch.object(self.wtq.connection, "describe_workflow_type", mock_describe_workflow_type):
+        with patch.object(self.wtq, "describe_workflow_type", mock_describe_workflow_type):
             wt = self.wtq.get("TestType", "0.1")
             self.assertIsNotNone(wt)
             self.assertIsInstance(wt, WorkflowType)
 
     def test_get_non_existent_workflow_type(self):
-        with patch.object(self.wtq.connection, "describe_workflow_type") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
+        with patch.object(self.wtq, "describe_workflow_type") as mock:
+            with self.assertRaises(ResponseError):
+                mock.side_effect = ClientError(
                     {
-                        "__type": "UnknownResourceFault",
-                        "message": "Whatever",
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
                     },
+                    "describe_workflow_type",
                 )
                 self.wtq.get("NonExistentWorkflowType", "0.1")
 
     def test_get_whatever_failing_workflow_type(self):
-        with patch.object(self.wtq.connection, "describe_workflow_type") as mock:
+        with patch.object(ConnectedSWFObject, "describe_workflow_type") as mock:
             with self.assertRaises(ResponseError):
-                mock.side_effect = SWFResponseError(
-                    400,
-                    "mocked exception",
+                mock.side_effect = ClientError(
                     {
-                        "__type": "Whatever Error",
-                        "message": "Whatever",
+                        "Error": {
+                            "Message": "Foo bar",
+                            "Code": "WhateverError",
+                        },
+                        "message": "Foo bar",
                     },
+                    "describe_workflow_type",
                 )
                 self.wtq.get("NonExistentWorkflowType", "0.1")
 
     def test_get_or_create_existing_workflow_type(self):
-        with patch.object(Layer1, "describe_workflow_type", mock_describe_workflow_type):
+        with patch.object(self.wtq, "describe_workflow_type", mock_describe_workflow_type):
             workflow_type = self.wtq.get_or_create("TestActivityType", "testversion")
 
             self.assertIsInstance(workflow_type, WorkflowType)
 
     def test_get_or_create_non_existent_workflow_type(self):
-        with patch.object(Layer1, "describe_workflow_type") as mock:
+        with patch.object(self.wtq, "describe_workflow_type") as mock:
             mock.side_effect = DoesNotExistError("Mocked exception")
 
             with patch.object(Layer1, "register_workflow_type", mock_describe_workflow_type):
@@ -247,7 +255,7 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
     def test_get_workflow_type(self):
         execution_info = mock_list_open_workflow_executions()["executionInfos"][0]
 
-        with patch.object(Layer1, "describe_workflow_type", mock_describe_workflow_type):
+        with patch.object(ConnectedSWFObject, "describe_workflow_type", mock_describe_workflow_type):
             wt = self.weq.get_workflow_type(execution_info)
             self.assertIsNotNone(wt)
             self.assertIsInstance(wt, WorkflowType)

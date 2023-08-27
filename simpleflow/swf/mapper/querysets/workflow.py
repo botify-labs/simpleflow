@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from boto.swf.exceptions import SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper.constants import MAX_WORKFLOW_AGE, REGISTERED
 from simpleflow.swf.mapper.exceptions import (
@@ -15,6 +16,8 @@ from simpleflow.swf.mapper.exceptions import (
     DoesNotExistError,
     InvalidKeywordArgumentError,
     ResponseError,
+    extract_error_code,
+    extract_message,
 )
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.workflow import CHILD_POLICIES, WorkflowExecution, WorkflowType
@@ -118,12 +121,14 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             }
         """
         try:
-            response = self.connection.describe_workflow_type(self.domain.name, name, version)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.body["message"])
+            response = self.describe_workflow_type(self.domain.name, name, version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         wt_info = response[self._infos]
         wt_config = response["configuration"]

@@ -6,6 +6,7 @@ from functools import partial, wraps
 from typing import Any, Callable
 
 import boto.exception
+from botocore.exceptions import ClientError
 
 
 class SWFError(Exception):
@@ -162,10 +163,10 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     :type  error: Exception
 
     """
-    if not isinstance(error, boto.exception.SWFResponseError):
+    if not isinstance(error, (boto.exception.SWFResponseError, ClientError)):
         return False
 
-    return getattr(error, "error_code", None) == "UnknownResourceFault"
+    return extract_error_code(error) == "UnknownResourceFault"
 
 
 def is_unknown(resource):
@@ -183,10 +184,12 @@ def is_unknown(resource):
         """
         if not is_unknown_resource_raised(error, *args, **kwargs):
             return False
-        if getattr(error, "error_code", None) != "UnknownResourceFault":
+
+        error_code = extract_error_code(error)
+        if error_code != "UnknownResourceFault":
             raise ValueError(f"cannot extract resource from {error}")
 
-        message = error.body.get("message")
+        message = extract_message(error)
         if match_equals(REGEX_UNKNOWN_RESOURCE, message, ("type", "execution")):
             return match_equals(REGEX_NESTED_RESOURCE, message, resource)
         return match_equals(REGEX_UNKNOWN_RESOURCE, message, resource)
@@ -221,11 +224,12 @@ def always(value):
     return wrapped
 
 
-def extract_resource(error):
-    if getattr(error, "error_code", None) != "UnknownResourceFault":
+def generate_resource_not_found_message(error):
+    error_code = extract_error_code(error)
+    if error_code != "UnknownResourceFault":
         raise ValueError(f"cannot extract resource from {error}")
 
-    message = error.body.get("message")
+    message = extract_message(error)
     resource = REGEX_UNKNOWN_RESOURCE.findall(message) if message else None
     return f"Resource {resource[0] if resource else 'unknown'} does not exist"
 
@@ -387,6 +391,26 @@ def translate(exceptions, to):
     """
 
     def throw(err, *args, **kwargs):
-        raise to(err.message)
+        raise to(extract_message(err))
 
     return catch(exceptions, handle_with=throw)
+
+
+def extract_error_code(error: Exception) -> str | None:
+    # boto2
+    if hasattr(error, "error_code"):
+        return error.error_code
+    # boto3
+    if hasattr(error, "response"):
+        return error.response["Error"]["Code"]
+    return None
+
+
+def extract_message(error: Exception) -> str | None:
+    # boto2
+    if hasattr(error, "message"):
+        return error.message
+    # boto3
+    if hasattr(error, "response"):
+        return error.response["Error"]["Message"]
+    return None

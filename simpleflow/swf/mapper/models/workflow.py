@@ -10,11 +10,19 @@ import time
 from typing import TYPE_CHECKING, List
 
 from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow import format
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
+from simpleflow.swf.mapper.exceptions import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    ResponseError,
+    raises,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.history.base import History
@@ -125,12 +133,14 @@ class WorkflowType(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_workflow_type(self.domain.name, self.name, self.version)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
+            description = self.describe_workflow_type(self.domain.name, self.name, self.version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         workflow_info = description["typeInfo"]
         workflow_config = description["configuration"]
@@ -162,19 +172,19 @@ class WorkflowType(BaseModel):
         )
 
     @property
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.is_not(WorkflowTypeDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             WorkflowTypeDoesNotExist,
             when=exceptions.is_unknown("WorkflowType"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
         """Checks if the WorkflowType exists amazon-side"""
-        self.connection.describe_workflow_type(self.domain.name, self.name, self.version)
+        self.describe_workflow_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self) -> None:
@@ -419,7 +429,7 @@ class WorkflowExecution(BaseModel):
         raises(
             WorkflowExecutionDoesNotExist,
             when=exceptions.is_unknown("WorkflowExecution"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
@@ -466,7 +476,7 @@ class WorkflowExecution(BaseModel):
         raises(
             WorkflowExecutionDoesNotExist,
             when=exceptions.is_unknown("WorkflowExecution"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def signal(
@@ -509,7 +519,7 @@ class WorkflowExecution(BaseModel):
         raises(
             WorkflowExecutionDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def request_cancel(self, *args, **kwargs) -> None:
@@ -522,7 +532,7 @@ class WorkflowExecution(BaseModel):
         raises(
             WorkflowExecutionDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def terminate(
