@@ -2,26 +2,26 @@ from __future__ import annotations
 
 import unittest
 
-import boto
+import boto3
+from moto import mock_swf
 
 from simpleflow.swf.mapper.actors import Decider
 from simpleflow.swf.mapper.exceptions import PollTimeout
 from simpleflow.swf.mapper.models.domain import Domain
-from tests.moto_compat import mock_swf
 
 
 class TestActor(unittest.TestCase):
     def make_swf_environment(self):
-        conn = boto.connect_swf()
-        conn.register_domain("TestDomain", "50")
+        conn = boto3.client("swf", region_name="us-east-1")
+        conn.register_domain(name="TestDomain", workflowExecutionRetentionPeriodInDays="50")
         conn.register_workflow_type(
-            "TestDomain",
-            "test-workflow",
-            "v1.2",
-            task_list="test-task-list",
-            default_child_policy="TERMINATE",
-            default_execution_start_to_close_timeout="10",
-            default_task_start_to_close_timeout="3",
+            domain="TestDomain",
+            name="test-workflow",
+            version="v1.2",
+            defaultTaskList={"name": "test-task-list"},
+            defaultChildPolicy="TERMINATE",
+            defaultExecutionStartToCloseTimeout="10",
+            defaultTaskStartToCloseTimeout="3",
         )
         return conn
 
@@ -41,7 +41,11 @@ class TestActor(unittest.TestCase):
     @mock_swf
     def test_poll_with_decision_to_take(self):
         conn = self.make_swf_environment()
-        conn.start_workflow_execution("TestDomain", "wfe-1234", "test-workflow", "v1.2")
+        conn.start_workflow_execution(
+            domain="TestDomain",
+            workflowId="wfe-1234",
+            workflowType={"name": "test-workflow", "version": "v1.2"},
+        )
 
         response = self.actor.poll()
 

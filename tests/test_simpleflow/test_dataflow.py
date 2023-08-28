@@ -4,7 +4,8 @@ import datetime
 import functools
 from unittest.mock import patch
 
-import boto
+import boto3
+from moto import mock_swf
 
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.models.decision
@@ -31,7 +32,6 @@ from tests.data.activities import (
 )
 from tests.data.constants import DOMAIN
 from tests.data.workflows import BaseTestWorkflow
-from tests.moto_compat import mock_swf
 
 
 def check_task_scheduled_decision(decision, task):
@@ -1342,8 +1342,8 @@ def test_activity_task_timeout_raises():
 
 @mock_swf
 def test_activity_not_found_schedule_failed():
-    conn = boto.connect_swf()
-    conn.register_domain("TestDomain", "50")
+    conn = boto3.client("swf", region_name="us-east-1")
+    conn.register_domain(name="TestDomain", workflowExecutionRetentionPeriodInDays="50")
 
     workflow = ATestDefinition
     executor = Executor(DOMAIN, workflow)

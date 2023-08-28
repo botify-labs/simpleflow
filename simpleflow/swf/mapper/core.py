@@ -602,7 +602,7 @@ class ConnectedSWFObject:
             else None,
             "childPolicy": child_policy,
             "executionStartToCloseTimeout": execution_start_to_close_timeout,
-            "input": input,
+            "input": input if input is not None else "",
             "tagList": tag_list,
             "taskStartToCloseTimeout": task_start_to_close_timeout,
         }

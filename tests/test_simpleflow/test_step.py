@@ -4,6 +4,7 @@ import json
 import unittest
 
 import boto
+from moto import mock_swf
 
 from simpleflow import futures, storage, task, workflow
 from simpleflow.activity import with_attributes
@@ -19,7 +20,7 @@ from simpleflow.step.utils import (
     step_will_run,
 )
 from simpleflow.step.workflow import WorkflowStepMixin
-from tests.moto_compat import mock_s3, mock_swf
+from tests.moto_compat import mock_s3
 
 from .base import TestWorkflowMixin
 
