@@ -578,3 +578,40 @@ class ConnectedSWFObject:
             },
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.start_workflow_execution
+    # written with boto3.
+    def start_workflow_execution(
+        self,
+        domain: str,
+        workflow_id: str,
+        workflow_name: str,
+        workflow_version: str,
+        task_list: str | None = None,
+        child_policy: str | None = None,
+        execution_start_to_close_timeout: str | None = None,
+        input: str | None = None,
+        tag_list: list[str] | None = None,
+        task_start_to_close_timeout: str | None = None,
+    ):
+        kwargs = {
+            "taskList": {
+                "name": task_list,
+            }
+            if task_list
+            else None,
+            "childPolicy": child_policy,
+            "executionStartToCloseTimeout": execution_start_to_close_timeout,
+            "input": input,
+            "tagList": tag_list,
+            "taskStartToCloseTimeout": task_start_to_close_timeout,
+        }
+        return self.boto3_client.start_workflow_execution(
+            domain=domain,
+            workflowId=workflow_id,
+            workflowType={
+                "name": workflow_name,
+                "version": workflow_version,
+            },
+            **remove_none(kwargs),
+        )

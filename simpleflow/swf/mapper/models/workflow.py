@@ -261,7 +261,7 @@ class WorkflowType(BaseModel):
         if tag_list and len(tag_list) > 5:
             raise ValueError("You cannot have more than 5 tags in StartWorkflowExecution.")
 
-        run_id = self.connection.start_workflow_execution(
+        run_id = self.start_workflow_execution(
             self.domain.name,
             workflow_id,
             self.name,
