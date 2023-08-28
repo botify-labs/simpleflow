@@ -458,12 +458,12 @@ class WorkflowExecution(BaseModel):
         if not isinstance(domain, str):
             domain = domain.name
 
-        response = self.connection.get_workflow_execution_history(domain, self.run_id, self.workflow_id, **kwargs)
+        response = self.get_workflow_execution_history(domain, self.run_id, self.workflow_id, **kwargs)
 
         events: list[dict[str, Any]] = response["events"]
         next_page = response.get("nextPageToken")
         while next_page is not None:
-            response = self.connection.get_workflow_execution_history(
+            response = self.get_workflow_execution_history(
                 domain,
                 self.run_id,
                 self.workflow_id,

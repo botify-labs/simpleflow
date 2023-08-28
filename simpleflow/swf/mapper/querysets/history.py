@@ -41,7 +41,7 @@ class HistoryQuerySet(BaseQuerySet):
         if max_results < page_size:
             page_size = max_results
 
-        response = self.connection.get_workflow_execution_history(
+        response = self.get_workflow_execution_history(
             self.domain.name,
             run_id,
             workflow_id,
@@ -52,7 +52,7 @@ class HistoryQuerySet(BaseQuerySet):
 
         next_page = response.get("nextPageToken")
         while next_page is not None and len(events) < max_results:
-            response = self.connection.get_workflow_execution_history(
+            response = self.get_workflow_execution_history(
                 self.domain.name,
                 run_id,
                 workflow_id,

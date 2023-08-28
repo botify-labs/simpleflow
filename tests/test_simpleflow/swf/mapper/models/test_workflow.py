@@ -376,7 +376,7 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
 
     def test_history(self):
         with patch.object(
-            self.we.connection,
+            self.we,
             "get_workflow_execution_history",
             mock_get_workflow_execution_history,
         ):
