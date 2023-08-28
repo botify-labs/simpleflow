@@ -9,7 +9,6 @@ import collections
 import time
 from typing import TYPE_CHECKING, List
 
-from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
 from botocore.exceptions import ClientError
 
 from simpleflow import format
@@ -520,9 +519,9 @@ class WorkflowExecution(BaseModel):
             run_id=run_id if workflow_id else self.run_id,
         )
 
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             WorkflowExecutionDoesNotExist,
             when=exceptions.is_unknown("domain"),
@@ -531,7 +530,7 @@ class WorkflowExecution(BaseModel):
     )
     def request_cancel(self, *args, **kwargs) -> None:
         """Requests the workflow execution cancel"""
-        self.connection.request_cancel_workflow_execution(self.domain.name, self.workflow_id, run_id=self.run_id)
+        self.request_cancel_workflow_execution(self.domain.name, self.workflow_id, run_id=self.run_id)
 
     @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(

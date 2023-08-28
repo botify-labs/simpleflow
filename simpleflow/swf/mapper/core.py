@@ -490,3 +490,20 @@ class ConnectedSWFObject:
             workflowId=workflow_id,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.request_cancel_workflow_execution
+    # written with boto3.
+    def request_cancel_workflow_execution(
+        self,
+        domain: str,
+        workflow_id: str,
+        run_id: str | None = None,
+    ):
+        kwargs = {
+            "runId": run_id,
+        }
+        return self.boto3_client.request_cancel_workflow_execution(
+            domain=domain,
+            workflowId=workflow_id,
+            **remove_none(kwargs),
+        )
