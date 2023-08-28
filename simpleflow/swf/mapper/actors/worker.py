@@ -91,7 +91,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
         except JumboTooLargeError as e:
-            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
+            return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def fail(self, task_token: str, details: str | None = None, reason: str | None = None) -> dict[str, Any] | None:
         """Replies to ``swf`` that the activity task failed
@@ -101,14 +101,15 @@ class ActivityWorker(Actor):
         :param  reason: Description of the error that may assist in diagnostics
         """
         try:
-            return self.connection.respond_activity_task_failed(
+            return self.respond_activity_task_failed(
                 task_token,
                 details=format.details(details),
                 reason=format.reason(reason),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to fail activity task with token={task_token}",
                     message,
@@ -116,7 +117,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
         except JumboTooLargeError as e:
-            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
+            return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def heartbeat(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Records activity task heartbeat

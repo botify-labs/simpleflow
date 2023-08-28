@@ -437,3 +437,20 @@ class ConnectedSWFObject:
             taskToken=task_token,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_activity_task_failed
+    # written with boto3.
+    def respond_activity_task_failed(
+        self,
+        task_token: str,
+        reason: str | None = None,
+        details: str | None = None,
+    ):
+        kwargs = {
+            "reason": reason,
+            "details": details,
+        }
+        return self.boto3_client.respond_activity_task_failed(
+            taskToken=task_token,
+            **remove_none(kwargs),
+        )
