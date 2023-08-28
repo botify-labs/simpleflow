@@ -469,3 +469,24 @@ class ConnectedSWFObject:
             taskToken=task_token,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.signal_workflow_execution
+    # written with boto3.
+    def signal_workflow_execution(
+        self,
+        domain: str,
+        signal_name: str,
+        workflow_id: str,
+        input: str | None = None,
+        run_id: str | None = None,
+    ):
+        kwargs = {
+            "input": input,
+            "runId": run_id,
+        }
+        return self.boto3_client.signal_workflow_execution(
+            domain=domain,
+            signalName=signal_name,
+            workflowId=workflow_id,
+            **remove_none(kwargs),
+        )

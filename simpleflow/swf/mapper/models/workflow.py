@@ -477,12 +477,12 @@ class WorkflowExecution(BaseModel):
 
         return History.from_event_list(events)
 
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             WorkflowExecutionDoesNotExist,
-            when=exceptions.is_unknown("WorkflowExecution"),
+            when=exceptions.is_unknown(("WorkflowExecution", "workflowId")),
             extract=exceptions.generate_resource_not_found_message,
         ),
     )
@@ -512,7 +512,7 @@ class WorkflowExecution(BaseModel):
         """
         if input is None:
             input = {}
-        self.connection.signal_workflow_execution(
+        self.signal_workflow_execution(
             self.domain.name,
             signal_name,
             workflow_id or self.workflow_id,
