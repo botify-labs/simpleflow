@@ -507,3 +507,22 @@ class ConnectedSWFObject:
             workflowId=workflow_id,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_domains
+    # written with boto3.
+    def list_domains(
+        self,
+        registration_status: str,
+        maximum_page_size: int | None = None,
+        next_page_token: str | None = None,
+        reverse_order: bool | None = None,
+    ):
+        kwargs = {
+            "maximumPageSize": maximum_page_size,
+            "nextPageToken": next_page_token,
+            "reverseOrder": reverse_order,
+        }
+        return self.boto3_client.list_domains(
+            registrationStatus=registration_status,
+            **remove_none(kwargs),
+        )

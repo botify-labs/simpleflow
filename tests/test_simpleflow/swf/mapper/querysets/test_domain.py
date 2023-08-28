@@ -66,7 +66,7 @@ class TestDomainQuerySet(unittest.TestCase):
                 self.assertIsInstance(domain, Domain)
 
     def test_all_with_existent_domains(self):
-        with patch.object(self.qs.connection, "list_domains", mock_list_domains):
+        with patch.object(self.qs, "list_domains", mock_list_domains):
             domains = self.qs.all()
             self.assertEqual(len(domains), 1)
             self.assertIsInstance(domains[0], Domain)
