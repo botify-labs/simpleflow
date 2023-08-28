@@ -422,3 +422,18 @@ class ConnectedSWFObject:
             decisions=decisions,
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_activity_task_completed
+    # written with boto3.
+    def respond_activity_task_completed(
+        self,
+        task_token: str,
+        result: str | None = None,
+    ):
+        kwargs = {
+            "result": result,
+        }
+        return self.boto3_client.respond_activity_task_completed(
+            taskToken=task_token,
+            **remove_none(kwargs),
+        )

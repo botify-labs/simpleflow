@@ -54,7 +54,7 @@ def run_fake_activity_task(domain, task_list, result):
         task_list,
         identity=swf_identity(),
     )
-    obj.connection.respond_activity_task_completed(
+    obj.respond_activity_task_completed(
         resp["taskToken"],
         result,
     )
