@@ -370,3 +370,22 @@ class ConnectedSWFObject:
             },
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.poll_for_activity_task
+    # written with boto3.
+    def poll_for_activity_task(
+        self,
+        domain: str,
+        task_list: str,
+        identity: str | None = None,
+    ):
+        kwargs = {
+            "identity": identity,
+        }
+        return self.boto3_client.poll_for_activity_task(
+            domain=domain,
+            taskList={
+                "name": task_list,
+            },
+            **remove_none(kwargs),
+        )

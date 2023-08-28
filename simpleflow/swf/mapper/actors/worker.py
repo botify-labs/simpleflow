@@ -3,12 +3,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import boto.exception
+from botocore.exceptions import ClientError
 
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
 from simpleflow.utils import format_exc
 from simpleflow.swf.mapper.actors.core import Actor
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, PollTimeout, RateLimitExceededError, ResponseError
+from simpleflow.swf.mapper.exceptions import (
+    DoesNotExistError,
+    PollTimeout,
+    RateLimitExceededError,
+    ResponseError,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.responses import Response
 
@@ -159,14 +167,15 @@ class ActivityWorker(Actor):
         identity = identity or self._identity
 
         try:
-            task = self.connection.poll_for_activity_task(
+            task = self.poll_for_activity_task(
                 self.domain.name,
                 task_list,
                 identity=format.identity(identity),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to poll activity task",
                     message,

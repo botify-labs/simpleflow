@@ -49,7 +49,7 @@ __all__ = ["Executor"]
 @retry.with_delay(nb_times=3, delay=retry.exponential, on_exceptions=KeyError)
 def run_fake_activity_task(domain, task_list, result):
     obj = ConnectedSWFObject()
-    resp = obj.connection.poll_for_activity_task(
+    resp = obj.poll_for_activity_task(
         domain,
         task_list,
         identity=swf_identity(),
