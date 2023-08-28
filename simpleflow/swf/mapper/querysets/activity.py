@@ -65,7 +65,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         )
 
     def _list(self, *args, **kwargs):
-        return self.connection.list_activity_types(*args, **kwargs)["typeInfos"]
+        return self.list_activity_types(*args, **kwargs)["typeInfos"]
 
     def get(self, name: str, version: str, *args, **kwargs) -> ActivityType:
         """Fetches the activity type with provided ``name`` and ``version``
@@ -274,7 +274,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         def get_activity_types():
             response = {"nextPageToken": None}
             while "nextPageToken" in response:
-                response = self.connection.list_activity_types(
+                response = self.list_activity_types(
                     self.domain.name,
                     registration_status,
                     next_page_token=response["nextPageToken"],
