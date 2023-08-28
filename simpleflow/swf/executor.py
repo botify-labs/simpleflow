@@ -69,7 +69,7 @@ def run_fake_child_workflow_task(domain, task_list, result=None):
         task_list,
         identity=swf_identity(),
     )
-    obj.connection.respond_decision_task_completed(
+    obj.respond_decision_task_completed(
         resp["taskToken"],
         decisions=[
             {

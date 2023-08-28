@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import os
+from typing import Any
 
 import boto.swf  # noqa
 import boto3
@@ -402,5 +403,22 @@ class ConnectedSWFObject:
         }
         return self.boto3_client.record_activity_task_heartbeat(
             taskToken=task_token,
+            **remove_none(kwargs),
+        )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_decision_task_completed
+    # written with boto3.
+    def respond_decision_task_completed(
+        self,
+        task_token: str,
+        decisions: list[dict[str, Any]],
+        execution_context: str | None = None,
+    ):
+        kwargs = {
+            "executionContext": execution_context,
+        }
+        return self.boto3_client.respond_decision_task_completed(
+            taskToken=task_token,
+            decisions=decisions,
             **remove_none(kwargs),
         )

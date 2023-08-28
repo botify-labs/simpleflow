@@ -50,14 +50,15 @@ class Decider(Actor):
         if execution_context is not None and not isinstance(execution_context, str):
             execution_context = json_dumps(execution_context)
         try:
-            self.connection.respond_decision_task_completed(
+            self.respond_decision_task_completed(
                 task_token,
                 decisions,
-                format.execution_context(execution_context),
+                execution_context=format.execution_context(execution_context),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to complete decision task with token={task_token}",
                     message,
