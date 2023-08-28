@@ -124,19 +124,20 @@ class ActivityWorker(Actor):
         :param  details: provided details about task progress
         """
         try:
-            return self.connection.record_activity_task_heartbeat(
+            return self.record_activity_task_heartbeat(
                 task_token,
                 format.heartbeat_details(details),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to send heartbeat with token={task_token}",
                     message,
                 )
 
-            if e.error_code == "ThrottlingException":
+            if error_code == "ThrottlingException":
                 raise RateLimitExceededError(
                     f"Rate exceeded when sending heartbeat with token={task_token}",
                     message,

@@ -389,3 +389,18 @@ class ConnectedSWFObject:
             },
             **remove_none(kwargs),
         )
+
+    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.record_activity_task_heartbeat
+    # written with boto3.
+    def record_activity_task_heartbeat(
+        self,
+        task_token: str,
+        details: str | None = None,
+    ):
+        kwargs = {
+            "details": details,
+        }
+        return self.boto3_client.record_activity_task_heartbeat(
+            taskToken=task_token,
+            **remove_none(kwargs),
+        )
