@@ -54,13 +54,14 @@ class ActivityWorker(Actor):
         :param  details: provided details about cancel
         """
         try:
-            return self.connection.respond_activity_task_canceled(
+            return self.respond_activity_task_canceled(
                 task_token,
                 details=format.details(details),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to cancel activity task with token={task_token}",
                     message,
