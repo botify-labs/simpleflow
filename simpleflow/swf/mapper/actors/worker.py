@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import boto.exception
 from botocore.exceptions import ClientError
 
 from simpleflow import format, logging_context

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from boto.swf.exceptions import SWFResponseError  # noqa
 from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper.constants import MAX_WORKFLOW_AGE, REGISTERED

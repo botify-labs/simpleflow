@@ -4,7 +4,6 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
-import boto.swf  # noqa
 import boto3
 from click.testing import CliRunner
 from sure import expect
@@ -61,12 +60,6 @@ class VCRIntegrationTest(IntegrationTestCase):
     @property
     def workflow_id(self):
         return WORKFLOW_ID
-
-    @property
-    def conn(self):
-        if not hasattr(self, "_conn"):
-            self._conn = boto.swf.connect_to_region(self.region)
-        return self._conn
 
     @property
     def boto3_client(self):

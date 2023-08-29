@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import Mock, patch
 
 import boto3
-from boto.swf.exceptions import SWFDomainAlreadyExistsError
 from botocore.exceptions import ClientError
 from moto import mock_swf
 

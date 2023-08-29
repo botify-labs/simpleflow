@@ -5,9 +5,6 @@ from unittest.mock import patch
 
 import boto3
 import pytest
-from boto.exception import SWFResponseError
-from boto.swf.exceptions import SWFTypeAlreadyExistsError
-from boto.swf.layer1 import Layer1
 from botocore.exceptions import ClientError
 from moto import mock_swf
 

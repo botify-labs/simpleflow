@@ -55,7 +55,6 @@ class DomainQuerySet(BaseQuerySet):
             domain_info["name"],
             status=domain_info["status"],
             retention_period=domain_config["workflowExecutionRetentionPeriodInDays"],
-            connection=self.connection,
         )
 
     def get_or_create(

@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from functools import partial, wraps
 from typing import Any, Callable
 
-import boto.exception
 from botocore.exceptions import ClientError
 
 
@@ -140,17 +139,6 @@ def match_equals(regex, string, values):
     return matched[0] in values
 
 
-def is_swf_response_error(error):
-    """
-    Return true if *error* is a :class:`SWFResponseError` exception.
-
-    :param error: is the exception to check.
-    :type  error: Exception.
-
-    """
-    return isinstance(error, boto.exception.SWFResponseError)
-
-
 def is_unknown_resource_raised(error, *args, **kwargs):
     """
     Handler that checks if *error* is an unknown resource fault.
@@ -159,7 +147,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     :type  error: Exception
 
     """
-    if not isinstance(error, (boto.exception.SWFResponseError, ClientError)):
+    if not isinstance(error, ClientError):
         return False
 
     return extract_error_code(error) == "UnknownResourceFault"
@@ -241,77 +229,6 @@ def raises(exception, when, extract: Callable[[Any], str] = str):
 
     :param when: predicate to apply.
     :type  when: (error, *args, **kwargs) -> bool
-
-    Examples
-    --------
-
-    Let's build a :class:`boto.swf.exceptions.SWFResponseError` for an unknown
-    execution:
-
-    FIXME commented-out these doctests for now as they fail on python3
-    (returning simpleflow.swf.mapper.exceptions.DoesNotExistError and such, not just DoesNotExistError)
-    # >>> status = 400
-    # >>> reason = 'Bad Request'
-    # >>> body_type = 'com.amazonaws.swf.base.model#UnknownResourceFault'
-    # >>> body_message = 'Unknown execution: blah'
-    # >>> body = {'__type': body_type, 'message': body_message}
-    # >>> error_code = 'UnknownResourceFault'
-    # >>> from boto.swf.exceptions import SWFResponseError
-    # >>> err = SWFResponseError(status, reason, body, error_code)
-    # >>> raises(DoesNotExistError,
-    # ...        when=is_unknown_resource_raised,
-    # ...        extract=extract_resource)(err)
-    # Traceback (most recent call last):
-    #     ...
-    # DoesNotExistError: Resource execution does not exist
-    #
-    # >>> body = {'__type': body_type}
-    # >>> err = SWFResponseError(status, reason, body, error_code)
-    # >>> raises(DoesNotExistError,
-    # ...        when=is_unknown_resource_raised,
-    # ...        extract=extract_resource)(err)
-    # Traceback (most recent call last):
-    #     ...
-    # DoesNotExistError: Resource unknown does not exist
-    #
-    # Now, we do the same for an unknown domain:
-    #
-    # >>> body_message = 'Unknown domain'
-    # >>> body = {'__type': body_type, 'message': body_message}
-    # >>> err = SWFResponseError(status, reason, body, error_code)
-    # >>> raises(DoesNotExistError,
-    # ...        when=is_unknown_resource_raised,
-    # ...        extract=extract_resource)(err)
-    # Traceback (most recent call last):
-    #     ...
-    # DoesNotExistError: Resource domain does not exist
-    #
-    # If it does not detect an error related to an unknown resource,
-    # it raises a :class:`ResponseError`:
-    #
-    # >>> body_message = 'Other Fault'
-    # >>> body = {'__type': body_type, 'message': body_message}
-    # >>> err = SWFResponseError(status, reason, body, error_code)
-    # >>> err.error_code = 'OtherFault'
-    # >>> raises(DoesNotExistError,
-    # ...        when=is_unknown_resource_raised,
-    # ...        extract=extract_resource)(err)
-    # ... # doctest: +IGNORE_EXCEPTION_DETAIL
-    # Traceback (most recent call last):
-    #     ...
-    # SWFResponseError: SWFResponseError: 400 Bad Request
-    # {'message': 'Other Fault', '__type': 'com.amazonaws.swf.base.model#UnknownResourceFault'}
-    #
-    # If it's not a :class:`boto.swf.exceptions.SWFResponseError`, it
-    # raises the exception as-is:
-    #
-    # >>> raises(DoesNotExistError,
-    # ...        when=is_unknown_resource_raised,
-    # ...        extract=extract_resource)(Exception('boom!'))
-    # Traceback (most recent call last):
-    #     ...
-    # Exception: boom!
-
     """
 
     @wraps(raises)
