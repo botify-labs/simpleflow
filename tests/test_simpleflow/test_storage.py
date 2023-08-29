@@ -5,10 +5,11 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import boto
+import boto3
+from botocore.exceptions import ClientError
+from moto import mock_s3
 
 from simpleflow import storage
-from tests.moto_compat import mock_s3
 
 
 # disable storage.BUCKET_LOCATIONS_CACHE because it interfers with tests
@@ -23,8 +24,8 @@ storage.BUCKET_LOCATIONS_CACHE = DevNullCache()
 class TestGroup(unittest.TestCase):
     def create(self):
         self.bucket = "bucket"
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket(self.bucket)
+        self.conn = boto3.client("s3", region_name="us-east-1")
+        self.conn.create_bucket(Bucket=self.bucket)
 
     def setUp(self):
         self.tmp_filename = tempfile.mktemp()
@@ -38,58 +39,67 @@ class TestGroup(unittest.TestCase):
     @mock_s3
     def test_push_file(self):
         self.create()
+
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
-        bucket = self.conn.get_bucket(self.bucket)
-        self.assertEqual(bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"), "42")
+
+        bucket = boto3.resource("s3").Bucket(self.bucket)
+        got = bucket.Object("mykey.txt").get()["Body"].read().decode("utf-8")
+        assert got == "42"
 
     @mock_s3
     def test_push_content(self):
         self.create()
+
         storage.push_content(self.bucket, "mykey.txt", "Hey Jude")
-        bucket = self.conn.get_bucket(self.bucket)
-        self.assertEqual(
-            bucket.get_key("mykey.txt").get_contents_as_string(encoding="utf-8"),
-            "Hey Jude",
-        )
+
+        bucket = boto3.resource("s3").Bucket(self.bucket)
+        got = bucket.Object("mykey.txt").get()["Body"].read().decode("utf-8")
+        assert got == "Hey Jude"
 
     @mock_s3
     def test_pull(self):
         self.create()
+
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
+
         dest_tmp_filename = tempfile.mktemp()
         storage.pull(self.bucket, "mykey.txt", dest_tmp_filename)
         f = open(dest_tmp_filename)
-        self.assertEqual(f.readline(), "42")
+        assert f.readline() == "42"
 
     @mock_s3
     def test_pull_content(self):
         self.create()
+
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
-        self.assertEqual(storage.pull_content(self.bucket, "mykey.txt"), "42")
+
+        assert storage.pull_content(self.bucket, "mykey.txt") == "42"
 
     @mock_s3
     def test_list(self):
         self.create()
         storage.push(self.bucket, "mykey.txt", self.tmp_filename)
+
         keys = [k for k in storage.list_keys(self.bucket, None)]
-        self.assertEqual(keys[0].key, "mykey.txt")
+
+        assert len(keys) == 1
+        assert keys[0].key == "mykey.txt"
 
     @mock_s3
     def test_sanitize_bucket_and_host(self):
         self.create()
 
         # bucket where "get_location" works: return bucket+region
-        self.assertEqual(storage.sanitize_bucket_and_host(self.bucket), (self.bucket, "us-east-1"))
+        assert storage.sanitize_bucket_and_host(self.bucket) == (self.bucket, "us-east-1")
 
         # bucket where "get_location" doesn't work: return bucket + default region setting
-        def _access_denied():
-            from boto.exception import S3ResponseError
+        def _access_denied(*args, **kwargs):
+            raise ClientError({"Error": {"Code": "AccessDenied"}}, "op")
 
-            err = S3ResponseError("reason", "resp")
-            err.error_code = "AccessDenied"
-            raise err
-
-        with patch("boto.s3.bucket.Bucket.get_location", side_effect=_access_denied):
+        s3 = boto3.client("s3")
+        with patch.object(s3, "get_bucket_location", _access_denied), patch.object(
+            storage, "get_client", return_value=s3
+        ):
             with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
                 self.assertEqual(
                     storage.sanitize_bucket_and_host(self.bucket),

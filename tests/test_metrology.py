@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 import unittest
 
-import boto
+import boto3
+from moto import mock_s3
 
 from simpleflow import metrology, settings, storage
 from simpleflow.activity import with_attributes
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local.executor import Executor
-from tests.moto_compat import mock_s3
 
 
 @with_attributes(task_list="test_task_list")
@@ -37,8 +37,8 @@ class MyWorkflow(metrology.MetrologyWorkflow):
 
 class MetrologyTestCase(unittest.TestCase):
     def create_bucket(self):
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket(settings.METROLOGY_BUCKET)
+        self.client = boto3.client("s3", region_name="us-east-1")
+        self.client.create_bucket(Bucket=settings.METROLOGY_BUCKET)
 
     @mock_s3
     def test_metrology(self):

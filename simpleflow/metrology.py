@@ -163,16 +163,16 @@ class MetrologyWorkflow(Workflow, ABC):
         """
         Fetch workflow history and merge it with metrology
         """
-        activity_keys = [obj for obj in storage.list_keys(settings.METROLOGY_BUCKET, self.metrology_path)]
+        activity_keys = storage.list_keys(settings.METROLOGY_BUCKET, self.metrology_path)
         history_dumped = dump_history_to_json(history)
         history = json.loads(history_dumped)
 
         for key in activity_keys:
             if not key.key.startswith(os.path.join(self.metrology_path, "activity.")):
                 continue
-            contents = key.get_contents_as_string(encoding="utf-8")
+            contents = key.get()["Body"].read().decode("utf-8")
             result = json.loads(contents)
-            search = ACTIVITY_KEY_RE.search(key.name)
+            search = ACTIVITY_KEY_RE.search(key.key)
             name = search.group(1)
             for h in history:
                 if h[0] == name:

@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 import unittest
 
-import boto
-from moto import mock_swf
+import boto3
+from moto import mock_swf, mock_s3
 
 from simpleflow import futures, storage, task, workflow
 from simpleflow.activity import with_attributes
@@ -20,7 +20,6 @@ from simpleflow.step.utils import (
     step_will_run,
 )
 from simpleflow.step.workflow import WorkflowStepMixin
-from tests.moto_compat import mock_s3
 
 from .base import TestWorkflowMixin
 
@@ -80,8 +79,8 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
     WORKFLOW = MyWorkflow
 
     def create_bucket(self):
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket(BUCKET)
+        self.client = boto3.client("s3", region_name="us-east-1")
+        self.client.create_bucket(Bucket=BUCKET)
 
     @mock_s3
     def test_get_steps_done(self):

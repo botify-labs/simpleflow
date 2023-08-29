@@ -50,6 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black",
+    "boto3-stubs[s3,swf]",
     "flaky",
     "invoke",
     "moto<3.0.0",

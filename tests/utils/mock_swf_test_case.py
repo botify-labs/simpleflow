@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import unittest
 
-import boto
 import boto3
-from moto import mock_swf
+from moto import mock_swf, mock_s3
 from moto.swf import swf_backend
 
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from simpleflow.swf.mapper.actors import Decider
 from tests.data.constants import DOMAIN
-from tests.moto_compat import mock_s3
 
 
 @mock_s3
@@ -37,8 +35,8 @@ class MockSWFTestCase(unittest.TestCase):
         )
 
         # S3 preparation in case we use jumbo fields
-        self.s3_conn = boto.connect_s3()
-        self.s3_conn.create_bucket("jumbo-bucket")
+        self.s3_conn = boto3.client("s3", region_name="us-east-1")
+        self.s3_conn.create_bucket(Bucket="jumbo-bucket")
 
     def tearDown(self):
         swf_backend.reset()
