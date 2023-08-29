@@ -31,7 +31,6 @@ dynamic = ["version"]
 
 dependencies = [
     "attrs",
-    "boto>=2.49.0",
     "boto3>=1.28.20",
     "dill>=0.3.6",
     "diskcache>=4.1.0",
