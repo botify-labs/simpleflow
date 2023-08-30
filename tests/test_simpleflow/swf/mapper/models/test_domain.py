@@ -10,11 +10,10 @@ from moto import mock_swf
 import simpleflow.swf.mapper.settings
 from simpleflow.swf.mapper.constants import DEPRECATED
 from simpleflow.swf.mapper.core import ConnectedSWFObject
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, ResponseError
+from simpleflow.swf.mapper.exceptions import AlreadyExistsError
 from simpleflow.swf.mapper.models.domain import Domain, DomainDoesNotExist
 from simpleflow.swf.mapper.querysets.domain import DomainQuerySet
 from simpleflow.swf.mapper.querysets.workflow import WorkflowTypeQuerySet
-from tests.test_simpleflow.swf.mapper.mocks.base import MiniMock
 from tests.test_simpleflow.swf.mapper.mocks.domain import mock_describe_domain
 
 simpleflow.swf.mapper.settings.set(aws_access_key_id="fakeaccesskey", aws_secret_access_key="fakesecret")

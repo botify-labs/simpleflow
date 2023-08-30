@@ -270,14 +270,14 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
                 mock.side_effect = ClientError(
                     {
                         "Error": {
-                            "Message": "Unknown execution: WorkflowExecution=[workflowId=mocked-workflow-id, runId=mocked-run-id]",
+                            "Message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
                             "Code": "UnknownResourceFault",
                         },
-                        "message": "Unknown execution: WorkflowExecution=[workflowId=mocked-workflow-id, runId=mocked-run-id]",
+                        "message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
                     },
                     "describe_workflow_execution",
                 )
-                self.weq.get("mocked-workflow-id", "mocked-run-id")
+                self.weq.get("wf-id", "run-id")
 
     def test_get_invalid_workflow_execution(self):
         with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
