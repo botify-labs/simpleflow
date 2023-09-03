@@ -156,6 +156,7 @@ class History:
             }
             if event.activity_id not in self._activities:
                 activity["retry"] = 0
+                activity["attempt"] = 1
                 self._activities[event.activity_id] = activity
                 self._tasks.append(activity)
             else:
@@ -166,6 +167,7 @@ class History:
                 # corresponds to the last execution.
                 self._activities[event.activity_id].update(activity)
                 self._activities[event.activity_id]["retry"] += 1
+                self._activities[event.activity_id]["attempt"] += 1
         elif event.state == "schedule_failed":
             activity = {
                 "type": "activity",
@@ -305,6 +307,7 @@ class History:
             }
             if event.workflow_id not in self._child_workflows:
                 workflow["retry"] = 0
+                workflow["attempt"] = 1
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
             else:
@@ -318,6 +321,7 @@ class History:
                     )
                 self._child_workflows[event.workflow_id].update(workflow)
                 self._child_workflows[event.workflow_id]["retry"] += 1
+                self._child_workflows[event.workflow_id]["attempt"] += 1
         elif event.state == "start_failed":
             workflow = {
                 "type": "child_workflow",
