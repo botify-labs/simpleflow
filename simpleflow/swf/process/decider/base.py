@@ -5,19 +5,19 @@ from typing import TYPE_CHECKING
 
 import multiprocess
 
-import swf.actors
-import swf.exceptions
-import swf.models.decision
+import simpleflow.swf.mapper.actors
+import simpleflow.swf.mapper.exceptions
+import simpleflow.swf.mapper.models.decision
 from simpleflow import format, logger
 from simpleflow.process import Supervisor, with_state
-from simpleflow.swf.process import Poller
+from simpleflow.swf.process.poller import Poller
 from simpleflow.swf.utils import DecisionsAndContext, get_name_from_event
 
 if TYPE_CHECKING:
     from typing import Any
 
     from simpleflow.swf.executor import Executor
-    from swf.responses import Response
+    from simpleflow.swf.mapper.responses import Response
 
 
 class Decider(Supervisor):
@@ -36,7 +36,7 @@ class Decider(Supervisor):
         )
 
 
-class DeciderPoller(Poller, swf.actors.Decider):
+class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
     """
     Decider poller.
 
@@ -51,7 +51,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
     def __init__(
         self,
         workflow_executors: list[Executor],
-        domain: swf.models.Domain,
+        domain: simpleflow.swf.mapper.models.Domain,
         task_list: str,
         is_standalone: bool,
         nb_retries: int = 3,
@@ -134,7 +134,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
 
     @with_state("polling")
     def poll(self, task_list=None, identity=None, **kwargs):
-        return swf.actors.Decider.poll(self, task_list, identity, **kwargs)
+        return simpleflow.swf.mapper.actors.Decider.poll(self, task_list, identity, **kwargs)
 
     @with_state("completing")
     def complete(
@@ -144,7 +144,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         execution_context: Any | None | DecisionsAndContext = None,
     ) -> None:
         """
-        DubiousImpl: ~same signature as swf.actors.Decider.complete although execution_context is never set...
+        DubiousImpl: ~same as simpleflow.swf.mapper.actors.Decider.complete although execution_context is never set...
         :param token: task token.
         :param decisions: decisions, maybe with context.
         :param execution_context: None...
@@ -155,7 +155,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
                 decisions.decisions,
                 decisions.execution_context,
             )
-        return swf.actors.Decider.complete(self, token, decisions, execution_context)
+        return simpleflow.swf.mapper.actors.Decider.complete(self, token, decisions, execution_context)
 
     @with_state("processing")
     def process(self, decision_response):
@@ -166,7 +166,7 @@ class DeciderPoller(Poller, swf.actors.Decider):
         leaks on long-running deciders.
 
         :param decision_response: an object wrapping the PollForDecisionTask response.
-        :type  decision_response: swf.responses.Response
+        :type  decision_response:  simpleflow.swf.mapper.responses.Response
         """
         spawn(self, decision_response)
 
@@ -177,10 +177,10 @@ class DeciderPoller(Poller, swf.actors.Decider):
         the executor).
 
         :param decision_response: an object wrapping the PollForDecisionTask response.
-        :type  decision_response: swf.responses.Response
+        :type  decision_response:  simpleflow.swf.mapper.responses.Response
 
         :return: the decisions.
-        :rtype: Union[List[swf.models.decision.base.Decision], DecisionsAndContext]
+        :rtype: Union[List[simpleflow.swf.mapper.models.decision.base.Decision], DecisionsAndContext]
         """
         worker = DeciderWorker(self.domain, self._workflow_executors)
         decisions = worker.decide(decision_response, self.task_list if self.is_standalone else None)
@@ -191,7 +191,7 @@ class DeciderWorker:
     """
     Decider worker.
     :ivar _domain: SWF domain.
-    :type _domain: swf.models.Domain
+    :type _domain: simpleflow.swf.mapper.models.Domain
     :ivar _workflow_executors: executors.
     :type _workflow_executors: dict[str, simpleflow.swf.executor.Executor]
     """
@@ -205,12 +205,12 @@ class DeciderWorker:
         Delegate the decision to the executor, loading it if needed.
 
         :param decision_response: an object wrapping the PollForDecisionTask response.
-        :type  decision_response: swf.responses.Response
+        :type  decision_response:  simpleflow.swf.mapper.responses.Response
         :param task_list:
         :type task_list: Optional[str]
 
         :returns: the decisions.
-        :rtype: list[swf.models.decision.base.Decision]
+        :rtype: list[simpleflow.swf.mapper.models.decision.base.Decision]
         """
         history = decision_response.history
         workflow_name = get_name_from_event(history[0])
@@ -233,7 +233,7 @@ class DeciderWorker:
             details = traceback.format_exc()
             message = f"workflow decision failed: {err}"
             logger.exception(message)
-            decision = swf.models.decision.WorkflowExecutionDecision()
+            decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
             decision.fail(reason=message, details=details)
             decisions = [decision]
 

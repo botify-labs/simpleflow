@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING, Any, Callable
 import multiprocess
 
 import simpleflow.task as base_task
-import swf.exceptions
-import swf.models
-import swf.models.decision
+import simpleflow.swf.mapper.exceptions
+import simpleflow.swf.mapper.models
+import simpleflow.swf.mapper.models.decision
 from simpleflow import exceptions, executor, format, futures, logger, task
 from simpleflow.activity import PRIORITY_NOT_SET, Activity
 from simpleflow.base import Submittable
@@ -35,10 +35,10 @@ from simpleflow.swf.task import (
 from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
-from swf.core import ConnectedSWFObject
+from simpleflow.swf.mapper.core import ConnectedSWFObject
 
 if TYPE_CHECKING:
-    from swf.models import Domain
+    from simpleflow.swf.mapper.models.domain import Domain
 
 __all__ = ["Executor"]
 
@@ -240,11 +240,11 @@ class Executor(executor.Executor):
             version = event["activity_type"]["version"]
             if event["cause"] == "ACTIVITY_TYPE_DOES_NOT_EXIST" and (name, version) not in self.created_activity_types:
                 self.created_activity_types.add((name, version))
-                activity_type = swf.models.ActivityType(self.domain, name=name, version=version)
+                activity_type = simpleflow.swf.mapper.models.ActivityType(self.domain, name=name, version=version)
                 logger.info(f"creating activity type {activity_type.name} in domain {self.domain.name}")
                 try:
                     activity_type.save()
-                except swf.exceptions.AlreadyExistsError:
+                except simpleflow.swf.mapper.exceptions.AlreadyExistsError:
                     logger.info(
                         f"oops: Activity type {activity_type.name} in domain {self.domain.name} already exists,"
                         f" creation failed, continuing..."
@@ -288,7 +288,7 @@ class Executor(executor.Executor):
             pass  # future._state = futures.PENDING
         elif state == "start_failed":
             if event["cause"] == "WORKFLOW_TYPE_DOES_NOT_EXIST":
-                workflow_type = swf.models.WorkflowType(
+                workflow_type = simpleflow.swf.mapper.models.WorkflowType(
                     self.domain,
                     name=event["name"],
                     version=event["version"],
@@ -296,7 +296,7 @@ class Executor(executor.Executor):
                 logger.info(f"Creating workflow type {workflow_type.name} in domain {self.domain.name}")
                 try:
                     workflow_type.save()
-                except swf.exceptions.AlreadyExistsError:
+                except simpleflow.swf.mapper.exceptions.AlreadyExistsError:
                     # Could have be created by a concurrent workflow execution.
                     pass
                 return None
@@ -731,7 +731,7 @@ class Executor(executor.Executor):
             raise exceptions.ExecutionBlocked()
 
     def _add_start_timer_decision(self, id, timeout=0):
-        timer = swf.models.decision.TimerDecision("start", id=id, start_to_fire_timeout=str(timeout))
+        timer = simpleflow.swf.mapper.models.decision.TimerDecision("start", id=id, start_to_fire_timeout=str(timeout))
         self._decisions_and_context.append_decision(timer)
 
     EVENT_TYPE_TO_FUTURE: dict[
@@ -916,7 +916,9 @@ class Executor(executor.Executor):
         iterable = task.get_actual_value(iterable)
         return super().starmap(callable, iterable)
 
-    def replay(self, decision_response: swf.responses.Response, decref_workflow: bool = True) -> DecisionsAndContext:
+    def replay(
+        self, decision_response: simpleflow.swf.mapper.responses.Response, decref_workflow: bool = True
+    ) -> DecisionsAndContext:
         """Replay the workflow from the start until it blocks.
         Called by the DeciderWorker.
 
@@ -985,7 +987,7 @@ class Executor(executor.Executor):
 
             self.on_failure(reason)
 
-            decision = swf.models.decision.WorkflowExecutionDecision()
+            decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
             decision.fail(
                 reason=reason,
                 details=details,
@@ -996,7 +998,7 @@ class Executor(executor.Executor):
             return DecisionsAndContext([decision])
 
         self.after_replay()
-        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         decision.complete(result=result)
         self.on_completed()
         self.after_closed()
@@ -1006,7 +1008,7 @@ class Executor(executor.Executor):
 
     def handle_replay_swf_exception(
         self, err: exceptions.TaskException | exceptions.WorkflowException
-    ) -> swf.models.decision.WorkflowExecutionDecision:
+    ) -> simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision:
         def _extract_reason():
             if hasattr(err.exception, "reason"):
                 raw = err.exception.reason
@@ -1019,7 +1021,7 @@ class Executor(executor.Executor):
         logger.exception("%s", reason)  # Don't let logger try to interpolate the message
         details = getattr(err.exception, "details", None)
         self.on_failure(reason, details)
-        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         decision.fail(
             reason=reason,
             details=details,
@@ -1079,7 +1081,7 @@ class Executor(executor.Executor):
     def fail(self, reason, details=None):
         self.on_failure(reason, details)
 
-        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         decision.fail(
             reason=f"Workflow execution failed: {reason}",
             details=details,
@@ -1098,7 +1100,7 @@ class Executor(executor.Executor):
         """
         Extract data from the execution and history.
         :param decision_response:
-        :type  decision_response: swf.responses.Response
+        :type  decision_response:  simpleflow.swf.mapper.responses.Response
         """
         # noinspection PyUnresolvedReferences
         execution = decision_response.execution
@@ -1232,8 +1234,8 @@ class Executor(executor.Executor):
         else:
             raise ValueError(f"Unimplemented type {event_type!r} for get_event_details")
 
-    def handle_cancel_requested(self) -> list[swf.models.decision.WorkflowExecutionDecision] | None:
-        decision = swf.models.decision.WorkflowExecutionDecision()
+    def handle_cancel_requested(self) -> list[simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision] | None:
+        decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         is_current_decision = self._history.completed_decision_id < self._history.cancel_requested_id
         should_cancel = self._workflow.should_cancel(self._history)
         if not should_cancel:

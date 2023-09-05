@@ -14,7 +14,7 @@ from simpleflow.signal import WaitForSignal
 from simpleflow.task import ActivityTask, MarkerTask, SignalTask, TaskFailureContext, WorkflowTask
 from simpleflow.utils import format_exc, format_exc_type, issubclass_, json_dumps
 from simpleflow.workflow import Workflow
-from swf.models.history import builder
+from simpleflow.swf.mapper.models.history import builder
 
 
 class Executor(executor.Executor):
@@ -47,7 +47,7 @@ class Executor(executor.Executor):
     def update_workflow_class(self):
         """
         Returns the workflow class with all the needed attributes for
-        swf.models.history.builder.History()
+        simpleflow.swf.mapper.models.history.builder.History()
         This allows to get a SWF-compatible history in local executions so that
         the metrology feature works correctly.
         """
@@ -164,7 +164,7 @@ class Executor(executor.Executor):
         result = self.run_workflow(*args, **kwargs)
 
         # Hack: self._history must be available to the callback as a
-        # simpleflow.history.History, not a swf.models.history.builder.History
+        # simpleflow.history.History, not a simpleflow.swf.mapper.models.history.builder.History
         self._history = History(self._history)
         self._history.parse()
         self.after_replay()

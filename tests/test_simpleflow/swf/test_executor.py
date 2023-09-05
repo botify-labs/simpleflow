@@ -7,8 +7,8 @@ from sure import expect
 
 from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
-from swf.models.history import builder
-from swf.responses import Response
+from simpleflow.swf.mapper.models.history import builder
+from simpleflow.swf.mapper.responses import Response
 from tests.data.activities import increment
 from tests.data.constants import DOMAIN
 from tests.data.workflows import BaseTestWorkflow

@@ -9,16 +9,16 @@ from typing import TYPE_CHECKING
 
 import psutil
 
-import swf.exceptions
-import swf.models
-import swf.querysets
+import simpleflow.swf.mapper.exceptions
+import simpleflow.swf.mapper.models
+import simpleflow.swf.mapper.querysets
 from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.utils import json_dumps
 
 from .stats import pretty
 
 if TYPE_CHECKING:
-    from swf.models import WorkflowExecution
+    from simpleflow.swf.mapper.models.workflow import WorkflowExecution
 
 
 __all__ = [
@@ -35,8 +35,8 @@ def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | Non
             kwargs["status"] = kwargs.pop("workflow_status")
         return query.filter(*args, **kwargs)[0]
 
-    domain = swf.models.Domain(domain_name)
-    query = swf.querysets.WorkflowExecutionQuerySet(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain_name)
+    query = simpleflow.swf.mapper.querysets.WorkflowExecutionQuerySet(domain)
 
     action = filter_execution
     keywords = {
@@ -48,8 +48,8 @@ def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | Non
 
     try:
         workflow_execution = action(**keywords)
-    except (swf.exceptions.DoesNotExistError, IndexError):
-        keywords["workflow_status"] = swf.models.WorkflowExecution.STATUS_CLOSED
+    except (simpleflow.swf.mapper.exceptions.DoesNotExistError, IndexError):
+        keywords["workflow_status"] = simpleflow.swf.mapper.models.WorkflowExecution.STATUS_CLOSED
         workflow_execution = action(**keywords)
 
     return workflow_execution
@@ -83,8 +83,8 @@ def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
 
 
 def list_workflow_executions(domain_name, *args, **kwargs):
-    domain = swf.models.Domain(domain_name)
-    query = swf.querysets.WorkflowExecutionQuerySet(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain_name)
+    query = simpleflow.swf.mapper.querysets.WorkflowExecutionQuerySet(domain)
     executions = query.all(*args, **kwargs)
 
     return pretty.list_executions(executions)
@@ -100,8 +100,8 @@ def filter_workflow_executions(
     *args,
     **kwargs,
 ):
-    domain = swf.models.Domain(domain_name)
-    query = swf.querysets.WorkflowExecutionQuerySet(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain_name)
+    query = simpleflow.swf.mapper.querysets.WorkflowExecutionQuerySet(domain)
     executions = query.filter(
         status,
         tag,

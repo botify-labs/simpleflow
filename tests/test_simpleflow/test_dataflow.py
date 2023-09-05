@@ -6,18 +6,18 @@ from unittest.mock import patch
 
 import boto
 
-import swf.models
-import swf.models.decision
-import swf.models.workflow
+import simpleflow.swf.mapper.models
+import simpleflow.swf.mapper.models.decision
+import simpleflow.swf.mapper.models.workflow
 from simpleflow import futures
 from simpleflow.history import History
 from simpleflow.swf import constants
 from simpleflow.swf.executor import Executor
+from simpleflow.swf.mapper.models.history import builder
+from simpleflow.swf.mapper.responses import Response
 from simpleflow.swf.task import NonPythonicActivityTask
 from simpleflow.task import ActivityTask
 from simpleflow.utils import json_dumps
-from swf.models.history import builder
-from swf.responses import Response
 from tests.data.activities import (
     Tetra,
     double,
@@ -84,7 +84,7 @@ def test_workflow_with_input():
     # As there is only a single task, the executor should now complete the
     # workflow and set its result accordingly.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=result)
 
     assert decisions[0] == workflow_completed
@@ -312,7 +312,7 @@ def test_workflow_with_after_closed(mock_decref_workflow):
     # should complete the workflow and its result to ``b.result``.
     assert not hasattr(executor.workflow, "b")
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=5)
 
     assert decisions[0] == workflow_completed
@@ -384,7 +384,7 @@ def test_workflow_with_two_tasks():
     # *double* has completed and the ``b.result``is now available. The executor
     # should complete the workflow and its result to ``b.result``.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
@@ -438,7 +438,7 @@ def test_workflow_with_two_tasks_not_completed():
     # As there is a single task and it is now finished, the executor should
     # complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=result)
 
     assert decisions[0] == workflow_completed
@@ -509,7 +509,7 @@ def test_workflow_with_same_task_called_two_times():
 
     # The executor should now complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=3)
 
     assert decisions[0] == workflow_completed
@@ -576,7 +576,7 @@ def test_workflow_reuse_same_future():
 
     # The executor should now complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
@@ -655,7 +655,7 @@ def test_workflow_with_two_tasks_same_future():
 
     # Both tasks completed, hence the executor should complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=(4, 3))
 
     assert decisions[0] == workflow_completed
@@ -707,7 +707,7 @@ def test_workflow_map():
 
     # All tasks are finished, the executor should complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=[i + 1 for i in range(nb_parts)])
 
     assert decisions[0] == workflow_completed
@@ -770,7 +770,7 @@ def test_workflow_retry_activity():
 
     # Now the task is finished and the executor should complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=8)
 
     assert decisions[0] == workflow_completed
@@ -822,7 +822,7 @@ def test_workflow_retry_activity_failed_again():
     # complete the workflow as there is no further task.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
 
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     # ``a.result`` is ``None`` because it was not set.
     workflow_completed.complete(result=None)
 
@@ -883,7 +883,7 @@ def test_workflow_with_child_workflow():
     # Now the child workflow is finished and the executor should complete the
     # workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=4)
 
     assert decisions[0] == workflow_completed
@@ -908,7 +908,7 @@ def test_workflow_with_child_workflow_failed():
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     fail_workflow.fail(reason="FAIL")
 
     decision = decisions[0]
@@ -936,7 +936,7 @@ def test_workflow_with_child_workflow_timed_out():
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     fail_workflow.fail(reason="timed out")
 
     decision = decisions[0]
@@ -964,7 +964,7 @@ def test_workflow_with_child_workflow_canceled():
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     fail_workflow.cancel()
 
     decision = decisions[0]
@@ -992,7 +992,7 @@ def test_workflow_with_child_workflow_terminated():
     # The child workflow fails and the executor should fail the
     # main workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    fail_workflow = swf.models.decision.WorkflowExecutionDecision()
+    fail_workflow = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     fail_workflow.terminate()
 
     decision = decisions[0]
@@ -1052,7 +1052,7 @@ def test_workflow_with_more_than_max_decisions():
 
     # All tasks are finised, the executor should complete the workflow.
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_completed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_completed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_completed.complete(result=None)
 
     assert decisions[0] == workflow_completed
@@ -1134,7 +1134,7 @@ def test_workflow_failed_from_definition(mock_decref_workflow):
 
     assert executor.workflow.failed is True
 
-    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(reason="Workflow execution failed: error")
 
     assert decisions[0] == workflow_failed
@@ -1174,7 +1174,7 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
 
     assert executor.workflow.failed is True
 
-    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
         reason="Workflow execution error in " "activity-tests.data.activities.raise_on_failure: " '"error"',
         details=builder.DEFAULT_DETAILS,
@@ -1212,7 +1212,7 @@ def test_on_failure_callback(mock_decref_workflow):
 
     assert executor.workflow.failed is True
 
-    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(reason="Workflow execution failed: FAIL")
 
     assert decisions[0] == workflow_failed
@@ -1330,7 +1330,7 @@ def test_activity_task_timeout_raises():
     )
 
     decisions = executor.replay(Response(history=history, execution=None)).decisions
-    workflow_failed = swf.models.decision.WorkflowExecutionDecision()
+    workflow_failed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
         reason="Workflow execution error in "
         "activity-tests.data.activities.raise_on_failure: "
@@ -1366,7 +1366,7 @@ def test_activity_not_found_schedule_failed():
 def raise_already_exists(activity):
     @functools.wraps(raise_already_exists)
     def wrapped(*args):
-        raise swf.exceptions.AlreadyExistsError(
+        raise simpleflow.swf.mapper.exceptions.AlreadyExistsError(
             f"<ActivityType domain={DOMAIN.name} name={activity.name} version={activity.version} status=REGISTERED>"
             f" already exists"
         )
@@ -1390,7 +1390,7 @@ def test_activity_not_found_schedule_failed_already_exists():
         )
     )
 
-    with patch("swf.models.ActivityType.save", raise_already_exists(increment)):
+    with patch("simpleflow.swf.mapper.models.ActivityType.save", raise_already_exists(increment)):
         decisions = executor.replay(Response(history=history, execution=None)).decisions
 
     check_task_scheduled_decision(decisions[0], increment)
@@ -1581,11 +1581,11 @@ def test_run_context():
     executor.replay(
         Response(
             history=history,
-            execution=swf.models.workflow.WorkflowExecution(
+            execution=simpleflow.swf.mapper.models.workflow.WorkflowExecution(
                 domain=DOMAIN,
                 workflow_id="a_workflow_id",
                 run_id="a_run_id",
-                workflow_type=swf.models.workflow.WorkflowType(
+                workflow_type=simpleflow.swf.mapper.models.workflow.WorkflowType(
                     domain=DOMAIN,
                     name="the_workflow_name",
                     version="the_workflow_version",

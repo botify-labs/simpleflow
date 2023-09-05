@@ -3,10 +3,11 @@ from __future__ import annotations
 import typing
 from typing import Any
 
-import swf.models
-import swf.models.decision
-from simpleflow import Workflow, logger, settings, task
+import simpleflow.swf.mapper.models
+import simpleflow.swf.mapper.models.decision
+from simpleflow import logger, settings, task
 from simpleflow.swf.utils import set_workflow_class_name
+from simpleflow.workflow import Workflow
 
 if typing.TYPE_CHECKING:
     if hasattr(typing, "Self"):
@@ -33,7 +34,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
     Activity task managed on SWF.
     """
 
-    cached_models: dict[tuple[str, str, str], swf.models.ActivityType] = {}
+    cached_models: dict[tuple[str, str, str], simpleflow.swf.mapper.models.ActivityType] = {}
 
     @classmethod
     def from_generic_task(cls, task: task.ActivityTask) -> Self:
@@ -51,8 +52,8 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return self.activity.task_list
 
     def schedule(
-        self, domain: swf.models.Domain, task_list: str | None = None, **kwargs
-    ) -> list[swf.models.decision.Decision]:
+        self, domain: simpleflow.swf.mapper.models.Domain, task_list: str | None = None, **kwargs
+    ) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         """
         Schedule an activity.
         """
@@ -86,7 +87,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
         if meta:
             input["meta"] = meta
 
-        decision = swf.models.decision.ActivityTaskDecision(
+        decision = simpleflow.swf.mapper.models.decision.ActivityTaskDecision(
             "schedule",
             activity_id=self.id,
             activity_type=model,
@@ -110,18 +111,20 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return input
 
     @classmethod
-    def is_known_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> bool:
+    def is_known_activity_type(cls, domain: simpleflow.swf.mapper.models.Domain, name: str, version: str) -> bool:
         key = (domain.name, name, version)
         return key in cls.cached_models
 
     @classmethod
-    def get_activity_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.ActivityType:
+    def get_activity_type(
+        cls, domain: simpleflow.swf.mapper.models.Domain, name: str, version: str
+    ) -> simpleflow.swf.mapper.models.ActivityType:
         """
         Cache known ActivityType's to remove useless latency.
         """
         key = (domain.name, name, version)
         if key not in cls.cached_models:
-            cls.cached_models[key] = swf.models.ActivityType(
+            cls.cached_models[key] = simpleflow.swf.mapper.models.ActivityType(
                 domain,
                 name,
                 version=version,
@@ -148,7 +151,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     WorkflowTask managed on SWF.
     """
 
-    cached_models: dict[tuple[str, str, str], swf.models.WorkflowType] = {}
+    cached_models: dict[tuple[str, str, str], simpleflow.swf.mapper.models.WorkflowType] = {}
 
     @classmethod
     def from_generic_task(cls, task: task.WorkflowTask) -> Self:
@@ -183,11 +186,11 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     def schedule(
         self,
-        domain: swf.models.Domain,
+        domain: simpleflow.swf.mapper.models.Domain,
         task_list: str | None = None,
         executor: Executor | None = None,
         **kwargs,
-    ) -> list[swf.models.decision.Decision]:
+    ) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         """
         Schedule a child workflow.
         """
@@ -202,7 +205,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
             tag_list = executor.get_run_context()["tag_list"]  # FIXME what about self.executor?
 
         execution_timeout = getattr(workflow, "execution_timeout", None)
-        decision = swf.models.decision.ChildWorkflowExecutionDecision(
+        decision = simpleflow.swf.mapper.models.decision.ChildWorkflowExecutionDecision(
             "start",
             workflow_id=self.id,
             workflow_type=model,
@@ -224,13 +227,15 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         return input
 
     @classmethod
-    def get_workflow_type(cls, domain: swf.models.Domain, name: str, version: str) -> swf.models.WorkflowType:
+    def get_workflow_type(
+        cls, domain: simpleflow.swf.mapper.models.Domain, name: str, version: str
+    ) -> simpleflow.swf.mapper.models.WorkflowType:
         """
         Cache known WorkflowType's to remove useless latency.
         """
         key = (domain.name, name, version)
         if key not in cls.cached_models:
-            cls.cached_models[key] = swf.models.WorkflowType(
+            cls.cached_models[key] = simpleflow.swf.mapper.models.WorkflowType(
                 domain,
                 name,
                 version=version,
@@ -240,15 +245,19 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
 class ContinueAsNewWorkflowTask(WorkflowTask):
     def schedule(
-        self, domain: swf.models.Domain, task_list: str | None = None, executor: Executor | None = None, **kwargs
-    ) -> list[swf.models.decision.Decision]:
+        self,
+        domain: simpleflow.swf.mapper.models.Domain,
+        task_list: str | None = None,
+        executor: Executor | None = None,
+        **kwargs,
+    ) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         workflow = self.workflow
         tag_list = self.tag_list
         if tag_list == Workflow.INHERIT_TAG_LIST:
             tag_list = executor.get_run_context()["tag_list"]
         execution_timeout = getattr(workflow, "execution_timeout", None)
 
-        decision = swf.models.decision.WorkflowExecutionDecision()
+        decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         input = self.get_input()
         set_workflow_class_name(input, workflow)
         logger.debug(f"ContinueAsNewWorkflowTask: input={input}")
@@ -317,7 +326,7 @@ class SignalTask(task.SignalTask, SwfTask):
             f" args={self.args}, kwargs={self.kwargs})"
         )
 
-    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
+    def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         input: dict[str, Any] = {
             "args": self.args,
             "kwargs": self.kwargs,
@@ -329,7 +338,7 @@ class SignalTask(task.SignalTask, SwfTask):
             f" control={self.control}, extra_input={self.extra_input}"
         )
 
-        decision = swf.models.decision.ExternalWorkflowExecutionDecision()
+        decision = simpleflow.swf.mapper.models.decision.ExternalWorkflowExecutionDecision()
         decision.signal(
             signal_name=self.name,
             input=input,
@@ -352,8 +361,8 @@ class MarkerTask(task.MarkerTask, SwfTask):
         super().__init__(name, details)
         self.id = None
 
-    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
-        decision = swf.models.decision.MarkerDecision()
+    def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
+        decision = simpleflow.swf.mapper.models.decision.MarkerDecision()
         decision.record(
             self.name,
             self.details,
@@ -371,8 +380,8 @@ class TimerTask(task.TimerTask, SwfTask):
     def __init__(self, timer_id: str, timeout: int | str, control: dict[str, Any] | None) -> None:
         super().__init__(timer_id, timeout, control)
 
-    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
-        decision = swf.models.decision.TimerDecision(
+    def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
+        decision = simpleflow.swf.mapper.models.decision.TimerDecision(
             "start",
             id=self.timer_id,
             start_to_fire_timeout=str(self.timeout),
@@ -391,8 +400,8 @@ class CancelTimerTask(task.CancelTimerTask, SwfTask):
     def __init__(self, timer_id: str) -> None:
         super().__init__(timer_id)
 
-    def schedule(self, *args, **kwargs) -> list[swf.models.decision.Decision]:
-        decision = swf.models.decision.TimerDecision(
+    def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
+        decision = simpleflow.swf.mapper.models.decision.TimerDecision(
             "cancel",
             id=self.timer_id,
         )

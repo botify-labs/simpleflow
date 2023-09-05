@@ -84,7 +84,7 @@ simpleflow = "simpleflow.command:cli"
 
 [tool.setuptools]
 zip-safe = false
-packages=["simpleflow", "swf"]
+packages=["simpleflow"]
 
 [tool.setuptools.dynamic]
 version = { attr = "simpleflow.__version__" }

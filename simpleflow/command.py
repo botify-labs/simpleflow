@@ -13,10 +13,11 @@ import boto.connection
 import click
 import multiprocess
 
-import swf.exceptions
-import swf.models
-import swf.querysets
-from simpleflow import Workflow, __version__, format, log, logger
+import simpleflow.swf.mapper.exceptions
+import simpleflow.swf.mapper.models
+import simpleflow.swf.mapper.querysets
+from simpleflow.workflow import Workflow
+from simpleflow import __version__, format, log, logger
 from simpleflow.download import download_binaries
 from simpleflow.history import History
 from simpleflow.settings import print_settings
@@ -30,7 +31,7 @@ from simpleflow.utils import import_from_module, json_dumps
 if TYPE_CHECKING:
     from typing import Any
 
-    from swf.models import WorkflowType
+    from simpleflow.swf.mapper.models.workflow import WorkflowType
 
 
 def disable_boto_connection_pooling():
@@ -81,8 +82,8 @@ def get_workflow_type(domain_name: str, workflow_class: type[Workflow]) -> Workf
     :param workflow_class:
     :return:
     """
-    domain = swf.models.Domain(domain_name)
-    query = swf.querysets.WorkflowTypeQuerySet(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain_name)
+    query = simpleflow.swf.mapper.querysets.WorkflowTypeQuerySet(domain)
     return query.get_or_create(workflow_class.name, workflow_class.version)
 
 
@@ -124,7 +125,7 @@ def transform_input(wf_input):
 
 
 def run_workflow_locally(workflow_class, wf_input, middlewares):
-    from .local import Executor
+    from .local.executor import Executor
 
     Executor(workflow_class, middlewares=middlewares).run(wf_input)
 
@@ -381,7 +382,7 @@ def filter_workflows(
 ):
     status = status.upper()
     kwargs = {}
-    if status == swf.models.workflow.WorkflowExecution.STATUS_OPEN:
+    if status == simpleflow.swf.mapper.models.workflow.WorkflowExecution.STATUS_OPEN:
         kwargs["oldest_date"] = started_since
     else:
         kwargs["start_oldest_date"] = started_since
@@ -724,7 +725,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     # find workflow execution
     try:
         wfe = helpers.get_workflow_execution(domain, workflow_id, run_id)
-    except (swf.exceptions.DoesNotExistError, IndexError):
+    except (simpleflow.swf.mapper.exceptions.DoesNotExistError, IndexError):
         logger.error("Couldn't find execution, exiting.")
         sys.exit(1)
     logger.info(f"Found execution: workflowId={wfe.workflow_id} runId={wfe.run_id}")
