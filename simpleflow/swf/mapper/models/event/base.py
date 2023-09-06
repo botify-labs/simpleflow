@@ -92,8 +92,6 @@ class Event:
 
     @cached_property
     def timestamp(self) -> datetime:
-        # boto2 returns floats, boto3 returns datetimes (in local timezone)
-        # -> we convert both to UTC datetimes
         if isinstance(self._timestamp, datetime):
             return self._timestamp.astimezone(pytz.UTC)
         return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)

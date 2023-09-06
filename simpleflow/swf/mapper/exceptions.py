@@ -314,20 +314,12 @@ def translate(exceptions, to):
 
 
 def extract_error_code(error: Exception) -> str | None:
-    # boto2
-    if hasattr(error, "error_code"):
-        return error.error_code
-    # boto3
     if hasattr(error, "response"):
         return error.response["Error"]["Code"]
     return None
 
 
 def extract_message(error: Exception) -> str | None:
-    # boto2
-    if hasattr(error, "message"):
-        return error.message
-    # boto3
     if hasattr(error, "response"):
         return error.response["Error"]["Message"]
     return None
