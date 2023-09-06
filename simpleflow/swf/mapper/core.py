@@ -53,8 +53,7 @@ class ConnectedSWFObject:
 
         logger.debug(f"initiated connection to region={self.region}")
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_open_workflow_executions
-    # written with boto3.
+    # Mimics https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_open_workflow_executions
     def list_open_workflow_executions(
         self,
         domain: str,
@@ -96,8 +95,7 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_closed_workflow_executions
-    # written with boto3's https://boto3.amazonaws.com/v1/documentation/api/1.28.20/reference/services/simpleflow/swf/mapper/client/list_open_workflow_executions.html
+    # Mimics https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_closed_workflow_executions
     def list_closed_workflow_executions(
         self,
         domain: str,
@@ -150,8 +148,6 @@ class ConnectedSWFObject:
 
         return self.boto3_client.list_closed_workflow_executions(**remove_none(kwargs))
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_workflow_types
-    # written with boto3.
     def list_workflow_types(
         self,
         domain: str,
@@ -171,8 +167,6 @@ class ConnectedSWFObject:
         }
         return self.boto3_client.list_workflow_types(**remove_none(kwargs))
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_workflow_type
-    # written with boto3.
     def describe_workflow_type(self, domain: str, name: str, version: str):
         return self.boto3_client.describe_workflow_type(
             domain=domain,
@@ -182,8 +176,6 @@ class ConnectedSWFObject:
             },
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_workflow_execution
-    # written with boto3.
     def describe_workflow_execution(self, domain: str, run_id: str, workflow_id: str):
         return self.boto3_client.describe_workflow_execution(
             domain=domain,
@@ -193,15 +185,11 @@ class ConnectedSWFObject:
             },
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_domain
-    # written with boto3.
     def describe_domain(self, name: str):
         return self.boto3_client.describe_domain(
             name=name,
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.describe_activity_type
-    # written with boto3.
     def describe_activity_type(self, domain: str, name: str, version: str):
         return self.boto3_client.describe_activity_type(
             domain=domain,
@@ -211,8 +199,6 @@ class ConnectedSWFObject:
             },
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_activity_type
-    # written with boto3.
     def deprecate_activity_type(self, domain: str, name: str, version: str):
         return self.boto3_client.deprecate_activity_type(
             domain=domain,
@@ -222,8 +208,6 @@ class ConnectedSWFObject:
             },
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_workflow_type
-    # written with boto3.
     def deprecate_workflow_type(self, domain: str, name: str, version: str):
         return self.boto3_client.deprecate_workflow_type(
             domain=domain,
@@ -233,8 +217,6 @@ class ConnectedSWFObject:
             },
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.terminate_workflow_execution
-    # written with boto3.
     def terminate_workflow_execution(
         self,
         domain: str,
@@ -256,15 +238,11 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.deprecate_domain
-    # written with boto3.
     def deprecate_domain(self, name: str):
         return self.boto3_client.deprecate_domain(
             name=name,
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_domain
-    # written with boto3.
     def register_domain(
         self,
         name: str,
@@ -280,8 +258,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_activity_type
-    # written with boto3.
     def register_activity_type(
         self,
         domain: str,
@@ -311,8 +287,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.register_workflow_type
-    # written with boto3.
     def register_workflow_type(
         self,
         domain: str,
@@ -340,8 +314,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.poll_for_decision_task
-    # written with boto3.
     def poll_for_decision_task(
         self,
         domain: str,
@@ -367,8 +339,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.poll_for_activity_task
-    # written with boto3.
     def poll_for_activity_task(
         self,
         domain: str,
@@ -386,8 +356,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.record_activity_task_heartbeat
-    # written with boto3.
     def record_activity_task_heartbeat(
         self,
         task_token: str,
@@ -401,8 +369,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_decision_task_completed
-    # written with boto3.
     def respond_decision_task_completed(
         self,
         task_token: str,
@@ -418,8 +384,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_activity_task_completed
-    # written with boto3.
     def respond_activity_task_completed(
         self,
         task_token: str,
@@ -433,8 +397,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_activity_task_failed
-    # written with boto3.
     def respond_activity_task_failed(
         self,
         task_token: str,
@@ -450,8 +412,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.respond_activity_task_canceled
-    # written with boto3.
     def respond_activity_task_canceled(
         self,
         task_token: str,
@@ -465,8 +425,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.signal_workflow_execution
-    # written with boto3.
     def signal_workflow_execution(
         self,
         domain: str,
@@ -486,8 +444,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.request_cancel_workflow_execution
-    # written with boto3.
     def request_cancel_workflow_execution(
         self,
         domain: str,
@@ -503,8 +459,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_domains
-    # written with boto3.
     def list_domains(
         self,
         registration_status: str,
@@ -522,8 +476,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.list_activity_types
-    # written with boto3.
     def list_activity_types(
         self,
         domain: str,
@@ -549,8 +501,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.get_workflow_execution_history
-    # written with boto3.
     def get_workflow_execution_history(
         self,
         domain: str,
@@ -574,8 +524,6 @@ class ConnectedSWFObject:
             **remove_none(kwargs),
         )
 
-    # Proxy for https://boto.cloudhackers.com/en/latest/ref/swf.html#boto.swf.layer1.Layer1.start_workflow_execution
-    # written with boto3.
     def start_workflow_execution(
         self,
         domain: str,
