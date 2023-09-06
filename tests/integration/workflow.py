@@ -48,7 +48,7 @@ def double(y):
 def send_unrequested_signal():
     context = send_unrequested_signal.context
     ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
-    ex.connection.signal_workflow_execution(
+    ex.signal_workflow_execution(
         ex.domain.name,
         "unexpected",
         ex.workflow_id,
@@ -224,7 +224,7 @@ def wait_and_signal(name="signal"):
     time.sleep(1 + len(name))  # Hoping to be deterministic
     context = wait_and_signal.context
     ex = get_workflow_execution(context["domain_name"], context["workflow_id"], context["run_id"])
-    ex.connection.signal_workflow_execution(
+    ex.signal_workflow_execution(
         ex.domain.name,
         name,
         ex.workflow_id,

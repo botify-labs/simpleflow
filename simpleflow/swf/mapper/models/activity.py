@@ -5,13 +5,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List
 
-from boto.swf.exceptions import SWFResponseError, SWFTypeAlreadyExistsError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
+from simpleflow.swf.mapper.exceptions import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    ResponseError,
+    raises,
+    extract_message,
+    extract_error_code,
+)
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
@@ -106,7 +113,7 @@ class ActivityType(BaseModel):
         # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between ActivityType instance
         and upstream version
 
@@ -114,12 +121,14 @@ class ActivityType(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_activity_type(self.domain.name, self.name, self.version)
-        except SWFResponseError as err:
-            if err.error_code == "UnknownResourceFault":
+            description = self.describe_activity_type(self.domain.name, self.name, self.version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote ActivityType does not exist")
 
-            raise ResponseError(err.body["message"])
+            raise ResponseError(message)
 
         info = description["typeInfo"]
         config = description["configuration"]
@@ -152,27 +161,28 @@ class ActivityType(BaseModel):
                 self.task_start_to_close_timeout,
                 config["defaultTaskStartToCloseTimeout"],
             ),
+            ignore_fields=ignore_fields,
         )
 
     @property
     @exceptions.is_not(ActivityTypeDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
         """Checks if the ActivityType exists amazon-side"""
-        self.connection.describe_activity_type(self.domain.name, self.name, self.version)
+        self.describe_activity_type(self.domain.name, self.name, self.version)
         return True
 
     def save(self):
         """Creates the activity type amazon side"""
         try:
-            self.connection.register_activity_type(
+            self.register_activity_type(
                 self.domain.name,
                 self.name,
                 self.version,
@@ -183,24 +193,26 @@ class ActivityType(BaseModel):
                 default_task_start_to_close_timeout=str(self.task_start_to_close_timeout),
                 description=self.description,
             )
-        except SWFTypeAlreadyExistsError:
-            raise AlreadyExistsError(f"{self} already exists")
-        except SWFResponseError as err:
-            if err.error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
-                raise DoesNotExistError(err.body["message"])
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "TypeAlreadyExistsFault":
+                raise AlreadyExistsError(f"{self} already exists")
+            if error_code in ("UnknownResourceFault", "TypeDeprecatedFault"):
+                raise DoesNotExistError(f"{error_code}: {message}")
             raise
 
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             ActivityTypeDoesNotExist,
             when=exceptions.is_unknown("ActivityType"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def delete(self):
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_activity_type(self.domain.name, self.name, self.version)
+        self.deprecate_activity_type(self.domain.name, self.name, self.version)
 
     def upstream(self):
         from simpleflow.swf.mapper.querysets.activity import ActivityTypeQuerySet

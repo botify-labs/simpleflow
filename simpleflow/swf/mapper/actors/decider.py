@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import boto.exception
+from botocore.exceptions import ClientError
 
 from simpleflow import format, logging_context
 from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.actors.core import Actor
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, PollTimeout, ResponseError
+from simpleflow.swf.mapper.exceptions import (
+    DoesNotExistError,
+    PollTimeout,
+    ResponseError,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.decision.base import Decision
 from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.models.workflow import WorkflowExecution, WorkflowType
@@ -43,14 +49,15 @@ class Decider(Actor):
         if execution_context is not None and not isinstance(execution_context, str):
             execution_context = json_dumps(execution_context)
         try:
-            self.connection.respond_decision_task_completed(
+            self.respond_decision_task_completed(
                 task_token,
                 decisions,
-                format.execution_context(execution_context),
+                execution_context=format.execution_context(execution_context),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to complete decision task with token={task_token}",
                     message,
@@ -79,7 +86,7 @@ class Decider(Actor):
         logging_context.reset()
         task_list = task_list or self.task_list
 
-        task = self.connection.poll_for_decision_task(
+        task = self.poll_for_decision_task(
             self.domain.name,
             task_list=task_list,
             identity=format.identity(identity),
@@ -97,16 +104,17 @@ class Decider(Actor):
         next_page = task.get("nextPageToken")
         while next_page:
             try:
-                task = self.connection.poll_for_decision_task(
+                task = self.poll_for_decision_task(
                     self.domain.name,
                     task_list=task_list,
                     identity=format.identity(identity),
                     next_page_token=next_page,
                     **kwargs,
                 )
-            except boto.exception.SWFResponseError as e:
-                message = self.get_error_message(e)
-                if e.error_code == "UnknownResourceFault":
+            except ClientError as e:
+                error_code = extract_error_code(e)
+                message = extract_message(e)
+                if error_code == "UnknownResourceFault":
                     raise DoesNotExistError(
                         "Unable to poll decision task",
                         message,

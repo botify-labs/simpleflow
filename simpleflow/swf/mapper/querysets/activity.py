@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from boto.swf.exceptions import SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, ResponseError
+from simpleflow.swf.mapper.exceptions import DoesNotExistError, ResponseError, extract_error_code, extract_message
 from simpleflow.swf.mapper.models.activity import ActivityType
 from simpleflow.swf.mapper.querysets.base import BaseQuerySet
 from simpleflow.swf.mapper.utils import get_subkey
@@ -65,7 +65,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         )
 
     def _list(self, *args, **kwargs):
-        return self.connection.list_activity_types(*args, **kwargs)["typeInfos"]
+        return self.list_activity_types(*args, **kwargs)["typeInfos"]
 
     def get(self, name: str, version: str, *args, **kwargs) -> ActivityType:
         """Fetches the activity type with provided ``name`` and ``version``
@@ -101,12 +101,14 @@ class ActivityTypeQuerySet(BaseQuerySet):
             }
         """
         try:
-            response = self.connection.describe_activity_type(self.domain.name, name, version)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.error_message)
+            response = self.describe_activity_type(self.domain.name, name, version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
 
-            raise ResponseError(e.error_message)
+            raise ResponseError(message)
 
         activity_info = response[self._infos]
         activity_config = response["configuration"]
@@ -272,7 +274,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         def get_activity_types():
             response = {"nextPageToken": None}
             while "nextPageToken" in response:
-                response = self.connection.list_activity_types(
+                response = self.list_activity_types(
                     self.domain.name,
                     registration_status,
                     next_page_token=response["nextPageToken"],

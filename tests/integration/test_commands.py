@@ -17,7 +17,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
     def cleanup_sleep_workflow(self):
         # ideally this should be in a tearDown() or setUp() call, but those
         # calls play badly with VCR since they only happen "sometimes"... :-/
-        self.conn.terminate_workflow_execution(self.domain, self.workflow_id)
+        self.boto3_client.terminate_workflow_execution(domain=self.domain, workflowId=self.workflow_id)
 
     @vcr.use_cassette
     def test_simpleflow_workflow_start(self):
@@ -37,7 +37,15 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         expect(wf_id).to.equal(self.workflow_id)
 
         # check against SWF that execution is launched
-        executions = self.conn.list_open_workflow_executions(self.domain, 0, workflow_id=self.workflow_id)
+        executions = self.boto3_client.list_open_workflow_executions(
+            domain=self.domain,
+            startTimeFilter={
+                "oldestDate": 0,
+            },
+            executionFilter={
+                "workflowId": self.workflow_id,
+            },
+        )
         items = executions["executionInfos"]
         expect(len(items)).to.equal(1)
         expect(items[0]["execution"]["runId"]).to.equal(run_id)

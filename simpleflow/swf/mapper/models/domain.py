@@ -5,13 +5,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
-from boto.swf.exceptions import SWFDomainAlreadyExistsError, SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper import exceptions
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import AlreadyExistsError, DoesNotExistError, ResponseError, raises
+from simpleflow.swf.mapper.exceptions import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    ResponseError,
+    raises,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
 
@@ -72,7 +79,7 @@ class Domain(BaseModel):
         if not isinstance(domain, cls) or not hasattr(domain, "name") or not isinstance(domain.name, str):
             raise TypeError(f"invalid type {type(domain)} for domain")
 
-    def _diff(self) -> ModelDiff:
+    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
         """Checks for differences between Domain instance
         and upstream version
 
@@ -80,12 +87,13 @@ class Domain(BaseModel):
                   differences
         """
         try:
-            description = self.connection.describe_domain(self.name)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
+            description = self.describe_domain(self.name)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("Remote Domain does not exist")
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(e.args[0])
 
         domain_info = description["domainInfo"]
         domain_config = description["configuration"]
@@ -99,17 +107,18 @@ class Domain(BaseModel):
                 self.retention_period,
                 domain_config["workflowExecutionRetentionPeriodInDays"],
             ),
+            ignore_fields=ignore_fields,
         )
 
     @property
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.is_not(DomainDoesNotExist)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def exists(self) -> bool:
@@ -117,28 +126,37 @@ class Domain(BaseModel):
 
         :rtype: bool
         """
-        self.connection.describe_domain(self.name)
+        try:
+            self.describe_domain(self.name)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "UnknownResourceFault":
+                return False
         return True
 
     def save(self) -> None:
         """Creates the domain amazon side"""
         try:
-            self.connection.register_domain(self.name, str(self.retention_period), self.description)
-        except SWFDomainAlreadyExistsError:
-            raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
+            self.register_domain(self.name, str(self.retention_period), self.description)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "DomainAlreadyExistsFault":
+                raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
+            raise ResponseError(message)
 
-    @exceptions.translate(SWFResponseError, to=ResponseError)
+    @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(
-        SWFResponseError,
+        ClientError,
         raises(
             DomainDoesNotExist,
             when=exceptions.is_unknown("domain"),
-            extract=exceptions.extract_resource,
+            extract=exceptions.generate_resource_not_found_message,
         ),
     )
     def delete(self) -> None:
         """Deprecates the domain amazon side"""
-        self.connection.deprecate_domain(self.name)
+        self.deprecate_domain(self.name)
 
     def upstream(self) -> Domain:
         from simpleflow.swf.mapper.querysets.domain import DomainQuerySet

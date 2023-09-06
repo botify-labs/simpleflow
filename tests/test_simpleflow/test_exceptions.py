@@ -3,12 +3,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-import boto
+import boto3
+from moto import mock_s3
 from sure import expect
 
 from simpleflow.exceptions import TaskFailed
 from simpleflow.storage import push_content
-from tests.moto_compat import mock_s3
 
 
 class TestTaskFailed(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestTaskFailed(unittest.TestCase):
     @patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_task_failed_jumbo_fields_resolution(self):
         # prepare jumbo field content
-        boto.connect_s3().create_bucket("jumbo-bucket")
+        boto3.client("s3", region_name="us-east-1").create_bucket(Bucket="jumbo-bucket")
         push_content("jumbo-bucket", "my-reason", "reason decoded!")
         push_content("jumbo-bucket", "my-details", "details decoded!")
 

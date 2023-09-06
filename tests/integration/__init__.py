@@ -4,7 +4,7 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
-import boto.swf  # noqa
+import boto3
 from click.testing import CliRunner
 from sure import expect
 from vcr import VCR
@@ -62,25 +62,30 @@ class VCRIntegrationTest(IntegrationTestCase):
         return WORKFLOW_ID
 
     @property
-    def conn(self):
-        if not hasattr(self, "_conn"):
-            self._conn = boto.swf.connect_to_region(self.region)
-        return self._conn
+    def boto3_client(self):
+        if not hasattr(self, "_boto3_client"):
+            session = boto3.session.Session(region_name=self.region)
+            self._boto3_client = session.client("swf")
+        return self._boto3_client
 
     def get_events(self, run_id):
-        response = self.conn.get_workflow_execution_history(
-            self.domain,
-            run_id,
-            self.workflow_id,
+        response = self.boto3_client.get_workflow_execution_history(
+            domain=self.domain,
+            execution={
+                "workflowId": self.workflow_id,
+                "runId": run_id,
+            },
         )
         events = response["events"]
         next_page = response.get("nextPageToken")
         while next_page is not None:
-            response = self.conn.get_workflow_execution_history(
-                self.domain,
-                run_id,
-                self.workflow_id,
-                next_page_token=next_page,
+            response = self.boto3_client.get_workflow_execution_history(
+                domain=self.domain,
+                execution={
+                    "workflowId": self.workflow_id,
+                    "runId": run_id,
+                },
+                nextPageToken=next_page,
             )
 
             events.extend(response["events"])

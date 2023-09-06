@@ -2,13 +2,20 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import boto.exception
+from botocore.exceptions import ClientError
 
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
 from simpleflow.utils import format_exc
 from simpleflow.swf.mapper.actors.core import Actor
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, PollTimeout, RateLimitExceededError, ResponseError
+from simpleflow.swf.mapper.exceptions import (
+    DoesNotExistError,
+    PollTimeout,
+    RateLimitExceededError,
+    ResponseError,
+    extract_error_code,
+    extract_message,
+)
 from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.responses import Response
 
@@ -46,13 +53,14 @@ class ActivityWorker(Actor):
         :param  details: provided details about cancel
         """
         try:
-            return self.connection.respond_activity_task_canceled(
+            return self.respond_activity_task_canceled(
                 task_token,
                 details=format.details(details),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to cancel activity task with token={task_token}",
                     message,
@@ -68,13 +76,14 @@ class ActivityWorker(Actor):
         :param  result: The result of the activity task.
         """
         try:
-            return self.connection.respond_activity_task_completed(
+            return self.respond_activity_task_completed(
                 task_token,
                 format.result(result),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to complete activity task with token={task_token}",
                     message,
@@ -82,7 +91,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
         except JumboTooLargeError as e:
-            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
+            return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def fail(self, task_token: str, details: str | None = None, reason: str | None = None) -> dict[str, Any] | None:
         """Replies to ``swf`` that the activity task failed
@@ -92,14 +101,15 @@ class ActivityWorker(Actor):
         :param  reason: Description of the error that may assist in diagnostics
         """
         try:
-            return self.connection.respond_activity_task_failed(
+            return self.respond_activity_task_failed(
                 task_token,
                 details=format.details(details),
                 reason=format.reason(reason),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to fail activity task with token={task_token}",
                     message,
@@ -107,7 +117,7 @@ class ActivityWorker(Actor):
 
             raise ResponseError(message)
         except JumboTooLargeError as e:
-            return self.connection.respond_activity_task_failed(task_token, reason=format_exc(e))
+            return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
     def heartbeat(self, task_token: str, details: str | None = None) -> dict[str, Any] | None:
         """Records activity task heartbeat
@@ -116,19 +126,20 @@ class ActivityWorker(Actor):
         :param  details: provided details about task progress
         """
         try:
-            return self.connection.record_activity_task_heartbeat(
+            return self.record_activity_task_heartbeat(
                 task_token,
                 format.heartbeat_details(details),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     f"Unable to send heartbeat with token={task_token}",
                     message,
                 )
 
-            if e.error_code == "ThrottlingException":
+            if error_code == "ThrottlingException":
                 raise RateLimitExceededError(
                     f"Rate exceeded when sending heartbeat with token={task_token}",
                     message,
@@ -159,14 +170,15 @@ class ActivityWorker(Actor):
         identity = identity or self._identity
 
         try:
-            task = self.connection.poll_for_activity_task(
+            task = self.poll_for_activity_task(
                 self.domain.name,
                 task_list,
                 identity=format.identity(identity),
             )
-        except boto.exception.SWFResponseError as e:
-            message = self.get_error_message(e)
-            if e.error_code == "UnknownResourceFault":
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(
                     "Unable to poll activity task",
                     message,

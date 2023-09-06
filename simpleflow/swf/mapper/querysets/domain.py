@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
-from boto.swf.exceptions import SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper.constants import REGISTERED
-from simpleflow.swf.mapper.exceptions import DoesNotExistError, InvalidCredentialsError, ResponseError
+from simpleflow.swf.mapper.exceptions import DoesNotExistError, ResponseError
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.querysets.base import BaseQuerySet
 
@@ -40,16 +40,13 @@ class DomainQuerySet(BaseQuerySet):
             }
         """
         try:
-            response = self.connection.describe_domain(name)
-        except SWFResponseError as e:
-            # If resource does not exist, amazon throws 400 with
-            # UnknownResourceFault exception
-            if e.error_code == "UnknownResourceFault":
+            response = self.describe_domain(name)
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "UnknownResourceFault":
                 raise DoesNotExistError("No such domain: %s" % name)
-            elif e.error_code == "UnrecognizedClientException":
-                raise InvalidCredentialsError("Invalid aws credentials supplied")
             # Any other errors should raise
-            raise ResponseError(e.body["message"])
+            raise ResponseError(e.args[0])
 
         domain_info = response["domainInfo"]
         domain_config = response["configuration"]
@@ -58,7 +55,6 @@ class DomainQuerySet(BaseQuerySet):
             domain_info["name"],
             status=domain_info["status"],
             retention_period=domain_config["workflowExecutionRetentionPeriodInDays"],
-            connection=self.connection,
         )
 
     def get_or_create(
@@ -118,7 +114,7 @@ class DomainQuerySet(BaseQuerySet):
         def get_domains():
             response = {"nextPageToken": None}
             while "nextPageToken" in response:
-                response = self.connection.list_domains(registration_status, next_page_token=response["nextPageToken"])
+                response = self.list_domains(registration_status, next_page_token=response["nextPageToken"])
 
                 yield from response["domainInfos"]
 

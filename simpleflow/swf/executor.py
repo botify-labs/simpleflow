@@ -48,13 +48,13 @@ __all__ = ["Executor"]
 # doesn't get the scheduled task while it should...
 @retry.with_delay(nb_times=3, delay=retry.exponential, on_exceptions=KeyError)
 def run_fake_activity_task(domain, task_list, result):
-    conn = ConnectedSWFObject().connection
-    resp = conn.poll_for_activity_task(
+    obj = ConnectedSWFObject()
+    resp = obj.poll_for_activity_task(
         domain,
         task_list,
         identity=swf_identity(),
     )
-    conn.respond_activity_task_completed(
+    obj.respond_activity_task_completed(
         resp["taskToken"],
         result,
     )
@@ -63,13 +63,13 @@ def run_fake_activity_task(domain, task_list, result):
 # Same retry condition as run_fake_activity_task
 @retry.with_delay(nb_times=3, delay=retry.exponential, on_exceptions=KeyError)
 def run_fake_child_workflow_task(domain, task_list, result=None):
-    conn = ConnectedSWFObject().connection
-    resp = conn.poll_for_decision_task(
+    obj = ConnectedSWFObject()
+    resp = obj.poll_for_decision_task(
         domain,
         task_list,
         identity=swf_identity(),
     )
-    conn.respond_decision_task_completed(
+    obj.respond_decision_task_completed(
         resp["taskToken"],
         decisions=[
             {

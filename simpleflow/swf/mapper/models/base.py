@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
+from typing import List
 
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.exceptions import DoesNotExistError
@@ -19,9 +20,13 @@ class ModelDiff:
     :param  input: triples (tuples) storing in order: compared attribute name,
                    local model attribute value, upstream model attribute value.
     :type   input: *args
+
+    :param  ignore_fields: list of fields to ignore when comparing local and upstream
+    :type   ignore_fields: list
     """
 
-    def __init__(self, *input):
+    def __init__(self, *input, ignore_fields: List[str] = None):
+        self.ignore_fields = ignore_fields or []
         self.container: OrderedDict[str, tuple[str, str]] = self._process_input(input)
 
     def __contains__(self, attr):
@@ -35,7 +40,11 @@ class ModelDiff:
         return Difference(attr, local, upstream)
 
     def _process_input(self, input):
-        return OrderedDict((attr, (local, upstream)) for attr, local, upstream in input if local != upstream)
+        return OrderedDict(
+            (attr, (local, upstream))
+            for attr, local, upstream in input
+            if local != upstream and attr not in self.ignore_fields
+        )
 
     def add_input(self, *input):
         """Adds input differing data into ModelDiff instance"""

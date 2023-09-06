@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from boto.swf.exceptions import SWFResponseError  # noqa
+from botocore.exceptions import ClientError
 
 from simpleflow.swf.mapper.constants import MAX_WORKFLOW_AGE, REGISTERED
 from simpleflow.swf.mapper.exceptions import (
@@ -15,6 +15,8 @@ from simpleflow.swf.mapper.exceptions import (
     DoesNotExistError,
     InvalidKeywordArgumentError,
     ResponseError,
+    extract_error_code,
+    extract_message,
 )
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.mapper.models.workflow import CHILD_POLICIES, WorkflowExecution, WorkflowType
@@ -72,7 +74,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
     _infos_plural = "typeInfos"
 
     def to_WorkflowType(self, domain, workflow_info, **kwargs):
-        # Not using get_subkey in order for it to explictly
+        # Not using get_subkey in order for it to explicitly
         # raise when workflowType name doesn't exist for example
         return WorkflowType(
             domain,
@@ -118,12 +120,14 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             }
         """
         try:
-            response = self.connection.describe_workflow_type(self.domain.name, name, version)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.body["message"])
+            response = self.describe_workflow_type(self.domain.name, name, version)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         wt_info = response[self._infos]
         wt_config = response["configuration"]
@@ -252,7 +256,7 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
                 )
 
     def _list(self, *args, **kwargs):
-        return self.connection.list_workflow_types(*args, **kwargs)
+        return self.list_workflow_types(*args, **kwargs)
 
     def filter(
         self,
@@ -424,17 +428,18 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             WorkflowExecution.STATUS_CLOSED: "closed",
         }
 
+        if status not in statuses:
+            raise ValueError("Unknown status provided: %s" % status)
+
         # boto.swf.list_closed_workflow_executions awaits a `start_oldest_date`
         # MANDATORY kwarg, when boto.swf.list_open_workflow_executions awaits a
         # `oldest_date` mandatory arg.
+        # TODO: remove this quirk or handle start_latest_date too
         if status == WorkflowExecution.STATUS_OPEN:
             kwargs["oldest_date"] = kwargs.pop("start_oldest_date")
 
-        try:
-            method = f"list_{statuses[status]}_workflow_executions"
-            return getattr(self.connection, method)(*args, **kwargs)
-        except KeyError:
-            raise ValueError("Unknown status provided: %s" % status)
+        method = f"list_{statuses[status]}_workflow_executions"
+        return getattr(self, method)(*args, **kwargs)
 
     def get_workflow_type(self, execution_info):
         workflow_type = execution_info["workflowType"]
@@ -470,12 +475,14 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
     def get(self, workflow_id, run_id, *args, **kwargs):
         """ """
         try:
-            response = self.connection.describe_workflow_execution(self.domain.name, run_id, workflow_id)
-        except SWFResponseError as e:
-            if e.error_code == "UnknownResourceFault":
-                raise DoesNotExistError(e.body["message"])
+            response = self.describe_workflow_execution(self.domain.name, run_id, workflow_id)
+        except ClientError as e:
+            error_code = extract_error_code(e)
+            message = extract_message(e)
+            if error_code == "UnknownResourceFault":
+                raise DoesNotExistError(message)
 
-            raise ResponseError(e.body["message"])
+            raise ResponseError(message)
 
         execution_info = response[self._infos]
         execution_config = response["executionConfiguration"]

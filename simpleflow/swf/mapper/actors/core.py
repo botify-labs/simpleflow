@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.models.domain import Domain
-
-if TYPE_CHECKING:
-    from boto.exception import SWFResponseError
 
 
 class Actor(ConnectedSWFObject):
@@ -50,11 +46,3 @@ class Actor(ConnectedSWFObject):
         shutting down.
         """
         raise NotImplementedError
-
-    def get_error_message(self, e: SWFResponseError) -> str:
-        message = e.error_message
-        if not message:
-            if e.body:
-                # Expected 'message', got 'Message' ¯\_(ツ)_/¯
-                message = e.body.get("Message")
-        return message

@@ -5,12 +5,12 @@ import os
 import random
 import unittest
 
-import boto
+import boto3
+from moto import mock_s3
 
 from simpleflow import constants, format
 from simpleflow.format import JumboTooLargeError
 from simpleflow.storage import push_content
-from tests.moto_compat import mock_s3
 
 
 class TestFormat(unittest.TestCase):
@@ -23,8 +23,8 @@ class TestFormat(unittest.TestCase):
 
     def setup_jumbo_fields(self, bucket):
         os.environ["SIMPLEFLOW_JUMBO_FIELDS_BUCKET"] = bucket
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket(bucket.split("/")[0])
+        self.client = boto3.client("s3", region_name="us-east-1")
+        self.client.create_bucket(Bucket=bucket.split("/")[0])
 
     @mock_s3
     def test_encode_none(self):
@@ -65,7 +65,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEqual(
-            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding="utf-8"),
+            self.client.get_object(Bucket="jumbo-bucket", Key=key)["Body"].read().decode("utf-8"),
             json.dumps(message),
         )
 
@@ -81,7 +81,7 @@ class TestFormat(unittest.TestCase):
 
         key = encoded.split()[0].replace("simpleflow+s3://jumbo-bucket/", "")
         self.assertEqual(
-            self.conn.get_bucket("jumbo-bucket").get_key(key).get_contents_as_string(encoding="utf-8"),
+            self.client.get_object(Bucket="jumbo-bucket", Key=key)["Body"].read().decode("utf-8"),
             json.dumps(message),
         )
 
