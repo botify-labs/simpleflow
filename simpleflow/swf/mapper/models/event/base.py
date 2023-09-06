@@ -92,7 +92,9 @@ class Event:
 
     @cached_property
     def timestamp(self) -> datetime:
-        return self._timestamp.astimezone(pytz.UTC)
+        if isinstance(self._timestamp, datetime):
+            return self._timestamp.astimezone(pytz.UTC)
+        return datetime.fromtimestamp(self._timestamp, tz=pytz.UTC)
 
     @property
     def input(self) -> dict[str, Any]:
