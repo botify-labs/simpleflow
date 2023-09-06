@@ -6,7 +6,6 @@ from functools import partial, wraps
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Sequence
 
-import pytz
 from tabulate import tabulate
 
 from simpleflow.history import History
@@ -251,8 +250,8 @@ def list_details(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence
             execution.task_list,
             execution.child_policy,
             execution.close_status,
-            datetime.fromtimestamp(execution.start_timestamp, tz=pytz.utc),
-            datetime.fromtimestamp(execution.close_timestamp, tz=pytz.utc),
+            execution.start_timestamp,
+            execution.close_timestamp,
             execution.cancel_requested,
             execution.execution_timeout,
             execution.input,
