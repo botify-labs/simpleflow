@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling==1.11.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "simpleflow"
@@ -52,6 +52,7 @@ dev = [
     "boto3-stubs[s3,swf]",
     "build",
     "flaky",
+    "hatch==1.6.3",
     "invoke",
     "moto<3.0.0",
     "packaging",
@@ -83,13 +84,6 @@ changelog = "https://github.com/botify-labs/simpleflow/blob/main/CHANGELOG.md"
 [project.scripts]
 simpleflow = "simpleflow.command:cli"
 
-[tool.setuptools]
-zip-safe = false
-packages=["simpleflow"]
-
-[tool.setuptools.dynamic]
-version = { attr = "simpleflow.__version__" }
-
 [tool.ruff]
 line-length = 120
 
@@ -114,3 +108,6 @@ skips = ["B404"]
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules --ignore=setup.py --ignore=tasks.py --ignore=docs/ --ignore=build/ --ignore=examples/"
+
+[tool.hatch.version]
+path = "simpleflow/__init__.py"
