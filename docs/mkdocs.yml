@@ -3,7 +3,7 @@ docs_dir: src/
 
 # Project information
 site_name: "Simpleflow documentation"
-copyright: "Copyright &copy; 2017‒ — Botify"
+copyright: "Copyright &copy; 2013‒ Botify, Greg Leclercq, Theo Crevon, Jean-Baptiste Barth, Yves Bastide"
 
 # Code
 repo_name: botify-labs/simpleflow
