@@ -1,8 +1,3 @@
-# Copyright (c) 2013, Theo Crevon
-# Copyright (c) 2013, Greg Leclercq
-#
-# See the file LICENSE for copying permission.
-
 from simpleflow.swf.mapper.models.event.base import Event  # NOQA
 from simpleflow.swf.mapper.models.event.compiler import CompiledEvent  # NOQA
 from simpleflow.swf.mapper.models.event.factory import CompiledEventFactory, EventFactory  # NOQA
