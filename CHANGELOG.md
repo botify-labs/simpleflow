@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.33.0rc1
+---------
+
+-  (#431)
+- Revert "Remove obsolete int-to-datetime translation" (#428)
+- boto2 -> boto3 (#423)
+-  (#422)
+
 0.32.2
 ------
 

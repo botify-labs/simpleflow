@@ -5,6 +5,6 @@ from .runtime import logger  # NOQA
 from .signal import WaitForSignal  # NOQA
 from .workflow import Workflow  # NOQA
 
-__version__ = "0.32.2"
+__version__ = "0.33.0rc1"
 __author__ = "Greg Leclercq"
 __license__ = "MIT"
