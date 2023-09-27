@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
@@ -175,6 +175,8 @@ class ActivityWorker(Actor):
                 task_list,
                 identity=format.identity(identity),
             )
+        except ReadTimeoutError:
+            task = {}
         except ClientError as e:
             error_code = extract_error_code(e)
             message = extract_message(e)

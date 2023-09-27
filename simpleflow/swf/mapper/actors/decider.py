@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 
 from simpleflow import format, logging_context
 from simpleflow.swf.mapper.actors.core import Actor
@@ -81,12 +81,16 @@ class Decider(Actor):
         logging_context.reset()
         task_list = task_list or self.task_list
 
-        task = self.poll_for_decision_task(
-            self.domain.name,
-            task_list=task_list,
-            identity=format.identity(identity),
-            **kwargs,
-        )
+        try:
+            task = self.poll_for_decision_task(
+                self.domain.name,
+                task_list=task_list,
+                identity=format.identity(identity),
+                **kwargs,
+            )
+        except ReadTimeoutError:
+            task = {}
+
         token = task.get("taskToken")
         if not token:
             raise PollTimeout("Decider poll timed out")
