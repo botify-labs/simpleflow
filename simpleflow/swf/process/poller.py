@@ -13,6 +13,7 @@ from simpleflow.swf.helpers import swf_identity
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.domain import Domain
+    from simpleflow.swf.mapper.responses import Response
 
 __all__ = ["Poller"]
 
@@ -143,7 +144,7 @@ class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
         """
         return f"{self.__class__.__name__}()"
 
-    def poll_with_retry(self):
+    def poll_with_retry(self) -> Response:
         """
         Polls a task represented by its token and data. It uses long-polling
         with a timeout of one minute.
@@ -151,9 +152,6 @@ class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
         See also
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForDecisionTask.html#API_PollForDecisionTask_RequestSyntax
         http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_RequestSyntax
-
-        :returns:
-        :rtype:  simpleflow.swf.mapper.responses.Response
         """
         task_list = self.task_list
         identity = self.identity

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 
 from simpleflow import format, logging_context
-from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.actors.core import Actor
 from simpleflow.swf.mapper.exceptions import (
     DoesNotExistError,
@@ -18,6 +17,7 @@ from simpleflow.swf.mapper.models.decision.base import Decision
 from simpleflow.swf.mapper.models.history.base import History
 from simpleflow.swf.mapper.models.workflow import WorkflowExecution, WorkflowType
 from simpleflow.swf.mapper.responses import Response
+from simpleflow.utils import json_dumps
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.domain import Domain
@@ -66,32 +66,31 @@ class Decider(Actor):
         finally:
             logging_context.reset()
 
-    def poll(self, task_list=None, identity=None, **kwargs):
+    def poll(self, task_list: str | None = None, identity: str | None = None, **kwargs) -> Response:
         """
         Polls a decision task and returns the token and the full history of the
         workflow's events.
 
         :param task_list: task list to poll for decision tasks from.
-        :type task_list: str
-
         :param identity: Identity of the decider making the request,
         which is recorded in the DecisionTaskStarted event in the
         workflow history.
-        :type identity: str
 
         :returns: a Response object with history, token, and execution set
-        :rtype:  simpleflow.swf.mapper.responses.Response
-
         """
         logging_context.reset()
         task_list = task_list or self.task_list
 
-        task = self.poll_for_decision_task(
-            self.domain.name,
-            task_list=task_list,
-            identity=format.identity(identity),
-            **kwargs,
-        )
+        try:
+            task = self.poll_for_decision_task(
+                self.domain.name,
+                task_list=task_list,
+                identity=format.identity(identity),
+                **kwargs,
+            )
+        except ReadTimeoutError:
+            task = {}
+
         token = task.get("taskToken")
         if not token:
             raise PollTimeout("Decider poll timed out")

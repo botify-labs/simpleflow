@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
-from simpleflow.utils import format_exc
 from simpleflow.swf.mapper.actors.core import Actor
 from simpleflow.swf.mapper.exceptions import (
     DoesNotExistError,
@@ -18,6 +17,7 @@ from simpleflow.swf.mapper.exceptions import (
 )
 from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.responses import Response
+from simpleflow.utils import format_exc
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.domain import Domain
@@ -175,6 +175,8 @@ class ActivityWorker(Actor):
                 task_list,
                 identity=format.identity(identity),
             )
+        except ReadTimeoutError:
+            task = {}
         except ClientError as e:
             error_code = extract_error_code(e)
             message = extract_message(e)
