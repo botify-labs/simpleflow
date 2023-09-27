@@ -6,7 +6,6 @@ from botocore.exceptions import ClientError
 
 from simpleflow import format, logging_context
 from simpleflow.format import JumboTooLargeError
-from simpleflow.utils import format_exc
 from simpleflow.swf.mapper.actors.core import Actor
 from simpleflow.swf.mapper.exceptions import (
     DoesNotExistError,
@@ -18,6 +17,7 @@ from simpleflow.swf.mapper.exceptions import (
 )
 from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.responses import Response
+from simpleflow.utils import format_exc
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.domain import Domain

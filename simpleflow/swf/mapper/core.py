@@ -4,8 +4,8 @@
 # See the file LICENSE for copying permission.
 from __future__ import annotations
 
-from datetime import datetime
 import os
+from datetime import datetime
 from typing import Any
 
 import boto3
@@ -323,7 +323,7 @@ class ConnectedSWFObject:
         next_page_token: str | None = None,
         reverse_order: bool | None = None,
         start_at_previous_started_event: bool = False,
-    ):
+    ) -> dict[str, Any]:
         kwargs = {
             "identity": identity,
             "maximumPageSize": maximum_page_size,
@@ -344,7 +344,7 @@ class ConnectedSWFObject:
         domain: str,
         task_list: str,
         identity: str | None = None,
-    ):
+    ) -> dict[str, Any]:
         kwargs = {
             "identity": identity,
         }

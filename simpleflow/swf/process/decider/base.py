@@ -133,7 +133,7 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         return f"{self.__class__.__name__}{suffix}"
 
     @with_state("polling")
-    def poll(self, task_list=None, identity=None, **kwargs):
+    def poll(self, task_list: str | None = None, identity: str | None = None, **kwargs) -> Response:
         return simpleflow.swf.mapper.actors.Decider.poll(self, task_list, identity, **kwargs)
 
     @with_state("completing")
