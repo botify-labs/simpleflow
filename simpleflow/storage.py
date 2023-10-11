@@ -7,19 +7,18 @@ import boto3
 from botocore.exceptions import ClientError
 
 from . import logger, settings
+from .boto3_utils import get_or_create_boto3_client
 from .swf.mapper.exceptions import extract_error_code
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple  # NOQA
-
-    from mypy_boto3_s3.service_resource import Bucket, ObjectSummary  # NOQA
+    from mypy_boto3_s3.service_resource import Bucket, ObjectSummary
 
 BUCKET_CACHE = {}
 BUCKET_LOCATIONS_CACHE = {}
 
 
 def get_client() -> boto3.session.Session.client:
-    return boto3.session.Session().client("s3")
+    return get_or_create_boto3_client(region_name=None, service_name="s3")
 
 
 def get_resource(host_or_region: str) -> boto3.session.Session.resource:
