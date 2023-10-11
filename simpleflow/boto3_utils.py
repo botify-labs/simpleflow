@@ -21,5 +21,5 @@ def get_or_create_boto3_client(*, region_name: str | None, service_name: str, **
     if client is None:
         session = boto3.session.Session(region_name=region_name)
         client = session.client(service_name, **kwargs)
-        local_data.key = client
+        setattr(local_data, key, client)
     return client
