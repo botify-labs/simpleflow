@@ -15,9 +15,9 @@ from botocore.exceptions import NoCredentialsError
 # config hosted in simpleflow. This wouldn't be the case with a standard
 # "logging.getLogger(__name__)" which would write logs under the "swf" namespace
 from simpleflow import logger
+from simpleflow.boto3_utils import get_or_create_boto3_client
+from simpleflow.swf.mapper import settings
 from simpleflow.utils import remove_none, retry
-
-from . import settings
 
 SETTINGS = settings.get()
 RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
@@ -47,9 +47,8 @@ class ConnectedSWFObject:
 
         self.boto3_client = kwargs.pop("boto3_client", None)
         if not self.boto3_client:
-            session = boto3.session.Session(region_name=self.region)
             # raises EndpointConnectionError if region is wrong
-            self.boto3_client = session.client("swf", **creds_)
+            self.boto3_client = get_or_create_boto3_client(region_name=self.region, service_name="swf", **creds_)
 
         logger.debug(f"initiated connection to region={self.region}")
 
