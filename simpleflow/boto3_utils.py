@@ -8,7 +8,7 @@ import boto3
 
 from simpleflow.utils import json_dumps
 
-_client_var: ContextVar[dict | None] = ContextVar("boto3_clients", default=None)
+_client_var: ContextVar[dict] = ContextVar("boto3_clients")
 
 
 def get_or_create_boto3_client(*, region_name: str | None, service_name: str, **kwargs: Any):
@@ -18,9 +18,8 @@ def get_or_create_boto3_client(*, region_name: str | None, service_name: str, **
     }
     d.update(kwargs)
     key = hashlib.sha1(json_dumps(d).encode()).hexdigest()
-    boto3_clients = _client_var.get()
-    if boto3_clients is None:
-        boto3_clients = {}
+    boto3_clients = _client_var.get({})
+    if not boto3_clients:
         _client_var.set(boto3_clients)
 
     client = boto3_clients.get(key)
