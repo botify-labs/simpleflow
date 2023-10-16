@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from zlib import adler32
 
 from . import retry  # NOQA
-from ._json import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 from ._dict import remove_none  # NOQA
+from ._json import json_dumps, json_loads_or_raw, serialize_complex_object  # NOQA
 
 if TYPE_CHECKING:
     from typing import Any
@@ -33,7 +33,7 @@ def hex_hash(s):
     return f"{adler32(s) & 0xFFFFFFFF:x}"
 
 
-def format_exc(exc: Exception) -> str:
+def format_exc(exc: BaseException) -> str:
     """
     Copy-pasted from traceback._format_final_exc_line.
     :param exc: Exception value
