@@ -111,3 +111,6 @@ addopts = "--doctest-modules --ignore=setup.py --ignore=tasks.py --ignore=docs/ 
 
 [tool.hatch.version]
 path = "simpleflow/__init__.py"
+
+[tool.hatch.build]
+include = ["/simpleflow"]
