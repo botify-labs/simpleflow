@@ -9,7 +9,7 @@ import sys
 from shlex import quote
 from typing import TYPE_CHECKING
 
-from packaging.version import InvalidVersion, Version
+from packaging.version import Version
 
 if TYPE_CHECKING:
     from typing import Iterator
@@ -18,6 +18,21 @@ VERSION_FILE = "simpleflow/__init__.py"
 MAIN_BRANCH = "main"
 CHANGELOG_FILE = "CHANGELOG.md"
 
+# This is not the full list, we removed some abbreviations that are not super explicit.
+# Hatch does not expose does as constants, so we have to duplicate them here.
+HATCH_VERSION_SEGMENTS = (
+    "major",
+    "minor",
+    "micro",
+    "patch",
+    "fix",
+    "rc",
+    "alpha",
+    "beta",
+    "pre",
+    "dev",
+)
+
 
 def color_msg(color: str, msg: str) -> str:
     colors = {
@@ -25,6 +40,7 @@ def color_msg(color: str, msg: str) -> str:
         "yellow": "\033[93m",
         "red": "\033[91m",
         "blue": "\033[94m",
+        "purple": "\033[95m",
     }
     if color in colors and sys.stdout.isatty():
         return colors[color] + msg + "\033[0m"
@@ -55,7 +71,7 @@ def execute(command: list[str], ignore: bool = False, log: bool = False, dry_run
     :return: command output
     """
     if log or dry_run:
-        print(f"{'would ' if dry_run else ''}execute: {' '.join(quote(c) for c in command)}")
+        print(color_msg("purple", f"{'would ' if dry_run else ''}execute: {' '.join(quote(c) for c in command)}"))
     if dry_run:
         return ""
     env = os.environ.copy()
@@ -93,59 +109,8 @@ def on_main_branch() -> bool:
 
 
 def current_version() -> Version:
-    with open(VERSION_FILE) as f:
-        version_line_regex = re.compile(r"""^__version__\s*=\s*['"](?P<version>.*?)['"]\s*$""")
-        for line in f:
-            m = version_line_regex.match(line)
-            if m:
-                return Version(m.group("version"))
-    fail(f"Unable to find current version in {VERSION_FILE}")
-
-
-def increment_version(current: Version) -> Version:
-    epoch = current.epoch
-    release = current.release
-    pre = None
-    post = None
-    dev = None
-    local = current.local
-
-    # Increment least significant part
-    if current.dev is not None:
-        dev = current.dev + 1
-    elif current.post is not None:
-        post = current.post + 1
-    elif current.pre is not None:
-        pre = current.pre[:-1] + (current.pre[-1] + 1,)
-    else:
-        release = release[:-1] + (release[-1] + 1,)
-
-    parts = []
-
-    # Epoch
-    if epoch != 0:
-        parts.append(f"{epoch}!")
-
-    # Release segment
-    parts.append(".".join(str(x) for x in release))
-
-    # Pre-release
-    if pre is not None:
-        parts.append("".join(str(x) for x in pre))
-
-    # Post-release
-    if post is not None:
-        parts.append(f".post{post}")
-
-    # Development release
-    if dev is not None:
-        parts.append(f".dev{dev}")
-
-    # Local version segment
-    if local is not None:
-        parts.append(f"+{local}")
-
-    return Version("".join(parts))
+    raw = execute(["hatch", "--no-color", "version"])
+    return Version(raw)
 
 
 def generate_version_file(new_version: Version, dry_run: bool) -> None:
@@ -246,18 +211,11 @@ def release_tag(new_version: Version, changes: str, dry_run: bool) -> None:
 
 
 def input_new_version(current: Version) -> Version:
-    default_new_version = increment_version(current)
-    new_version = None
-    while not new_version:
-        new_version_str = input(f"New version to release [{default_new_version}]: ")
-        if new_version_str:
-            try:
-                new_version = Version(new_version_str)
-            except InvalidVersion as ex:
-                print(f"{ex}; Should be PEP 440-compatible (for instance in the form: 1.2.3)")
-        else:
-            new_version = default_new_version
-    return new_version
+    while True:
+        new_version_str = input(f"New version to release [{'|'.join(HATCH_VERSION_SEGMENTS)}]: ")
+        if new_version_str and new_version_str in HATCH_VERSION_SEGMENTS:
+            return new_version_str
+        print(f"Invalid version: {new_version_str}")
 
 
 def main():
@@ -275,13 +233,13 @@ def main():
         "--test-pypi",
         "-T",
         action="store_const",
-        const="testpypi",
+        const="test",
         dest="repository",
         help="upload to TestPyPI",
     )
     group.add_argument(
         "--repository",
-        help="repository (package index) to upload the package to",
+        help="repository (package index) name or URL to upload the package to",
     )
     group.add_argument(
         "--repository-url",
@@ -307,14 +265,14 @@ def main():
     print(f"Current version: {current}")
 
     # decide a new version number to release
-    if args.new_version:
-        new_version = Version(args.new_version)
-    else:
-        new_version = input_new_version(current)
+    new_version_raw = args.new_version
+    if not new_version_raw:
+        new_version_raw = input_new_version(current)
 
     # generate new version file
     step(f"Generate version file {VERSION_FILE}")
-    generate_version_file(new_version, dry_run)
+    execute(["hatch", "version", new_version_raw], log=True, dry_run=dry_run)
+    new_version = current_version()
 
     # generate changelog
     step(f"Generate {CHANGELOG_FILE}")
@@ -326,14 +284,15 @@ def main():
 
     # push package to pypi
     step(f"Generate and push package to {args.repository or args.repository_url or 'pypi'}")
-    execute(["python", "-m", "build"], log=True)
+    execute(["hatch", "build", "--clean"], log=True)
     wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
     tar_gz = f"dist/simpleflow-{new_version}.tar.gz"
-    cmd = ["twine", "upload", wheel, tar_gz]
+    cmd = ["hatch", "publish"]
     if args.repository:
-        cmd += ["--repository", args.repository]
+        cmd += ["--repo", args.repository]
     elif args.repository_url:
-        cmd += ["--repository-url", args.repository_url]
+        cmd += ["--repo", args.repository_url]
+    cmd += [wheel, tar_gz]
     execute(cmd, log=True, dry_run=dry_run)
 
 
