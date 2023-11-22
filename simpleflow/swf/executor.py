@@ -798,8 +798,16 @@ class Executor(executor.Executor):
             self.schedule_task(a_task, task_list=self.task_list)
             future = futures.Future()  # return a pending future.
 
-        if self._open_activity_count == constants.MAX_OPEN_ACTIVITY_COUNT:
-            logger.warning(f"limit of {constants.MAX_OPEN_ACTIVITY_COUNT} open activities reached")
+        max_open_activity_count = (
+            getattr(self.workflow, "max_open_activity_count", None) or constants.MAX_OPEN_ACTIVITY_COUNT
+        )
+        if self._open_activity_count >= max_open_activity_count:
+            logger.warning(
+                "limit of %d/%d open activities reached (workflow class: %s)",
+                self._open_activity_count,
+                max_open_activity_count,
+                self.workflow_class.__name__,
+            )
             raise exceptions.ExecutionBlocked
 
         return future
