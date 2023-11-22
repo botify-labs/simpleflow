@@ -15,7 +15,6 @@ import multiprocess
 import simpleflow.swf.mapper.exceptions
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.querysets
-from simpleflow.workflow import Workflow
 from simpleflow import __version__, format, log, logger
 from simpleflow.download import download_binaries
 from simpleflow.history import History
@@ -26,6 +25,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
+from simpleflow.workflow import Workflow
 
 if TYPE_CHECKING:
     from typing import Any
@@ -71,7 +71,7 @@ def get_workflow_type(domain_name: str, workflow_class: type[Workflow]) -> Workf
 def load_input(input_fp):
     if input_fp is None:
         input_fp = sys.stdin
-    input = format.decode(input_fp)
+    input = format.decode(input_fp.read())
     return transform_input(input)
 
 

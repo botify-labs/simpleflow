@@ -8,7 +8,7 @@ from .base import ActivityPoller, Worker
 def make_worker_poller(
     domain: str,
     task_list: str,
-    middlewares: dict[str, str] | None,
+    middlewares: dict[str, list[str]] | None,
     heartbeat: int,
     poll_data: str,
 ) -> ActivityPoller:

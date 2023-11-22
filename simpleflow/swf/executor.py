@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import multiprocess
 
-import simpleflow.task as base_task
 import simpleflow.swf.mapper.exceptions
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.models.decision
+import simpleflow.task as base_task
 from simpleflow import exceptions, executor, format, futures, logger, task
 from simpleflow.activity import PRIORITY_NOT_SET, Activity
 from simpleflow.base import Submittable
@@ -22,6 +22,7 @@ from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
+from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.task import (
     ActivityTask,
     CancelTimerTask,
@@ -35,7 +36,6 @@ from simpleflow.swf.task import (
 from simpleflow.swf.utils import DecisionsAndContext
 from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
-from simpleflow.swf.mapper.core import ConnectedSWFObject
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.domain import Domain

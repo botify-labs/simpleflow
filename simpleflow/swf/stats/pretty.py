@@ -84,7 +84,7 @@ FORMATS = {
 
 def get_timestamps(task) -> tuple:
     last_state = task["state"]
-    timestamp = task[last_state + "_timestamp"]
+    timestamp = task.get(last_state + "_timestamp")
     scheduled_timestamp = task.get("scheduled_timestamp", "")
 
     return last_state, timestamp, scheduled_timestamp
