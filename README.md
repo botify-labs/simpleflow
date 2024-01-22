@@ -1,9 +1,9 @@
 Simpleflow
 ==========
 
-<p class=badges>
-[![Pypi Status](https://badge.fury.io/py/simpleflow.png)](https://badge.fury.io/py/simpleflow) [![Build Status](https://travis-ci.org/botify-labs/simpleflow.svg?branch=main)](https://travis-ci.org/botify-labs/simpleflow)
-</p>
+![PyPI - Version](https://img.shields.io/pypi/v/simpleflow)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/botify-labs/simpleflow/ci.yml)
+
 
 Simpleflow is a Python library that provides abstractions to write programs in
 the [distributed dataflow paradigm](https://en.wikipedia.org/wiki/Distributed_data_flow).
