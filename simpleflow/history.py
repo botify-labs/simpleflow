@@ -155,6 +155,8 @@ class History:
                 "decision_task_completed_event_id": event.decision_task_completed_event_id,
             }
             if event.activity_id not in self._activities:
+                activity["retry"] = 0
+                activity["attempt"] = 1
                 self._activities[event.activity_id] = activity
                 self._tasks.append(activity)
             else:
@@ -164,6 +166,8 @@ class History:
                 # in ``retry``.  As the state of the event mutates, it
                 # corresponds to the last execution.
                 self._activities[event.activity_id].update(activity)
+                self._activities[event.activity_id]["retry"] += 1
+                self._activities[event.activity_id]["attempt"] += 1
         elif event.state == "schedule_failed":
             activity = {
                 "type": "activity",
@@ -218,10 +222,6 @@ class History:
                     "timed_out_timestamp": event.timestamp,
                 }
             )
-            if "retry" not in activity:
-                activity["retry"] = 0
-            else:
-                activity["retry"] += 1
         elif event.state == "failed":
             activity = get_activity()
             activity.update(
@@ -233,10 +233,6 @@ class History:
                     "failed_timestamp": event.timestamp,
                 }
             )
-            if "retry" not in activity:
-                activity["retry"] = 0
-            else:
-                activity["retry"] += 1
         elif event.state == "cancelled":
             activity = get_activity()
             activity.update(
@@ -310,6 +306,8 @@ class History:
                 "decision_task_completed_event_id": event.decision_task_completed_event_id,
             }
             if event.workflow_id not in self._child_workflows:
+                workflow["retry"] = 0
+                workflow["attempt"] = 1
                 self._child_workflows[event.workflow_id] = workflow
                 self._tasks.append(workflow)
             else:
@@ -322,6 +320,8 @@ class History:
                         f" we're @{event.id})"
                     )
                 self._child_workflows[event.workflow_id].update(workflow)
+                self._child_workflows[event.workflow_id]["retry"] += 1
+                self._child_workflows[event.workflow_id]["attempt"] += 1
         elif event.state == "start_failed":
             workflow = {
                 "type": "child_workflow",
@@ -372,10 +372,6 @@ class History:
                     "failed_timestamp": event.timestamp,
                 }
             )
-            if "retry" not in workflow:
-                workflow["retry"] = 0
-            else:
-                workflow["retry"] += 1
         elif event.state == "timed_out":
             workflow = get_workflow()
             workflow.update(
@@ -391,10 +387,6 @@ class History:
                     "timed_out_timestamp": event.timestamp,
                 }
             )
-            if "retry" not in workflow:
-                workflow["retry"] = 0
-            else:
-                workflow["retry"] += 1
         elif event.state == "canceled":
             workflow = get_workflow()
             workflow.update(
