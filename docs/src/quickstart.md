@@ -53,7 +53,7 @@ class BasicWorkflow(Workflow):
 
 Now check that the workflow works locally with an integer "x" and a wait value "t":
 
-    $ simpleflow workflow.start --local examples.basic.BasicWorkflow --input '[1, 5]'
+    $ PYTHONPATH=$PWD simpleflow workflow.start --local examples.basic.BasicWorkflow --input '[1, 5]'
     (1 + 1) * 2 = 4
 
 **input** is encoded in JSON format and can contain the list of **positional**
@@ -64,12 +64,13 @@ such as `{"args": [1], "kwargs": {}}`, `{"kwargs": {"x": 1}}`, or
 Now that you are confident that the workflow should work, you can run it on
 Amazon SWF with the `standalone` command:
 
-    $ simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input '[1, 5]'
+    $ PYTHONPATH=$PWD simpleflow standalone --domain TestDomain examples.basic.BasicWorkflow --input '[1, 5]'
 
 The **standalone** command sets a unique task list and manage all the processes
 that are needed to execute the workflow: decider, activity worker, and a client
 that starts the workflow. It is very convenient for testing a workflow by
-executing it with SWF during the development steps or integration tests.
+executing it with SWF during the development steps or integration tests. Note that
+you'll need to replace `TestDomain` with a valid [SWF domain](https://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dev-domains.html).
 
 Let’s take a closer look to the workflow definition.
 
