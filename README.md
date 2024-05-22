@@ -43,7 +43,7 @@ and activity worker processes.
 
 Start a decider with:
 
-    $ simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
+    $ PYTHONPATH=$PWD simpleflow decider.start --domain TestDomain --task-list test examples.basic.BasicWorkflow
 
 Start an activity worker with:
 
