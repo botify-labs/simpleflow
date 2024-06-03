@@ -26,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dynamic = ["version"]
 
@@ -48,7 +49,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "boto3-stubs[s3,swf]",
     "flaky",
     "invoke",
@@ -92,10 +92,6 @@ version = { attr = "simpleflow.__version__" }
 
 [tool.ruff]
 line-length = 120
-
-[tool.black]
-line-length = 120
-target-version = ["py37", "py38", "py39", "py310", "py311"]
 
 [tool.bandit]
 exclude_dirs = ["/tests", "/examples", "/venv", "/build"]
