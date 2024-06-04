@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import errno
 import functools
 import json
 import logging
@@ -97,7 +96,9 @@ def get_name(func) -> str:
     return ".".join([prefix, name])
 
 
-def wait_subprocess(process, timeout: int | None = None, command_info: str | list[str] | None = None) -> int:
+def wait_subprocess(
+    process, timeout: int | None = None, command_info: str | list[str] | None = None
+) -> int:
     """
     Wait for a process, raise if timeout.
     :param process: the process to wait
@@ -117,12 +118,9 @@ def wait_subprocess(process, timeout: int | None = None, command_info: str | lis
     if rc is None:
         try:
             process.terminate()  # send SIGTERM
-        except OSError as e:
-            # Ignore that exception the case the sub-process already terminated after last poll() call.
-            if e.errno == errno.ESRCH:
-                return process.poll()
-            else:
-                raise
+        except ProcessLookupError:
+            # Ignore that exception the case the subprocess already terminated after last poll() call.
+            return process.poll()
         raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
     return rc
 
@@ -159,9 +157,11 @@ def python(
                     tmp_dir = env.get(envname)
                     if tmp_dir:
                         break
-            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(
+            with tempfile.TemporaryFile(
+                dir=tmp_dir
+            ) as result_fd, tempfile.TemporaryFile(
                 dir=tmp_dir, buffering=0
-            ) as error_fd:
+            ) as error_fd:  # TODO when Python 3.7 is dropped: encoding="utf-8", errors="replace"
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)
@@ -175,13 +175,15 @@ def python(
                     f"--error-fd={dup_error_fd}",
                     f"--context={json_dumps(context)}",
                 ]
-                if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
+                if (
+                    len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH
+                ):  # command-line limit on Linux: 128K
                     full_command.append(arguments_json)
                     arg_file = None
                     arg_fd = None
                 else:
                     arg_file = tempfile.TemporaryFile(dir=tmp_dir)
-                    arg_file.write(arguments_json.encode("utf-8"))
+                    arg_file.write(arguments_json.encode())
                     arg_file.flush()
                     arg_file.seek(0)
                     arg_fd = os.dup(arg_file.fileno())
@@ -200,23 +202,24 @@ def python(
                     pass_fds=pass_fds,
                     env=env,
                 )
-                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
+                rc = wait_subprocess(
+                    process, timeout=timeout, command_info=full_command
+                )
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if arg_file:
                     arg_file.close()
                 if rc:
                     error_fd.seek(0)
-                    err_output = error_fd.read().decode("utf-8", errors="replace")
+                    err_output = error_fd.read().decode(errors="replace")
                     raise ExecutionError(err_output) if err_output else ExecutionError
 
                 result_fd.seek(0)
-                result_str = result_fd.read()
+                result_str = result_fd.read().decode(errors="replace")
 
             if not result_str:
                 return None
             try:
-                result_str = result_str.decode("utf-8", errors="replace")
                 result = format.decode(result_str)
                 return result
             except BaseException:
@@ -263,7 +266,9 @@ def program(path=None, argument_format=format_arguments):
             sig.bind(*args, **kwargs)  # Raise TypeError on error
 
             command = path or func.__name__
-            return subprocess.check_output([command] + argument_format(*args, **kwargs), text=True)  # nosec
+            return subprocess.check_output(
+                [command] + argument_format(*args, **kwargs), text=True
+            )  # nosec
 
         sig = signature(func)
 
@@ -394,7 +399,9 @@ def main():
         callable_ = callable_.__wrapped__
     args = arguments.get("args", ())
     kwargs = arguments.get("kwargs", {})
-    context = json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
+    context = (
+        json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
+    )
     try:
         if hasattr(callable_, "execute"):
             inst = callable_(*args, **kwargs)
