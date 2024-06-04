@@ -93,6 +93,19 @@ version = { attr = "simpleflow.__version__" }
 [tool.ruff]
 line-length = 120
 
+[tool.ruff.lint]
+extend-select = [
+    "UP",  # pyupgrade
+    "I",   # isort
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "RUF", # ruff
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
 [tool.bandit]
 exclude_dirs = ["/tests", "/examples", "/venv", "/build"]
 skips = ["B404"]
