@@ -40,7 +40,7 @@ class FuncGroup(SubmittableContainer):
         if not isinstance(self.activities, (Submittable, Group)):
             raise TypeError(
                 "FuncGroup submission should return a Group or Submittable,"
-                " got {} instead (func: {!r})".format(type(self.activities), self.func)
+                f" got {type(self.activities)} instead (func: {self.func!r})"
             )
 
         if self.raises_on_failure is not None:
@@ -228,7 +228,7 @@ class ChainFuture(GroupFuture):
             if send_result and i > 0:
                 if isinstance(a, ActivityTask):
                     # ActivityTask.args is ignored when building swf.ActivityTask (#247)
-                    args = a.args + [previous_result]
+                    args = [*a.args, previous_result]
                     a = ActivityTask(a.activity, *args, **a.kwargs)
                 else:
                     a.args.append(previous_result)

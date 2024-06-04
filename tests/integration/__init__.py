@@ -38,7 +38,7 @@ vcr = VCR(
                 "AWS4-HMAC-SHA256 Credential=1234AB/20160823/us-east-1/swf/"
                 "aws4_request,SignedHeaders=host;x-amz-date;x-amz-target,Signature=foobar"
             ),
-        ),  # noqa
+        ),
     ],
     record_mode=os.getenv("SIMPLEFLOW_VCR_RECORD_MODE", "once"),
 )
@@ -117,7 +117,7 @@ class VCRIntegrationTest(IntegrationTestCase):
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
-        start_line = [line for line in lines if line.startswith(self.workflow_id)][0]
+        start_line = next(line for line in lines if line.startswith(self.workflow_id))
         _, run_id = start_line.split(" ", 1)
 
         events = self.get_events(run_id)

@@ -41,7 +41,7 @@ def format_exc(exc: BaseException) -> str:
     etype = exc.__class__.__name__
     valuestr = _some_str(exc)
     if exc is None or not valuestr:
-        line = "%s" % etype
+        line = f"{etype}"
     else:
         line = f"{etype}: {valuestr}"
     return line
@@ -54,7 +54,7 @@ def _some_str(value: Any) -> str:
     try:
         return str(value)
     except Exception:
-        return "<unprintable %s object>" % type(value).__name__
+        return f"<unprintable {type(value).__name__} object>"
 
 
 def format_exc_type(exc_type: type) -> str:

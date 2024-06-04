@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import typing
-from typing import Any
+from typing import Any, ClassVar
 
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.models.decision
@@ -34,7 +34,7 @@ class ActivityTask(task.ActivityTask, SwfTask):
     Activity task managed on SWF.
     """
 
-    cached_models: dict[tuple[str, str, str], simpleflow.swf.mapper.models.ActivityType] = {}
+    cached_models: ClassVar[dict[tuple[str, str, str], simpleflow.swf.mapper.models.ActivityType]] = {}
 
     @classmethod
     def from_generic_task(cls, task: task.ActivityTask) -> Self:
@@ -52,7 +52,10 @@ class ActivityTask(task.ActivityTask, SwfTask):
         return self.activity.task_list
 
     def schedule(
-        self, domain: simpleflow.swf.mapper.models.Domain, task_list: str | None = None, **kwargs
+        self,
+        domain: simpleflow.swf.mapper.models.Domain,
+        task_list: str | None = None,
+        **kwargs,
     ) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         """
         Schedule an activity.
@@ -151,7 +154,7 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
     WorkflowTask managed on SWF.
     """
 
-    cached_models: dict[tuple[str, str, str], simpleflow.swf.mapper.models.WorkflowType] = {}
+    cached_models: ClassVar[dict[tuple[str, str, str], simpleflow.swf.mapper.models.WorkflowType]] = {}
 
     @classmethod
     def from_generic_task(cls, task: task.WorkflowTask) -> Self:

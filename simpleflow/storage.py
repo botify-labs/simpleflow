@@ -75,7 +75,7 @@ def sanitize_bucket_and_host(bucket: str) -> tuple[str, str]:
     return bucket, location
 
 
-def get_bucket(bucket_name: str) -> "Bucket":
+def get_bucket(bucket_name: str) -> Bucket:
     bucket_name, location = sanitize_bucket_and_host(bucket_name)
     s3 = get_resource(location)
     if bucket_name not in BUCKET_CACHE:
@@ -116,6 +116,6 @@ def push_content(bucket: str, path: str, content: str, content_type: str | None 
     bucket_resource.upload_fileobj(io.BytesIO(content.encode()), path, ExtraArgs=extra_args)
 
 
-def list_keys(bucket: str, path: str = None) -> list["ObjectSummary"]:
+def list_keys(bucket: str, path: str | None = None) -> list[ObjectSummary]:
     bucket_resource = get_bucket(bucket)
     return [obj for obj in bucket_resource.objects.filter(Prefix=path or "").all()]

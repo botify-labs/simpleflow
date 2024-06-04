@@ -82,7 +82,7 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(future.count_finished_activities, 2)
         self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result  # noqa
+            future.result
 
     def test_simplified_declaration(self):
         future = Group((to_string, 1), (to_string, 2)).submit(executor)
@@ -99,7 +99,7 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(future.count_finished_activities, 2)
         self.assertEqual(future._result, ["test1", None, 3])
         with self.assertRaises(exceptions.ExecutionBlocked):
-            future.result  # noqa
+            future.result
 
     def test_group_with_workflow(self):
         """Test that it is possible to provide a WorkflowTask to a Group()."""

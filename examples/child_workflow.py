@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from random import randrange
+from typing import ClassVar
 
 from simpleflow import Workflow, activity, futures
 
@@ -69,7 +72,7 @@ class ParentWorkflow(Workflow):
     name = "basic_parent"
     version = "example"
     task_list = "example"
-    tag_list = ["these", "are", "tags"]
+    tag_list: ClassVar[list[int]] = ["these", "are", "tags"]
 
     def __init__(self, executor):
         super().__init__(executor)

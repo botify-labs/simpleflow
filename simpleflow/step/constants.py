@@ -1,6 +1,7 @@
 """
 Default values for GetStepsDoneTask and MarkStepDoneTask.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

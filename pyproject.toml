@@ -102,7 +102,9 @@ extend-select = [
     "RUF", # ruff
 ]
 fixable = ["ALL"]
-
+allowed-confusables = ["‘", "’"]
+extend-ignore = [
+]
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 

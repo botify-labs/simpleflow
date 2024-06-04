@@ -5,7 +5,7 @@ import sys
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
 else:
-    from typing import TypedDict
+    from typing import ClassVar, TypedDict
 
 from simpleflow.swf.mapper.models.event.base import Event, TaskList
 from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
@@ -44,7 +44,7 @@ class CompiledWorkflowExecutionEvent(CompiledEvent):
         "cancel_requested",  # A request to cancel this workflow execution was made
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "started": (
             "signaled",
             "failed",
@@ -96,7 +96,7 @@ class CompiledChildWorkflowExecutionEvent(CompiledEvent):
         "terminated",  # started by this workflow execution, was terminated
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "start_initiated": ("start_failed", "started"),
         "start_failed": ("failed",),
         "started": ("canceled", "failed", "timed_out", "terminated"),
@@ -129,7 +129,7 @@ class CompiledExternalWorkflowExecutionEvent(CompiledEvent):
         "request_cancel_failed",  # Request to cancel an external workflow execution failed
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "signal_initiated": ("signal_failed", "signaled"),
         "request_cancel_initiated": ("request_cancel_failed",),
         "cancel_requested": ("request_cancel_failed",),

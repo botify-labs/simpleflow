@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 import sys
-from ast import parse, NodeVisitor, ImportFrom
-from importlib import util as import_util, import_module
+from ast import ImportFrom, NodeVisitor, parse
+from importlib import import_module
+from importlib import util as import_util
 from importlib.machinery import ModuleSpec
 from os import path
 from pkgutil import iter_modules
-from typing import Any, List, Iterator
+from typing import Any, Iterator
 
 import pytest
 
@@ -116,7 +117,7 @@ class _ImportFromSourceChecker(NodeVisitor):
         which case we should only import from them if self._module is internal to that private module.
         """
         module_components = module_to_import.split(".")
-        result: List[str] = []
+        result: list[str] = []
 
         for component in module_components:
             if component.startswith("_") and not self._module.startswith(".".join(result)):
@@ -131,7 +132,7 @@ def _apply_visitor(module: str, visitor: NodeVisitor) -> None:
     assert module_spec is not None
     assert module_spec.origin is not None
 
-    with open(module_spec.origin, "r") as source_file:
+    with open(module_spec.origin) as source_file:
         ast = parse(source=source_file.read(), filename=module_spec.origin)
 
     visitor.visit(ast)
@@ -143,7 +144,7 @@ def _test_imports_from_source(module: str) -> None:
 
 def add_module_organization_tests(
     test_module: str,
-    module_names: List[str],
+    module_names: list[str],
 ) -> None:
     """
     This function dynamically generates a set of python tests which can be used to ensure that all modules follow

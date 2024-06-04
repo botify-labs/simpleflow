@@ -576,8 +576,7 @@ def standalone(
         # get the previous execution history, it will serve as "default history"
         # for activities that succeeded in the previous execution
         logger.info(
-            "retrieving history of previous execution: domain={} "
-            "workflow_id={} run_id={}".format(domain, repair, repair_run_id)
+            f"retrieving history of previous execution: domain={domain} " f"workflow_id={repair} run_id={repair_run_id}"
         )
         workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
         previous_history = History(workflow_execution.history())

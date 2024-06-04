@@ -6,7 +6,7 @@ import inspect
 import json
 import re
 import traceback
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
 import multiprocess
 
@@ -499,7 +499,7 @@ class Executor(executor.Executor):
                 return None
         return event
 
-    TASK_TYPE_TO_EVENT_FINDER: dict[type, callable] = {
+    TASK_TYPE_TO_EVENT_FINDER: ClassVar[dict[type, callable]] = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
@@ -689,7 +689,7 @@ class Executor(executor.Executor):
 
     @staticmethod
     def get_retry_task_timer_id(swf_task):
-        return f"__simpleflow_task_{str(swf_task.id)}"
+        return f"__simpleflow_task_{swf_task.id!s}"
 
     def schedule_task(
         self,
@@ -749,12 +749,14 @@ class Executor(executor.Executor):
         timer = simpleflow.swf.mapper.models.decision.TimerDecision("start", id=id, start_to_fire_timeout=str(timeout))
         self._decisions_and_context.append_decision(timer)
 
-    EVENT_TYPE_TO_FUTURE: dict[
-        str,
-        Callable[
-            [ActivityTask | WorkflowTask | SignalTask | MarkerTask, dict[str, Any]],
-            futures.Future | None,
-        ],
+    EVENT_TYPE_TO_FUTURE: ClassVar[
+        dict[
+            str,
+            Callable[
+                [ActivityTask | WorkflowTask | SignalTask | MarkerTask, dict[str, Any]],
+                futures.Future | None,
+            ],
+        ]
     ] = {
         "activity": resume_activity,
         "child_workflow": resume_child_workflow,
@@ -1174,8 +1176,8 @@ class Executor(executor.Executor):
         self,
         name,
         *args,
-        workflow_id: str = None,
-        run_id: str = None,
+        workflow_id: str | None = None,
+        run_id: str | None = None,
         propagate: bool = True,
         **kwargs,
     ):

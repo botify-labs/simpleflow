@@ -188,7 +188,7 @@ def status(workflow_execution, nb_tasks=None) -> tuple[Sequence, Sequence]:
     history.parse()
 
     header = "Tasks", "Last State", "Last State Time", "Scheduled Time"
-    rows = [(task["name"],) + get_timestamps(task) for task in history.tasks[::-1]]
+    rows = [(task["name"], *get_timestamps(task)) for task in history.tasks[::-1]]
     if nb_tasks:
         rows = rows[:nb_tasks]
 

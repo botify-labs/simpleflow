@@ -4,7 +4,7 @@ import json
 import unittest
 
 import boto3
-from moto import mock_swf, mock_s3
+from moto import mock_s3, mock_swf
 
 from simpleflow import futures, storage, task, workflow
 from simpleflow.activity import with_attributes

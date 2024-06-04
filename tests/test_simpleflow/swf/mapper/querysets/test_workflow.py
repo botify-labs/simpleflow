@@ -18,11 +18,11 @@ from simpleflow.swf.mapper.querysets.workflow import (
 from simpleflow.swf.mapper.utils import datetime_timestamp, past_day
 
 from ..mocks.workflow import (
+    mock_describe_workflow_execution,
     mock_describe_workflow_type,
     mock_list_closed_workflow_executions,
     mock_list_open_workflow_executions,
     mock_list_workflow_types,
-    mock_describe_workflow_execution,
 )
 
 

@@ -153,7 +153,7 @@ class ActivityWorker:
             ).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.exception(f"process error: {str(exc_value)}")
+            logger.exception(f"process error: {exc_value!s}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
                 details = exc_value.args[0]
                 reason = format_exc(exc_value)  # FIXME json.loads and rebuild?

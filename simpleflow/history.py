@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 import simpleflow.swf.mapper.models.history
 from simpleflow import logger
@@ -15,7 +15,10 @@ if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.event.marker import MarkerEvent
     from simpleflow.swf.mapper.models.event.task import ActivityTaskEvent
     from simpleflow.swf.mapper.models.event.timer import TimerEvent
-    from simpleflow.swf.mapper.models.event.workflow import ChildWorkflowExecutionEvent, WorkflowExecutionEvent
+    from simpleflow.swf.mapper.models.event.workflow import (
+        ChildWorkflowExecutionEvent,
+        WorkflowExecutionEvent,
+    )
 
 
 class History:
@@ -261,7 +264,9 @@ class History:
                 self._activities[event.activity_id].update(activity)
 
     def parse_child_workflow_event(
-        self, events: list[Event | ChildWorkflowExecutionEvent], event: ChildWorkflowExecutionEvent
+        self,
+        events: list[Event | ChildWorkflowExecutionEvent],
+        event: ChildWorkflowExecutionEvent,
     ) -> None:
         """Aggregate all the attributes of a workflow in a single entry.
 
@@ -455,7 +460,9 @@ class History:
             self._cancel_failed = cancel_failed
 
     def parse_external_workflow_event(
-        self, events: list[Event | ExternalWorkflowExecutionEvent], event: ExternalWorkflowExecutionEvent
+        self,
+        events: list[Event | ExternalWorkflowExecutionEvent],
+        event: ExternalWorkflowExecutionEvent,
     ):
         """
         Parse an external workflow event.
@@ -638,7 +645,7 @@ class History:
         if event.state == "completed":
             self.completed_decision_id = event.id
 
-    TYPE_TO_PARSER: dict[str, Callable[[History, list[Event], Event], None]] = {
+    TYPE_TO_PARSER: ClassVar[dict[str, Callable[[History, list[Event], Event], None]]] = {
         "ActivityTask": parse_activity_event,
         "DecisionTask": parse_decision_event,
         "ChildWorkflowExecution": parse_child_workflow_event,

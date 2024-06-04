@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 from moto import mock_swf
 
-from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from simpleflow.swf.mapper.models.activity import ActivityTask
 from simpleflow.swf.mapper.models.domain import Domain
+from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 
 FakeActivityType = namedtuple("FakeActivityType", ["name"])
 

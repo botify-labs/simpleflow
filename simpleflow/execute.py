@@ -96,9 +96,7 @@ def get_name(func) -> str:
     return ".".join([prefix, name])
 
 
-def wait_subprocess(
-    process, timeout: int | None = None, command_info: str | list[str] | None = None
-) -> int:
+def wait_subprocess(process, timeout: int | None = None, command_info: str | list[str] | None = None) -> int:
     """
     Wait for a process, raise if timeout.
     :param process: the process to wait
@@ -157,9 +155,7 @@ def python(
                     tmp_dir = env.get(envname)
                     if tmp_dir:
                         break
-            with tempfile.TemporaryFile(
-                dir=tmp_dir
-            ) as result_fd, tempfile.TemporaryFile(
+            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(
                 dir=tmp_dir, buffering=0
             ) as error_fd:  # TODO when Python 3.7 is dropped: encoding="utf-8", errors="replace"
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
@@ -175,9 +171,7 @@ def python(
                     f"--error-fd={dup_error_fd}",
                     f"--context={json_dumps(context)}",
                 ]
-                if (
-                    len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH
-                ):  # command-line limit on Linux: 128K
+                if len(arguments_json) < MAX_ARGUMENTS_JSON_LENGTH:  # command-line limit on Linux: 128K
                     full_command.append(arguments_json)
                     arg_file = None
                     arg_fd = None
@@ -202,9 +196,7 @@ def python(
                     pass_fds=pass_fds,
                     env=env,
                 )
-                rc = wait_subprocess(
-                    process, timeout=timeout, command_info=full_command
-                )
+                rc = wait_subprocess(process, timeout=timeout, command_info=full_command)
                 os.close(dup_result_fd)
                 os.close(dup_error_fd)
                 if arg_file:
@@ -266,9 +258,7 @@ def program(path=None, argument_format=format_arguments):
             sig.bind(*args, **kwargs)  # Raise TypeError on error
 
             command = path or func.__name__
-            return subprocess.check_output(
-                [command] + argument_format(*args, **kwargs), text=True
-            )  # nosec
+            return subprocess.check_output([command, *argument_format(*args, **kwargs)], text=True)  # nosec
 
         sig = signature(func)
 
@@ -399,9 +389,7 @@ def main():
         callable_ = callable_.__wrapped__
     args = arguments.get("args", ())
     kwargs = arguments.get("kwargs", {})
-    context = (
-        json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
-    )
+    context = json.loads(cmd_arguments.context) if cmd_arguments.context is not None else None
     try:
         if hasattr(callable_, "execute"):
             inst = callable_(*args, **kwargs)
