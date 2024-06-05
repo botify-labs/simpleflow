@@ -762,10 +762,12 @@ def info(sections):
     if "versions" in sections:
         with section("Versions"):
             print(f"simpleflow: {__version__}")
-            version, build = sys.version.split("\n", 1)
+            version = platform.python_version()
+            build = platform.python_compiler()
+            platform_platform = platform.platform()
             print(f"python_version: {version}")
             print(f"python_build: {build}")
-            print(f"platform: {platform.platform()}")
+            print(f"platform: {platform_platform}")
 
     if "settings" in sections:
         with section("Settings"):
