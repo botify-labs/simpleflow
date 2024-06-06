@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.models.domain import Domain
 

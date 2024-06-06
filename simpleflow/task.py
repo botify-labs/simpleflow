@@ -18,9 +18,9 @@ from .activity import Activity
 if TYPE_CHECKING:
     from typing import Any
 
-    from simpleflow.workflow import Workflow
     from simpleflow.exceptions import TaskFailed
     from simpleflow.executor import Executor
+    from simpleflow.workflow import Workflow
 
 
 def get_actual_value(value):
@@ -76,7 +76,7 @@ class ActivityTask(Task):
         self.kwargs = self.resolve_kwargs(**kwargs)
         self.id: str | None = None
 
-    def load_middlewares(self, middlewares):
+    def load_middlewares(self, middlewares: dict[str, list[str]]) -> None:
         if not middlewares:
             return
 

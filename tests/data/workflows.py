@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from simpleflow.workflow import Workflow
 from simpleflow.constants import HOUR, MINUTE
+from simpleflow.workflow import Workflow
 
 
 class BaseTestWorkflow(Workflow):

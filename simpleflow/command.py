@@ -15,7 +15,6 @@ import multiprocess
 import simpleflow.swf.mapper.exceptions
 import simpleflow.swf.mapper.models
 import simpleflow.swf.mapper.querysets
-from simpleflow.workflow import Workflow
 from simpleflow import __version__, format, log, logger
 from simpleflow.download import download_binaries
 from simpleflow.history import History
@@ -26,6 +25,7 @@ from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
 from simpleflow.utils import import_from_module, json_dumps
+from simpleflow.workflow import Workflow
 
 if TYPE_CHECKING:
     from typing import Any
@@ -71,7 +71,7 @@ def get_workflow_type(domain_name: str, workflow_class: type[Workflow]) -> Workf
 def load_input(input_fp):
     if input_fp is None:
         input_fp = sys.stdin
-    input = format.decode(input_fp)
+    input = format.decode(input_fp.read())
     return transform_input(input)
 
 
@@ -576,8 +576,7 @@ def standalone(
         # get the previous execution history, it will serve as "default history"
         # for activities that succeeded in the previous execution
         logger.info(
-            "retrieving history of previous execution: domain={} "
-            "workflow_id={} run_id={}".format(domain, repair, repair_run_id)
+            f"retrieving history of previous execution: domain={domain} " f"workflow_id={repair} run_id={repair_run_id}"
         )
         workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
         previous_history = History(workflow_execution.history())
@@ -763,10 +762,12 @@ def info(sections):
     if "versions" in sections:
         with section("Versions"):
             print(f"simpleflow: {__version__}")
-            version, build = sys.version.split("\n", 1)
+            version = platform.python_version()
+            build = platform.python_compiler()
+            platform_platform = platform.platform()
             print(f"python_version: {version}")
             print(f"python_build: {build}")
-            print(f"platform: {platform.platform()}")
+            print(f"platform: {platform_platform}")
 
     if "settings" in sections:
         with section("Settings"):

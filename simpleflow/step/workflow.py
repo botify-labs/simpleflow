@@ -13,7 +13,7 @@ from .submittable import Step
 from .tasks import GetStepsDoneTask
 
 if TYPE_CHECKING:
-    from typing import Any, DefaultDict, Sequence
+    from typing import Any, Sequence
 
 
 class WorkflowStepMixin(metaclass=abc.ABCMeta):
@@ -42,7 +42,7 @@ class WorkflowStepMixin(metaclass=abc.ABCMeta):
         """
         if not hasattr(self, "steps_forced"):
             self.steps_forced: set[str] = set()
-            self.steps_forced_reasons: DefaultDict[str, set] = defaultdict(set)
+            self.steps_forced_reasons: defaultdict[str, set] = defaultdict(set)
         steps = set(steps)
         self.steps_forced |= steps
         if reason:

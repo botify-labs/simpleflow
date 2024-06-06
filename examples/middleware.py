@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def my_pre_execution_middleware(context, **kwargs):
     print("AAAH PRE EXECUTION MIDDLEWARE", context)
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import errno
 import functools
 import json
 import logging
@@ -29,18 +28,13 @@ class RequiredArgument:
     pass
 
 
-def format_arguments(*args, **kwargs):
+def format_arguments(*args, **kwargs) -> list[str]:
     """
     Returns a string that contains the values of *args* and *kwargs* as command
     line options.
 
     :param args: that can be converted to strings.
-    :type  args: tuple.
     :param kwargs: whose keys and values can be converted to strings.
-    :type  kwargs: dict.
-
-    :returns:
-        :rtype: str.
 
     The elements args must be convertible to strings and will be used as
     positional arguments.
@@ -64,7 +58,7 @@ def format_arguments(*args, **kwargs):
     return [f'{arg(k)}="{v}"' for k, v in kwargs.items()] + list(map(str, args))
 
 
-def format_arguments_json(*args, **kwargs):
+def format_arguments_json(*args, **kwargs) -> str:
     dump = json_dumps(
         {
             "args": args,
@@ -74,7 +68,7 @@ def format_arguments_json(*args, **kwargs):
     return dump
 
 
-def get_name(func):
+def get_name(func) -> str:
     """
     Returns the name of a callable.
 
@@ -102,35 +96,31 @@ def get_name(func):
     return ".".join([prefix, name])
 
 
-def wait_subprocess(process, timeout=None, command_info=None):
+def wait_subprocess(process, timeout: int | None = None, command_info: str | list[str] | None = None) -> int:
     """
     Wait for a process, raise if timeout.
     :param process: the process to wait
     :param timeout: timeout after 'timeout' seconds
-    :type timeout: int | None
     :param command_info:
-        :returns: return code
-        :rtype: int.
+    :returns: return code
     """
-    if timeout:
-        t_start = time.time()
-        rc = process.poll()
-        while time.time() - t_start < timeout and rc is None:
-            time.sleep(1)
-            rc = process.poll()
+    if not timeout:
+        return process.wait()
 
-        if rc is None:
-            try:
-                process.terminate()  # send SIGTERM
-            except OSError as e:
-                # Ignore that exception the case the sub-process already terminated after last poll() call.
-                if e.errno == errno.ESRCH:
-                    return process.poll()
-                else:
-                    raise
-            raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
-        return rc
-    return process.wait()
+    t_start = time.time()
+    rc = process.poll()
+    while time.time() - t_start < timeout and rc is None:
+        time.sleep(1)
+        rc = process.poll()
+
+    if rc is None:
+        try:
+            process.terminate()  # send SIGTERM
+        except ProcessLookupError:
+            # Ignore that exception the case the subprocess already terminated after last poll() call.
+            return process.poll()
+        raise ExecutionTimeoutError(command=command_info, timeout_value=timeout)
+    return rc
 
 
 def python(
@@ -165,7 +155,9 @@ def python(
                     tmp_dir = env.get(envname)
                     if tmp_dir:
                         break
-            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(dir=tmp_dir) as error_fd:
+            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(
+                dir=tmp_dir, buffering=0
+            ) as error_fd:  # TODO when Python 3.7 is dropped: encoding="utf-8", errors="replace"
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)
@@ -185,7 +177,7 @@ def python(
                     arg_fd = None
                 else:
                     arg_file = tempfile.TemporaryFile(dir=tmp_dir)
-                    arg_file.write(arguments_json.encode("utf-8"))
+                    arg_file.write(arguments_json.encode())
                     arg_file.flush()
                     arg_file.seek(0)
                     arg_fd = os.dup(arg_file.fileno())
@@ -211,23 +203,20 @@ def python(
                     arg_file.close()
                 if rc:
                     error_fd.seek(0)
-                    err_output = error_fd.read()
-                    if err_output:
-                        err_output = err_output.decode("utf-8", errors="replace")
-                    raise ExecutionError(err_output)
+                    err_output = error_fd.read().decode(errors="replace")
+                    raise ExecutionError(err_output) if err_output else ExecutionError
 
                 result_fd.seek(0)
-                result_str = result_fd.read()
+                result_str = result_fd.read().decode(errors="replace")
 
             if not result_str:
                 return None
             try:
-                result_str = result_str.decode("utf-8", errors="replace")
                 result = format.decode(result_str)
                 return result
-            except BaseException as ex:
-                logger.exception(f"Exception in python.execute: {ex.__class__.__name__} {ex}")
-                logger.warning("%r", result_str)
+            except BaseException:
+                logger.exception("Exception in python.execute")
+                logger.warning("result_str: %r", result_str)
 
         execute.add_context_in_kwargs = True
         return execute
@@ -269,7 +258,7 @@ def program(path=None, argument_format=format_arguments):
             sig.bind(*args, **kwargs)  # Raise TypeError on error
 
             command = path or func.__name__
-            return subprocess.check_output([command] + argument_format(*args, **kwargs), text=True)  # nosec
+            return subprocess.check_output([command, *argument_format(*args, **kwargs)], text=True)  # nosec
 
         sig = signature(func)
 

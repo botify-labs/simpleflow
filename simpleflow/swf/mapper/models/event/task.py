@@ -5,7 +5,7 @@ import sys
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
 else:
-    from typing import TypedDict
+    from typing import ClassVar, TypedDict
 
 from typing import TYPE_CHECKING, Any
 
@@ -82,7 +82,7 @@ class CompiledActivityTaskEvent(CompiledEvent):
         "request_cancel_failed",  # Failed to process request_cancel decision
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "scheduled": ("schedule_failed", "canceled", "timed_out", "started"),
         "schedule_failed": ("scheduled", "timed_out"),
         "started": ("canceled", "failed", "timed_out", "completed"),
@@ -109,7 +109,7 @@ class CompiledDecisionTaskEvent(CompiledEvent):
         "timed_out",  # The decision task timed out
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "scheduled": ("started",),
         "started": ("timed_out", "completed"),
         "timed_out": ("scheduled",),

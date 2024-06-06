@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
-from typing import List
 
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.exceptions import DoesNotExistError
@@ -20,7 +19,7 @@ class ModelDiff:
     :type   ignore_fields: list
     """
 
-    def __init__(self, *input, ignore_fields: List[str] = None):
+    def __init__(self, *input, ignore_fields: list[str] | None = None):
         self.ignore_fields = ignore_fields or []
         self.container: OrderedDict[str, tuple[str, str]] = self._process_input(input)
 

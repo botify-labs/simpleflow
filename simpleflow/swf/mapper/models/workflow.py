@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from botocore.exceptions import ClientError
 
@@ -13,9 +13,9 @@ from simpleflow.swf.mapper.exceptions import (
     AlreadyExistsError,
     DoesNotExistError,
     ResponseError,
-    raises,
     extract_error_code,
     extract_message,
+    raises,
 )
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.models.domain import Domain
@@ -119,7 +119,7 @@ class WorkflowType(BaseModel):
 
         self.child_policy = policy
 
-    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
+    def _diff(self, ignore_fields: list[str] | None = None) -> ModelDiff:
         """Checks for differences between WorkflowType instance
         and upstream version
 
@@ -198,7 +198,7 @@ class WorkflowType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "TypeAlreadyExistsFault":
-                raise AlreadyExistsError("Workflow type %s already exists amazon-side" % self.name)
+                raise AlreadyExistsError(f"Workflow type {self.name} already exists amazon-side")
             if error_code == "UnknownResourceFault":
                 raise DoesNotExistError(message)
             raise
@@ -378,7 +378,7 @@ class WorkflowExecution(BaseModel):
         # so have to use generice self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
+    def _diff(self, ignore_fields: list[str] | None = None) -> ModelDiff:
         """Checks for differences between WorkflowExecution instance
         and upstream version
 
@@ -537,7 +537,10 @@ class WorkflowExecution(BaseModel):
         ),
     )
     def terminate(
-        self, child_policy: CHILD_POLICIES | None = None, details: str | None = None, reason: str | None = None
+        self,
+        child_policy: CHILD_POLICIES | None = None,
+        details: str | None = None,
+        reason: str | None = None,
     ) -> None:
         """Terminates the workflow execution"""
         self.terminate_workflow_execution(

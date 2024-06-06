@@ -114,9 +114,7 @@ class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
                 delay=utils.retry.exponential,
                 log_with=logger.exception,
                 except_on=simpleflow.swf.mapper.exceptions.DoesNotExistError,
-            )(
-                self.complete
-            )  # Exponential backoff on errors.
+            )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
         except Exception as err:
             # This is embarrassing because the decider cannot notify SWF of the

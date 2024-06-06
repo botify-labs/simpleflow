@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from botocore.exceptions import ClientError
 
@@ -10,9 +10,9 @@ from simpleflow.swf.mapper.exceptions import (
     AlreadyExistsError,
     DoesNotExistError,
     ResponseError,
-    raises,
     extract_error_code,
     extract_message,
+    raises,
 )
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
@@ -74,7 +74,7 @@ class Domain(BaseModel):
         if not isinstance(domain, cls) or not hasattr(domain, "name") or not isinstance(domain.name, str):
             raise TypeError(f"invalid type {type(domain)} for domain")
 
-    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
+    def _diff(self, ignore_fields: list[str] | None = None) -> ModelDiff:
         """Checks for differences between Domain instance
         and upstream version
 
@@ -137,7 +137,7 @@ class Domain(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "DomainAlreadyExistsFault":
-                raise AlreadyExistsError("Domain %s already exists amazon-side" % self.name)
+                raise AlreadyExistsError(f"Domain {self.name} already exists amazon-side")
             raise ResponseError(message)
 
     @exceptions.translate(ClientError, to=ResponseError)

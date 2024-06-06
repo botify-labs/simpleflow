@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import simpleflow.swf.mapper.models.event.workflow
-from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.models.event.factory import EventFactory
+from simpleflow.utils import json_dumps
 
 if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.workflow import WorkflowType

@@ -6,6 +6,6 @@ RUN curl -s https://bootstrap.pypa.io/get-pip.py | python - && pip install -U se
 
 WORKDIR /code
 
-ADD setup.py pyproject.toml ./
+ADD pyproject.toml ./
 COPY . ./
 RUN pip install -e .[dev]

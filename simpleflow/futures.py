@@ -63,7 +63,7 @@ class Future:
     def __repr__(self):
         return (
             f"<Future at {hex(id(self))} state={_STATE_TO_DESCRIPTION_MAP[self._state]}"
-            f"{' exception=%r' % self._exception if self._exception else ''}>"
+            f"{f' exception={self._exception!r}' if self._exception else ''}>"
         )
 
     def wait(self):

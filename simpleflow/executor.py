@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from ._decorators import deprecated
 
 if TYPE_CHECKING:
-    from simpleflow.workflow import Workflow
     from simpleflow.history import History
+    from simpleflow.workflow import Workflow
 
 __all__ = ["Executor"]
 

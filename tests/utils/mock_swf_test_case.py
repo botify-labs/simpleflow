@@ -3,12 +3,12 @@ from __future__ import annotations
 import unittest
 
 import boto3
-from moto import mock_swf, mock_s3
+from moto import mock_s3, mock_swf
 from moto.swf import swf_backend
 
 from simpleflow.swf.executor import Executor
-from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from simpleflow.swf.mapper.actors import Decider
+from simpleflow.swf.process.worker.base import ActivityPoller, ActivityWorker
 from tests.data.constants import DOMAIN
 
 

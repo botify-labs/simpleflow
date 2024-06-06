@@ -26,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dynamic = ["version"]
 
@@ -48,8 +49,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "boto3-stubs[s3,swf]",
+    "build",
     "flaky",
     "invoke",
     "moto<3.0.0",
@@ -63,7 +64,6 @@ dev = [
     "sure",
     "typing-extensions",
     "vcrpy",
-    "wheel",
     "twine",
 ]
 
@@ -93,9 +93,20 @@ version = { attr = "simpleflow.__version__" }
 [tool.ruff]
 line-length = 120
 
-[tool.black]
-line-length = 120
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+[tool.ruff.lint]
+extend-select = [
+    "UP",  # pyupgrade
+    "I",   # isort
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "RUF", # ruff
+]
+fixable = ["ALL"]
+allowed-confusables = ["‘", "’"]
+extend-ignore = [
+]
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 
 [tool.bandit]
 exclude_dirs = ["/tests", "/examples", "/venv", "/build"]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 
 from simpleflow import Workflow, activity, futures

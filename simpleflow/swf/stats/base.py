@@ -55,7 +55,7 @@ class WorkflowStats:
             history._activities.items(),
             history._child_workflows.items(),
         )
-        return [(name,) + get_start_to_close_timing(attributes) for name, attributes in events]
+        return [(name, *get_start_to_close_timing(attributes)) for name, attributes in events]
 
     def get_timings_with_percentage(self):
         """
@@ -75,6 +75,4 @@ class WorkflowStats:
         timing = -1
         total_time = self.total_time()
 
-        return [
-            (vals + ((vals[timing] / total_time) * 100.0,) if vals[timing] else None) for vals in self.get_timings()
-        ]
+        return [((*vals, vals[timing] / total_time * 100.0) if vals[timing] else None) for vals in self.get_timings()]

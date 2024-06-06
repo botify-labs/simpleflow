@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
 from botocore.exceptions import ClientError
 
@@ -10,9 +10,9 @@ from simpleflow.swf.mapper.exceptions import (
     AlreadyExistsError,
     DoesNotExistError,
     ResponseError,
-    raises,
-    extract_message,
     extract_error_code,
+    extract_message,
+    raises,
 )
 from simpleflow.swf.mapper.models.base import BaseModel, ModelDiff
 from simpleflow.swf.mapper.utils import immutable
@@ -108,7 +108,7 @@ class ActivityType(BaseModel):
         # so have to use generic self.__class__
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    def _diff(self, ignore_fields: List[str] = None) -> ModelDiff:
+    def _diff(self, ignore_fields: list[str] | None = None) -> ModelDiff:
         """Checks for differences between ActivityType instance
         and upstream version
 
@@ -242,11 +242,11 @@ class ActivityTask(BaseModel):
         task_list: str,
         task_token: str | None = None,
         activity_type: ActivityType | None = None,
-        workflow_execution: WorkflowExecution = None,
+        workflow_execution: WorkflowExecution | None = None,
         input: Any = None,
         activity_id: int | None = None,
         started_event_id: int | None = None,
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         self.domain = domain
         self.task_list = task_list

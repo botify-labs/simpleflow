@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def remove_none(obj):
     # Removes None *values* recursively from a dict/list
     # adapted from https://stackoverflow.com/questions/20558699

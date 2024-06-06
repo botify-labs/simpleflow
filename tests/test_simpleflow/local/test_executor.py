@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from simpleflow.workflow import Workflow
 from simpleflow.activity import with_attributes
 from simpleflow.canvas import Chain, Group
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local import Executor
 from simpleflow.task import WorkflowTask
+from simpleflow.workflow import Workflow
 
 
 @with_attributes()

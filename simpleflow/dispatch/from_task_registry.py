@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class RegistryDispatcher:
     """
     Map a name to a task handler wrt a task registry.

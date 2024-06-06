@@ -82,19 +82,19 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         """
         # run a very short workflow
         result = self.invoke(
-            'standalone --workflow-id %s --input {"args":[0]} --nb-workers 1 '
-            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow" % self.workflow_id,
+            f'standalone --workflow-id {self.workflow_id} --input {{"args":[0]}} --nb-workers 1 '
+            "--nb-deciders 1 tests.integration.workflow.SleepWorkflow",
         )
         expect(result.exit_code).to.equal(0)
         lines = result.output.split("\n")
-        start_line = [line for line in lines if line.startswith("test-simpleflow-workflow")][0]
+        start_line = next(line for line in lines if line.startswith("test-simpleflow-workflow"))
         _, run_id = start_line.split(" ", 1)
 
         # this workflow has executed a single activity, activity-tests.integration.workflow.sleep-1
         # for which scheduledEventId is 5
         # => let's rerun it locally and check the result
         result = self.invoke(
-            "activity.rerun --workflow-id %s --run-id %s --scheduled-id 5" % (self.workflow_id, run_id),
+            f"activity.rerun --workflow-id {self.workflow_id} --run-id {run_id} --scheduled-id 5",
         )
         expect(result.exit_code).to.equal(0)
         expect(result.output).to.contain("will sleep 0s")
@@ -109,8 +109,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             for e in events
             if (
                 e["eventType"] == "ActivityTaskScheduled"
-                and e["activityTaskScheduledEventAttributes"]["activityType"]["name"] == "tests.integration.workflow"
-                ".get_uuid"
+                and e["activityTaskScheduledEventAttributes"]["activityType"]["name"]
+                == "tests.integration.workflow" ".get_uuid"
             )
         ]
         expect(activities).should.have.length_of(2)

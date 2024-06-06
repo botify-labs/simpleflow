@@ -84,7 +84,7 @@ class SimpleflowFormatter(logging.Formatter):
             record.message = record.msg
 
         record.coloredlevel = colorize(record.levelname, record.levelname)
-        s = "%(isodate)s %(coloredlevel)s [process=%(processName)s, pid=%(process)s]: %(message)s" % record.__dict__
+        s = "{isodate} {coloredlevel} [process={processName}, pid={process}]: {message}".format(**record.__dict__)
 
         # C&P from logging.Formatter#format
         if record.exc_info:
