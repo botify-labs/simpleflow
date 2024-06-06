@@ -53,7 +53,7 @@ dev = [
     "build",
     "flaky",
     "invoke",
-    "moto<3.0.0",
+    "moto>=4.2.8,<5.0.0",
     "packaging",
     "pre-commit",
     "pytest",
