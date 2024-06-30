@@ -150,6 +150,7 @@ class ActivityWorker:
             kwargs = input.get("kwargs", {})
             context = sanitize_activity_context(task.context)
             context["domain_name"] = poller.domain.name
+            context["task_list"] = poller.task_list
             if input.get("meta", {}).get("binaries"):
                 download_binaries(input["meta"]["binaries"])
             result = ActivityTask(
@@ -284,7 +285,7 @@ def spawn(
         except simpleflow.swf.mapper.exceptions.RateLimitExceededError as error:
             # ignore rate limit errors: high chances the next heartbeat will be
             # ok anyway, so it would be stupid to break the task for that
-            logger.warning(
+            logger.info(
                 f'got a "ThrottlingException / Rate exceeded" when heartbeating for task {task.activity_type.name}:'
                 f" {error}"
             )
