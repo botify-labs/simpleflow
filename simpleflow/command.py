@@ -409,6 +409,7 @@ def start_decider(workflows, domain, task_list, nb_processes):
     )
 
 
+@click.option("--proxy", "-x", envvar="SWF_PROXY", required=False, help="Proxy URL.")
 @click.option("--middleware-pre-execution", required=False, multiple=True)
 @click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
@@ -436,9 +437,12 @@ def start_worker(
     poll_data,
     middleware_pre_execution,
     middleware_post_execution,
+    proxy,
 ):
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
+    if poll_data and proxy:
+        raise ValueError("Please provide either --poll-data or --proxy, not both")
 
     middlewares = {
         "pre": middleware_pre_execution,
@@ -453,6 +457,7 @@ def start_worker(
         heartbeat=heartbeat,
         one_task=one_task,
         poll_data=poll_data,
+        proxy=proxy,
     )
 
 
