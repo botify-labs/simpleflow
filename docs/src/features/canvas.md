@@ -139,12 +139,12 @@ from simpleflow.canvas import Chain, FuncGroup, Group
 @activity.with_attributes(task_list="quickstart", version="example")
 def partition_data(data_location):
     # Partition a list of things to do into parallelizable sub-parts
-    pass
+    ...
 
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def execute_on_sub_part(sub_part):
-    pass
+    ...
 
 
 class AWorkflow(Workflow):
@@ -169,5 +169,11 @@ return an empty Group. Since this has been a long-standing policy, a new
 `_allow_none` argument relaxes this constraint.
 
 !!! warning
-    This is a new experimental option: a better one might be to enforce
-    that nothing is returned.
+    This is a new experimental option: a better one may be to allow
+    a `None` return value.
+
+### Overriding future classes
+
+Both the `Group` and `Canvas` instances delegate their work to a
+`GroupFuture` (resp. `ChainFuture`) instance by default.
+Passing a `future_class` argument allows overriding this.

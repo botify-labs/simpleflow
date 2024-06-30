@@ -1,7 +1,7 @@
 Execution of Tasks as Programs
 ==============================
 
-The `simpleflow.execute` module allows to define functions that will be
+The `simpleflow.execute` module allows defining functions that will be
 executed as a program.
 
 There are two modes:

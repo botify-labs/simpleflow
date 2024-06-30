@@ -22,7 +22,7 @@ Settings
 --------
 
 !!! bug
-    The informations in this "Settings" section may be outdated, they need some love.
+    The information in this "Settings" section may be outdated, it needs some love.
 
 Optional:
 
@@ -84,7 +84,7 @@ local and remote objects.
     retention_period=60
 )
 
-# a Domain model local instance has been created, but nothing has been
+# A Domain model local instance has been created, but nothing has been
 # sent to amazon. To do so, you have to save it.
 >>> D.save()
 ```
@@ -133,8 +133,8 @@ ModelDiff()
 
 ### QuerySets
 
-Models can be retrieved and instantiated via querysets. To continue over the django comparison,
-they’re behaving like django managers.
+Models can be retrieved and instantiated via querysets. To continue over the Django comparison,
+they’re behaving like Django managers.
 
 ```python
 # As querying for models needs a valid connection to amazon service,
