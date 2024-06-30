@@ -1,7 +1,6 @@
 # Task Lists
 
-Task lists are often used to route different tasks to specific groups
-of workers.
+Task lists are used to route different tasks to specific groups of workers.
 The decider and activity task lists are distinct, even if they have the same name.
 
 For SWF activities, the task list is typically specified with `@activity.with_attributes`:
@@ -56,7 +55,7 @@ class MyWorkflow(Workflow):
     ...
 
     @classmethod
-    def get_task_list(cls, task_list, *args, **kwargs):
+    def get_task_list(cls, *args, task_list, **kwargs):
         return task_list
 
     def run(self, x, task_list, *args, **kwargs):
