@@ -7,7 +7,7 @@ It can be executed like this:
 ```
 export AWS_DEFAULT_REGION=eu-west-1
 export SWF_DOMAIN=TestDomain
-simpleflow standalone \
+PYTHONPATH="$PWD" simpleflow standalone \
   --nb-deciders 1 \
   --nb-workers 2 \
   --input '{"kwargs":{"money_needed": 120}}' \
