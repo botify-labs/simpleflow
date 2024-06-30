@@ -21,11 +21,11 @@ __all__ = ["Poller"]
 class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
     """Multi-processing implementation of a SWF actor."""
 
-    def __init__(self, domain: Domain, task_list: str | None = None) -> None:
+    def __init__(self, domain: Domain, task_list: str | None = None, **kwargs) -> None:
         self.is_alive = False
         self._named_mixin_properties = ["task_list"]
 
-        super().__init__(domain, task_list)
+        super().__init__(domain, task_list, **kwargs)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(domain={self.domain.name}, task_list={self.task_list})"

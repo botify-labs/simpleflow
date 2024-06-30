@@ -18,8 +18,8 @@ class Actor(ConnectedSWFObject):
     :ivar  task_list: task list the Actor should watch for tasks on
     """
 
-    def __init__(self, domain: Domain, task_list: str) -> None:
-        super().__init__()
+    def __init__(self, domain: Domain, task_list: str, **kwargs) -> None:
+        super().__init__(**kwargs)
 
         self._set_domain(domain)
         self.task_list = task_list

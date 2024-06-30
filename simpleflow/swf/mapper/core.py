@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any
 
 import boto3
+from botocore import config
 from botocore.exceptions import NoCredentialsError
 
 # NB: import logger directly from simpleflow so we benefit from the logging
@@ -41,6 +42,7 @@ class ConnectedSWFObject:
         self,
         *,
         region: str | None = None,
+        proxy: str | None = None,
     ):
         self.region = SETTINGS.get("region") or region or DEFAULT_AWS_REGION
         # Use settings-provided keys if available, otherwise pass empty
@@ -49,6 +51,8 @@ class ConnectedSWFObject:
         cred_keys = ["aws_access_key_id", "aws_secret_access_key"]
         creds_: dict[str, Any] = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
 
+        if proxy:
+            creds_["config"] = config.Config(proxies={"https": proxy})
         # raises EndpointConnectionError if region is wrong
         self.boto3_client = get_or_create_boto3_client(region_name=self.region, service_name="swf", **creds_)
 
