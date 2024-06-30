@@ -21,6 +21,7 @@ from simpleflow.history import History
 from simpleflow.settings import print_settings
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider, worker
+from simpleflow.swf.process.proxy.command import start_proxy
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
@@ -782,6 +783,17 @@ def info(sections):
                 if "SECRET" in key:
                     value = "<redacted>"
                 print(f"{key}={value}")
+
+
+@click.option("--address", "-a", required=False, default="::1", help="Address to bind.")
+@click.option("--port", "-p", required=False, type=int, default=4242, help="Port to bind.")
+@cli.command("proxy.start", help="Start a proxy process to handle worker tasks.")
+def proxy_start(address: str, port: int):
+    proxy = os.environ.get("SWF_PROXY")
+    if proxy:
+        address, sport = proxy.rsplit(":", 1)
+        port = int(sport)
+    start_proxy(address=address, port=port)
 
 
 @click.argument("locations", nargs=-1)
