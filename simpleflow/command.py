@@ -43,7 +43,7 @@ def comma_separated_list(value):
 
 @click.group()
 @click.option("--format")
-@click.option("--header/--no-header", default=False)
+@click.option("--header/--no-header", default=True)
 @click.option(
     "--color",
     type=click.Choice([log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]),
@@ -395,14 +395,11 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 
 
 @click.option("--nb-processes", "-N", type=int)
-@click.option("--log-level", "-l")
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @click.argument("workflows", nargs=-1, required=False)
 @cli.command("decider.start", help="Start a decider process to manage workflow executions.")
-def start_decider(workflows, domain, task_list, log_level, nb_processes):
-    if log_level:
-        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
+def start_decider(workflows, domain, task_list, nb_processes):
     decider.command.start(
         workflows,
         domain,
@@ -427,14 +424,12 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     help="Heartbeat interval in seconds (0 to disable heartbeating).",
 )
 @click.option("--nb-processes", "-N", type=int)
-@click.option("--log-level", "-l")
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @cli.command("worker.start", help="Start a worker process to handle activity tasks.")
 def start_worker(
     domain,
     task_list,
-    log_level,
     nb_processes,
     heartbeat,
     one_task,
@@ -442,9 +437,6 @@ def start_worker(
     middleware_pre_execution,
     middleware_post_execution,
 ):
-    if log_level:
-        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
-
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
 
