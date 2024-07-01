@@ -50,10 +50,10 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
         middlewares: dict[str, list[str]] | None = None,
         heartbeat: int = 60,
         poll_data: str | None = None,
+        proxy: str | None = None,
     ) -> None:
         """
         :param middlewares: Paths to middleware functions to execute before and after any Activity
-        :param process_mode: Whether to process locally (default)
         """
         self.nb_retries = 3
         # heartbeat=0 is a special value to disable heartbeating. We want to
@@ -63,7 +63,7 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
         self.middlewares = middlewares
 
         self.poll_data = poll_data
-        super().__init__(domain, task_list)
+        super().__init__(domain, task_list, proxy=proxy)
 
     @property
     def name(self):
@@ -96,7 +96,7 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
         """
         Process a simpleflow.swf.mapper.actors.ActivityWorker poll response.
         """
-        token = response.task_token
+        token: str = response.task_token
         task = response.activity_task
         spawn(self, token, task, self.middlewares, self._heartbeat)
 
@@ -107,7 +107,11 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
     # noinspection PyMethodOverriding
     @with_state("failing")
     def fail(
-        self, token: str, task: ActivityTask, reason: str | None = None, details: str | None = None
+        self,
+        token: str,
+        task: ActivityTask,
+        reason: str | None = None,
+        details: str | None = None,
     ) -> dict[str, Any] | None:
         """
         Fail the activity, log and ignore exceptions.
@@ -132,7 +136,11 @@ class ActivityWorker:
         return self._dispatcher.dispatch_activity(name)
 
     def process(
-        self, poller: ActivityPoller, token: str, task: ActivityTask, middlewares: dict[str, list[str]] | None = None
+        self,
+        poller: ActivityPoller,
+        token: str,
+        task: ActivityTask,
+        middlewares: dict[str, list[str]] | None = None,
     ) -> Any:
         logger.debug("ActivityWorker.process()")
         try:
@@ -142,6 +150,7 @@ class ActivityWorker:
             kwargs = input.get("kwargs", {})
             context = sanitize_activity_context(task.context)
             context["domain_name"] = poller.domain.name
+            context["task_list"] = poller.task_list
             if input.get("meta", {}).get("binaries"):
                 download_binaries(input["meta"]["binaries"])
             result = ActivityTask(
@@ -180,7 +189,12 @@ class ActivityWorker:
             poller.fail_with_retry(token, task, reason)
 
 
-def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, list[str]] | None = None) -> None:
+def process_task(
+    poller: ActivityPoller,
+    token: str,
+    task: ActivityTask,
+    middlewares: dict[str, list[str]] | None = None,
+) -> None:
     logger.debug("process_task()")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
@@ -271,7 +285,7 @@ def spawn(
         except simpleflow.swf.mapper.exceptions.RateLimitExceededError as error:
             # ignore rate limit errors: high chances the next heartbeat will be
             # ok anyway, so it would be stupid to break the task for that
-            logger.warning(
+            logger.info(
                 f'got a "ThrottlingException / Rate exceeded" when heartbeating for task {task.activity_type.name}:'
                 f" {error}"
             )

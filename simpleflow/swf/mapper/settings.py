@@ -99,9 +99,6 @@ def from_home(path: str | os.PathLike = ".swf") -> dict[str, str]:
     """Retrieves settings from home environment
 
     If HOME environment is applicable, search $HOME/path.
-
-    :rtype: dict
-
     """
     if "HOME" in os.environ:
         swf_path = os.path.join(os.environ["HOME"], path)
@@ -116,7 +113,7 @@ def get(path: str | os.PathLike = ".swf") -> dict[str, str]:
     First, it will try to retrieve settings from a *path* in the user's home
     directory. Other it tries to load the settings from the environment.
 
-    If both return an empty dict, it will also return a empty dict.
+    If both return an empty dict, it will also return an empty dict.
     """
 
     return from_home(path) or from_env()

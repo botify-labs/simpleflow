@@ -41,8 +41,8 @@ class ActivityWorker(Actor):
                       The form of this identity is user defined.
     """
 
-    def __init__(self, domain: Domain, task_list: str, identity: str | None = None):
-        super().__init__(domain, task_list)
+    def __init__(self, domain: Domain, task_list: str, identity: str | None = None, **kwargs):
+        super().__init__(domain, task_list, **kwargs)
 
         self._identity = identity
 
