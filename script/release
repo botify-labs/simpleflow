@@ -19,7 +19,7 @@ MAIN_BRANCH = "main"
 CHANGELOG_FILE = "CHANGELOG.md"
 
 # This is not the full list, we removed some abbreviations that are not super explicit.
-# Hatch does not expose does as constants, so we have to duplicate them here.
+# Hatch does not expose those as constants, so we have to duplicate them here.
 HATCH_VERSION_SEGMENTS = (
     "major",
     "minor",
@@ -71,7 +71,12 @@ def execute(command: list[str], ignore: bool = False, log: bool = False, dry_run
     :return: command output
     """
     if log or dry_run:
-        print(color_msg("purple", f"{'would ' if dry_run else ''}execute: {' '.join(quote(c) for c in command)}"))
+        print(
+            color_msg(
+                "purple",
+                f"{'would ' if dry_run else ''}execute: {' '.join(quote(c) for c in command)}",
+            )
+        )
     if dry_run:
         return ""
     env = os.environ.copy()
