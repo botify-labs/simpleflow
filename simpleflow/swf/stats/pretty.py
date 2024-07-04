@@ -38,7 +38,12 @@ def _to_timestamp(date: datetime):
     return (date - datetime(1970, 1, 1)).total_seconds()
 
 
-def tabular(values: Sequence[Sequence[Any]], headers: Sequence[str], tablefmt: str, floatfmt: str) -> str:
+def tabular(
+    values: Sequence[Sequence[Any]],
+    headers: Sequence[str],
+    tablefmt: str,
+    floatfmt: str,
+) -> str:
     return tabulate(
         values,
         headers=headers,
@@ -65,7 +70,7 @@ def human(values: Sequence[Sequence[Any]], headers: Sequence[str]) -> str:
     )
 
 
-def jsonify(values: Sequence[Sequence[Any]], headers: Sequence[str]) -> str:
+def jsonify(values: Sequence[Sequence[Any]], headers: Sequence[str] | None) -> str:
     if headers:
         return json_dumps([dict(zip(headers, value)) for value in values])
     else:
@@ -82,9 +87,9 @@ FORMATS = {
 }
 
 
-def get_timestamps(task) -> tuple:
+def get_timestamps(task: dict[str, Any]) -> tuple:
     last_state = task["state"]
-    timestamp = task[last_state + "_timestamp"]
+    timestamp = task.get(last_state + "_timestamp")
     scheduled_timestamp = task.get("scheduled_timestamp", "")
 
     return last_state, timestamp, scheduled_timestamp
@@ -183,7 +188,7 @@ def status(workflow_execution, nb_tasks=None) -> tuple[Sequence, Sequence]:
     history.parse()
 
     header = "Tasks", "Last State", "Last State Time", "Scheduled Time"
-    rows = [(task["name"],) + get_timestamps(task) for task in history.tasks[::-1]]
+    rows = [(task["name"], *get_timestamps(task)) for task in history.tasks[::-1]]
     if nb_tasks:
         rows = rows[:nb_tasks]
 
@@ -208,7 +213,9 @@ def formatted(with_header: bool = False, fmt: callable = DEFAULT_FORMAT) -> call
     return formatter
 
 
-def list_executions(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence, Sequence]:
+def list_executions(
+    workflow_executions: list[WorkflowExecution],
+) -> tuple[Sequence, Sequence]:
     header = "Workflow ID", "Workflow Type", "Status"
     rows = [
         (
@@ -222,7 +229,9 @@ def list_executions(workflow_executions: list[WorkflowExecution]) -> tuple[Seque
     return header, rows
 
 
-def list_details(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence, Sequence]:
+def list_details(
+    workflow_executions: list[WorkflowExecution],
+) -> tuple[Sequence, Sequence]:
     header = (
         "Workflow ID",
         "Workflow Type",
@@ -265,7 +274,7 @@ def list_details(workflow_executions: list[WorkflowExecution]) -> tuple[Sequence
 
 
 def get_task(
-    workflow_execution: WorkflowExecution, task_id: int, details: bool = False
+    workflow_execution: WorkflowExecution, task_id: str, details: bool = False
 ) -> tuple[list[str], list[list[Any]]]:
     history = History(workflow_execution.history())
     history.parse()

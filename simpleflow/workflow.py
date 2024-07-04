@@ -205,8 +205,23 @@ class Workflow(Submittable):
         """
         return self.executor.get_run_context()
 
-    def signal(self, name, *args, workflow_id: str = None, run_id: str = None, propagate: bool = True, **kwargs):
-        return self.executor.signal(name, *args, workflow_id=workflow_id, run_id=run_id, propagate=propagate, **kwargs)
+    def signal(
+        self,
+        name,
+        *args,
+        workflow_id: str | None = None,
+        run_id: str | None = None,
+        propagate: bool = True,
+        **kwargs,
+    ):
+        return self.executor.signal(
+            name,
+            *args,
+            workflow_id=workflow_id,
+            run_id=run_id,
+            propagate=propagate,
+            **kwargs,
+        )
 
     def wait_signal(self, name):
         return self.executor.wait_signal(name)

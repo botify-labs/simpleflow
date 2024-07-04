@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from simpleflow.utils import json_dumps
 from simpleflow.swf.mapper.models.decision.base import Decision, decision_action
+from simpleflow.utils import json_dumps
 
 
 class MarkerDecision(Decision):

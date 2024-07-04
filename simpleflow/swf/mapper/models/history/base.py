@@ -3,9 +3,12 @@ from __future__ import annotations
 from itertools import groupby
 from typing import Any, Iterator
 
-from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
 from simpleflow.swf.mapper.models.event.base import Event
-from simpleflow.swf.mapper.models.event.factory import CompiledEventFactory, EventFactory
+from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
+from simpleflow.swf.mapper.models.event.factory import (
+    CompiledEventFactory,
+    EventFactory,
+)
 from simpleflow.swf.mapper.models.event.workflow import WorkflowExecutionEvent
 from simpleflow.swf.mapper.utils import cached_property
 
@@ -76,11 +79,11 @@ class History:
         elif isinstance(val, slice):
             return History(events=self.events[val])
 
-        raise TypeError("Unknown slice format: %s" % type(val))
+        raise TypeError(f"Unknown slice format: {type(val)}")
 
     def __repr__(self):
         events_repr = "\n\t".join([e.__repr__() for e in self.events])
-        repr_str = "<History\n\t%s\n>" % events_repr
+        repr_str = f"<History\n\t{events_repr}\n>"
 
         return repr_str
 

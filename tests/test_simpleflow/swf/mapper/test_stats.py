@@ -3,8 +3,8 @@ from __future__ import annotations
 from simpleflow import Workflow, activity
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.history import History
-from simpleflow.swf.stats import WorkflowStats
 from simpleflow.swf.mapper.models.history import builder
+from simpleflow.swf.stats import WorkflowStats
 
 
 @activity.with_attributes(version="test")

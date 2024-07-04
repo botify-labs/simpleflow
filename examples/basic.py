@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import time
+from typing import ClassVar
 
 from simpleflow import Workflow, activity, futures, logger
 
@@ -35,7 +38,7 @@ class BasicWorkflow(Workflow):
     name = "basic"
     version = "example"
     task_list = "example"
-    tag_list = ["a=1", "b=foo"]
+    tag_list: ClassVar[list[int]] = ["a=1", "b=foo"]
 
     def run(self, x, t=30):
         execution = self.get_run_context()

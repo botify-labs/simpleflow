@@ -48,7 +48,7 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     @domain.setter
     def domain(self, value: Domain):
         if not isinstance(value, Domain):
-            err = "domain property has to be of" "swf.model.domain.Domain type, not %r" % type(value)
+            err = "domain property has to be of" f"swf.model.domain.Domain type, not {type(value)!r}"
             raise TypeError(err)
         self._domain = value
 
@@ -424,7 +424,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         }
 
         if status not in statuses:
-            raise ValueError("Unknown status provided: %s" % status)
+            raise ValueError(f"Unknown status provided: {status}")
 
         # boto.swf.list_closed_workflow_executions awaits a `start_oldest_date`
         # MANDATORY kwarg, when boto.swf.list_open_workflow_executions awaits a

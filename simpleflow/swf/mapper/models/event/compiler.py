@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from simpleflow.swf.mapper.models.event.base import Event
 
 
@@ -15,7 +17,7 @@ class Stateful:
     """Base stateful object implementation"""
 
     states: tuple[str, ...] = ()
-    transitions: dict[str, tuple[str, ...]] = {}
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {}
 
 
 class CompiledEvent(Event, Stateful):

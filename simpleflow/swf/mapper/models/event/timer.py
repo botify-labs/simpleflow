@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from simpleflow.swf.mapper.models.event.base import Event
 from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
 
@@ -24,7 +26,7 @@ class CompiledTimerEvent(CompiledEvent):
         "cancel_failed",  # Failed to process CancelTimer decision
     )
 
-    transitions = {
+    transitions: ClassVar[dict[str, tuple[str, ...]]] = {
         "started": ("canceled", "fired"),
         "start_failed": ("canceled"),
         "fired": ("canceled"),

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from simpleflow.utils import remove_none
 
 

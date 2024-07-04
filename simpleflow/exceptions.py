@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from simpleflow.workflow import Workflow
     from simpleflow.task import Task
+    from simpleflow.workflow import Workflow
 
 
 class ExecutionBlocked(Exception):
@@ -144,10 +144,10 @@ class AggregateException(Exception):
             exceptions.append(exception)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {repr([repr(ex) for ex in self.exceptions])}>"
+        return f"<{self.__class__.__name__} {[repr(ex) for ex in self.exceptions]!r}>"
 
     def __str__(self):
-        return f"{self.__class__.__name__}({str([str(ex) for ex in self.exceptions])})"
+        return f"{self.__class__.__name__}({[str(ex) for ex in self.exceptions]!s})"
 
     def __eq__(self, other):
         return self.exceptions == other.exceptions

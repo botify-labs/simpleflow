@@ -11,10 +11,10 @@ from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.marker import Marker
 from simpleflow.signal import WaitForSignal
+from simpleflow.swf.mapper.models.history import builder
 from simpleflow.task import ActivityTask, MarkerTask, SignalTask, TaskFailureContext, WorkflowTask
 from simpleflow.utils import format_exc, format_exc_type, issubclass_, json_dumps
 from simpleflow.workflow import Workflow
-from simpleflow.swf.mapper.models.history import builder
 
 
 class Executor(executor.Executor):

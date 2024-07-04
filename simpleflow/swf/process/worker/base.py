@@ -17,12 +17,12 @@ from simpleflow.dispatch import dynamic_dispatcher
 from simpleflow.download import download_binaries
 from simpleflow.exceptions import ExecutionError
 from simpleflow.process import Supervisor, with_state
+from simpleflow.swf.mapper.models.activity import ActivityTask as BaseActivityTask
+from simpleflow.swf.mapper.responses import Response
 from simpleflow.swf.process.poller import Poller
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import sanitize_activity_context
 from simpleflow.utils import format_exc, format_exc_type, json_dumps
-from simpleflow.swf.mapper.models.activity import ActivityTask as BaseActivityTask
-from simpleflow.swf.mapper.responses import Response
 
 if TYPE_CHECKING:
     from simpleflow.activity import Activity
@@ -47,7 +47,7 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
         self,
         domain: Domain,
         task_list: str | None,
-        middlewares: dict[str, str] | None = None,
+        middlewares: dict[str, list[str]] | None = None,
         heartbeat: int = 60,
         poll_data: str | None = None,
     ) -> None:
@@ -132,7 +132,7 @@ class ActivityWorker:
         return self._dispatcher.dispatch_activity(name)
 
     def process(
-        self, poller: ActivityPoller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None
+        self, poller: ActivityPoller, token: str, task: ActivityTask, middlewares: dict[str, list[str]] | None = None
     ) -> Any:
         logger.debug("ActivityWorker.process()")
         try:
@@ -153,7 +153,7 @@ class ActivityWorker:
             ).execute()
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.exception(f"process error: {str(exc_value)}")
+            logger.exception(f"process error: {exc_value!s}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
                 details = exc_value.args[0]
                 reason = format_exc(exc_value)  # FIXME json.loads and rebuild?
@@ -180,7 +180,7 @@ class ActivityWorker:
             poller.fail_with_retry(token, task, reason)
 
 
-def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, str] | None = None) -> None:
+def process_task(poller, token: str, task: ActivityTask, middlewares: dict[str, list[str]] | None = None) -> None:
     logger.debug("process_task()")
     format.JUMBO_FIELDS_MEMORY_CACHE.clear()
     worker = ActivityWorker()
@@ -226,7 +226,7 @@ def spawn(
     poller: ActivityPoller,
     token: str,
     task: ActivityTask,
-    middlewares: dict[str, str] | None = None,
+    middlewares: dict[str, list[str]] | None = None,
     heartbeat: int = 60,
 ) -> None:
     """

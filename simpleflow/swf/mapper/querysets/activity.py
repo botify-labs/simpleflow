@@ -43,7 +43,7 @@ class ActivityTypeQuerySet(BaseQuerySet):
         from simpleflow.swf.mapper.models.domain import Domain
 
         if not isinstance(value, Domain):
-            err = "domain property has to be of" "swf.model.domain.Domain type, not %r" % type(value)
+            err = "domain property has to be of" f"swf.model.domain.Domain type, not {type(value)!r}"
             raise TypeError(err)
         self._domain = value
 
