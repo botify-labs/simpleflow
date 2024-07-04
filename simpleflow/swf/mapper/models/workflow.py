@@ -13,6 +13,7 @@ from simpleflow.swf.mapper.exceptions import (
     AlreadyExistsError,
     DoesNotExistError,
     ResponseError,
+    WorkflowExecutionAlreadyStartedError,
     extract_error_code,
     extract_message,
     raises,
@@ -219,6 +220,14 @@ class WorkflowType(BaseModel):
         qs = WorkflowTypeQuerySet(self.domain)
         return qs.get(self.name, self.version)
 
+    @exceptions.catch(
+        ClientError,
+        raises(
+            WorkflowExecutionAlreadyStartedError,
+            when=lambda error, *args, **kwargs: extract_error_code(error) == "WorkflowExecutionAlreadyStartedFault",
+            extract=lambda *args, **kwargs: "",
+        ),
+    )
     def start_execution(
         self,
         workflow_id: str | None = None,

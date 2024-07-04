@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 
 
 class SWFError(Exception):
-    def __init__(self, message: str, raw_error: str = "", *args) -> None:
+    def __init__(self, message: str = "", raw_error: str = "", *args) -> None:
         """
         Examples:
 
@@ -102,6 +102,10 @@ class InvalidKeywordArgumentError(SWFError):
 
 
 class RateLimitExceededError(SWFError):
+    pass
+
+
+class WorkflowExecutionAlreadyStartedError(SWFError):
     pass
 
 
@@ -234,7 +238,7 @@ def raises(exception, when, extract: Callable[[Any], str] = str):
     @wraps(raises)
     def raises_closure(error, *args, **kwargs):
         if when(error, *args, **kwargs) is True:
-            raise exception(extract(error))
+            raise exception(extract(error)) from None
         raise error
 
     return raises_closure
