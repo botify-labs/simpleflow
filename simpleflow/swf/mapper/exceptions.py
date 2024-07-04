@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 
 
 class SWFError(Exception):
-    def __init__(self, message: str = "", raw_error: str = "", *args) -> None:
+    def __init__(self, message: str = "", raw_error: str = "", error_code: str = "", *args) -> None:
         """
         Examples:
 
@@ -59,6 +59,7 @@ class SWFError(Exception):
 
         self.kind = values[0].strip()
         self.type_ = self.kind.lower().strip().replace(" ", "_") if self.kind else None
+        self.error_code = error_code
 
     @property
     def message(self):
@@ -312,6 +313,8 @@ def translate(exceptions, to):
     """
 
     def throw(err, *args, **kwargs):
+        if isinstance(getattr(err, "response", None), dict) and issubclass(to, SWFError):
+            raise to(extract_message(err), error_code=extract_error_code(err)) from None
         raise to(extract_message(err))
 
     return catch(exceptions, handle_with=throw)
