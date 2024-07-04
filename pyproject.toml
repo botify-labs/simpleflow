@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling==1.11.1"]
+requires = ["hatchling==1.17.1"]
 build-backend = "hatchling.build"
 
 [project]
@@ -50,9 +50,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "boto3-stubs[s3,swf]",
-    "build",
     "flaky",
-    "hatch==1.6.3",
+    "hatch==1.7.0",
     "invoke",
     "moto<3.0.0",
     "packaging",
