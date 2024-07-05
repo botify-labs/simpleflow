@@ -64,8 +64,8 @@ class ActivityWorker(Actor):
                 raise DoesNotExistError(
                     f"Unable to cancel activity task with token={task_token}",
                     message,
-                )
-            raise ResponseError(message)
+                ) from e
+            raise ResponseError(message, error_code=error_code) from e
         finally:
             logging_context.reset()
 
@@ -87,9 +87,9 @@ class ActivityWorker(Actor):
                 raise DoesNotExistError(
                     f"Unable to complete activity task with token={task_token}",
                     message,
-                )
+                ) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
         except JumboTooLargeError as e:
             return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
@@ -113,9 +113,9 @@ class ActivityWorker(Actor):
                 raise DoesNotExistError(
                     f"Unable to fail activity task with token={task_token}",
                     message,
-                )
+                ) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
         except JumboTooLargeError as e:
             return self.respond_activity_task_failed(task_token, reason=format_exc(e))
 
@@ -137,15 +137,15 @@ class ActivityWorker(Actor):
                 raise DoesNotExistError(
                     f"Unable to send heartbeat with token={task_token}",
                     message,
-                )
+                ) from e
 
             if error_code == "ThrottlingException":
                 raise RateLimitExceededError(
                     f"Rate exceeded when sending heartbeat with token={task_token}",
                     message,
-                )
+                ) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
     def poll(self, task_list: str | None = None, identity: str | None = None) -> Response:
         """Polls for an activity task to process from current
@@ -184,9 +184,9 @@ class ActivityWorker(Actor):
                 raise DoesNotExistError(
                     "Unable to poll activity task",
                     message,
-                )
+                ) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         if not task.get("taskToken"):
             raise PollTimeout("Activity Worker poll timed out")

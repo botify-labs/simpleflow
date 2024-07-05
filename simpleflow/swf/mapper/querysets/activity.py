@@ -101,9 +101,9 @@ class ActivityTypeQuerySet(BaseQuerySet):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message)
+                raise DoesNotExistError(message) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         activity_info = response[self._infos]
         activity_config = response["configuration"]
