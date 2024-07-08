@@ -21,6 +21,7 @@ from simpleflow.history import History
 from simpleflow.settings import print_settings
 from simpleflow.swf import helpers
 from simpleflow.swf.process import decider, worker
+from simpleflow.swf.process.proxy.command import start_proxy
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
@@ -42,7 +43,7 @@ def comma_separated_list(value):
 
 @click.group()
 @click.option("--format")
-@click.option("--header/--no-header", default=False)
+@click.option("--header/--no-header", default=True)
 @click.option(
     "--color",
     type=click.Choice([log.ColorModes.AUTO, log.ColorModes.ALWAYS, log.ColorModes.NEVER]),
@@ -394,14 +395,11 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 
 
 @click.option("--nb-processes", "-N", type=int)
-@click.option("--log-level", "-l")
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @click.argument("workflows", nargs=-1, required=False)
 @cli.command("decider.start", help="Start a decider process to manage workflow executions.")
-def start_decider(workflows, domain, task_list, log_level, nb_processes):
-    if log_level:
-        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
+def start_decider(workflows, domain, task_list, nb_processes):
     decider.command.start(
         workflows,
         domain,
@@ -411,6 +409,7 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     )
 
 
+@click.option("--proxy", "-x", envvar="SWF_PROXY", required=False, help="Proxy URL.")
 @click.option("--middleware-pre-execution", required=False, multiple=True)
 @click.option("--middleware-post-execution", required=False, multiple=True)
 @click.option(
@@ -426,26 +425,24 @@ def start_decider(workflows, domain, task_list, log_level, nb_processes):
     help="Heartbeat interval in seconds (0 to disable heartbeating).",
 )
 @click.option("--nb-processes", "-N", type=int)
-@click.option("--log-level", "-l")
 @click.option("--task-list", "-t")
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @cli.command("worker.start", help="Start a worker process to handle activity tasks.")
 def start_worker(
     domain,
     task_list,
-    log_level,
     nb_processes,
     heartbeat,
     one_task,
     poll_data,
     middleware_pre_execution,
     middleware_post_execution,
+    proxy,
 ):
-    if log_level:
-        logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
-
     if not task_list and not poll_data:
         raise ValueError("Please provide a --task-list or some data via --poll-data")
+    if poll_data and proxy:
+        raise ValueError("Please provide either --poll-data or --proxy, not both")
 
     middlewares = {
         "pre": middleware_pre_execution,
@@ -460,6 +457,7 @@ def start_worker(
         heartbeat=heartbeat,
         one_task=one_task,
         poll_data=poll_data,
+        proxy=proxy,
     )
 
 
@@ -782,6 +780,17 @@ def info(sections):
                 if "SECRET" in key:
                     value = "<redacted>"
                 print(f"{key}={value}")
+
+
+@click.option("--address", "-a", required=False, default="::1", help="Address to bind.")
+@click.option("--port", "-p", required=False, type=int, default=4242, help="Port to bind.")
+@cli.command("proxy.start", help="Start a proxy process to handle worker tasks.")
+def proxy_start(address: str, port: int):
+    proxy = os.environ.get("SWF_PROXY")
+    if proxy:
+        address, sport = proxy.rsplit(":", 1)
+        port = int(sport)
+    start_proxy(address=address, port=port)
 
 
 @click.argument("locations", nargs=-1)

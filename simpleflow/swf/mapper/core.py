@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any
 
 import boto3
+from botocore import config
 from botocore.exceptions import NoCredentialsError
 
 # NB: import logger directly from simpleflow so we benefit from the logging
@@ -37,18 +38,23 @@ class ConnectedSWFObject:
         delay=retry.exponential,
         on_exceptions=(TypeError, NoCredentialsError),
     )
-    def __init__(self, *args, **kwargs):
-        self.region = SETTINGS.get("region") or kwargs.get("region") or DEFAULT_AWS_REGION
+    def __init__(
+        self,
+        *,
+        region: str | None = None,
+        proxy: str | None = None,
+    ):
+        self.region = SETTINGS.get("region") or region or DEFAULT_AWS_REGION
         # Use settings-provided keys if available, otherwise pass empty
         # dictionary to boto SWF client, which will use its default credentials
         # chain provider.
         cred_keys = ["aws_access_key_id", "aws_secret_access_key"]
-        creds_ = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
+        creds_: dict[str, Any] = {k: SETTINGS[k] for k in cred_keys if SETTINGS.get(k, None)}
 
-        self.boto3_client = kwargs.pop("boto3_client", None)
-        if not self.boto3_client:
-            # raises EndpointConnectionError if region is wrong
-            self.boto3_client = get_or_create_boto3_client(region_name=self.region, service_name="swf", **creds_)
+        if proxy:
+            creds_["config"] = config.Config(proxies={"https": proxy})
+        # raises EndpointConnectionError if region is wrong
+        self.boto3_client = get_or_create_boto3_client(region_name=self.region, service_name="swf", **creds_)
 
         logger.debug(f"initiated connection to region={self.region}")
 
@@ -70,7 +76,7 @@ class ConnectedSWFObject:
             "domain": domain,
             "startTimeFilter": {
                 "oldestDate": datetime.fromtimestamp(oldest_date),
-                "latestDate": datetime.fromtimestamp(latest_date) if latest_date is not None else None,
+                "latestDate": (datetime.fromtimestamp(latest_date) if latest_date is not None else None),
             },
             "nextPageToken": next_page_token,
             "maximumPageSize": maximum_page_size,
@@ -83,7 +89,7 @@ class ConnectedSWFObject:
             }
         if tag:
             kwargs["tagFilter"] = {
-                "name": tag,
+                "tag": tag,
             }
         if workflow_id:
             kwargs["executionFilter"] = {
@@ -120,12 +126,12 @@ class ConnectedSWFObject:
         if start_oldest_date is not None:
             kwargs["startTimeFilter"] = {
                 "oldestDate": datetime.fromtimestamp(start_oldest_date),
-                "latestDate": datetime.fromtimestamp(start_latest_date) if start_latest_date is not None else None,
+                "latestDate": (datetime.fromtimestamp(start_latest_date) if start_latest_date is not None else None),
             }
         if close_oldest_date is not None:
             kwargs["closeTimeFilter"] = {
                 "oldestDate": datetime.fromtimestamp(close_oldest_date),
-                "latestDate": datetime.fromtimestamp(close_latest_date) if close_latest_date is not None else None,
+                "latestDate": (datetime.fromtimestamp(close_latest_date) if close_latest_date is not None else None),
             }
         if close_status:
             kwargs["closeStatusFilter"] = {
@@ -138,7 +144,7 @@ class ConnectedSWFObject:
             }
         if tag:
             kwargs["tagFilter"] = {
-                "name": tag,
+                "tag": tag,
             }
         if workflow_id:
             kwargs["executionFilter"] = {
@@ -485,11 +491,13 @@ class ConnectedSWFObject:
         reverse_order: bool | None = None,
     ):
         kwargs = {
-            "activityType": {
-                "name": name,
-            }
-            if name
-            else None,
+            "activityType": (
+                {
+                    "name": name,
+                }
+                if name
+                else None
+            ),
             "maximumPageSize": maximum_page_size,
             "nextPageToken": next_page_token,
             "reverseOrder": reverse_order,
@@ -537,11 +545,13 @@ class ConnectedSWFObject:
         task_start_to_close_timeout: str | None = None,
     ):
         kwargs = {
-            "taskList": {
-                "name": task_list,
-            }
-            if task_list
-            else None,
+            "taskList": (
+                {
+                    "name": task_list,
+                }
+                if task_list
+                else None
+            ),
             "childPolicy": child_policy,
             "executionStartToCloseTimeout": execution_start_to_close_timeout,
             "input": input if input is not None else "",

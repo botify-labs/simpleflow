@@ -76,6 +76,7 @@ nav:
       - Error Handling: features/error_handling.md
       - Continue As New: features/continue_as_new.md
       - Middleware: features/middleware.md
+      - Proxy: features/proxy.md
   - Development: development.md
   - Contributing: contributing.md
   - License: license.md

@@ -11,6 +11,7 @@ def make_worker_poller(
     middlewares: dict[str, list[str]] | None,
     heartbeat: int,
     poll_data: str,
+    proxy: str | None = None,
 ) -> ActivityPoller:
     """
     Make a worker poller for the domain and task list.
@@ -22,6 +23,7 @@ def make_worker_poller(
         middlewares=middlewares,
         heartbeat=heartbeat,
         poll_data=poll_data,
+        proxy=proxy,
     )
 
 
@@ -33,6 +35,7 @@ def start(
     heartbeat: int = 60,
     one_task: bool = False,
     poll_data: str | None = None,
+    proxy: str | None = None,
 ):
     """
     Start a worker for the given domain and task_list.
@@ -48,6 +51,7 @@ def start(
         middlewares=middlewares,
         heartbeat=heartbeat,
         poll_data=poll_data,
+        proxy=proxy,
     )
 
     if poll_data:
