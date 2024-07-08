@@ -401,7 +401,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
     _infos = "executionInfo"
     _infos_plural = "executionInfos"
 
-    def _is_valid_status_param(self, status, param):
+    def _is_valid_status_param(self, status: str, param: str) -> bool:
         statuses = {
             WorkflowExecution.STATUS_OPEN: {"oldest_date", "latest_date"},
             WorkflowExecution.STATUS_CLOSED: {
@@ -414,10 +414,10 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         }
         return param in statuses.get(status, set())
 
-    def _validate_status_parameters(self, status, params):
+    def _validate_status_parameters(self, status: str, params: list[str]) -> list[str]:
         return [param for param in params if not self._is_valid_status_param(status, param)]
 
-    def list_workflow_executions(self, status, *args, **kwargs):
+    def list_workflow_executions(self, status: str, *args, **kwargs):
         statuses = {
             WorkflowExecution.STATUS_OPEN: "open",
             WorkflowExecution.STATUS_CLOSED: "closed",
@@ -436,7 +436,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         method = f"list_{statuses[status]}_workflow_executions"
         return getattr(self, method)(*args, **kwargs)
 
-    def get_workflow_type(self, execution_info):
+    def get_workflow_type(self, execution_info: dict[str, Any]) -> WorkflowType:
         workflow_type = execution_info["workflowType"]
         workflow_type_qs = WorkflowTypeQuerySet(self.domain)
 
@@ -467,7 +467,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             **kwargs,
         )
 
-    def get(self, workflow_id, run_id, *args, **kwargs):
+    def get(self, workflow_id: str, run_id: str, *args, **kwargs):
         """ """
         try:
             response = self.describe_workflow_execution(self.domain.name, run_id, workflow_id)
@@ -496,11 +496,11 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
     def filter(
         self,
-        status=WorkflowExecution.STATUS_OPEN,
-        tag=None,
-        workflow_id=None,
-        workflow_type_name=None,
-        workflow_type_version=None,
+        status: str = WorkflowExecution.STATUS_OPEN,
+        tag: str | None = None,
+        workflow_id: str | None = None,
+        workflow_type_name: str | None = None,
+        workflow_type_version: str | None = None,
         *args,
         **kwargs,
     ):
@@ -510,21 +510,16 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
                         Valid values are:
                         * ``simpleflow.swf.mapper.models.WorkflowExecution.STATUS_OPEN``
                         * ``simpleflow.swf.mapper.models.WorkflowExecution.STATUS_CLOSED``
-        :type   status: string
 
         :param  tag: workflow executions containing the tag will be kept
-        :type   tag: String
 
         :param  workflow_id: workflow executions attached to the id will be kept
-        :type   workflow_id: String
 
         :param  workflow_type_name: workflow executions attached to the workflow type
                                     with provided name will be kept
-        :type   workflow_type_name: String
 
         :param  workflow_type_version: workflow executions attached to the workflow type
                                        of the provided version will be kept
-        :type   workflow_type_version: String
 
         **Be aware that** querying over status allows the usage of statuses specific
         kwargs
@@ -618,8 +613,8 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
     def all(
         self,
-        status=WorkflowExecution.STATUS_OPEN,
-        start_oldest_date=MAX_WORKFLOW_AGE,
+        status: str = WorkflowExecution.STATUS_OPEN,
+        start_oldest_date: int = MAX_WORKFLOW_AGE,
         *args,
         **kwargs,
     ):
