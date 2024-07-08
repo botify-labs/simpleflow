@@ -83,7 +83,7 @@ class ConnectedSWFObject:
             }
         if tag:
             kwargs["tagFilter"] = {
-                "name": tag,
+                "tag": tag,
             }
         if workflow_id:
             kwargs["executionFilter"] = {
@@ -138,7 +138,7 @@ class ConnectedSWFObject:
             }
         if tag:
             kwargs["tagFilter"] = {
-                "name": tag,
+                "tag": tag,
             }
         if workflow_id:
             kwargs["executionFilter"] = {
