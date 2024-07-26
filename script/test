@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# TODO out of CI/container:
-# fd -g '*.pyc' -I | xargs rm
-# export PYTHONDONTWRITEBYTECODE=1
+# not needed, but harmless, in CI/container
+find . -name '*.pyc' -print0 | xargs -0 rm
+export PYTHONDONTWRITEBYTECODE=1
 
 # The AWS_DEFAULT_REGION parameter determines the region used for SWF
 # Leaving it to a value different than "us-east-1" would break moto,
