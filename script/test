@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# not needed, but harmless, in CI/container
+find . -name '*.pyc' -print0 | xargs -0 rm
+export PYTHONDONTWRITEBYTECODE=1
+
 # The AWS_DEFAULT_REGION parameter determines the region used for SWF
 # Leaving it to a value different than "us-east-1" would break moto,
 # because moto.swf only mocks calls to us-east-1 region for now.
@@ -26,7 +30,7 @@ export SIMPLEFLOW_VCR_RECORD_MODE=none
 # Disable jumbo fields
 export SIMPLEFLOW_JUMBO_FIELDS_BUCKET=""
 
-# Prevent Travis from overriding boto configuration
+# Prevent CI from overriding boto configuration
 export BOTO_CONFIG=/dev/null
 
 PYTHON=${PYTHON:-python}

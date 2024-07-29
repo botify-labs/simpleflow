@@ -3,13 +3,13 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 from functools import partial, wraps
-from typing import Any, Callable
+from typing import Any, Callable, Pattern
 
 from botocore.exceptions import ClientError
 
 
 class SWFError(Exception):
-    def __init__(self, message: str, raw_error: str = "", *args) -> None:
+    def __init__(self, message: str = "", raw_error: str = "", error_code: str = "", *args) -> None:
         """
         Examples:
 
@@ -46,9 +46,16 @@ class SWFError(Exception):
         'kind'
         >>> error.details
         'details'
+        >>> error = SWFError('message', error_code='FooFault')
+        >>> error.message
+        'message'
+        >>> error.error_code
+        'FooFault'
+        >>> error.details
+        ''
 
         """
-        Exception.__init__(self, message, *args)
+        super().__init__(message, *args)
 
         values = raw_error.split(":", 1)
 
@@ -59,6 +66,7 @@ class SWFError(Exception):
 
         self.kind = values[0].strip()
         self.type_ = self.kind.lower().strip().replace(" ", "_") if self.kind else None
+        self.error_code = error_code
 
     @property
     def message(self):
@@ -105,6 +113,10 @@ class RateLimitExceededError(SWFError):
     pass
 
 
+class WorkflowExecutionAlreadyStartedError(SWFError):
+    pass
+
+
 def ignore(*args, **kwargs):
     return
 
@@ -113,18 +125,15 @@ REGEX_UNKNOWN_RESOURCE = re.compile(r"^Unknown ([^ :,]+)")
 REGEX_NESTED_RESOURCE = re.compile(r"Unknown (?:type|execution)[:,]\s*([^ =]+)\s*=")
 
 
-def match_equals(regex, string, values):
+def match_equals(regex: Pattern, string: str | None, values: str | Sequence[str]) -> bool:
     """
     Extract a value from a string with a regex and compare it.
 
     :param regex: to extract the value to check.
-    :type  regex: _sre.SRE_Pattern (compiled regex)
 
     :param string: that contains the value to extract.
-    :type  string: str
 
     :param values: to compare with.
-    :type  values: [str]
 
     """
     if string is None:
@@ -139,12 +148,11 @@ def match_equals(regex, string, values):
     return matched[0] in values
 
 
-def is_unknown_resource_raised(error, *args, **kwargs):
+def is_unknown_resource_raised(error: Exception, *args, **kwargs) -> bool:
     """
     Handler that checks if *error* is an unknown resource fault.
 
     :param error: is the exception to check.
-    :type  error: Exception
 
     """
     if not isinstance(error, ClientError):
@@ -153,7 +161,7 @@ def is_unknown_resource_raised(error, *args, **kwargs):
     return extract_error_code(error) == "UnknownResourceFault"
 
 
-def is_unknown(resource: str | Sequence[str]):
+def is_unknown(resource: str | Sequence[str]) -> Callable:
     """
     Return a function that checks if *error* is an unknown *resource* fault.
 
@@ -185,7 +193,7 @@ def is_unknown(resource: str | Sequence[str]):
     return wrapped
 
 
-def always(value):
+def always(value: Any) -> Callable:
     """
     Always return *value* whatever arguments it got.
 
@@ -212,7 +220,7 @@ def always(value):
     return wrapped
 
 
-def generate_resource_not_found_message(error):
+def generate_resource_not_found_message(error: Exception) -> str:
     error_code = extract_error_code(error)
     if error_code != "UnknownResourceFault":
         raise ValueError(f"cannot extract resource from {error}")
@@ -222,37 +230,43 @@ def generate_resource_not_found_message(error):
     return f"Resource {resource[0] if resource else 'unknown'} does not exist"
 
 
-def raises(exception, when, extract: Callable[[Any], str] = str):
+def raises(
+    exception: type[Exception] | type[SWFError],
+    when: Callable[[Exception, tuple, dict], bool],
+    extract: Callable[[Any], str] = str,
+):
     """
     :param exception: to raise when the predicate is True.
-    :type  exception: type(Exception)
-
     :param when: predicate to apply.
-    :type  when: (error, *args, **kwargs) -> bool
+    :param extract: function to extract the value from the exception.
     """
 
     @wraps(raises)
     def raises_closure(error, *args, **kwargs):
         if when(error, *args, **kwargs) is True:
-            raise exception(extract(error))
-        raise error
+            if isinstance(getattr(error, "response", None), dict) and issubclass(exception, SWFError):
+                raise exception(extract_message(error), error_code=extract_error_code(error)) from error
+
+            raise exception(extract(error)) from error
+        raise error from None
 
     return raises_closure
 
 
-def catch(exceptions, handle_with=None, log=False):
+def catch(
+    exceptions: type[Exception] | Sequence[type[Exception]] | tuple[type[Exception]],
+    handle_with: Callable[[Exception, tuple, dict], Any] | None = None,
+    log: bool = False,
+):
     """
     Catch *exceptions*, then eventually handle and log them.
 
     :param exceptions: sequence of exceptions to catch.
-    :type  exceptions: Exception | (Exception, )
 
     :param handle_with: handle the exceptions (if handle_with is not None) or
                         raise them again.
-    :type  handle_with: function(err, *args, **kwargs)
 
     :param log: the exception with default logger.
-    :type  log: bool
 
     Examples:
 
@@ -307,8 +321,10 @@ def translate(exceptions, to):
 
     """
 
-    def throw(err, *args, **kwargs):
-        raise to(extract_message(err))
+    def throw(err: Exception, *args, **kwargs):
+        if isinstance(getattr(err, "response", None), dict) and issubclass(to, SWFError):
+            raise to(extract_message(err), error_code=extract_error_code(err)) from err
+        raise to(extract_message(err)) from err
 
     return catch(exceptions, handle_with=throw)
 

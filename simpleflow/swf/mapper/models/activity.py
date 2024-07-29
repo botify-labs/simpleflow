@@ -121,9 +121,9 @@ class ActivityType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError("Remote ActivityType does not exist")
+                raise DoesNotExistError("Remote ActivityType does not exist") from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         info = description["typeInfo"]
         config = description["configuration"]
@@ -192,9 +192,9 @@ class ActivityType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "TypeAlreadyExistsFault":
-                raise AlreadyExistsError(f"{self} already exists")
+                raise AlreadyExistsError(f"{self} already exists") from e
             if error_code in ("UnknownResourceFault", "TypeDeprecatedFault"):
-                raise DoesNotExistError(f"{error_code}: {message}")
+                raise DoesNotExistError(f"{error_code}: {message}") from e
             raise
 
     @exceptions.catch(

@@ -39,9 +39,9 @@ class DomainQuerySet(BaseQuerySet):
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(f"No such domain: {name}")
+                raise DoesNotExistError(f"No such domain: {name}") from e
             # Any other errors should raise
-            raise ResponseError(e.args[0])
+            raise ResponseError(e.args[0], error_code=error_code) from e
 
         domain_info = response["domainInfo"]
         domain_config = response["configuration"]

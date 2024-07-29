@@ -4,7 +4,6 @@ import unittest
 
 import boto3
 from moto import mock_s3, mock_swf
-from moto.swf import swf_backend
 
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.actors import Decider
@@ -37,12 +36,6 @@ class MockSWFTestCase(unittest.TestCase):
         # S3 preparation in case we use jumbo fields
         self.s3_conn = boto3.client("s3", region_name="us-east-1")
         self.s3_conn.create_bucket(Bucket="jumbo-bucket")
-
-    def tearDown(self):
-        swf_backend.reset()
-        assert not self.swf_conn.list_domains(registrationStatus="REGISTERED")[
-            "domainInfos"
-        ], "moto state incorrectly reset!"
 
     def register_activity_type(self, func: str, task_list: str):
         self.swf_conn.register_activity_type(domain=self.domain.name, name=func, version=task_list)

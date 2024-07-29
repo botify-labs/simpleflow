@@ -120,9 +120,9 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message)
+                raise DoesNotExistError(message) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         wt_info = response[self._infos]
         wt_config = response["configuration"]
@@ -475,9 +475,9 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message)
+                raise DoesNotExistError(message) from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         execution_info = response[self._infos]
         execution_config = response["executionConfiguration"]

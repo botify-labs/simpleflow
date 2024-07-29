@@ -86,9 +86,9 @@ class Domain(BaseModel):
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError("Remote Domain does not exist")
+                raise DoesNotExistError("Remote Domain does not exist") from e
 
-            raise ResponseError(e.args[0])
+            raise ResponseError(e.args[0], error_code=error_code) from e
 
         domain_info = description["domainInfo"]
         domain_config = description["configuration"]
@@ -137,8 +137,8 @@ class Domain(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "DomainAlreadyExistsFault":
-                raise AlreadyExistsError(f"Domain {self.name} already exists amazon-side")
-            raise ResponseError(message)
+                raise AlreadyExistsError(f"Domain {self.name} already exists amazon-side") from e
+            raise ResponseError(message, error_code=error_code) from e
 
     @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(

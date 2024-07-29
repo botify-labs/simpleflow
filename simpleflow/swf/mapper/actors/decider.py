@@ -61,8 +61,8 @@ class Decider(Actor):
                 raise DoesNotExistError(
                     f"Unable to complete decision task with token={task_token}",
                     message,
-                )
-            raise ResponseError(message)
+                ) from e
+            raise ResponseError(message, error_code=error_code) from e
         finally:
             logging_context.reset()
 
@@ -117,9 +117,9 @@ class Decider(Actor):
                     raise DoesNotExistError(
                         "Unable to poll decision task",
                         message,
-                    )
+                    ) from e
 
-                raise ResponseError(message)
+                raise ResponseError(message, error_code=error_code) from e
 
             token = task.get("taskToken")
             if not token:

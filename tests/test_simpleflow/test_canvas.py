@@ -410,7 +410,7 @@ class TestAggregateException(unittest.TestCase):
         agg_ex = AggregateException([ZeroDivisionError(), None, memory_error])
 
         def my_handler(ex, a, b=None):
-            return type(ex) == ZeroDivisionError
+            return isinstance(ex, ZeroDivisionError)
 
         with self.assertRaises(AggregateException) as new_agg_ex:
             agg_ex.handle(my_handler, 1, b=True)

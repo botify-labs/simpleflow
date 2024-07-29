@@ -13,6 +13,7 @@ from simpleflow.swf.mapper.exceptions import (
     AlreadyExistsError,
     DoesNotExistError,
     ResponseError,
+    WorkflowExecutionAlreadyStartedError,
     extract_error_code,
     extract_message,
     raises,
@@ -132,9 +133,9 @@ class WorkflowType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError("Remote Domain does not exist")
+                raise DoesNotExistError("Remote Domain does not exist") from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         workflow_info = description["typeInfo"]
         workflow_config = description["configuration"]
@@ -198,9 +199,9 @@ class WorkflowType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "TypeAlreadyExistsFault":
-                raise AlreadyExistsError(f"Workflow type {self.name} already exists amazon-side")
+                raise AlreadyExistsError(f"Workflow type {self.name} already exists amazon-side") from e
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message)
+                raise DoesNotExistError(message) from e
             raise
 
     def delete(self) -> None:
@@ -211,7 +212,7 @@ class WorkflowType(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code in ["UnknownResourceFault", "TypeDeprecatedFault"]:
-                raise DoesNotExistError(message)
+                raise DoesNotExistError(message) from e
 
     def upstream(self) -> WorkflowType:
         from simpleflow.swf.mapper.querysets.workflow import WorkflowTypeQuerySet
@@ -219,6 +220,14 @@ class WorkflowType(BaseModel):
         qs = WorkflowTypeQuerySet(self.domain)
         return qs.get(self.name, self.version)
 
+    @exceptions.catch(
+        ClientError,
+        raises(
+            WorkflowExecutionAlreadyStartedError,
+            when=lambda error, *args, **kwargs: extract_error_code(error) == "WorkflowExecutionAlreadyStartedFault",
+            extract=lambda *args, **kwargs: "",
+        ),
+    )
     def start_execution(
         self,
         workflow_id: str | None = None,
@@ -391,9 +400,9 @@ class WorkflowExecution(BaseModel):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError("Remote Domain does not exist")
+                raise DoesNotExistError("Remote Domain does not exist") from e
 
-            raise ResponseError(message)
+            raise ResponseError(message, error_code=error_code) from e
 
         execution_info = description["executionInfo"]
         execution_config = description["executionConfiguration"]
