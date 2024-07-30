@@ -61,6 +61,7 @@ class ActivityTaskEventDict(TypedDict):
     activity_id: int
     activity_type: ActivityType
     retry: int | None
+    attempt: int | None
     cause: str
     result: Any
     reason: str | None
