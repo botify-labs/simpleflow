@@ -33,6 +33,7 @@ class History:
         self._external_workflows_signaling: dict[int, dict[str, Any]] = {}
         self._external_workflows_canceling: dict[str, dict[str, Any]] = {}
         self._signals: dict[str, dict[str, Any]] = {}
+        self._signal_lists: collections.defaultdict[str, list[dict[str, Any]]] = collections.defaultdict(list)
         self._signaled_workflows = collections.defaultdict(list)
         self._markers: dict[str, list[dict[str, Any]]] = {}
         self._timers: dict[str, dict[str, Any]] = {}
@@ -74,6 +75,13 @@ class History:
         :return: signals
         """
         return self._signals
+
+    @property
+    def signal_lists(self):
+        return self._signal_lists
+
+    def get_signal_events(self, signal_name):
+        return self._signal_lists.get(signal_name, [])
 
     @property
     def cancel_requested(self):
@@ -437,6 +445,7 @@ class History:
                 "timestamp": event.timestamp,
             }
             self._signals[event.signal_name] = signal
+            self._signal_lists[event.signal_name].append(signal)
             self._tasks.append(signal)
         elif event.state == "cancel_requested":
             cancel_requested = {
