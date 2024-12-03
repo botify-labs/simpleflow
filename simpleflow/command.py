@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import platform
 import signal
@@ -25,7 +26,7 @@ from simpleflow.swf.process import decider, worker
 from simpleflow.swf.stats import pretty
 from simpleflow.swf.task import ActivityTask
 from simpleflow.swf.utils import get_workflow_execution, set_workflow_class_name
-from simpleflow.utils import import_from_module, json_dumps
+from simpleflow.utils import import_from_module, json_dumps, serialize_complex_object
 from simpleflow.workflow import Workflow
 
 if TYPE_CHECKING:
@@ -42,7 +43,7 @@ TIMESTAMP_FORMATS = [
 ]
 
 
-def comma_separated_list(value):
+def comma_separated_list(value: str) -> list[str]:
     """
     Transforms a comma-separated list into a list of strings.
     """
@@ -59,7 +60,7 @@ def comma_separated_list(value):
 )
 @click.version_option(version=__version__)
 @click.pass_context
-def cli(ctx, header, format, color):
+def cli(ctx, header: bool, format: str, color: str) -> None:
     if format == "prettyjson":
         format, header = "json", True
     ctx.params["format"] = format
@@ -156,18 +157,18 @@ def run_workflow_locally(workflow_class, wf_input, middlewares):
 @click.argument("workflow")
 @cli.command("workflow.start", help="Start the workflow defined in the WORKFLOW module.")
 def start_workflow(
-    workflow,
-    domain,
-    workflow_id,
-    task_list,
-    execution_timeout,
-    tags,
-    decision_tasks_timeout,
-    input,
-    input_file,
-    local,
-    middleware_pre_execution,
-    middleware_post_execution,
+    workflow: str,
+    domain: str | None,
+    workflow_id: str | None,
+    task_list: str | None,
+    execution_timeout: str | None,
+    tags: str | None,
+    decision_tasks_timeout: str | None,
+    input: str | None,
+    input_file: str | None,
+    local: bool,
+    middleware_pre_execution: str | None,
+    middleware_post_execution: str | None,
 ):
     workflow_class = import_from_module(workflow)
 
@@ -213,7 +214,11 @@ def start_workflow(
     "workflow.terminate",
     help="Workflow associated with WORKFLOW and optionally RUN_ID.",
 )
-def terminate_workflow(domain, workflow_id, run_id):
+def terminate_workflow(
+    domain: str,
+    workflow_id: str,
+    run_id: str | None,
+):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
     ex.terminate()
 
@@ -228,7 +233,7 @@ def terminate_workflow(domain, workflow_id, run_id):
     "workflow.restart",
     help="Workflow associated with WORKFLOW_ID and optionally RUN_ID.",
 )
-def restart_workflow(domain, workflow_id, run_id):
+def restart_workflow(domain: str, workflow_id: str, run_id: str | None):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
     history = ex.history()
     ex.terminate(reason="workflow.restart")
@@ -258,7 +263,7 @@ def with_format(ctx):
 )
 @cli.command("workflow.info", help="Info about a workflow execution.")
 @click.pass_context
-def workflow_info(ctx, domain, workflow_id, run_id):
+def workflow_info(ctx, domain: str, workflow_id: str, run_id: str | None):
     print(
         with_format(ctx)(helpers.show_workflow_info)(
             domain,
@@ -309,7 +314,13 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
 )
 @cli.command("workflow.tasks", help="Tasks of a workflow execution.")
 @click.pass_context
-def status(ctx, domain, workflow_id, run_id, nb_tasks):
+def workflow_tasks(
+    ctx,
+    domain: str,
+    workflow_id: str,
+    run_id: str | None,
+    nb_tasks: int | None,
+) -> None:
     print(
         with_format(ctx)(helpers.show_workflow_status)(
             domain,
@@ -335,12 +346,79 @@ def status(ctx, domain, workflow_id, run_id, nb_tasks):
 )
 @click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.pass_context
-def list_workflows(ctx, domain, status, started_since):
+def list_workflows(ctx, domain: str, status: str, started_since: int):
     print(
         with_format(ctx)(helpers.list_workflow_executions)(
             domain, status=status.upper(), start_oldest_date=started_since
         )
     )
+
+
+_NOTSET = object()
+
+
+@click.argument(
+    "domain",
+    envvar="SWF_DOMAIN",
+)
+@cli.command(
+    "workflow.history",
+    help="Workflow history from workflow WORKFLOW_ID [RUN_ID].",
+)
+@click.argument("workflow_id")
+@click.argument("run_id", required=False)
+@click.option(
+    "--format", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
+)
+@click.option("--reverse-order", required=False, type=bool, default=False, help="Reverse order.")
+@click.pass_context
+def workflow_history(
+    ctx,
+    domain: str,
+    workflow_id: str,
+    run_id: str | None,
+    format: str,
+    reverse_order: bool = False,
+) -> None:
+    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
+
+    if ctx.format != "json" or not ctx.header:
+        raise NotImplementedError("Only pretty JSON mode is implemented")
+
+    ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    events = ex.history_events(
+        callback=get_progression_callback("events"),
+        reverse_order=reverse_order,
+    )
+    if format == "rawest":
+        pass
+    else:
+        raw_history = BaseHistory.from_event_list(events)
+        history = History(raw_history)
+        if format == "raw":
+            events = []
+            for event in history.events[:10]:
+                e = {}
+                for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
+                    if k.startswith("_") or k == "raw":
+                        continue
+                    v = getattr(event, k, _NOTSET)
+                    if v is _NOTSET:
+                        continue
+                    e[k] = v
+                events.append(e)
+        elif format == "cooked":
+            history.parse()
+            events = {
+                "activities": history.activities,
+                "child_workflows": history.child_workflows,
+                "markers": history.markers,
+                "signals": history.signals,
+                "timers": history.timers,
+            }
+        else:
+            raise NotImplementedError
+    print(json.dumps(events, separators=(",", ":"), default=serialize_complex_object))
 
 
 @click.argument(
@@ -360,6 +438,18 @@ def list_workflows(ctx, domain, status, started_since):
 @click.option("--workflow-id", default=None, help="Workflow ID.")
 @click.option("--workflow-type-name", default=None, help="Workflow Name.")
 @click.option("--workflow-type-version", default=None, help="Workflow Version (name needed).")
+@click.option(
+    "--close-status",
+    "-c",
+    type=click.Choice(
+        [
+            case
+            for state in ["COMPLETED", "FAILED", "CANCELED", "TERMINATED", "CONTINUED_AS_NEW", "TIMED_OUT"]
+            for case in [state, state.lower()]
+        ]
+    ),
+    help="Started since N days.",
+)
 @click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
 @click.option("--from-date", default=None, type=click.DateTime(formats=TIMESTAMP_FORMATS), help="From datetime.")
 @click.option("--to-date", default=None, type=click.DateTime(formats=TIMESTAMP_FORMATS), help="To datetime.")
@@ -372,12 +462,13 @@ def filter_workflows(
     workflow_id: str | None,
     workflow_type_name: str | None,
     workflow_type_version: str | None,
+    close_status: str | None,
     started_since: int | None,
     from_date: datetime | None,
     to_date: datetime | None,
 ):
     status = status.upper()
-    kwargs = {}
+    kwargs: dict[str, Any] = {}
     if status == simpleflow.swf.mapper.models.workflow.WorkflowExecution.STATUS_OPEN:
         if from_date:
             kwargs["oldest_date"] = from_date
@@ -391,6 +482,26 @@ def filter_workflows(
         else:
             kwargs["start_oldest_date"] = started_since
 
+    if close_status and status != simpleflow.swf.mapper.models.workflow.WorkflowExecution.STATUS_CLOSED:
+        raise Exception("Closed status not supported for non-closed workflows.")
+    elif close_status:
+        kwargs["close_status"] = close_status.upper()
+
+    print(
+        with_format(ctx)(helpers.filter_workflow_executions)(
+            domain,
+            status=status.upper(),
+            tag=tag,
+            workflow_id=workflow_id,
+            workflow_type_name=workflow_type_name,
+            workflow_type_version=workflow_type_version,
+            callback=get_progression_callback("executionInfos"),
+            **kwargs,
+        )
+    )
+
+
+def get_progression_callback(key: str):
     if os.isatty(sys.stderr.fileno()):
         spin_marks = ["⠏", "⠛", "⠹", "⠼", "⠶", "⠧"]  # from Google's googlecloudsdk.core
         success = f"{log.GREEN}✓{log.END}" if log.color_mode != log.ColorModes.NEVER else "✓"
@@ -403,25 +514,14 @@ def filter_workflows(
 
         def cb(*_args, loop_number: int, response: dict[str, Any] | None, **_kwargs):
             if response:
-                executions = len(response.get("executionInfos", []))
+                executions = len(response.get(key, []))
                 print(f"\r{spin_marks[loop_number % len(spin_marks)]} {counter.total}", file=sys.stderr, end="")
                 counter.total += executions
             else:
                 print(f"\r{success} {counter.total}", file=sys.stderr)
     else:
         cb = None
-    print(
-        with_format(ctx)(helpers.filter_workflow_executions)(
-            domain,
-            status=status.upper(),
-            tag=tag,
-            workflow_id=workflow_id,
-            workflow_type_name=workflow_type_name,
-            workflow_type_version=workflow_type_version,
-            callback=cb,
-            **kwargs,
-        )
-    )
+    return cb
 
 
 @click.argument("task_id")
@@ -431,9 +531,15 @@ def filter_workflows(
     envvar="SWF_DOMAIN",
 )
 @click.option("--details/--no-details", default=False, help="Display details.")
-@cli.command("task.info", help="Informations on a task.")
+@cli.command("task.info", help="Information on a task.")
 @click.pass_context
-def task_info(ctx, domain, workflow_id, task_id, details):
+def task_info(
+    ctx,
+    domain: str,
+    workflow_id: str,
+    task_id: str,
+    details: bool,
+) -> None:
     print(with_format(ctx)(helpers.get_task)(domain, workflow_id, task_id, details))
 
 
@@ -443,7 +549,13 @@ def task_info(ctx, domain, workflow_id, task_id, details):
 @click.option("--domain", "-d", envvar="SWF_DOMAIN", required=True, help="SWF Domain")
 @click.argument("workflows", nargs=-1, required=False)
 @cli.command("decider.start", help="Start a decider process to manage workflow executions.")
-def start_decider(workflows, domain, task_list, log_level, nb_processes):
+def start_decider(
+    workflows: list[str],
+    domain: str,
+    task_list: str,
+    log_level: str,
+    nb_processes: int,
+) -> None:
     if log_level:
         logger.warning("Deprecated: --log-level will be removed, use LOG_LEVEL environment variable instead")
     decider.command.start(

@@ -61,9 +61,13 @@ class BaseWorkflowQuerySet(BaseQuerySet):
         if callback:
             callback(loop_number=loop_number, response=response)
         while "nextPageToken" in response:
-            response = self._list(*args, next_page_token=response["nextPageToken"], **kwargs)
-
+            response = self._list(
+                *args,
+                next_page_token=response["nextPageToken"],
+                **kwargs,
+            )
             yield from response[self._infos_plural]
+
             loop_number += 1
             if callback:
                 callback(loop_number=loop_number, response=response)

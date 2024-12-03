@@ -73,7 +73,7 @@ def show_workflow_profile(domain_name, workflow_id, run_id=None, nb_tasks=None):
     return pretty.profile(workflow_execution, nb_tasks)
 
 
-def show_workflow_status(domain_name, workflow_id, run_id=None, nb_tasks=None):
+def show_workflow_status(domain_name: str, workflow_id: str, run_id: str | None = None, nb_tasks: int | None = None):
     workflow_execution = get_workflow_execution(
         domain_name,
         workflow_id,
@@ -161,7 +161,12 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     return activity, args, kwargs, meta, found_activity
 
 
-def get_task(domain_name, workflow_id, task_id, details):
+def get_task(
+    domain_name: str,
+    workflow_id: str,
+    task_id: str,
+    details: bool,
+):
     workflow_execution = get_workflow_execution(
         domain_name,
         workflow_id,

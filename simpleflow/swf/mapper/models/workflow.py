@@ -453,32 +453,40 @@ class WorkflowExecution(BaseModel):
         qs = WorkflowExecutionQuerySet(self.domain)
         return qs.get(self.workflow_id, self.run_id)
 
-    def history(self, *args, **kwargs) -> History:
+    def history(self, callback=None, **kwargs) -> History:
         """Returns workflow execution history report
 
         :returns: The workflow execution complete events history
         """
+        events = self.history_events(callback, **kwargs)
+
+        return History.from_event_list(events)
+
+    def history_events(self, callback, **kwargs) -> list[dict[str, Any]]:
         domain = kwargs.pop("domain", self.domain)
         if not isinstance(domain, str):
             domain = domain.name
-
-        response = self.get_workflow_execution_history(domain, self.run_id, self.workflow_id, **kwargs)
-
-        events: list[dict[str, Any]] = response["events"]
-        next_page = response.get("nextPageToken")
-        while next_page is not None:
+        events: list[dict[str, Any]] = []
+        response = {"nextPageToken": None}
+        loop_number = 0
+        if callback:
+            callback(loop_number=loop_number, response=response)
+        while "nextPageToken" in response:
             response = self.get_workflow_execution_history(
-                domain,
-                self.run_id,
-                self.workflow_id,
-                next_page_token=next_page,
+                domain=domain,
+                run_id=self.run_id,
+                workflow_id=self.workflow_id,
+                next_page_token=response["nextPageToken"],
                 **kwargs,
             )
-
             events.extend(response["events"])
-            next_page = response.get("nextPageToken")
 
-        return History.from_event_list(events)
+            loop_number += 1
+            if callback:
+                callback(loop_number=loop_number, response=response)
+        if callback:
+            callback(loop_number=loop_number, response=None)
+        return events
 
     @exceptions.translate(ClientError, to=ResponseError)
     @exceptions.catch(

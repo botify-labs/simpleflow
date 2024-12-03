@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections
 from typing import TYPE_CHECKING, Any
 
 from simpleflow.swf.mapper.models.event.marker import CompiledMarkerEvent, MarkerEvent
@@ -25,60 +24,15 @@ if TYPE_CHECKING:
     from simpleflow.swf.mapper.models.event.base import Event
     from simpleflow.swf.mapper.models.event.compiler import CompiledEvent
 
-EVENTS = collections.OrderedDict(
-    [
-        # At top-level to override 'WorkflowExecution'
-        (
-            "ChildWorkflowExecution",
-            {
-                "event": ChildWorkflowExecutionEvent,
-                "compiled": CompiledChildWorkflowExecutionEvent,
-            },
-        ),
-        (
-            "ExternalWorkflow",
-            {
-                "event": ExternalWorkflowExecutionEvent,
-                "compiled": CompiledExternalWorkflowExecutionEvent,
-            },
-        ),
-        (
-            "WorkflowExecution",
-            {
-                "event": WorkflowExecutionEvent,
-                "compiled_event": CompiledWorkflowExecutionEvent,
-            },
-        ),
-        (
-            "DecisionTask",
-            {
-                "event": DecisionTaskEvent,
-                "compiled_event": CompiledDecisionTaskEvent,
-            },
-        ),
-        (
-            "ActivityTask",
-            {
-                "event": ActivityTaskEvent,
-                "compiled_event": CompiledActivityTaskEvent,
-            },
-        ),
-        (
-            "Marker",
-            {
-                "event": MarkerEvent,
-                "compiled": CompiledMarkerEvent,
-            },
-        ),
-        (
-            "Timer",
-            {
-                "event": TimerEvent,
-                "compiled": CompiledTimerEvent,
-            },
-        ),
-    ]
-)
+EVENTS = {
+    "ActivityTask": {"event": ActivityTaskEvent, "compiled_event": CompiledActivityTaskEvent},
+    "DecisionTask": {"event": DecisionTaskEvent, "compiled_event": CompiledDecisionTaskEvent},
+    "ChildWorkflowExecution": {"event": ChildWorkflowExecutionEvent, "compiled": CompiledChildWorkflowExecutionEvent},
+    "Marker": {"event": MarkerEvent, "compiled": CompiledMarkerEvent},
+    "Timer": {"event": TimerEvent, "compiled": CompiledTimerEvent},
+    "ExternalWorkflow": {"event": ExternalWorkflowExecutionEvent, "compiled": CompiledExternalWorkflowExecutionEvent},
+    "WorkflowExecution": {"event": WorkflowExecutionEvent, "compiled_event": CompiledWorkflowExecutionEvent},
+}
 
 
 class EventFactory:
@@ -125,6 +79,7 @@ class EventFactory:
         event_attributes_key = decapitalize(event_name) + "EventAttributes"
 
         cls = EventFactory.events[event_type]["event"]
+        # ⚠️ changing class attributes: don't use them in instances!
         cls._name = event_name
         cls._attributes_key = event_attributes_key
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import Submittable
+from simpleflow.base import Submittable
 
 
 class WaitForSignal(Submittable):
