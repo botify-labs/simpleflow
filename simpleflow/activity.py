@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "with_attributes",
-    "Activity",
     "PRIORITY_NOT_SET",
+    "Activity",
+    "with_attributes",
 ]
 
 

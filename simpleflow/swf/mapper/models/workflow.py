@@ -65,17 +65,17 @@ class WorkflowType(BaseModel):
     """
 
     __slots__ = [
-        "domain",
-        "name",
-        "version",
-        "status",
-        "creation_date",
-        "deprecation_date",
-        "task_list",
         "child_policy",
-        "execution_timeout",
+        "creation_date",
         "decision_tasks_timeout",
+        "deprecation_date",
         "description",
+        "domain",
+        "execution_timeout",
+        "name",
+        "status",
+        "task_list",
+        "version",
     ]
 
     def __init__(
@@ -251,7 +251,7 @@ class WorkflowType(BaseModel):
         :param  decision_tasks_timeout: maximum duration of decision tasks
                                         for this workflow execution
         """
-        workflow_id = workflow_id or "%s-%s-%i" % (self.name, self.version, time.time())
+        workflow_id = workflow_id or f"{self.name}-{self.version}-{time.time():d}"
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
         if child_policy not in CHILD_POLICIES:
@@ -317,25 +317,25 @@ class WorkflowExecution(BaseModel):
     kind = "execution"
 
     __slots__ = [
-        "domain",
-        "workflow_id",
-        "run_id",
-        "status",
-        "workflow_type",
-        "task_list",
+        "cancel_requested",
         "child_policy",
         "close_status",
+        "close_timestamp",
+        "decision_tasks_timeout",
+        "domain",
         "execution_timeout",
         "input",
-        "tag_list",
-        "decision_tasks_timeout",
-        "close_timestamp",
-        "start_timestamp",
-        "cancel_requested",
-        "latest_execution_context",
         "latest_activity_task_timestamp",
+        "latest_execution_context",
         "open_counts",
         "parent",
+        "run_id",
+        "start_timestamp",
+        "status",
+        "tag_list",
+        "task_list",
+        "workflow_id",
+        "workflow_type",
     ]
 
     def __init__(

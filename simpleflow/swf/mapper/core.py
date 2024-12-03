@@ -37,7 +37,7 @@ def convert_timestamp(dt: int | datetime | None) -> datetime | None:
 class ConnectedSWFObject:
     """Authenticated object interface"""
 
-    __slots__ = ["region", "connection", "boto3_client"]
+    __slots__ = ["boto3_client", "connection", "region"]
 
     region: str
     boto3_client: boto3.client

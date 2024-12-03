@@ -40,10 +40,10 @@ class Domain(BaseModel):
     """
 
     __slots__ = [
-        "name",
-        "status",
         "description",
+        "name",
         "retention_period",
+        "status",
     ]
 
     def __init__(

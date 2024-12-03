@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "list_workflow_executions",
     "show_workflow_profile",
     "show_workflow_status",
-    "list_workflow_executions",
     "swf_identity",
 ]
 

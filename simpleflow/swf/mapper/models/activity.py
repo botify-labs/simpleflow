@@ -58,18 +58,18 @@ class ActivityType(BaseModel):
     kind = "type"
 
     __slots__ = [
-        "domain",
-        "name",
-        "version",
-        "status",
-        "description",
         "creation_date",
         "deprecation_date",
-        "task_list",
+        "description",
+        "domain",
+        "name",
+        "status",
         "task_heartbeat_timeout",
+        "task_list",
         "task_schedule_to_close_timeout",
         "task_schedule_to_start_timeout",
         "task_start_to_close_timeout",
+        "version",
     ]
 
     def __init__(
@@ -225,14 +225,14 @@ class ActivityType(BaseModel):
 @immutable
 class ActivityTask(BaseModel):
     __slots__ = [
+        "activity_id",
+        "activity_type",
         "domain",
+        "input",
+        "started_event_id",
         "task_list",
         "task_token",
-        "activity_type",
         "workflow_execution",
-        "input",
-        "activity_id",
-        "started_event_id",
     ]
 
     # noinspection PyMissingConstructor

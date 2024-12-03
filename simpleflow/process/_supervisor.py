@@ -112,7 +112,7 @@ class Supervisor(NamedMixin):
                 name, status = child.name(), child.status()
             except psutil.NoSuchProcess:  # May be untimely deceased
                 name, status = "unknown", "unknown"
-            logger.debug("  child: name=%s pid=%d status=%s" % (name, child.pid, status))
+            logger.debug(f"  child: name={name} pid={child.pid:d} status={status}")
             if status in (psutil.STATUS_ZOMBIE, "unknown"):
                 logger.debug(f"  process {child.pid} is zombie, will cleanup")
                 # join process to clean it up
