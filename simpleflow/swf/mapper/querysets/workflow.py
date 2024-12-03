@@ -55,12 +55,21 @@ class BaseWorkflowQuerySet(BaseQuerySet):
     def _list(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _list_items(self, *args, **kwargs):
+    def _list_items(self, *args, callback=None, **kwargs):
         response = {"nextPageToken": None}
+        loop_number = 0
+        if callback:
+            callback(loop_number=loop_number, response=response)
         while "nextPageToken" in response:
             response = self._list(*args, next_page_token=response["nextPageToken"], **kwargs)
 
             yield from response[self._infos_plural]
+            loop_number += 1
+            if callback:
+                callback(loop_number=loop_number, response=response)
+
+        if callback:
+            callback(loop_number=loop_number, response=None)
 
 
 class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
@@ -405,10 +414,10 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         statuses = {
             WorkflowExecution.STATUS_OPEN: {"oldest_date", "latest_date"},
             WorkflowExecution.STATUS_CLOSED: {
-                "start_latest_date",
                 "start_oldest_date",
-                "close_latest_date",
+                "start_latest_date",
                 "close_oldest_date",
+                "close_latest_date",
                 "close_status",
             },
         }
@@ -501,6 +510,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         workflow_id=None,
         workflow_type_name=None,
         workflow_type_version=None,
+        callback=None,
         *args,
         **kwargs,
     ):
@@ -591,10 +601,13 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
 
         # Compute a timestamp from the delta in days we got from params
         # If oldest_date is blank at this point, it's because we didn't want
-        # it, so let's leave it blank and assume the user provided an other
+        # it, so let's leave it blank and assume the user provided another
         # time filter.
         if oldest_date:
-            start_oldest_date = int(datetime_timestamp(past_day(oldest_date)))
+            if isinstance(oldest_date, int):
+                start_oldest_date = int(datetime_timestamp(past_day(oldest_date)))
+            else:
+                start_oldest_date = oldest_date
         else:
             start_oldest_date = None
 
@@ -609,6 +622,7 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
                 workflow_version=workflow_type_version,
                 start_oldest_date=start_oldest_date,
                 tag=tag,
+                callback=callback,
                 **kwargs,
             )
         ]

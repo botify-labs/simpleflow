@@ -98,6 +98,7 @@ def filter_workflow_executions(
     workflow_type_name,
     workflow_type_version,
     *args,
+    callback=None,
     **kwargs,
 ):
     domain = simpleflow.swf.mapper.models.Domain(domain_name)
@@ -109,6 +110,7 @@ def filter_workflow_executions(
         workflow_type_name,
         workflow_type_version,
         *args,
+        callback=callback,
         **kwargs,
     )
 

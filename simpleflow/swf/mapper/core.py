@@ -24,6 +24,16 @@ RETRIES = int(os.environ.get("SWF_CONNECTION_RETRIES", "5"))
 DEFAULT_AWS_REGION = "us-east-1"
 
 
+def convert_timestamp(dt: int | datetime | None) -> datetime | None:
+    if dt is None:
+        return None
+    if isinstance(dt, datetime):
+        return dt
+    if isinstance(dt, int):
+        return datetime.fromtimestamp(dt)
+    raise TypeError(f"Invalid timestamp type: {type(dt).__name__}")
+
+
 class ConnectedSWFObject:
     """Authenticated object interface"""
 
@@ -56,8 +66,8 @@ class ConnectedSWFObject:
     def list_open_workflow_executions(
         self,
         domain: str,
-        oldest_date: int,  # timestamp
-        latest_date: int | None = None,  # timestamp
+        oldest_date: int | datetime,  # timestamp
+        latest_date: int | datetime | None = None,  # timestamp
         tag: str | None = None,
         workflow_id: str | None = None,
         workflow_name: str | None = None,
@@ -69,8 +79,8 @@ class ConnectedSWFObject:
         kwargs = {
             "domain": domain,
             "startTimeFilter": {
-                "oldestDate": datetime.fromtimestamp(oldest_date),
-                "latestDate": datetime.fromtimestamp(latest_date) if latest_date is not None else None,
+                "oldestDate": convert_timestamp(oldest_date),
+                "latestDate": convert_timestamp(latest_date),
             },
             "nextPageToken": next_page_token,
             "maximumPageSize": maximum_page_size,
@@ -98,10 +108,10 @@ class ConnectedSWFObject:
     def list_closed_workflow_executions(
         self,
         domain: str,
-        start_latest_date: int | None = None,  # timestamp
-        start_oldest_date: int | None = None,  # timestamp
-        close_latest_date: int | None = None,  # timestamp
-        close_oldest_date: int | None = None,  # timestamp
+        start_latest_date: int | datetime | None = None,  # timestamp
+        start_oldest_date: int | datetime | None = None,  # timestamp
+        close_latest_date: int | datetime | None = None,  # timestamp
+        close_oldest_date: int | datetime | None = None,  # timestamp
         close_status: str | None = None,
         tag: str | None = None,
         workflow_id: str | None = None,
@@ -119,13 +129,13 @@ class ConnectedSWFObject:
         }
         if start_oldest_date is not None:
             kwargs["startTimeFilter"] = {
-                "oldestDate": datetime.fromtimestamp(start_oldest_date),
-                "latestDate": datetime.fromtimestamp(start_latest_date) if start_latest_date is not None else None,
+                "oldestDate": convert_timestamp(start_oldest_date),
+                "latestDate": convert_timestamp(start_latest_date),
             }
         if close_oldest_date is not None:
             kwargs["closeTimeFilter"] = {
-                "oldestDate": datetime.fromtimestamp(close_oldest_date),
-                "latestDate": datetime.fromtimestamp(close_latest_date) if close_latest_date is not None else None,
+                "oldestDate": convert_timestamp(close_oldest_date),
+                "latestDate": convert_timestamp(close_latest_date),
             }
         if close_status:
             kwargs["closeStatusFilter"] = {

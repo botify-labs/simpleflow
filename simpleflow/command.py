@@ -6,6 +6,7 @@ import signal
 import sys
 import time
 from contextlib import contextmanager
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -32,6 +33,14 @@ if TYPE_CHECKING:
 
     from simpleflow.swf.mapper.models.workflow import WorkflowType
 
+TIMESTAMP_FORMATS = [
+    "%Y-%m-%d",
+    "%Y-%m-%dT%H:%M:%S%z",
+    "%Y-%m-%d %H:%M:%S%z",
+    "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%d %H:%M:%S",
+]
+
 
 def comma_separated_list(value):
     """
@@ -41,7 +50,7 @@ def comma_separated_list(value):
 
 
 @click.group()
-@click.option("--format")
+@click.option("--format", envvar="SIMPLEFLOW_FORMAT")
 @click.option("--header/--no-header", default=False)
 @click.option(
     "--color",
@@ -51,6 +60,8 @@ def comma_separated_list(value):
 @click.version_option(version=__version__)
 @click.pass_context
 def cli(ctx, header, format, color):
+    if format == "prettyjson":
+        format, header = "json", True
     ctx.params["format"] = format
     ctx.params["header"] = header
     log.color_mode = color
@@ -345,28 +356,60 @@ def list_workflows(ctx, domain, status, started_since):
     type=click.Choice(["open", "closed"]),
     help="Open/Closed",
 )
-@click.option("--tag", default=None, help="Tag (multiple option).")  # , multiple=True
+@click.option("--tag", default=None, help="Tags (comma-separated).")  # , multiple=True
 @click.option("--workflow-id", default=None, help="Workflow ID.")
 @click.option("--workflow-type-name", default=None, help="Workflow Name.")
 @click.option("--workflow-type-version", default=None, help="Workflow Version (name needed).")
 @click.option("--started-since", "-d", default=30, show_default=True, help="Started since N days.")
+@click.option("--from-date", default=None, type=click.DateTime(formats=TIMESTAMP_FORMATS), help="From datetime.")
+@click.option("--to-date", default=None, type=click.DateTime(formats=TIMESTAMP_FORMATS), help="To datetime.")
 @click.pass_context
 def filter_workflows(
     ctx,
-    domain,
-    status,
-    tag,
-    workflow_id,
-    workflow_type_name,
-    workflow_type_version,
-    started_since,
+    domain: str,
+    status: str,
+    tag: str | None,
+    workflow_id: str | None,
+    workflow_type_name: str | None,
+    workflow_type_version: str | None,
+    started_since: int | None,
+    from_date: datetime | None,
+    to_date: datetime | None,
 ):
     status = status.upper()
     kwargs = {}
     if status == simpleflow.swf.mapper.models.workflow.WorkflowExecution.STATUS_OPEN:
-        kwargs["oldest_date"] = started_since
+        if from_date:
+            kwargs["oldest_date"] = from_date
+            kwargs["latest_date"] = to_date
+        else:
+            kwargs["oldest_date"] = started_since
     else:
-        kwargs["start_oldest_date"] = started_since
+        if from_date:
+            kwargs["start_oldest_date"] = from_date
+            kwargs["start_latest_date"] = to_date
+        else:
+            kwargs["start_oldest_date"] = started_since
+
+    if os.isatty(sys.stderr.fileno()):
+        spin_marks = ["⠏", "⠛", "⠹", "⠼", "⠶", "⠧"]  # from Google's googlecloudsdk.core
+        success = f"{log.GREEN}✓{log.END}" if log.color_mode != log.ColorModes.NEVER else "✓"
+
+        class Counter:
+            def __init__(self):
+                self.total = 0
+
+        counter = Counter()
+
+        def cb(*_args, loop_number: int, response: dict[str, Any] | None, **_kwargs):
+            if response:
+                executions = len(response.get("executionInfos", []))
+                print(f"\r{spin_marks[loop_number % len(spin_marks)]} {counter.total}", file=sys.stderr, end="")
+                counter.total += executions
+            else:
+                print(f"\r{success} {counter.total}", file=sys.stderr)
+    else:
+        cb = None
     print(
         with_format(ctx)(helpers.filter_workflow_executions)(
             domain,
@@ -375,6 +418,7 @@ def filter_workflows(
             workflow_id=workflow_id,
             workflow_type_name=workflow_type_name,
             workflow_type_version=workflow_type_version,
+            callback=cb,
             **kwargs,
         )
     )
