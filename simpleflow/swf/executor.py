@@ -1125,7 +1125,7 @@ class Executor(executor.Executor):
         decision = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
         decision.fail(
             reason=f"Workflow execution failed: {reason}",
-            details=details,
+            details=str(details) if details else None,
         )
 
         self._decisions_and_context.append_decision(decision)

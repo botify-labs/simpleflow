@@ -116,8 +116,8 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
             return simpleflow.swf.mapper.actors.ActivityWorker.fail(
                 self,
                 token,
-                reason=reason,
-                details=details,
+                reason=str(reason) if reason else None,
+                details=str(details) if details else None,
             )
         except Exception as err:
             logger.error(f"cannot fail task {task.activity_type.name}: {err}")
