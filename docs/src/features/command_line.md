@@ -4,6 +4,19 @@ Command Line
 Simpleflow comes with a `simpleflow` command-line utility that can be used to list workflows against SWF,
 boot decider or activity workers (with multiprocessing), and a few other goodies.
 
+Most commands require the SWF domain.
+Several of them (not all, alas) can take it from the environment variable `SWF_DOMAIN`.
+
+Likewise, there is a pair of global options:
+
+- `--format csv|tsv|tabular|human|json|prettyjson` (default: `tabular`)
+- `--header/--no-header` (default: no header)
+
+The plain `json` format returns an array of arrays; `prettyjson` or `--json --header` returns an
+array of objects, as expected.
+**FIXME: `prettyjson` is not an adequate name...**
+
+The output format can also come from the environment variable `SIMPLEFLOW_FORMAT`.
 
 List Workflow Executions
 ------------------------
@@ -45,6 +58,22 @@ You can profile the execution of the workflow with:
     Task                                 Last State    Scheduled           Time Scheduled  Start               Time Running  End                 Percentage of total time
     activity-examples.basic.double-1     completed     2015-08-04 23:06              0.07  2015-08-04 23:06            1.39  2015-08-04 23:06                        1.15
     activity-examples.basic.increment-1  completed     2015-08-04 23:04            102.20  2015-08-04 23:06            0.79  2015-08-04 23:06                        0.65
+
+
+Find workflows
+--
+
+The `workflow.filter` command is mainly useful to find either running workflow or failed workflows
+on a given period.
+It accepts many different options; please see the help blurb 🙂
+
+
+Retrieve workflow history
+--
+
+The `workflow.history` command retrieves the SWF history associated with a given workflow.
+It only works in “pretty JSON” mode.
+Several output formats are available, from a raw events output to a per-activity/children workflows/etc. view.
 
 
 Controlling SWF access
