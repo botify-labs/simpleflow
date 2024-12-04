@@ -402,10 +402,10 @@ def workflow_history(
     output_format: str,
     reverse_order: bool = False,
 ) -> None:
-    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
-
     if ctx.parent.params["format"] != "json" or not ctx.parent.params["header"]:
         raise NotImplementedError("Only pretty JSON mode is implemented")
+
+    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
 
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
     events = ex.history_events(
@@ -435,8 +435,11 @@ def workflow_history(
                 "activities": history.activities,
                 "child_workflows": history.child_workflows,
                 "markers": history.markers,
-                "signals": history.signals,
                 "timers": history.timers,
+                "signals": history.signals,
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
             }
         else:
             raise NotImplementedError
