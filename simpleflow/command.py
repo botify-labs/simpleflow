@@ -368,7 +368,7 @@ _NOTSET = object()
 @click.argument("workflow_id")
 @click.argument("run_id", required=False)
 @click.option(
-    "--format", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
+    "--mode", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
 )
 @click.option("--reverse-order", required=False, type=bool, default=False, help="Reverse order.")
 @click.pass_context
@@ -377,12 +377,12 @@ def workflow_history(
     domain: str,
     workflow_id: str,
     run_id: str | None,
-    format: str,
+    mode: str,
     reverse_order: bool = False,
 ) -> None:
     from simpleflow.swf.mapper.models.history.base import History as BaseHistory
 
-    if ctx.format != "json" or not ctx.header:
+    if ctx.parent.params["format"] != "json" or not ctx.parent.params["header"]:
         raise NotImplementedError("Only pretty JSON mode is implemented")
 
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
@@ -390,14 +390,14 @@ def workflow_history(
         callback=get_progression_callback("events"),
         reverse_order=reverse_order,
     )
-    if format == "rawest":
+    if mode == "rawest":
         pass
     else:
         raw_history = BaseHistory.from_event_list(events)
         history = History(raw_history)
-        if format == "raw":
+        if mode == "raw":
             events = []
-            for event in history.events[:10]:
+            for event in history.events:
                 e = {}
                 for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
                     if k.startswith("_") or k == "raw":
@@ -407,7 +407,7 @@ def workflow_history(
                         continue
                     e[k] = v
                 events.append(e)
-        elif format == "cooked":
+        elif mode == "cooked":
             history.parse()
             events = {
                 "activities": history.activities,
