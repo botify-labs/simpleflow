@@ -430,7 +430,7 @@ def workflow_history(
         history = History(raw_history)
         if output_format == "raw":
             events = []
-            for event in history.events[:10]:
+            for event in history.events:
                 e = {}
                 for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
                     if k.startswith("_") or k == "raw":
