@@ -34,13 +34,13 @@ def get_uuid(unused=None):
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def increment(x):
-    print("increment: %d" % x)
+    print(f"increment: {x:d}")
     return x + 1
 
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def double(y):
-    print("double: %d" % y)
+    print(f"double: {y:d}")
     return y * 2
 
 
