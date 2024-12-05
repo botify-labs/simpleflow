@@ -238,7 +238,6 @@ def list_details(
         "Workflow Version",
         "Run ID",
         "Status",
-        "Task List",
         "Child Policy",
         "Close Status",
         "Start Timestamp",
@@ -248,6 +247,9 @@ def list_details(
         "Input",
         "Tags",
         "Decision Tasks Timeout",
+        "Parent Workflow ID",
+        "Parent Run ID",
+        "Cancel Requested",
     )
     rows = [
         (
@@ -256,7 +258,6 @@ def list_details(
             execution.workflow_type.version,
             execution.run_id,
             execution.status,
-            execution.task_list,
             execution.child_policy,
             execution.close_status,
             execution.start_timestamp,
@@ -266,6 +267,9 @@ def list_details(
             execution.input,
             execution.tag_list,
             execution.decision_tasks_timeout,
+            execution.parent.get("workflowId"),
+            execution.parent.get("runId"),
+            execution.cancel_requested,
         )
         for execution in workflow_executions
     ]
