@@ -5,6 +5,7 @@ import getpass
 import json
 import os
 import socket
+import sys
 from typing import TYPE_CHECKING
 
 import psutil
@@ -29,11 +30,12 @@ __all__ = [
 ]
 
 
-def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | None = None) -> WorkflowExecution:
+def get_workflow_execution(domain_name: str, workflow_id: str, run_id: str | None = None) -> WorkflowExecution | None:
     def filter_execution(*args, **kwargs):
         if "workflow_status" in kwargs:
             kwargs["status"] = kwargs.pop("workflow_status")
-        return query.filter(*args, **kwargs)[0]
+        filtered_executions = query.filter(*args, **kwargs)
+        return filtered_executions[0] if filtered_executions else None
 
     domain = simpleflow.swf.mapper.models.Domain(domain_name)
     query = simpleflow.swf.mapper.querysets.WorkflowExecutionQuerySet(domain)
@@ -61,6 +63,9 @@ def show_workflow_info(domain_name, workflow_id, run_id=None):
         workflow_id,
         run_id,
     )
+    if not workflow_execution:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     return pretty.info(workflow_execution)
 
 
@@ -70,6 +75,9 @@ def show_workflow_profile(domain_name, workflow_id, run_id=None, nb_tasks=None):
         workflow_id,
         run_id,
     )
+    if not workflow_execution:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     return pretty.profile(workflow_execution, nb_tasks)
 
 
@@ -79,6 +87,9 @@ def show_workflow_status(domain_name: str, workflow_id: str, run_id: str | None 
         workflow_id,
         run_id,
     )
+    if not workflow_execution:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     return pretty.status(workflow_execution, nb_tasks)
 
 
@@ -171,6 +182,9 @@ def get_task(
         domain_name,
         workflow_id,
     )
+    if not workflow_execution:
+        print(f"Workflow {workflow_id} not found")
+        sys.exit(1)
     return pretty.get_task(workflow_execution, task_id, details)
 
 
