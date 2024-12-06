@@ -220,6 +220,9 @@ def terminate_workflow(
     run_id: str | None,
 ):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     ex.terminate()
 
 
@@ -235,6 +238,9 @@ def terminate_workflow(
 )
 def restart_workflow(domain: str, workflow_id: str, run_id: str | None):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     history = ex.history()
     ex.terminate(reason="workflow.restart")
     new_ex = ex.workflow_type.start_execution(
@@ -299,6 +305,7 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
     )
 
 
+# FIXME superseded by history
 @click.option(
     "--nb-tasks",
     "-n",
@@ -331,6 +338,7 @@ def workflow_tasks(
     )
 
 
+# FIXME superseded by filter
 @click.argument(
     "domain",
     envvar="SWF_DOMAIN",
@@ -357,16 +365,16 @@ def list_workflows(ctx, domain: str, status: str, started_since: int):
 _NOTSET = object()
 
 
-@click.argument(
-    "domain",
-    envvar="SWF_DOMAIN",
-)
 @cli.command(
     "workflow.history",
     help="Workflow history from workflow WORKFLOW_ID [RUN_ID].",
 )
 @click.argument("workflow_id")
 @click.argument("run_id", required=False)
+@click.option(
+    "--domain",
+    envvar="SWF_DOMAIN",
+)
 @click.option(
     "--mode", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
 )
@@ -386,6 +394,9 @@ def workflow_history(
     from simpleflow.swf.mapper.models.history.base import History as BaseHistory
 
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     events = ex.history_events(
         callback=get_progression_callback("events"),
         reverse_order=reverse_order,
@@ -410,6 +421,7 @@ def workflow_history(
         elif mode == "cooked":
             history.parse()
             events = {
+                "workflow": history.workflow,
                 "activities": history.activities,
                 "child_workflows": history.child_workflows,
                 "markers": history.markers,
@@ -821,6 +833,11 @@ def standalone(
             ex.workflow_id,
             ex.run_id,
         )
+        if not ex:
+            print(
+                f"Execution {workflow_id} {ex.run_id} not found" if ex.run_id else f"Workflow {workflow_id} not found"
+            )
+            sys.exit(1)
         if display_status:
             print(f"status: {ex.status}", file=sys.stderr)
         if ex.status == ex.STATUS_CLOSED:

@@ -24,9 +24,43 @@ class WorkflowExecution(TypedDict):
 class WorkflowExecutionEvent(Event):
     _type = "WorkflowExecution"
 
+    # start
     initiated_event_id: int
+    child_policy: str
+    task_list: TaskList
+    workflow_type: WorkflowType
+    continued_execution_run_id: str | None
+    execution_start_to_close_timeout: str | None
+    input: str | None
+    lambda_role: str | None
+    parent_initiated_event_id: int | None
+    parent_workflow_execution: WorkflowExecution | None
+    tag_list: list[str] | None
+    task_priority: str | None
+    task_start_to_close_timeout: str | None
+
+    # continued_as_new
+    new_execution_run_id: str
+
     signal_name: str
+
     decision_task_completed_event_id: int
+
+    # completed
+    result: str | None
+
+    # terminated
+    # child_policy:str
+    cause: str | None
+    details: str | None
+    reason: str | None
+
+    # timed out
+    # child_policy:str
+    timeout_type: str | None
+
+    # workflow_execution: WorkflowExecution
+    # close_status: str
 
 
 class CompiledWorkflowExecutionEvent(CompiledEvent):
