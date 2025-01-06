@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from simpleflow.activity import Activity
-from simpleflow.utils import import_object_from_module
+from simpleflow.utils import format_exc, import_object_from_module
 
 from .exceptions import DispatchError
 
@@ -25,9 +25,9 @@ class Dispatcher:
         module_name, activity_name = name.rsplit(".", 1)
         try:
             activity = import_object_from_module(module_name, activity_name)
-        except ImportError:
+        except ImportError as e:
             # We were not able to import a function at all.
-            raise DispatchError(f"unable to import '{name}'")
+            raise DispatchError(f"unable to import '{name}': {format_exc(e)}")
         if not isinstance(activity, Activity):
             # We managed to import a function (or callable) but it's not an
             # "Activity". We will transform it into an Activity now. That way
