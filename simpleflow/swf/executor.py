@@ -19,7 +19,7 @@ from simpleflow.activity import PRIORITY_NOT_SET, Activity
 from simpleflow.base import Submittable
 from simpleflow.history import History
 from simpleflow.marker import Marker
-from simpleflow.signal import WaitForSignal
+from simpleflow.simpleflow_signal import WaitForSignal
 from simpleflow.swf import constants
 from simpleflow.swf.helpers import swf_identity
 from simpleflow.swf.mapper.core import ConnectedSWFObject

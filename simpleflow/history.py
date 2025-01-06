@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar, cast
 
 import simpleflow.swf.mapper.models.history
 from simpleflow import logger
@@ -142,6 +142,48 @@ class History:
     @property
     def events(self) -> list[Event]:
         return self._history.events
+
+    def get_activities_history(self) -> dict[str, dict[str, Any]]:
+        activities: dict[str, dict[str, Any]] = {}
+        scheduled_to_activity_id: dict[int, str] = {}
+        event: ActivityTaskEvent | Any
+        for event in self.events:
+            if event.type != "ActivityTask":
+                continue
+            cast(ActivityTaskEvent, event)
+            activity_id = getattr(event, "activity_id", None)
+            if event.state == "scheduled" and activity_id not in activities:
+                activities[activity_id] = {
+                    "id": activity_id,
+                    "name": event.activity_type["name"],
+                    "version": event.activity_type["version"],
+                    "states": [event.state],
+                    "scheduled_ids": [event.id],
+                    "scheduled_timestamps": [event.timestamp],
+                    "inputs": [event.input],
+                    "task_lists": [event.task_list["name"]],
+                }
+                scheduled_to_activity_id[event.id] = activity_id
+            else:
+                if event.state != "scheduled":
+                    scheduled_event = self.events[event.scheduled_event_id - 1]
+                    scheduled_id = scheduled_event.id
+                    activity = activities[scheduled_to_activity_id[scheduled_id]]
+                    activity["task_lists"].append(event.task_list["name"])
+                else:
+                    activity = activities[event.activity_id]
+                activity.setdefault("states", []).append(event.state)
+                activity.setdefault(f"{event.state}_ids", []).append(event.id)
+                activity.setdefault(f"{event.state}_timestamp", []).append(event.timestamp)
+                for attr in ("identity", "result", "reason", "details"):
+                    if hasattr(event, attr):
+                        activity.setdefault(attr, []).append(getattr(event, attr))
+                if event.state == "timed_out":
+                    activity.setdefault("timeout_types", []).append(event.timeout_type)
+                    activity.setdefault(f"{event.timeout_type}_timeouts", []).append(
+                        getattr(event, f"{event.timeout_type}_timeout")
+                    )
+                    activity.setdefault(f"{event.timeout_values}", []).append()
 
     def parse_activity_event(self, events: list[Event | ActivityTaskEvent], event: ActivityTaskEvent):
         """
