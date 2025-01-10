@@ -220,6 +220,9 @@ def terminate_workflow(
     run_id: str | None,
 ):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     ex.terminate()
 
 
@@ -235,6 +238,9 @@ def terminate_workflow(
 )
 def restart_workflow(domain: str, workflow_id: str, run_id: str | None):
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     history = ex.history()
     ex.terminate(reason="workflow.restart")
     new_ex = ex.workflow_type.start_execution(
@@ -299,6 +305,7 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
     )
 
 
+# FIXME superseded by history
 @click.option(
     "--nb-tasks",
     "-n",
@@ -331,6 +338,7 @@ def workflow_tasks(
     )
 
 
+# FIXME superseded by filter
 @click.argument(
     "domain",
     envvar="SWF_DOMAIN",
@@ -357,10 +365,6 @@ def list_workflows(ctx, domain: str, status: str, started_since: int):
 _NOTSET = object()
 
 
-@click.argument(
-    "domain",
-    envvar="SWF_DOMAIN",
-)
 @cli.command(
     "workflow.history",
     help="Workflow history from workflow WORKFLOW_ID [RUN_ID].",
@@ -368,7 +372,11 @@ _NOTSET = object()
 @click.argument("workflow_id")
 @click.argument("run_id", required=False)
 @click.option(
-    "--format", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
+    "--domain",
+    envvar="SWF_DOMAIN",
+)
+@click.option(
+    "--mode", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
 )
 @click.option("--reverse-order", required=False, type=bool, default=False, help="Reverse order.")
 @click.pass_context
@@ -377,27 +385,30 @@ def workflow_history(
     domain: str,
     workflow_id: str,
     run_id: str | None,
-    format: str,
+    mode: str,
     reverse_order: bool = False,
 ) -> None:
-    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
-
-    if ctx.format != "json" or not ctx.header:
+    if ctx.parent.params["format"] != "json" or not ctx.parent.params["header"]:
         raise NotImplementedError("Only pretty JSON mode is implemented")
 
+    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
+
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        sys.exit(1)
     events = ex.history_events(
         callback=get_progression_callback("events"),
         reverse_order=reverse_order,
     )
-    if format == "rawest":
+    if mode == "rawest":
         pass
     else:
         raw_history = BaseHistory.from_event_list(events)
         history = History(raw_history)
-        if format == "raw":
+        if mode == "raw":
             events = []
-            for event in history.events[:10]:
+            for event in history.events:
                 e = {}
                 for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
                     if k.startswith("_") or k == "raw":
@@ -407,14 +418,18 @@ def workflow_history(
                         continue
                     e[k] = v
                 events.append(e)
-        elif format == "cooked":
+        elif mode == "cooked":
             history.parse()
             events = {
+                "workflow": history.workflow,
                 "activities": history.activities,
                 "child_workflows": history.child_workflows,
                 "markers": history.markers,
-                "signals": history.signals,
                 "timers": history.timers,
+                "signals": history.signals,
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
             }
         else:
             raise NotImplementedError
@@ -818,6 +833,11 @@ def standalone(
             ex.workflow_id,
             ex.run_id,
         )
+        if not ex:
+            print(
+                f"Execution {workflow_id} {ex.run_id} not found" if ex.run_id else f"Workflow {workflow_id} not found"
+            )
+            sys.exit(1)
         if display_status:
             print(f"status: {ex.status}", file=sys.stderr)
         if ex.status == ex.STATUS_CLOSED:
