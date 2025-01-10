@@ -50,7 +50,10 @@ def comma_separated_list(value: str) -> list[str]:
     return value.split(",")
 
 
-@click.group()
+CONTEXT_SETTINGS = dict(help_option_names=["--help", "-h"])
+
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.option("--format", envvar="SIMPLEFLOW_FORMAT")
 @click.option("--header/--no-header", default=False)
 @click.option(
