@@ -63,8 +63,8 @@ def comma_separated_list(value: str) -> list[str]:
 def cli(ctx, header: bool, format: str, color: str) -> None:
     if format == "prettyjson":
         format, header = "json", True
-    ctx.params["format"] = format
-    ctx.params["header"] = header
+        ctx.params["format"] = format
+        ctx.params["header"] = header
     log.color_mode = color
 
 
@@ -368,7 +368,11 @@ _NOTSET = object()
 @click.argument("workflow_id")
 @click.argument("run_id", required=False)
 @click.option(
-    "--format", required=False, type=click.Choice(["rawest", "raw", "cooked"]), default="raw", help="Output format."
+    "--output-format",
+    required=False,
+    type=click.Choice(["rawest", "raw", "cooked"]),
+    default="raw",
+    help="Output format.",
 )
 @click.option("--reverse-order", required=False, type=bool, default=False, help="Reverse order.")
 @click.pass_context
@@ -377,12 +381,12 @@ def workflow_history(
     domain: str,
     workflow_id: str,
     run_id: str | None,
-    format: str,
+    output_format: str,
     reverse_order: bool = False,
 ) -> None:
     from simpleflow.swf.mapper.models.history.base import History as BaseHistory
 
-    if ctx.format != "json" or not ctx.header:
+    if ctx.parent.params["format"] != "json" or not ctx.parent.params["header"]:
         raise NotImplementedError("Only pretty JSON mode is implemented")
 
     ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
@@ -390,12 +394,12 @@ def workflow_history(
         callback=get_progression_callback("events"),
         reverse_order=reverse_order,
     )
-    if format == "rawest":
+    if output_format == "rawest":
         pass
     else:
         raw_history = BaseHistory.from_event_list(events)
         history = History(raw_history)
-        if format == "raw":
+        if output_format == "raw":
             events = []
             for event in history.events[:10]:
                 e = {}
@@ -407,7 +411,7 @@ def workflow_history(
                         continue
                     e[k] = v
                 events.append(e)
-        elif format == "cooked":
+        elif output_format == "cooked":
             history.parse()
             events = {
                 "activities": history.activities,
