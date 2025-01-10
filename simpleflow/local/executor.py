@@ -115,8 +115,8 @@ class Executor(executor.Executor):
                 task.post_execute()
             state = "completed"
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            tb = traceback.format_tb(exc_traceback)
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            tb = traceback.format_exception(exc_value, value=exc_value, tb=exc_tb)
             task_failed = exceptions.TaskFailed(
                 name=getattr(task, "name", "unknown"),
                 reason=format_exc(exc_value),

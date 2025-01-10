@@ -152,13 +152,13 @@ class ActivityWorker:
                 **kwargs,
             ).execute()
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
+            exc_type, exc_value, exc_tb = sys.exc_info()
             logger.exception(f"process error: {exc_value!s}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
                 details = exc_value.args[0]
                 reason = format_exc(exc_value)  # FIXME json.loads and rebuild?
             else:
-                tb = traceback.format_tb(exc_traceback)
+                tb = traceback.format_exception(exc_value, value=exc_value, tb=exc_tb)
                 reason = format_exc(exc_value)
                 details = json_dumps(
                     {
