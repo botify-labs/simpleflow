@@ -42,10 +42,10 @@ class Event:
     :param  raw_data: raw_event representation provided by amazon service
     """
 
-    _type: str | None
-    _name: str | None
-    _attributes_key: str | None
-    _attributes = Any
+    _type: str | None = None
+    _name: str | None = None
+    _attributes_key: str | None = None
+    _attributes: Any = None
 
     excluded_attributes = ("eventId", "eventType", "eventTimestamp")
 
