@@ -372,8 +372,9 @@ _NOTSET = object()
 @click.argument("run_id", required=False)
 @click.option(
     "--output-format",
+    "-o",
     required=False,
-    type=click.Choice(["rawest", "raw", "cooked"]),
+    type=click.Choice(["events", "raw", "cooked"]),
     default="raw",
     help="Output format.",
 )
@@ -397,7 +398,7 @@ def workflow_history(
         callback=get_progression_callback("events"),
         reverse_order=reverse_order,
     )
-    if output_format == "rawest":
+    if output_format == "events":
         pass
     else:
         raw_history = BaseHistory.from_event_list(events)
