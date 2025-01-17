@@ -9,6 +9,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime
 from typing import TYPE_CHECKING
+from urllib.parse import unquote
 from uuid import uuid4
 
 import click
@@ -48,6 +49,18 @@ def comma_separated_list(value: str) -> list[str]:
     Transforms a comma-separated list into a list of strings.
     """
     return value.split(",")
+
+
+class RunIdParamType(click.ParamType):
+    name = "str"
+
+    def convert(self, value: Any, param: click.Parameter | None, ctx: click.Context | None) -> str:
+        if "%" not in value:
+            return value
+        return unquote(value)
+
+
+RUN_ID = RunIdParamType()
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["--help", "-h"])
@@ -207,7 +220,7 @@ def start_workflow(
     return execution
 
 
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.argument("workflow_id")
 @click.argument(
     "domain",
@@ -226,7 +239,7 @@ def terminate_workflow(
     ex.terminate()
 
 
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.argument("workflow_id")
 @click.argument(
     "domain",
@@ -258,7 +271,7 @@ def with_format(ctx):
     )
 
 
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.argument("workflow_id")
 @click.argument(
     "domain",
@@ -283,7 +296,7 @@ def workflow_info(ctx, domain: str, workflow_id: str, run_id: str | None):
     type=int,
     help="Maximum number of tasks to display.",
 )
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.argument("workflow_id")
 @click.argument(
     "domain",
@@ -309,7 +322,7 @@ def profile(ctx, domain, workflow_id, run_id, nb_tasks):
     type=int,
     help="Maximum number of tasks to display.",
 )
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.argument("workflow_id")
 @click.argument(
     "domain",
@@ -369,7 +382,7 @@ _NOTSET = object()
     help="Workflow history from workflow WORKFLOW_ID [RUN_ID].",
 )
 @click.argument("workflow_id")
-@click.argument("run_id", required=False)
+@click.argument("run_id", type=RUN_ID, required=False)
 @click.option(
     "--output-format",
     "-o",
@@ -740,7 +753,7 @@ def standalone(
         # get the previous execution history, it will serve as "default history"
         # for activities that succeeded in the previous execution
         logger.info(
-            f"retrieving history of previous execution: domain={domain} " f"workflow_id={repair} run_id={repair_run_id}"
+            f"retrieving history of previous execution: domain={domain} workflow_id={repair} run_id={repair_run_id}"
         )
         workflow_execution = get_workflow_execution(domain, repair, run_id=repair_run_id)
         previous_history = History(workflow_execution.history())
@@ -841,7 +854,7 @@ def standalone(
 @click.option("--domain", envvar="SWF_DOMAIN", required=False, help="Amazon SWF Domain.")
 @click.option("--workflow-id", required=True, help="ID of the workflow execution.")
 @click.option("--input", "-i", required=False, help="JSON input of the workflow.")
-@click.option("--run-id", required=False, help="Run ID of the workflow execution.")
+@click.option("--run-id", type=RUN_ID, required=False, help="Run ID of the workflow execution.")
 @click.option(
     "--scheduled-id",
     required=False,
@@ -891,7 +904,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
     for line in json_dumps(params, pretty=True).split("\n"):
         logger.debug(line)
     if input_override:
-        logger.info("NB: input will be overriden with the passed one!")
+        logger.info("NB: input will be overridden with the passed one!")
     logger.info(f"Will re-run: {task}(*{args}, **{kwargs}) [+meta={meta}]")
 
     # download binaries if needed
@@ -913,8 +926,7 @@ def activity_rerun(domain, workflow_id, run_id, input, scheduled_id, activity_id
 )
 @cli.command(
     "info",
-    help="Display versions, settings, and environment variables. "
-    "Available sections: versions, settings, environment.",
+    help="Display versions, settings, and environment variables. Available sections: versions, settings, environment.",
 )
 def info(sections):
     @contextmanager
