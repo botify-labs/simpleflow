@@ -385,6 +385,7 @@ _NOTSET = object()
 @click.argument("run_id", type=RUN_ID, required=False)
 @click.option(
     "--output-format",
+    "--of",
     "-o",
     required=False,
     type=click.Choice(["events", "raw", "cooked"]),
