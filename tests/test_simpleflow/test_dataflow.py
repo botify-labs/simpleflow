@@ -1176,7 +1176,7 @@ def test_workflow_activity_raises_on_failure(mock_decref_workflow):
 
     workflow_failed = simpleflow.swf.mapper.models.decision.WorkflowExecutionDecision()
     workflow_failed.fail(
-        reason="Workflow execution error in " "activity-tests.data.activities.raise_on_failure: " '"error"',
+        reason='Workflow execution error in activity-tests.data.activities.raise_on_failure: "error"',
         details=builder.DEFAULT_DETAILS,
     )
 

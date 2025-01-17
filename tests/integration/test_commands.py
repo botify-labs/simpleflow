@@ -110,7 +110,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             if (
                 e["eventType"] == "ActivityTaskScheduled"
                 and e["activityTaskScheduledEventAttributes"]["activityType"]["name"]
-                == "tests.integration.workflow" ".get_uuid"
+                == "tests.integration.workflow.get_uuid"
             )
         ]
         expect(activities).should.have.length_of(2)
