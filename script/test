@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# not needed, but harmless, in CI/container
-find . -name '*.pyc' -print0 | xargs -0 rm
 export PYTHONDONTWRITEBYTECODE=1
 
 # The AWS_DEFAULT_REGION parameter determines the region used for SWF
@@ -35,4 +33,4 @@ export BOTO_CONFIG=/dev/null
 
 PYTHON=${PYTHON:-python}
 # run tests
-$PYTHON -m pytest --no-success-flaky-report -q $PYTEST_OPTIONS "$@"
+pytest --no-success-flaky-report -q $PYTEST_OPTIONS "$@"
