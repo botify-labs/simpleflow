@@ -58,4 +58,4 @@ jobs:
 
     - name: Test
       run: |
-        ./script/test -v
+        uv run ./script/test -v
