@@ -208,7 +208,7 @@ class Supervisor(NamedMixin):
         Terminate all worker processes managed by this Supervisor.
         """
         self._terminating = True
-        logger.info("process: will stop workers, this might take up several minutes. " "Please, be patient.")
+        logger.info("process: will stop workers, this might take up several minutes. Please, be patient.")
         self._killall()
 
     def _killall(self):

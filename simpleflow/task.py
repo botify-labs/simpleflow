@@ -102,8 +102,7 @@ class ActivityTask(Task):
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}(activity={self.activity}, args={self.args}, kwargs={self.kwargs},"
-            f" id={self.id})"
+            f"{self.__class__.__name__}(activity={self.activity}, args={self.args}, kwargs={self.kwargs}, id={self.id})"
         )
 
     def execute(self):
