@@ -7,7 +7,7 @@ name = "simpleflow"
 description = "Python library for dataflow programming with Amazon SWF"
 readme = "README.md"
 requires-python = ">=3.7"
-license = { text = "MIT License" }
+license = "MIT"
 authors = [
     { name = "Greg Leclercq" },
 ]
