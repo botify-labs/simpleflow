@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling==1.17.1"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -48,36 +48,6 @@ dependencies = [
     "pytz",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "boto3-stubs[s3,swf]",
-    "cffi==v1.17.0rc1; python_full_version=='3.13.0b4'", # via cryptography via moto, secretstorage
-    "flaky",
-    "hatch==1.7.0",
-    "invoke",
-    "moto>=4.2.8,<5.0.0",
-    "packaging",
-    "pre-commit",
-    "pytest",
-    "pytest-xdist>=3.2.0",
-    "ruff",
-    "setuptools<72", # See https://github.com/pypa/setuptools/issues/4519
-    "sphinx",
-    "sphinx_rtd_theme",
-    "sure",
-    "typing-extensions",
-    "vcrpy",
-    "twine",
-]
-
-doc = [
-    "mkdocs",
-    "mkdocs-material",
-    "pygments",
-    "pymdown-extensions",
-    "markdown-include",
-]
-
 [project.urls]
 documentation = "https://botify-labs.github.io/simpleflow"
 repository = "https://github.com/botify-labs/simpleflow"
@@ -117,3 +87,43 @@ path = "simpleflow/__init__.py"
 [tool.hatch.build]
 include = ["/simpleflow"]
 exclude = ["*~"]
+
+[dependency-groups]
+dev = [
+    "boto3-stubs[s3,swf]",
+    "cffi==v1.17.0rc1; python_full_version=='3.13.0b4'", # via cryptography via moto, secretstorage
+    "flaky",
+    "hatch",
+    "invoke",
+    "moto>=4.2.8,<5.0.0",
+    "packaging",
+    "pre-commit",
+    "pytest",
+    "pytest-xdist>=3.2.0",
+    "ruff",
+    "setuptools<72", # See https://github.com/pypa/setuptools/issues/4519
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sure",
+    "typing-extensions",
+    "vcrpy",
+    "twine",
+]
+
+doc = [
+    "mkdocs",
+    "mkdocs-material",
+    "pygments",
+    "pymdown-extensions",
+    "markdown-include",
+]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://pypi.org/legacy/"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"

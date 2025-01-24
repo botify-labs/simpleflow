@@ -102,7 +102,7 @@ def current_branch() -> str:
     branch = execute(["git", "branch", "--show-current"]).strip()
     if branch:
         return branch
-    fail("Couldn't find current branch, please don't" " be in 'detached' state when running this.")
+    fail("Couldn't find current branch, please don't be in 'detached' state when running this.")
 
 
 def on_main_branch() -> bool:
@@ -238,17 +238,13 @@ def main():
         "--test-pypi",
         "-T",
         action="store_const",
-        const="test",
-        dest="repository",
+        const="testpypi",
+        dest="index",
         help="upload to TestPyPI",
     )
     group.add_argument(
-        "--repository",
-        help="repository (package index) name or URL to upload the package to",
-    )
-    group.add_argument(
-        "--repository-url",
-        help="repository (package index) URL to upload the package to",
+        "--index",
+        help="index name (from [[tool.uv.index]] in pyproject.toml) to upload the package to",
     )
     parser.add_argument("--new-version", help="new version number")
     args = parser.parse_args()
@@ -289,14 +285,12 @@ def main():
 
     # push package to pypi
     step(f"Generate and push package to {args.repository or args.repository_url or 'pypi'}")
-    execute(["hatch", "build", "--clean"], log=True)
+    execute(["uv", "build"], log=True)
     wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
     tar_gz = f"dist/simpleflow-{new_version}.tar.gz"
-    cmd = ["hatch", "publish"]
-    if args.repository:
-        cmd += ["--repo", args.repository]
-    elif args.repository_url:
-        cmd += ["--repo", args.repository_url]
+    cmd = ["uv", "publish"]
+    if args.index:
+        cmd += ["--index", args.index]
     cmd += [wheel, tar_gz]
     execute(cmd, log=True, dry_run=dry_run)
 
