@@ -453,7 +453,7 @@ def workflow_history(
                 "external_workflows_signaling": history.external_workflows_signaling,
                 "signaled_workflows": history.signaled_workflows,
             }
-        elif mode == "cooked2":
+        elif output_format == "cooked2":
             history.parse()
             events = {
                 "workflow": [t for t in history.tasks if t.type == "child_workflow"],
