@@ -453,6 +453,19 @@ def workflow_history(
                 "external_workflows_signaling": history.external_workflows_signaling,
                 "signaled_workflows": history.signaled_workflows,
             }
+        elif output_format == "cooked2":
+            history.parse()
+            events = {
+                "workflow": [t for t in history.tasks if t.type == "child_workflow"],
+                "activities": [t for t in history.tasks if t.type == "activity"],
+                "child_workflows": history.child_workflows,
+                "markers": history.markers,
+                "timers": history.timers,
+                "signals": [t for t in history.tasks if t.type == "signal"],
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
+            }
         else:
             raise NotImplementedError
     print(json.dumps(events, separators=(",", ":"), default=serialize_complex_object))
