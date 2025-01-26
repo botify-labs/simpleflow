@@ -10,7 +10,7 @@ from simpleflow import Workflow, activity, futures, logger
 def increment(x):
     # Here's how you can access the raw context of the activity task if you need
     # it. It gives you access to the response of the PollForActivityTask call to
-    # the SWF API. See docs for more info: http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_ResponseSyntax  # NOQA
+    # the SWF API. See docs for more info: http://docs.aws.amazon.com/amazonswf/latest/apireference/API_PollForActivityTask.html#API_PollForActivityTask_ResponseSyntax
     logger.warning(f"activity context: {increment.context}")
     return x + 1
 

@@ -67,10 +67,11 @@ extend-select = [
     "W",   # pycodestyle warnings
     "RUF", # ruff
 ]
-fixable = ["ALL"]
 allowed-confusables = ["‘", "’"]
 extend-ignore = [
 ]
+ignore = ["E501"]
+
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 

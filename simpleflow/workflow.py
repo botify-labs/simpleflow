@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from simpleflow.base import Submittable, SubmittableContainer
-from simpleflow.signal import WaitForSignal
+from simpleflow.simpleflow_signal import WaitForSignal
 from simpleflow.task import CancelTimerTask, TaskFailureContext, TimerTask
 
 from . import canvas, task

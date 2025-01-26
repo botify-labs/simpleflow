@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar, cast
 
 import simpleflow.swf.mapper.models.history
 from simpleflow import logger
@@ -43,10 +43,15 @@ class History:
         self.started_decision_id: int | None = None
         self.completed_decision_id: int | None = None
         self.last_event_id: int | None = None
+        self._workflow: dict[str, Any] = {}
 
     @property
     def swf_history(self) -> simpleflow.swf.mapper.models.history.History:
         return self._history
+
+    @property
+    def workflow(self):
+        return self._workflow
 
     @property
     def activities(self) -> dict[str, ActivityTaskEventDict]:
@@ -137,6 +142,48 @@ class History:
     @property
     def events(self) -> list[Event]:
         return self._history.events
+
+    def get_activities_history(self) -> dict[str, dict[str, Any]]:
+        activities: dict[str, dict[str, Any]] = {}
+        scheduled_to_activity_id: dict[int, str] = {}
+        event: ActivityTaskEvent | Any
+        for event in self.events:
+            if event.type != "ActivityTask":
+                continue
+            cast(ActivityTaskEvent, event)
+            activity_id = getattr(event, "activity_id", None)
+            if event.state == "scheduled" and activity_id not in activities:
+                activities[activity_id] = {
+                    "id": activity_id,
+                    "name": event.activity_type["name"],
+                    "version": event.activity_type["version"],
+                    "states": [event.state],
+                    "scheduled_ids": [event.id],
+                    "scheduled_timestamps": [event.timestamp],
+                    "inputs": [event.input],
+                    "task_lists": [event.task_list["name"]],
+                }
+                scheduled_to_activity_id[event.id] = activity_id
+            else:
+                if event.state != "scheduled":
+                    scheduled_event = self.events[event.scheduled_event_id - 1]
+                    scheduled_id = scheduled_event.id
+                    activity = activities[scheduled_to_activity_id[scheduled_id]]
+                    activity["task_lists"].append(event.task_list["name"])
+                else:
+                    activity = activities[event.activity_id]
+                activity.setdefault("states", []).append(event.state)
+                activity.setdefault(f"{event.state}_ids", []).append(event.id)
+                activity.setdefault(f"{event.state}_timestamp", []).append(event.timestamp)
+                for attr in ("identity", "result", "reason", "details"):
+                    if hasattr(event, attr):
+                        activity.setdefault(attr, []).append(getattr(event, attr))
+                if event.state == "timed_out":
+                    activity.setdefault("timeout_types", []).append(event.timeout_type)
+                    activity.setdefault(f"{event.timeout_type}_timeouts", []).append(
+                        getattr(event, f"{event.timeout_type}_timeout")
+                    )
+                    activity.setdefault(f"{event.timeout_values}", []).append()
 
     def parse_activity_event(self, events: list[Event | ActivityTaskEvent], event: ActivityTaskEvent):
         """
@@ -432,6 +479,118 @@ class History:
         """
         Parse a workflow event.
         """
+        if event.state == "started":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "child_policy": getattr(event, "child_policy", None),
+                    "task_list": event.task_list["name"],
+                    "workflow_type": event.workflow_type,
+                    "continued_execution_run_id": getattr(event, "continued_execution_run_id", None),
+                    "execution_start_to_close_timeout": getattr(event, "execution_start_to_close_timeout", None),
+                    "input": getattr(event, "input", None),
+                    "lambda_role": getattr(event, "lambda_role", None),
+                    "parent_initiated_event_id": getattr(event, "parent_initiated_event_id", None),
+                    "parent_workflow_execution": getattr(event, "parent_workflow_execution", None),
+                    "tag_list": getattr(event, "tag_list", None),
+                    "task_priority": getattr(event, "task_priority", None),
+                    "task_start_to_close_timeout": getattr(event, "task_start_to_close_timeout", None),
+                }
+            )
+        elif event.state == "continued_as_new":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    f"{event.state}_decision_task_completed_event_id": event.decision_task_completed_event_id,
+                    "new_execution_run_id": event.new_execution_run_id,
+                    "task_list": event.task_list["name"],
+                    "workflow_type": event.workflow_type,
+                    "execution_start_to_close_timeout": getattr(event, "execution_start_to_close_timeout", None),
+                    "input": getattr(event, "input", None),
+                    "lambda_role": getattr(event, "lambda_role", None),
+                    "tag_list": getattr(event, "tag_list", None),
+                    "task_priority": getattr(event, "task_priority", None),
+                    "task_start_to_close_timeout": getattr(event, "task_start_to_close_timeout", None),
+                }
+            )
+        elif event.state == "completed":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "initiated_event_id": getattr(event, "initiated_event_id", None),
+                    "result": getattr(event, "result", None),
+                }
+            )
+        elif event.state == "cancelled":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "initiated_event_id": getattr(event, "initiated_event_id", None),
+                    "decision_task_completed_event_id": event.decision_task_completed_event_id,
+                    "details": getattr(event, "details", None),
+                }
+            )
+        elif event.state == "failed":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "initiated_event_id": getattr(event, "initiated_event_id", None),
+                    "decision_task_completed_event_id": event.decision_task_completed_event_id,
+                    "reason": getattr(event, "reason", None),
+                    "details": getattr(event, "details", None),
+                }
+            )
+        elif event.state == "terminated":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "initiated_event_id": getattr(event, "initiated_event_id", None),
+                    "cause": getattr(event, "cause", None),
+                    "details": getattr(event, "details", None),
+                }
+            )
+        elif event.state == "timed_out":
+            self._workflow.update(
+                {
+                    "state": event.state,
+                    f"{event.state}_id": event.id,
+                    f"{event.state}_timestamp": event.timestamp,
+                    "initiated_event_id": getattr(event, "initiated_event_id", None),
+                    "timeout_type": event.timeout_type,
+                }
+            )
+        # elif event.state in (
+        #     "cancel_failed",
+        #     "complete_failed",
+        #     "continue_as_new",
+        #     "fail_failed",
+        #     "start_child_failed",
+        #     "start_failed",
+        #     "terminate_failed",
+        # ):
+        #     self._workflow.update(
+        #         {
+        #             "state": event.state,
+        #             f"{event.state}_id": event.id,
+        #             f"{event.state}_cause": getattr(event, "cause", None),
+        #             f"{event.state}_decision_task_completed_event_id": event.decision_task_completed_event_id,
+        #         }
+        #     )
+
+        if event.state == "cancel_requested":
+            self._workflow.update()
         if event.state == "signaled":
             signal = {
                 "type": "signal",

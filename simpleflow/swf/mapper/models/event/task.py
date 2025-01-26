@@ -36,22 +36,23 @@ class ActivityTaskEvent(Event):
 
 class ActivityTaskEventDict(TypedDict):
     type: str
-    id: int
+    id: str
     name: str
     version: str
     state: str
     scheduled_id: int
     scheduled_timestamp: datetime
+    schedule_failed_timestamp: datetime | None
     started_id: int
     started_timestamp: datetime
     completed_id: int
-    completed_timestamp: datetime
+    completed_timestamp: datetime | None
     failed_id: int
-    failed_timestamp: datetime
+    failed_timestamp: datetime | None
     timeout_type: str
     timeout_value: int
     timed_out_id: int
-    timed_out_timestamp: datetime
+    timed_out_timestamp: datetime | None
     identity: Any
     input: dict
     task_list: str
