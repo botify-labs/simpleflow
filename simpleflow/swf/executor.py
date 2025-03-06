@@ -170,9 +170,9 @@ class Executor(executor.Executor):
         self._tasks = TaskRegistry()
         self._idempotent_tasks_to_submit = set()
         self._execution = None
-        self.current_priority = None
-        self.handled_failures = {}
-        self.created_activity_types = set()
+        self.current_priority: str | int | None = None
+        self.handled_failures: dict[int, Any] = {}
+        self.created_activity_types: set[tuple[str, str]] = set()
 
     def reset(self):
         """
@@ -223,7 +223,7 @@ class Executor(executor.Executor):
             # It makes the workflow resistant to retries or variations on the
             # same task name (see #11).
             arguments = json_dumps({"args": args, "kwargs": kwargs})
-            suffix = hashlib.md5(arguments.encode("utf-8")).hexdigest()  # nosec
+            suffix = hashlib.md5(arguments.encode()).hexdigest()  # nosec
 
         if isinstance(a_task, WorkflowTask):
             # Some task types must have globally unique names.
@@ -231,7 +231,7 @@ class Executor(executor.Executor):
 
         task_id = f"{a_task.name}-{suffix}"
         if len(task_id) > 256:  # Better safe than sorry...
-            task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode("utf-8")).hexdigest()  # nosec
+            task_id = task_id[0:223] + "-" + hashlib.md5(task_id.encode()).hexdigest()  # nosec
         return task_id
 
     def _get_future_from_activity_event(self, event: dict[str, Any]) -> futures.Future | None:
@@ -248,16 +248,7 @@ class Executor(executor.Executor):
             name = event["activity_type"]["name"]
             version = event["activity_type"]["version"]
             if event["cause"] == "ACTIVITY_TYPE_DOES_NOT_EXIST" and (name, version) not in self.created_activity_types:
-                self.created_activity_types.add((name, version))
-                activity_type = simpleflow.swf.mapper.models.ActivityType(self.domain, name=name, version=version)
-                logger.info(f"creating activity type {activity_type.name} in domain {self.domain.name}")
-                try:
-                    activity_type.save()
-                except simpleflow.swf.mapper.exceptions.AlreadyExistsError:
-                    logger.info(
-                        f"oops: Activity type {activity_type.name} in domain {self.domain.name} already exists,"
-                        f" creation failed, continuing..."
-                    )
+                self.create_activity_type(name, version)
                 return None
             logger.info(f"failed to schedule {name}: {event['cause']}")
             return None
@@ -282,6 +273,18 @@ class Executor(executor.Executor):
             )
 
         return future
+
+    def create_activity_type(self, name: str, version: str) -> None:
+        self.created_activity_types.add((name, version))
+        activity_type = simpleflow.swf.mapper.models.ActivityType(self.domain, name=name, version=version)
+        logger.info(f"creating activity type {activity_type.name} in domain {self.domain.name}")
+        try:
+            activity_type.save()
+        except simpleflow.swf.mapper.exceptions.AlreadyExistsError:
+            logger.info(
+                f"oops: Activity type {activity_type.name} in domain {self.domain.name} already exists,"
+                f" creation failed, continuing..."
+            )
 
     def _get_future_from_child_workflow_event(self, event: dict[str, Any]) -> futures.Future | None:
         """Maps a child workflow event to a Future with the corresponding
@@ -797,7 +800,7 @@ class Executor(executor.Executor):
             # ... but only keep the event if the task was successful
             if former_event and former_event["state"] == "completed":
                 logger.info(f"faking task completed successfully in previous workflow: {former_event['id']}")
-                json_hash = hashlib.md5(json_dumps(former_event).encode("utf-8")).hexdigest()  # nosec
+                json_hash = hashlib.md5(json_dumps(former_event).encode()).hexdigest()  # nosec
                 fake_task_list = "FAKE-" + json_hash
 
                 # schedule task on a fake task list
