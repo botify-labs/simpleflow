@@ -251,7 +251,7 @@ class WorkflowType(BaseModel):
         :param  decision_tasks_timeout: maximum duration of decision tasks
                                         for this workflow execution
         """
-        workflow_id = workflow_id or f"{self.name}-{self.version}-{time.time():d}"
+        workflow_id = workflow_id or f"{self.name}-{self.version}-{int(time.time())}"
         task_list = task_list or self.task_list
         child_policy = child_policy or self.child_policy
         if child_policy not in CHILD_POLICIES:

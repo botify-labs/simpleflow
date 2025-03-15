@@ -271,9 +271,14 @@ def restart_workflow(domain: str, workflow_id: str, run_id: str | None):
 
 
 def with_format(ctx):
+    with_header = ctx.parent.params.get("header")
+    fmt = ctx.parent.params.get("format") or pretty.DEFAULT_FORMAT
+    if fmt == "prettyjson":
+        with_header = True
+        fmt = "json"
     return pretty.formatted(
-        with_header=ctx.parent.params["header"],
-        fmt=ctx.parent.params["format"] or pretty.DEFAULT_FORMAT,
+        with_header=with_header,
+        fmt=fmt,
     )
 
 
