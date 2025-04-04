@@ -6,7 +6,7 @@ from enum import Enum
 import typer
 from typing_extensions import Annotated
 
-from simpleflow.cli import workflow
+from simpleflow.cli import decider, workflow
 
 app = typer.Typer(
     # add_completion=False,
@@ -15,6 +15,7 @@ app = typer.Typer(
 )
 
 app.add_typer(workflow.app, name="workflow", help="Manage workflows")
+app.add_typer(decider.app, name="decider", help="Manage deciders")
 
 
 class Format(str, Enum):
