@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -8,6 +7,7 @@ from typing import Any
 import typer
 from typing_extensions import Annotated
 
+from simpleflow import Workflow, format
 from simpleflow.command import get_progression_callback, get_workflow_type, with_format
 from simpleflow.swf import helpers
 from simpleflow.swf.mapper.models import WorkflowExecution
@@ -46,7 +46,6 @@ def filter(
     status: Annotated[Status, typer.Option("--status", "-s")] = Status.open,
     tag: str | None = None,
     workflow_id: str | None = None,
-    run_id: str | None = None,
     workflow_type: str | None = None,
     workflow_type_version: str | None = None,
     close_status: CloseStatus | None = None,
@@ -80,7 +79,7 @@ def filter(
     print(
         with_format(ctx.parent)(helpers.filter_workflow_executions)(
             domain,
-            status=status.upper(),
+            status=status,
             tag=tag,
             workflow_id=workflow_id,
             workflow_type_name=workflow_type,
@@ -95,16 +94,16 @@ def filter(
 def start(
     ctx: typer.Context,
     workflow: str,
-    domain: Annotated[str, typer.Argument(envvar="SWF_DOMAIN")],
+    domain: Annotated[str, typer.Option(envvar="SWF_DOMAIN")],
     input: Annotated[str, typer.Option("--input", "-i", help="input JSON")] | None = None,
 ):
     """
     Start a workflow.
     """
-    workflow_class = import_from_module(workflow)
+    workflow_class: type[Workflow] = import_from_module(workflow)
     wf_input: dict[str, Any] = {}
     if input is not None:
-        json_input = json.loads(input)
+        json_input = format.decode(input)
         if isinstance(json_input, list):
             wf_input = {"args": json_input, "kwargs": {}}
         elif isinstance(json_input, dict) and ("args" not in json_input or "kwargs" not in json_input):
@@ -113,9 +112,22 @@ def start(
             wf_input = json_input
     workflow_type = get_workflow_type(domain, workflow_class)
     set_workflow_class_name(wf_input, workflow_class)
+    get_task_list = getattr(workflow_class, "get_task_list", None)
+    if get_task_list:
+        if not callable(get_task_list):
+            raise Exception("get_task_list must be a callable")
+        if isinstance(wf_input, dict):
+            args = wf_input.get("args", [])
+            kwargs = wf_input.get("kwargs", {})
+        else:
+            args = []
+            kwargs = wf_input
+        task_list = get_task_list(workflow_class, *args, **kwargs)
+    else:
+        task_list = workflow_class.task_list
     execution = workflow_type.start_execution(
         # workflow_id=workflow_id,
-        # task_list=task_list or workflow_class.task_list,
+        task_list=task_list,
         # execution_timeout=execution_timeout,
         input=wf_input,
         # tag_list=tags,
