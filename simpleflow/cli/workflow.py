@@ -9,10 +9,11 @@ from typing_extensions import Annotated
 
 from simpleflow import Workflow, format
 from simpleflow.command import get_progression_callback, get_workflow_type, with_format
+from simpleflow.history import History
 from simpleflow.swf import helpers
 from simpleflow.swf.mapper.models import WorkflowExecution
 from simpleflow.swf.utils import set_workflow_class_name
-from simpleflow.utils import import_from_module
+from simpleflow.utils import import_from_module, json_dumps
 
 
 class Status(str, Enum):
@@ -26,6 +27,13 @@ class CloseStatus(str, Enum):
     canceled = "canceled"
     terminated = "terminated"
     continued_as_new = "continued_as_new"
+
+
+class OutputFormat(str, Enum):
+    events = "events"
+    raw = "raw"
+    cooked = "cooked"
+    cooked_alt = "cooked_alt"
 
 
 app = typer.Typer(no_args_is_help=True)
@@ -138,6 +146,79 @@ def start(
         return ["workflow_id", "run_id"], [[execution.workflow_id, execution.run_id]]
 
     print(with_format(ctx.parent)(get_infos)())
+
+
+_NOTSET = object()
+
+
+@app.command()
+def history(
+    ctx: typer.Context,
+    domain: Annotated[str, typer.Option(envvar="SWF_DOMAIN")],
+    workflow_id: str,
+    run_id: str | None = None,
+    output_format: Annotated[OutputFormat, typer.Option("--output-format", "--of")] = OutputFormat.events,
+    reverse_order: bool = False,
+):
+    # print(ctx)
+    # format = ctx.parent.parent.params.get("format")
+    # print(format)
+    from simpleflow.swf.mapper.models.history.base import History as BaseHistory
+
+    ex = helpers.get_workflow_execution(domain, workflow_id, run_id)
+    if not ex:
+        print(f"Execution {workflow_id} {run_id} not found" if run_id else f"Workflow {workflow_id} not found")
+        ctx.exit(1)
+    events = ex.history_events(
+        callback=get_progression_callback("events"),
+        reverse_order=reverse_order,
+    )
+    if output_format == OutputFormat.events:
+        pass
+    else:
+        raw_history = BaseHistory.from_event_list(events)
+        history = History(raw_history)
+        if output_format == OutputFormat.raw:
+            events = []
+            for event in history.events:
+                e = {}
+                for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
+                    if k.startswith("_") or k == "raw":
+                        continue
+                    v = getattr(event, k, _NOTSET)
+                    if v is _NOTSET:
+                        continue
+                    e[k] = v
+                events.append(e)
+        elif output_format == OutputFormat.cooked:
+            history.parse()
+            events = {
+                "workflow": history.workflow,
+                "activities": history.activities,
+                "child_workflows": history.child_workflows,
+                "markers": history.markers,
+                "timers": history.timers,
+                "signals": history.signals,
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
+            }
+        elif output_format == OutputFormat.cooked_alt:
+            history.parse()
+            events = {
+                "workflow": [t for t in history.tasks if t.type == "child_workflow"],
+                "activities": [t for t in history.tasks if t.type == "activity"],
+                "child_workflows": history.child_workflows,
+                "markers": history.markers,
+                "timers": history.timers,
+                "signals": [t for t in history.tasks if t.type == "signal"],
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
+            }
+        else:
+            raise NotImplementedError
+    print(json_dumps(events))
 
 
 if __name__ == "__main__":
