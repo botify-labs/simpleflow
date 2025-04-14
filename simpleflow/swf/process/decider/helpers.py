@@ -92,6 +92,8 @@ def make_decider_poller(
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
     domain = simpleflow.swf.mapper.models.Domain(domain)
+    if not domain.exists:
+        domain.save()
     executors = [
         load_workflow_executor(
             domain,
