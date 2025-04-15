@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 
 from simpleflow.swf.mapper.core import ConnectedSWFObject
 from simpleflow.swf.mapper.exceptions import DoesNotExistError
@@ -13,15 +13,13 @@ class ModelDiff:
 
     :param  input: triples (tuples) storing in order: compared attribute name,
                    local model attribute value, upstream model attribute value.
-    :type   input: *args
 
     :param  ignore_fields: list of fields to ignore when comparing local and upstream
-    :type   ignore_fields: list
     """
 
-    def __init__(self, *input, ignore_fields: list[str] | None = None):
+    def __init__(self, *input: tuple[str, str, str], ignore_fields: list[str] | None = None):
         self.ignore_fields = ignore_fields or []
-        self.container: OrderedDict[str, tuple[str, str]] = self._process_input(input)
+        self.container: dict[str, tuple[str, str]] = self._process_input(input)
 
     def __contains__(self, attr):
         return attr in self.container
@@ -33,14 +31,14 @@ class ModelDiff:
         attr, (local, upstream) = list(self.container.items())[index]
         return Difference(attr, local, upstream)
 
-    def _process_input(self, input):
-        return OrderedDict(
-            (attr, (local, upstream))
+    def _process_input(self, input: tuple[tuple[str, str, str], ...]) -> dict[str, tuple[str, str]]:
+        return {
+            attr: (local, upstream)
             for attr, local, upstream in input
             if local != upstream and attr not in self.ignore_fields
-        )
+        }
 
-    def add_input(self, *input):
+    def add_input(self, *input: tuple[str, str, str]):
         """Adds input differing data into ModelDiff instance"""
         self.container.update(self._process_input(input))
 

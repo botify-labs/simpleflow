@@ -6,7 +6,6 @@ import os
 import re
 import time
 from abc import ABC
-from collections import OrderedDict
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -18,31 +17,29 @@ ACTIVITY_KEY_RE = re.compile(r"activity\.(.+)\.json")
 
 
 class StepIO:
-    def __init__(self):
+    def __init__(self) -> None:
         self.bytes = 0
         self.records = 0
         self.sampled = False
 
-    def get_stats(self, time_total):
+    def get_stats(self, time_total: float) -> dict[str, Any]:
         mb_s = None
         rec_s = None
         if self.bytes:
             mb_s = round(float(self.bytes) / (1024 * 1024) / time_total, 2)
         if self.records:
             rec_s = int(self.records / time_total)
-        return OrderedDict(
-            [
-                ("bytes", self.bytes),
-                ("records", self.records),
-                ("mb_s", mb_s),
-                ("rec_s", rec_s),
-                ("sampled", self.sampled),
-            ]
-        )
+        return {
+            "bytes": self.bytes,
+            "records": self.records,
+            "mb_s": mb_s,
+            "rec_s": rec_s,
+            "sampled": self.sampled,
+        }
 
 
 class Step:
-    def __init__(self, name, task):
+    def __init__(self, name: str, task: MetrologyTask) -> None:
         self.name = name
         self.task = task
         self.read = StepIO()
@@ -57,22 +54,17 @@ class Step:
         self.time_total = self.time_finished - self.time_started
 
     def get_stats(self):
-        stats = OrderedDict(
-            [
-                ("name", self.name),
-                ("metadata", self.metadata),
-                ("time_started", self.time_started),
-                ("time_finished", self.time_finished),
-                ("time_total", self.time_total),
-                ("read", self.read.get_stats(self.time_total)),
-                ("write", self.write.get_stats(self.time_total)),
-            ]
-        )
-        return stats
+        stats = {
+            "name": self.name,
+            "metadata": self.metadata,
+            "time_started": self.time_started,
+            "time_finished": self.time_finished,
+            "time_total": self.time_total,
+            "read": self.read.get_stats(self.time_total),
+            "write": self.write.get_stats(self.time_total),
+        }
 
-    def mset_metadata(self, kvs):
-        for k, v in kvs:
-            self.metadata[k] = v
+        return stats
 
 
 class StepExecution:
@@ -90,14 +82,14 @@ class MetrologyTask:
     context: dict[str, Any]
     steps: list[Step]
 
-    def can_upload(self):
+    def can_upload(self) -> bool:
         if not hasattr(self, "context"):
             return False
         return all(c in self.context for c in ("workflow_id", "run_id", "activity_id"))
 
     @property
     def metrology_path(self):
-        path = []
+        path: list[str] = []
         if settings.METROLOGY_PATH_PREFIX is not None:
             path.append(settings.METROLOGY_PATH_PREFIX)
         path.append(self.context["workflow_id"])
@@ -105,7 +97,7 @@ class MetrologyTask:
         path.append(f"activity.{self.context['activity_id']}.json")
         return str(os.path.join(*path))
 
-    def step(self, name):
+    def step(self, name: str) -> StepExecution:
         """
         To be called in a `with` execution
         Ex :

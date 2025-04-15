@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections
 import sys
 import traceback
 import uuid
@@ -27,8 +26,8 @@ class Executor(executor.Executor):
         super().__init__(workflow_class)
         self.update_workflow_class()
         self.nb_activities = 0
-        self.signals_sent = set()
-        self._markers = collections.OrderedDict()
+        self.signals_sent: set[str] = set()
+        self._markers: dict[str, list[Marker]] = {}
 
         self.wf_run_id = []
         self.wf_id = []
@@ -206,7 +205,7 @@ class Executor(executor.Executor):
         self.update_workflow_class()
         self.nb_activities = 0
         self.signals_sent = set()
-        self._markers = collections.OrderedDict()
+        self._markers = {}
 
         self.wf_run_id = []
         self.wf_id = []
