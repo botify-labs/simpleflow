@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import simpleflow.swf.mapper.models
 from simpleflow import logger
 from simpleflow.swf.executor import Executor
@@ -7,35 +9,21 @@ from simpleflow.utils import import_from_module
 
 from .base import Decider, DeciderPoller
 
+if TYPE_CHECKING:
+    from simpleflow.history import History
+
 
 def load_workflow_executor(
-    domain,
-    workflow_name,
-    task_list=None,
-    repair_with=None,
-    force_activities=None,
-    repair_workflow_id=None,
-    repair_run_id=None,
-):
+    domain: simpleflow.swf.mapper.models.Domain,
+    workflow_name: str,
+    task_list: str | None = None,
+    repair_with: History | None = None,
+    force_activities: str | None = None,
+    repair_workflow_id: str | None = None,
+    repair_run_id: str | None = None,
+) -> Executor:
     """
     Load a workflow executor.
-
-    :param domain:
-    :type domain: simpleflow.swf.mapper.models.Domain
-    :param workflow_name:
-    :type workflow_name: str
-    :param task_list:
-    :type task_list: Optional[str]
-    :param repair_with:
-    :type repair_with: Optional[simpleflow.history.History]
-    :param force_activities:
-    :type force_activities: Optional[str]
-    :param repair_workflow_id: workflow ID to repair
-    :type repair_workflow_id: Optional[str]
-    :param repair_run_id: run ID to repair
-    :type repair_run_id: Optional[str]
-    :return: Executor for this workflow
-    :rtype: Executor
     """
     logger.debug(f'load_workflow_executor(workflow_name="{workflow_name}")')
     workflow = import_from_module(workflow_name)
@@ -55,43 +43,25 @@ def load_workflow_executor(
 
 
 def make_decider_poller(
-    workflows,
-    domain,
-    task_list,
-    repair_with=None,
-    force_activities=None,
-    is_standalone=False,
-    repair_workflow_id=None,
-    repair_run_id=None,
-):
+    workflows: list[str],
+    domain_name: str,
+    task_list: str,
+    repair_with: History | None = None,
+    force_activities: str | None = None,
+    is_standalone: bool = False,
+    repair_workflow_id: str | None = None,
+    repair_run_id: str | None = None,
+) -> DeciderPoller:
     """
     Factory building a decider poller.
-    :param workflows:
-    :type workflows:
-    :param domain:
-    :type domain:
-    :param task_list:
-    :type task_list:
-    :param repair_with:
-    :type repair_with: Optional[simpleflow.history.History]
-    :param force_activities:
-    :type force_activities: Optional[str]
-    :param is_standalone: Whether the executor use this task list (and pass it to the workers)
-    :type is_standalone: bool
-    :param repair_workflow_id: workflow ID to repair
-    :type repair_workflow_id: Optional[str]
-    :param repair_run_id: run ID to repair
-    :type repair_run_id: Optional[str]
-    :return:
-    :rtype: DeciderPoller
     """
     if repair_with and len(workflows) != 1:
-        # too complicated ; I even wonder why passing multiple workflows here is
+        # too complicated; I even wonder why passing multiple workflows here is
         # useful, a domain+task_list is typically handled in a single workflow
         # definition, seems like good practice (?)
         raise ValueError("Sorry you can't repair more than 1 workflow at once!")
 
-    domain = simpleflow.swf.mapper.models.Domain(domain)
+    domain = simpleflow.swf.mapper.models.Domain(domain_name)
     if not domain.exists:
         domain.save()
     executors = [
@@ -110,38 +80,23 @@ def make_decider_poller(
 
 
 def make_decider(
-    workflows,
-    domain,
-    task_list,
-    nb_children=None,
-    repair_with=None,
-    force_activities=None,
-    is_standalone=False,
-    repair_workflow_id=None,
-    repair_run_id=None,
-):
+    workflows: list[str],
+    domain: str,
+    task_list: str,
+    nb_children: int | None = None,
+    repair_with: History | None = None,
+    force_activities: str | None = None,
+    is_standalone: bool = False,
+    repair_workflow_id: str | None = None,
+    repair_run_id: str | None = None,
+) -> Decider:
     """
     Instantiate a Decider.
-    :param workflows:
-    :type workflows: list[str]
-    :param domain:
-    :type domain: str
-    :param task_list:
-    :type task_list: str
-    :param nb_children:
-    :type nb_children: Optional[int]
-    :param repair_with: previous history
-    :type repair_with: Optional[simpleflow.history.History]
-    :param force_activities: Regex matching the activities to force
-    :type force_activities: Optional[str]
-    :param is_standalone: Whether the executor use this task list (and pass it to the workers)
-    :type is_standalone: bool
-    :param repair_workflow_id: workflow ID to repair
-    :type repair_workflow_id: Optional[str]
-    :param repair_run_id: run ID to repair
-    :type repair_run_id: Optional[str]
-    :return:
-    :rtype: Decider
+    repair_with: previous history
+    force_activities: Regex matching the activities to force
+    is_standalone: Whether the executor uses this task list (and pass it to the workers)
+    repair_workflow_id: workflow ID to repair
+    repair_run_id: run ID to repair
     """
     poller = make_decider_poller(
         workflows,
