@@ -14,14 +14,14 @@ repos:
           - --maxkb=1024
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
-    rev: 0.5.24
+    rev: 0.6.14
     hooks:
       # Keep uv.lock up to date.
       - id: uv-lock
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.9.3
+    rev: v0.11.5
     hooks:
       # Run the linter.
       - id: ruff
