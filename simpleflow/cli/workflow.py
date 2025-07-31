@@ -50,14 +50,14 @@ TIMESTAMP_FORMATS = [
 @app.command()
 def filter(
     ctx: typer.Context,
-    domain: Annotated[str, typer.Argument(envvar="SWF_DOMAIN")],
+    domain: Annotated[str, typer.Option(envvar="SWF_DOMAIN")],
     status: Annotated[Status, typer.Option("--status", "-s")] = Status.open,
     tag: str | None = None,
     workflow_id: str | None = None,
     workflow_type: str | None = None,
     workflow_type_version: str | None = None,
     close_status: CloseStatus | None = None,
-    started_since: int = 1,
+    started_since: Annotated[int, typer.Option("--started-since", "-n")] = 1,
     from_date: Annotated[datetime, typer.Option(formats=TIMESTAMP_FORMATS)] | None = None,
     to_date: Annotated[datetime, typer.Option(formats=TIMESTAMP_FORMATS)] | None = None,
 ):
