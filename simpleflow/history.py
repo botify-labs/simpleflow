@@ -760,6 +760,7 @@ class History:
             timer.update(
                 {
                     "state": event.state,
+                    "cause": event.cause,
                     "cancel_failed_event_id": event.id,
                     "cancel_failed_event_timestamp": event.timestamp,
                 }
