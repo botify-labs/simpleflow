@@ -232,6 +232,7 @@ def list_executions(
 def list_details(
     workflow_executions: list[WorkflowExecution],
 ) -> tuple[Sequence, Sequence]:
+    # FIXME: input is missing, what else?
     header = (
         "Workflow ID",
         "Workflow Type",
@@ -244,7 +245,7 @@ def list_details(
         "Close Timestamp",
         "Cancel Requested",
         "Execution Timeout",
-        "Input",
+        # "Input",
         "Tags",
         "Decision Tasks Timeout",
         "Parent Workflow ID",
@@ -264,7 +265,7 @@ def list_details(
             execution.close_timestamp,
             execution.cancel_requested,
             execution.execution_timeout,
-            execution.input,
+            # execution.input,
             execution.tag_list,
             execution.decision_tasks_timeout,
             execution.parent.get("workflowId"),

@@ -17,16 +17,16 @@ if TYPE_CHECKING:
     from typing import Any
 
     from simpleflow.swf.executor import Executor
+    from simpleflow.swf.mapper.models.decision.base import Decision
     from simpleflow.swf.mapper.responses import Response
 
 
 class Decider(Supervisor):
     """
     Decider.
-
-    :ivar _poller: decider poller.
-    :type _poller: DeciderPoller
     """
+
+    _poller: DeciderPoller
 
     def __init__(self, poller, nb_children=None):
         self._poller = poller
@@ -74,15 +74,16 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         behind this is to limit operational burden by having a single service
         handling multiple workflows.
 
-        :param workflow_executors: executors handling workflow executions.
-        :type  workflow_executors: list[simpleflow.swf.executor.Executor]
+        workflow_executors: executors handling workflow executions.
 
         """
         self.workflow_name = f"{','.join([ex.workflow_class.name for ex in workflow_executors])}"
 
         # Maps a workflow's name to its definition.
         # Used to dispatch a decision task to the corresponding workflow.
-        self._workflow_executors = {executor.workflow_class.name: executor for executor in workflow_executors}
+        self._workflow_executors: dict[str, Executor] = {
+            executor.workflow_class.name: executor for executor in workflow_executors
+        }
 
         if task_list:
             self.task_list = task_list
@@ -123,8 +124,6 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         """
         The main purpose of this property is to find what workflow a decider
         handles.
-
-        :rtype: str
         """
         if self.workflow_name:
             suffix = f"(workflow={self.workflow_name})"
@@ -148,7 +147,6 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         :param token: task token.
         :param decisions: decisions, maybe with context.
         :param execution_context: None...
-        :return: nothing.
         """
         if isinstance(decisions, DecisionsAndContext):
             decisions, execution_context = (
@@ -158,7 +156,7 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         return simpleflow.swf.mapper.actors.Decider.complete(self, token, decisions, execution_context)
 
     @with_state("processing")
-    def process(self, decision_response):
+    def process(self, decision_response: Response) -> None:
         """
         Take a PollForDecisionTask response object and try to complete the
         decision task, by calling self._complete() with the response token and
@@ -171,7 +169,7 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         spawn(self, decision_response)
 
     @with_state("deciding")
-    def decide(self, decision_response):
+    def decide(self, decision_response: Response) -> (list[Decision], DecisionsAndContext):
         """
         Delegate the decision to the decider worker (which itself delegates to
         the executor).

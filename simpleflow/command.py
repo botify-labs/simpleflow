@@ -271,9 +271,14 @@ def restart_workflow(domain: str, workflow_id: str, run_id: str | None):
 
 
 def with_format(ctx):
+    with_header = ctx.parent.params.get("header")
+    fmt = ctx.parent.params.get("format") or pretty.DEFAULT_FORMAT
+    if fmt == "prettyjson":
+        with_header = True
+        fmt = "json"
     return pretty.formatted(
-        with_header=ctx.parent.params["header"],
-        fmt=ctx.parent.params["format"] or pretty.DEFAULT_FORMAT,
+        with_header=with_header,
+        fmt=fmt,
     )
 
 
@@ -430,7 +435,7 @@ def workflow_history(
         history = History(raw_history)
         if output_format == "raw":
             events = []
-            for event in history.events[:10]:
+            for event in history.events:
                 e = {}
                 for k in ["id", "type", "state", "timestamp", "input", "control", *event.__dict__]:
                     if k.startswith("_") or k == "raw":
@@ -449,6 +454,19 @@ def workflow_history(
                 "markers": history.markers,
                 "timers": history.timers,
                 "signals": history.signals,
+                "signal_lists": history.signal_lists,
+                "external_workflows_signaling": history.external_workflows_signaling,
+                "signaled_workflows": history.signaled_workflows,
+            }
+        elif output_format == "cooked2":
+            history.parse()
+            events = {
+                "workflow": [t for t in history.tasks if t.type == "child_workflow"],
+                "activities": [t for t in history.tasks if t.type == "activity"],
+                "child_workflows": history.child_workflows,
+                "markers": history.markers,
+                "timers": history.timers,
+                "signals": [t for t in history.tasks if t.type == "signal"],
                 "signal_lists": history.signal_lists,
                 "external_workflows_signaling": history.external_workflows_signaling,
                 "signaled_workflows": history.signaled_workflows,
