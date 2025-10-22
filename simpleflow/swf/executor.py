@@ -431,7 +431,7 @@ class Executor(executor.Executor):
         future = futures.Future()
         if not event:
             return future
-        state = event["state"]
+        state: str = event["state"]
         if state == "started":
             future.set_running()
         elif state == "fired":
@@ -441,7 +441,7 @@ class Executor(executor.Executor):
         elif state in ("start_failed", "cancel_failed"):
             future.set_exception(
                 exceptions.TaskFailed(
-                    name=event["timer_id"],
+                    name=event["id"],
                     reason=event["cause"],
                 )
             )
