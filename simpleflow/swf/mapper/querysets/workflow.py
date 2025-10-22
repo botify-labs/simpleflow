@@ -133,9 +133,9 @@ class WorkflowTypeQuerySet(BaseWorkflowQuerySet):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message) from e
+                raise DoesNotExistError(message or "") from e
 
-            raise ResponseError(message, error_code=error_code) from e
+            raise ResponseError(message or "", error_code=error_code or "") from e
 
         wt_info = response[self._infos]
         wt_config = response["configuration"]
@@ -465,12 +465,14 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             execution_info["workflowType"]["version"],
         )
 
+        workflow_id: str = get_subkey(execution_info, ["execution", "workflowId"])  # type: ignore
+        status: str = execution_info.get("executionStatus")  # type: ignore
         return WorkflowExecution(
             domain,
-            get_subkey(execution_info, ["execution", "workflowId"]),  # workflow_id
+            workflow_id,
             run_id=get_subkey(execution_info, ["execution", "runId"]),
             workflow_type=workflow_type,
-            status=execution_info.get("executionStatus"),
+            status=status,
             close_status=execution_info.get("closeStatus"),
             tag_list=execution_info.get("tagList"),
             start_timestamp=execution_info.get("startTimestamp"),
@@ -488,9 +490,9 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
             error_code = extract_error_code(e)
             message = extract_message(e)
             if error_code == "UnknownResourceFault":
-                raise DoesNotExistError(message) from e
+                raise DoesNotExistError(message or "") from e
 
-            raise ResponseError(message, error_code=error_code) from e
+            raise ResponseError(message or "", error_code=error_code or "") from e
 
         execution_info = response[self._infos]
         execution_config = response["executionConfiguration"]

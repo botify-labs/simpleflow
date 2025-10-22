@@ -38,6 +38,9 @@ from simpleflow.utils import hex_hash, issubclass_, json_dumps, retry
 from simpleflow.workflow import Workflow
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from simpleflow.activity import NotSet
     from simpleflow.swf.mapper.models.domain import Domain
 
 __all__ = ["Executor"]
@@ -199,7 +202,7 @@ class Executor(executor.Executor):
 
     def _make_task_id(
         self,
-        a_task: ActivityTask | WorkflowTask,
+        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask | TimerTask | CancelTimerTask,
         workflow_id: str,
         run_id: str,
         *args,
@@ -502,7 +505,7 @@ class Executor(executor.Executor):
                 return None
         return event
 
-    TASK_TYPE_TO_EVENT_FINDER: ClassVar[dict[type, callable]] = {
+    TASK_TYPE_TO_EVENT_FINDER: ClassVar[dict[type, Callable]] = {
         ActivityTask: find_activity_event,
         WorkflowTask: find_child_workflow_event,
         SignalTask: find_signal_event,
@@ -756,7 +759,7 @@ class Executor(executor.Executor):
         dict[
             str,
             Callable[
-                [ActivityTask | WorkflowTask | SignalTask | MarkerTask, dict[str, Any]],
+                [Self, ActivityTask | WorkflowTask | SignalTask | MarkerTask, dict[str, Any]],
                 futures.Future | None,
             ],
         ]
@@ -771,7 +774,7 @@ class Executor(executor.Executor):
 
     def resume(
         self,
-        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask,
+        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask | TimerTask | CancelTimerTask,
         *args,
         **kwargs,
     ) -> futures.Future:
@@ -843,7 +846,7 @@ class Executor(executor.Executor):
 
     def make_task_id(
         self,
-        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask,
+        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask | TimerTask | CancelTimerTask,
         *args,
         **kwargs,
     ) -> None:
@@ -857,7 +860,11 @@ class Executor(executor.Executor):
             workflow_id, run_id = self._workflow_id, self._run_id
         a_task.id = self._make_task_id(a_task, workflow_id, run_id, *args, **kwargs)
 
-    def _compute_priority(self, priority_set_on_submit, a_task):
+    def _compute_priority(
+        self,
+        priority_set_on_submit: str | int | NotSet,
+        a_task: ActivityTask | WorkflowTask | SignalTask | MarkerTask | TimerTask | CancelTimerTask,
+    ) -> str | int | None:
         """
         Computes the correct task priority, with the following precedence (first
         is better/preferred):
@@ -866,14 +873,7 @@ class Executor(executor.Executor):
         - priority set on the workflow execution
         - None otherwise
 
-        :param priority_set_on_submit:
-        :type  priority_set_on_submit: str|int|PRIORITY_NOT_SET
-
-        :param a_task:
-        :type  a_task: ActivityTask|WorkflowTask
-
         :returns: the priority for this task
-        :rtype: str|int|None
         """
         if priority_set_on_submit is not PRIORITY_NOT_SET:
             return priority_set_on_submit

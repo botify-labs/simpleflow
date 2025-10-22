@@ -1,3 +1,4 @@
+from simpleflow.swf.mapper.models.decision.base import Decision  # NOQA
 from simpleflow.swf.mapper.models.decision.marker import MarkerDecision  # NOQA
 from simpleflow.swf.mapper.models.decision.task import ActivityTaskDecision  # NOQA
 from simpleflow.swf.mapper.models.decision.timer import TimerDecision  # NOQA

@@ -11,6 +11,8 @@ from simpleflow.swf.mapper.models.event.workflow import ExternalWorkflowExecutio
 if TYPE_CHECKING:
     from typing import Any
 
+    from typing_extensions import Self
+
     from simpleflow.swf.mapper.models.event.base import Event
     from simpleflow.swf.mapper.models.event.marker import MarkerEvent
     from simpleflow.swf.mapper.models.event.task import ActivityTaskEvent
@@ -771,7 +773,7 @@ class History:
         if event.state == "completed":
             self.completed_decision_id = event.id
 
-    TYPE_TO_PARSER: ClassVar[dict[str, Callable[[History, list[Event], Event], None]]] = {
+    TYPE_TO_PARSER: ClassVar[dict[str, Callable[[Self, History, list[Event], Event], None]]] = {
         "ActivityTask": parse_activity_event,
         "DecisionTask": parse_decision_event,
         "ChildWorkflowExecution": parse_child_workflow_event,
