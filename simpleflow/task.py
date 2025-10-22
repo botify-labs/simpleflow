@@ -241,10 +241,13 @@ class TimerTask(Task):
     Timer.
     """
 
-    def __init__(self, timer_id: str, timeout: str | int, control: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, timer_id: str, timeout: str | int, control: dict[str, Any] | None = None, idempotent: bool = True
+    ) -> None:
         self.timer_id = timer_id
         self.timeout = timeout
         self.control = control
+        self.idempotent = idempotent
         self.args: tuple = ()
         self.kwargs: dict[str, Any] = {}
 
@@ -257,7 +260,7 @@ class TimerTask(Task):
         return self.timer_id
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} timer_id="{self.timer_id}" timeout={self.timeout}>'
+        return f'<{self.__class__.__name__} timer_id="{self.timer_id}" timeout={self.timeout} idempotent={self.idempotent}>'
 
     def execute(self):
         # Local execution
@@ -271,8 +274,9 @@ class CancelTimerTask(Task):
     Timer cancellation.
     """
 
-    def __init__(self, timer_id: str) -> None:
+    def __init__(self, timer_id: str, idempotent: bool = True) -> None:
         self.timer_id = timer_id
+        self.idempotent = idempotent
         self.args: tuple = ()
         self.kwargs: dict[str, Any] = {}
 
@@ -285,7 +289,7 @@ class CancelTimerTask(Task):
         return self.timer_id
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} timer_id="{self.timer_id}">'
+        return f'<{self.__class__.__name__} timer_id="{self.timer_id} idempotent={self.idempotent}">'
 
     def execute(self) -> None:
         # Local execution: no-op

@@ -374,14 +374,14 @@ class MarkerTask(task.MarkerTask, SwfTask):
 
 
 class TimerTask(task.TimerTask, SwfTask):
-    idempotent = True
-
     @classmethod
     def from_generic_task(cls, a_task: task.TimerTask) -> Self:
-        return cls(a_task.timer_id, a_task.timeout, a_task.control)
+        return cls(a_task.timer_id, a_task.timeout, a_task.control, a_task.idempotent)
 
-    def __init__(self, timer_id: str, timeout: int | str, control: dict[str, Any] | None) -> None:
-        super().__init__(timer_id, timeout, control)
+    def __init__(
+        self, timer_id: str, timeout: int | str, control: dict[str, Any] | None, idempotent: bool = True
+    ) -> None:
+        super().__init__(timer_id, timeout, control, idempotent)
 
     def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         decision = simpleflow.swf.mapper.models.decision.TimerDecision(
@@ -394,14 +394,12 @@ class TimerTask(task.TimerTask, SwfTask):
 
 
 class CancelTimerTask(task.CancelTimerTask, SwfTask):
-    idempotent = True
-
     @classmethod
     def from_generic_task(cls, a_task: task.CancelTimerTask) -> Self:
-        return cls(a_task.timer_id)
+        return cls(a_task.timer_id, a_task.idempotent)
 
-    def __init__(self, timer_id: str) -> None:
-        super().__init__(timer_id)
+    def __init__(self, timer_id: str, idempotent: bool = True) -> None:
+        super().__init__(timer_id, idempotent)
 
     def schedule(self, *args, **kwargs) -> list[simpleflow.swf.mapper.models.decision.Decision]:
         decision = simpleflow.swf.mapper.models.decision.TimerDecision(
