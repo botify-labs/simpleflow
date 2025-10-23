@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import signal
 import sys
 import time
@@ -9,7 +10,6 @@ import multiprocess
 from flaky import flaky
 from psutil import Process
 from pytest import mark
-from setproctitle import setproctitle
 from sure import expect
 
 from simpleflow.process import Supervisor, reset_signal_handlers
@@ -38,11 +38,13 @@ class TestSupervisor(IntegrationTestCase):
         time.sleep(seconds + wait_offset)
 
     @mark.skip("flaky test based on time.sleep")
-    # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
+    @mark.xfail(platform.system() == "Darwin", reason="setproctitle doesn't work reliably on MacOSX")
     # @mark.xfail(platform.python_implementation() == 'PyPy', reason="this test is too flaky on pypy")
     def test_start(self):
         # dummy function used in following tests
         def sleep_long(seconds):
+            from setproctitle import setproctitle
+
             setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 
@@ -62,6 +64,8 @@ class TestSupervisor(IntegrationTestCase):
     def test_terminate(self):
         # custom function that handles sigterm by changing its name, so we can
         # test it effectively received a SIGTERM (maybe there's a better way?)
+        from setproctitle import setproctitle
+
         def sigterm_receiver():
             def handle_sigterm(signum, frame):
                 setproctitle("simpleflow worker: shutting down")
@@ -107,6 +111,8 @@ class TestSupervisor(IntegrationTestCase):
     def test_maintain_the_pool_of_workers_if_not_terminating(self):
         # dummy function used in following tests
         def sleep_long(seconds):
+            from setproctitle import setproctitle
+
             setproctitle(f"simpleflow Worker(sleep_long, {seconds})")
             time.sleep(seconds)
 

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import functools
-
-from setproctitle import setproctitle
+import sys
 
 from simpleflow import logger
 
@@ -59,9 +58,15 @@ class NamedMixin:
         self.set_process_name()
 
     def set_process_name(self):
+        if sys.platform != "darwin":
+            from setproctitle import setproctitle
+        else:
+            setproctitle = None
+
         klass = self.__class__.__name__
         properties = []
         for prop in getattr(self, "_named_mixin_properties", []):
             properties.append(f"{prop}={getattr(self, prop)}")
         name = f"{klass}({', '.join(properties)})"
-        setproctitle(f"simpleflow {name}[{self.state}]")
+        if setproctitle:
+            setproctitle(f"simpleflow {name}[{self.state}]")
