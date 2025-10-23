@@ -86,7 +86,7 @@ class Supervisor(NamedMixin):
         self._args = arguments if arguments is not None else ()
         self._background = background
 
-        self._processes = {}
+        self._processes: dict[int, psutil.Process] = {}
         self._terminating = False
 
         super().__init__()
@@ -106,7 +106,7 @@ class Supervisor(NamedMixin):
 
     def _cleanup_worker_processes(self):
         # cleanup children
-        to_remove = []
+        to_remove: list[int] = []
         for pid, child in self._processes.items():
             try:
                 name, status = child.name(), child.status()

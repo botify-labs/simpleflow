@@ -41,8 +41,9 @@ dependencies = [
     "multiprocess>=0.70.14",
     "lazy_object_proxy",
     "lockfile>=0.9.1",
+    "setproctitle; sys_platform != 'darwin'",
     "tabulate>=0.8.2,<1.0.0",
-    "setproctitle",
+    "typing-extensions",
     "click",
     "psutil",
     "pytz",
@@ -106,7 +107,6 @@ dev = [
     "sphinx",
     "sphinx_rtd_theme",
     "sure",
-    "typing-extensions",
     "vcrpy",
     "twine",
 ]

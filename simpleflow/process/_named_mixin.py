@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import functools
-
-from setproctitle import setproctitle
+import sys
 
 from simpleflow import logger
 
 
-def with_state(state):
+def with_state(state: str):
     """
     Decorator used to change the process name when changing state.
-    :param state: new state
-    :type  state: str
     """
 
     def wrapper(method):
@@ -36,7 +33,7 @@ class NamedMixin:
         method explicitly if not the first parent)
     2- decorate your methods with "@with_state("my_state")"
 
-    You can optionnally expose some other attributes of your worker by defining
+    You can optionally expose some other attributes of your worker by defining
     the "_named_mixin_properties" attribute to a list or tuple of fields you want
     to include in your process title. For instance:
 
@@ -52,18 +49,24 @@ class NamedMixin:
         self.state = kwargs.get("state", "initializing")
 
     @property
-    def state(self):
+    def state(self) -> str:
         return self._state
 
     @state.setter
-    def state(self, value):
+    def state(self, value: str) -> None:
         self._state = value
         self.set_process_name()
 
     def set_process_name(self):
+        if sys.platform != "darwin":
+            from setproctitle import setproctitle
+        else:
+            setproctitle = None
+
         klass = self.__class__.__name__
         properties = []
         for prop in getattr(self, "_named_mixin_properties", []):
             properties.append(f"{prop}={getattr(self, prop)}")
         name = f"{klass}({', '.join(properties)})"
-        setproctitle(f"simpleflow {name}[{self.state}]")
+        if setproctitle:
+            setproctitle(f"simpleflow {name}[{self.state}]")

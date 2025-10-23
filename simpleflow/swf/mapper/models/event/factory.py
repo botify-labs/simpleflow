@@ -121,13 +121,13 @@ class EventFactory:
             With event_name = 'StartChildWorkflowExecutionInitiated'
              and event_type = 'ChildWorkflowExecution'
             left == 'Start'
-            sep == 'ChildWorkflowExecution'
+            (separator) == 'ChildWorkflowExecution'
             right == 'Initiated'
 
             Returns: 'start_initiated'
 
         """
-        left, sep, right = event_name.partition(event_type)
+        left, _, right = event_name.partition(event_type)
         return camel_to_underscore(left + right)
 
 

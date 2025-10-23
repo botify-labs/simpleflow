@@ -244,11 +244,11 @@ class Workflow(Submittable):
         """
         return self.executor.get_event_details(event_type, event_name)
 
-    def start_timer(self, timer_id, timeout, control=None):
-        return TimerTask(timer_id, timeout, control)
+    def start_timer(self, timer_id, timeout, control=None, idempotent: bool = True):
+        return TimerTask(timer_id, timeout, control, idempotent=idempotent)
 
-    def cancel_timer(self, timer_id):
-        return CancelTimerTask(timer_id)
+    def cancel_timer(self, timer_id, idempotent: bool = True):
+        return CancelTimerTask(timer_id, idempotent=idempotent)
 
     def should_cancel(self, history):
         """
