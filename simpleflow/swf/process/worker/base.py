@@ -142,6 +142,7 @@ class ActivityWorker:
             kwargs = input.get("kwargs", {})
             context = sanitize_activity_context(task.context)
             context["domain_name"] = poller.domain.name
+            context["task_list"] = poller.task_list
             if input.get("meta", {}).get("binaries"):
                 download_binaries(input["meta"]["binaries"])
             result = ActivityTask(
