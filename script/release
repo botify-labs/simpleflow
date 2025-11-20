@@ -284,7 +284,7 @@ def main():
     release_tag(new_version, changes, dry_run)
 
     # push package to pypi
-    step(f"Generate and push package to {args.repository or args.repository_url or 'pypi'}")
+    step(f"Generate and push package to {args.index or 'pypi'}")
     execute(["uv", "build"], log=True)
     wheel = f"dist/simpleflow-{new_version}-py3-none-any.whl"
     tar_gz = f"dist/simpleflow-{new_version}.tar.gz"
