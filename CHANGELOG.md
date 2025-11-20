@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.34.2
+------
+
+- Add task_list to ActivityWorker context (#453)
+
 0.34.1
 ------
 
