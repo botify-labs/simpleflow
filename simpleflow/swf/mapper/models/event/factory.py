@@ -127,7 +127,7 @@ class EventFactory:
             Returns: 'start_initiated'
 
         """
-        left, sep, right = event_name.partition(event_type)
+        left, _, right = event_name.partition(event_type)
         return camel_to_underscore(left + right)
 
 
