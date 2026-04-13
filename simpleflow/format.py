@@ -171,8 +171,12 @@ def heartbeat_details(message):
 def identity(message):
     # we don't allow the use of jumbo fields for identity because it's guaranteed
     # to change on every task, and we fear it makes the decider too slow
-    # NB: this should be revisited / questionned later, maybe not such a problem?
-    return encode(message, constants.MAX_IDENTITY_LENGTH, allow_jumbo_fields=False)
+    # NB: this should be revisited / questioned later, maybe not such a problem?
+    if not message:
+        return message
+    if len(message) > constants.MAX_IDENTITY_LENGTH:
+        message = f"{message[: constants.MAX_IDENTITY_LENGTH - 4]} ..."
+    return message
 
 
 def input(message):
