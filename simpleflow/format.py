@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from sqlite3 import OperationalError
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import lazy_object_proxy
@@ -23,7 +23,7 @@ def _jumbo_fields_bucket() -> str | None:
     # wrapped into a function so easier to override for tests
     bucket = os.getenv("SIMPLEFLOW_JUMBO_FIELDS_BUCKET")
     if not bucket:
-        return
+        return None
     # trim trailing / if there, would provoke double slashes down the road
     if bucket.endswith("/"):
         bucket = bucket[:-1]
@@ -122,9 +122,9 @@ def _set_cached(path: str, content: str) -> None:
 def _push_jumbo_field(message: str) -> str:
     size = len(message)
     uuid = str(uuid4())
-    bucket_with_dir = _jumbo_fields_bucket()
+    bucket_with_dir = cast(str, _jumbo_fields_bucket())
     if "/" in bucket_with_dir:
-        bucket, directory = _jumbo_fields_bucket().split("/", 1)
+        bucket, directory = bucket_with_dir.split("/", 1)
         path = f"{directory}/{uuid}"
     else:
         bucket = bucket_with_dir
@@ -149,26 +149,26 @@ def _pull_jumbo_field(location: str) -> str:
     return content
 
 
-def _log_message_too_long(message):
+def _log_message_too_long(message: str):
     if len(message) > constants.MAX_LOG_FIELD:
         message = f"{message[: constants.MAX_LOG_FIELD]} <...truncated to {constants.MAX_LOG_FIELD} chars>"
     logger.error(f"Message too long, will raise: {message}")
 
 
 # A few helpers to wrap common SWF fields
-def details(message):
+def details(message: str | None) -> str | None:
     return encode(message, constants.MAX_DETAILS_LENGTH)
 
 
-def execution_context(message):
+def execution_context(message: str | None) -> str | None:
     return encode(message, constants.MAX_EXECUTION_CONTEXT_LENGTH)
 
 
-def heartbeat_details(message):
+def heartbeat_details(message: str | None) -> str | None:
     return encode(message, constants.MAX_HEARTBEAT_DETAILS_LENGTH)
 
 
-def identity(message):
+def identity(message: str | None) -> str | None:
     # we don't allow the use of jumbo fields for identity because it's guaranteed
     # to change on every task, and we fear it makes the decider too slow
     # NB: this should be revisited / questioned later, maybe not such a problem?
@@ -179,17 +179,17 @@ def identity(message):
     return message
 
 
-def input(message):
-    return encode(json_dumps(message), constants.MAX_INPUT_LENGTH)
+def input(message: Any) -> str:
+    return cast(str, encode(json_dumps(message), constants.MAX_INPUT_LENGTH))
 
 
-def reason(message):
+def reason(message: str | None) -> str | None:
     return encode(message, constants.MAX_REASON_LENGTH)
 
 
-def result(message):
-    return encode(json_dumps(message), constants.MAX_RESULT_LENGTH)
+def result(message: Any) -> str:
+    return cast(str, encode(json_dumps(message), constants.MAX_RESULT_LENGTH))
 
 
-def control(message):
-    return encode(json_dumps(message), constants.MAX_CONTROL_LENGTH)
+def control(message: Any) -> str:
+    return cast(str, encode(json_dumps(message), constants.MAX_CONTROL_LENGTH))

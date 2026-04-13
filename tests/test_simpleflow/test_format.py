@@ -4,7 +4,7 @@ import json
 import os
 import random
 import unittest
-from typing import cast
+from typing import Any, cast
 
 import boto3
 from moto import mock_s3
@@ -109,12 +109,12 @@ class TestFormat(unittest.TestCase):
         self.setup_jumbo_fields("jumbo-bucket")
         push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
 
-        cases = [
-            [None, None],
-            ["foo bar baz", "foo bar baz"],
-            ['"a string"', "a string"],
-            ["[1, 2]", [1, 2]],
-            ["simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"],
+        cases: list[tuple[str | None, Any]] = [
+            (None, None),
+            ("foo bar baz", "foo bar baz"),
+            ('"a string"', "a string"),
+            ("[1, 2]", [1, 2]),
+            ("simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"),
         ]
 
         for case in cases:
