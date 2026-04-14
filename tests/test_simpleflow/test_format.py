@@ -4,6 +4,7 @@ import json
 import os
 import random
 import unittest
+from typing import Any, cast
 
 import boto3
 from moto import mock_s3
@@ -47,11 +48,12 @@ class TestFormat(unittest.TestCase):
             format.encode(message, MAX_LENGTH)
 
     @mock_s3
-    def test_identity_doesnt_use_jumbo_fields(self):
+    def test_identity_truncation(self):
         self.setup_jumbo_fields("jumbo-bucket")
         message = "A" * (constants.MAX_RESULT_LENGTH * 2)
-        with self.assertRaisesRegex(JumboTooLargeError, "Message too long"):
-            format.identity(message)
+        formatted_identity = cast(str, format.identity(message))
+        self.assertEqual(constants.MAX_IDENTITY_LENGTH, len(formatted_identity))
+        self.assertFalse(formatted_identity.startswith("simpleflow+s3://jumbo-bucket/"))
 
     @mock_s3
     def test_jumbo_fields_encoding_without_directory(self):
@@ -107,12 +109,12 @@ class TestFormat(unittest.TestCase):
         self.setup_jumbo_fields("jumbo-bucket")
         push_content("jumbo-bucket", "abc", "decoded jumbo field yay!")
 
-        cases = [
-            [None, None],
-            ["foo bar baz", "foo bar baz"],
-            ['"a string"', "a string"],
-            ["[1, 2]", [1, 2]],
-            ["simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"],
+        cases: list[tuple[str | None, Any]] = [
+            (None, None),
+            ("foo bar baz", "foo bar baz"),
+            ('"a string"', "a string"),
+            ("[1, 2]", [1, 2]),
+            ("simpleflow+s3://jumbo-bucket/abc 24", "decoded jumbo field yay!"),
         ]
 
         for case in cases:
