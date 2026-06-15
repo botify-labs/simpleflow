@@ -128,7 +128,6 @@ dev = [
     "setuptools<72",                                     # See https://github.com/pypa/setuptools/issues/4519
     "sphinx",
     "sphinx_rtd_theme",
-    "sure",
     "typing-extensions",
     "vcrpy",
     "twine",
