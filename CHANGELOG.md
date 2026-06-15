@@ -1,9 +1,8 @@
 Changelog
 =========
 
-> [!NOTE]
-> Starting with 0.36.0, changelog is posted as [GitHub
-> Releases](https://github.com/botify-labs/simpleflow/releases)
+!!! note
+    Starting with 0.35.0, changelog is posted as [GitHub Releases](https://github.com/botify-labs/simpleflow/releases)
 
 0.35.0
 ------
