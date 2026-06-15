@@ -1,6 +1,12 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+pattern = "default-unprefixed"
 
 [project]
 name = "simpleflow"
@@ -102,8 +108,6 @@ env = [
     "BOTO_CONFIG=/dev/null",
 ]
 
-[tool.hatch.version]
-path = "simpleflow/__init__.py"
 
 [tool.hatch.build]
 include = ["/simpleflow"]
