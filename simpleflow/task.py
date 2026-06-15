@@ -146,7 +146,14 @@ class WorkflowTask(Task):
     Child workflow.
     """
 
-    def __init__(self, executor: Executor | None, workflow: type[Workflow], *args, **kwargs) -> None:
+    def __init__(
+        self,
+        executor: Executor | None,
+        workflow: type[Workflow],
+        *args,
+        workflow_task_list: str | None = None,
+        **kwargs,
+    ) -> None:
         # Keep original arguments for use in subclasses
         # For instance this helps casting a generic class to a simpleflow.swf.task,
         # see simpleflow.swf.task.WorkflowTask.from_generic_task() factory
@@ -159,6 +166,11 @@ class WorkflowTask(Task):
         get_workflow_id = getattr(workflow, "get_workflow_id", None)
         self.args = self.resolve_args(*args)
         self.kwargs = self.resolve_kwargs(**kwargs)
+        # Explicit decision task list for the child workflow. When set, it takes
+        # precedence over the child workflow's own ``get_task_list``/``task_list``
+        # (see simpleflow.swf.task.WorkflowTask.task_list). It is *not* a run
+        # argument: it never reaches the child's ``run()``.
+        self._task_list = workflow_task_list
 
         if get_workflow_id:
             self.id: str | None = get_workflow_id(workflow, *self.args, **self.kwargs)
@@ -192,8 +204,8 @@ class ChildWorkflowTask(WorkflowTask):
     (yet).
     """
 
-    def __init__(self, workflow: type[Workflow], *args, **kwargs) -> None:
-        super().__init__(None, workflow, *args, **kwargs)
+    def __init__(self, workflow: type[Workflow], *args, workflow_task_list: str | None = None, **kwargs) -> None:
+        super().__init__(None, workflow, *args, workflow_task_list=workflow_task_list, **kwargs)
 
 
 class SignalTask(Task):

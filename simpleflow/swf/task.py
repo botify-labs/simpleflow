@@ -161,7 +161,14 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
         """
         Casts a generic simpleflow.task.WorkflowTask into a SWF one.
         """
-        return cls(task.executor, task.workflow, *task._args, **task._kwargs)
+        # Preserve an explicit decision task list override set on the generic task.
+        return cls(
+            task.executor,
+            task.workflow,
+            *task._args,
+            workflow_task_list=task._task_list,
+            **task._kwargs,
+        )
 
     @property
     def name(self):
@@ -173,6 +180,11 @@ class WorkflowTask(task.WorkflowTask, SwfTask):
 
     @property
     def task_list(self) -> str | None:
+        # An explicit override (e.g. to make a child workflow inherit its
+        # parent's decision task list) wins over the workflow's own logic.
+        if self._task_list:
+            return self._task_list
+
         get_task_list = getattr(self.workflow, "get_task_list", None)
         if get_task_list:
             return get_task_list(self.workflow, *self.args, **self.kwargs)
