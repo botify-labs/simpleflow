@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 from . import registry, settings
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
 
 __all__ = [

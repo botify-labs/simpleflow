@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import sys
 from ast import ImportFrom, NodeVisitor, parse
+from collections.abc import Iterator
 from importlib import import_module
 from importlib import util as import_util
 from importlib.machinery import ModuleSpec
 from os import path
 from pkgutil import iter_modules
-from typing import Any, Iterator
+from typing import Any
 
 import pytest
 

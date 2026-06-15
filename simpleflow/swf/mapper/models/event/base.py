@@ -1,13 +1,7 @@
 from __future__ import annotations
 
-import sys
 from datetime import datetime
-from typing import Any
-
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
+from typing import Any, TypedDict
 
 import pytz
 

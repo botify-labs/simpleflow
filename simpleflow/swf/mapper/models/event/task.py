@@ -1,13 +1,6 @@
 from __future__ import annotations
 
-import sys
-
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import ClassVar, TypedDict
-
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
 from simpleflow.swf.mapper.models.event.base import Event, TaskList
 from simpleflow.swf.mapper.models.event.compiler import CompiledEvent

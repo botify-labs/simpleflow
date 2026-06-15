@@ -58,6 +58,7 @@ simpleflow = "simpleflow.command:cli"
 
 [tool.ruff]
 line-length = 120
+unsafe-fixes = true
 
 [tool.ruff.lint]
 extend-select = [

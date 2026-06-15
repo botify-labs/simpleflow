@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import operator
+from collections.abc import Sequence
 from datetime import datetime
 from functools import partial, wraps
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any
 
 from tabulate import tabulate
 

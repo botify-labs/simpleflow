@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from itertools import groupby
-from typing import Any, Iterator
+from typing import Any
 
 from simpleflow.swf.mapper.models.event.base import Event
 from simpleflow.swf.mapper.models.event.compiler import CompiledEvent

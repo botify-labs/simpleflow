@@ -17,7 +17,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from collections.abc import Sequence
 
     from simpleflow.base import Submittable
     from simpleflow.executor import Executor
