@@ -4,18 +4,19 @@
 name: Python Checks
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
+  tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -41,21 +42,49 @@ jobs:
       UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-      with:
-        enable-cache: true
+      - name: Set up UV
+        id: setup-uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Run tests
+        run: uv run --frozen --all-extras --group=dev pytest
 
-    - name: Install the project
-      run: uv sync --all-extras --dev
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
 
-    - name: Test
-      run: |
-        uv run ./script/test -v
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up UV
+        id: setup-uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Run prek
+        run: uvx prek run --all-files
+
+  publish:
+    name: Publish package to PyPI
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    needs:
+      - tests
+      - lint
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up UV
+        id: setup-uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Build wheel & sdist
+        run: uv build
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
