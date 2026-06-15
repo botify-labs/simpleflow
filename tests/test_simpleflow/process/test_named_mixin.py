@@ -4,7 +4,6 @@ import unittest
 
 from psutil import Process
 from pytest import mark
-from sure import expect
 
 from simpleflow.process import NamedMixin, with_state
 
@@ -21,10 +20,10 @@ class TestNamedMixin(unittest.TestCase):
 
         # tests
         inst = Example()
-        expect(Process().name()).to.equal("simpleflow Example()[initializing]")
+        assert Process().name() == "simpleflow Example()[initializing]"
 
         inst.run()
-        expect(Process().name()).to.equal("simpleflow Example()[running]")
+        assert Process().name() == "simpleflow Example()[running]"
 
     @mark.skip("flaky test based on time.sleep")
     # @mark.xfail(platform.system() == 'Darwin', reason="setproctitle doesn't work reliably on MacOSX")
@@ -42,4 +41,4 @@ class TestNamedMixin(unittest.TestCase):
         # tests
         inst = Example()
         inst.run()
-        expect(Process().name()).to.equal("simpleflow Example(task_list=test-tl)[running]")
+        assert Process().name() == "simpleflow Example(task_list=test-tl)[running]"

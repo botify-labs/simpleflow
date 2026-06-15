@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from sure import expect
+import pytest
 
 from simpleflow import logging_context as ctx
 
@@ -17,25 +17,27 @@ class TestProcessContext(unittest.TestCase):
         ctx.reset()
 
     def test_set_and_get(self):
-        expect(ctx.get("workflow_id")).to.equal("")
-        expect(ctx.get("event_id")).to.equal("")
+        assert ctx.get("workflow_id") == ""
+        assert ctx.get("event_id") == ""
 
         ctx.set("workflow_id", "foo-bar")
         ctx.set("event_id", 4)
-        expect(ctx.get("workflow_id")).to.equal("foo-bar")
-        expect(ctx.get("event_id")).to.equal("4")
+        assert ctx.get("workflow_id") == "foo-bar"
+        assert ctx.get("event_id") == "4"
 
     def test_set_and_get_invalid_key(self):
-        (expect(ctx.set).when.called_with("invalid_key", "bar").to.have.raised(KeyError))
+        with pytest.raises(KeyError):
+            ctx.set("invalid_key", "bar")
 
-        (expect(ctx.get).when.called_with("invalid_key").to.have.raised(KeyError))
+        with pytest.raises(KeyError):
+            ctx.get("invalid_key")
 
     def test_reset(self):
         ctx.set("workflow_id", "foo-bar")
         ctx.set("task_list", "tl")
-        expect(ctx.get("workflow_id")).to.equal("foo-bar")
-        expect(ctx.get("task_list")).to.equal("tl")
+        assert ctx.get("workflow_id") == "foo-bar"
+        assert ctx.get("task_list") == "tl"
 
         ctx.reset()
-        expect(ctx.get("workflow_id")).to.equal("")
-        expect(ctx.get("task_list")).to.equal("")
+        assert ctx.get("workflow_id") == ""
+        assert ctx.get("task_list") == ""

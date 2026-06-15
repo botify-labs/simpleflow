@@ -5,8 +5,6 @@ import shutil
 import unittest
 from unittest.mock import patch
 
-from sure import expect
-
 from simpleflow.download import RemoteBinary, with_binaries
 
 # example binary remote/local location
@@ -34,8 +32,8 @@ class TestRemoteBinary(unittest.TestCase):
 
     def test_locations_computing(self):
         binary = RemoteBinary("custom-bin", remote_location)
-        expect(binary.local_directory).to.equal(local_directory)
-        expect(binary.local_location).to.equal(local_location)
+        assert binary.local_directory == local_directory
+        assert binary.local_location == local_location
 
     @patch("simpleflow.download.RemoteBinary._download_binary")
     def test_should_do_nothing_if_binary_present(self, method_mock):
@@ -44,7 +42,7 @@ class TestRemoteBinary(unittest.TestCase):
 
         # binary already here and executable, we should *not* call _download_binary
         binary.download()
-        expect(method_mock.call_count).to.equal(0)
+        assert method_mock.call_count == 0
 
     @patch("simpleflow.download.RemoteBinary._download_binary", return_value=None)
     def test_should_download_the_binary_if_needed(self, method_mock):
@@ -63,6 +61,6 @@ class TestWithBinariesDecorator(unittest.TestCase):
     @patch("simpleflow.download.RemoteBinary._download_binary", return_value=None)
     def test_with_binaries_decorator(self, method_mock):
         res = self.method_needing_custom_binary()
-        expect(res).to.equal("foo!")
+        assert res == "foo!"
 
         method_mock.assert_called_once_with()

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import boto3
 from click.testing import CliRunner
-from sure import expect
 from vcr import VCR
 
 import simpleflow.command
@@ -115,7 +114,7 @@ class VCRIntegrationTest(IntegrationTestCase):
                 workflow_name,
             ],
         )
-        expect(result.exit_code).to.equal(0)
+        assert result.exit_code == 0
         lines = result.output.split("\n")
         start_line = next(line for line in lines if line.startswith(self.workflow_id))
         _, run_id = start_line.split(" ", 1)

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from flaky import flaky
-from sure import expect
 
 from . import VCRIntegrationTest, vcr
 
@@ -32,9 +31,9 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         )
 
         # check response form: "<workflow id> <run-id>"
-        expect(result.exit_code).to.equal(0)
+        assert result.exit_code == 0
         wf_id, run_id = result.output.split()
-        expect(wf_id).to.equal(self.workflow_id)
+        assert wf_id == self.workflow_id
 
         # check against SWF that execution is launched
         executions = self.boto3_client.list_open_workflow_executions(
@@ -47,8 +46,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             },
         )
         items = executions["executionInfos"]
-        expect(len(items)).to.equal(1)
-        expect(items[0]["execution"]["runId"]).to.equal(run_id)
+        assert len(items) == 1
+        assert items[0]["execution"]["runId"] == run_id
 
         # kill the workflow now
         self.cleanup_sleep_workflow()
@@ -71,8 +70,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         )
 
         # check response form (empty)
-        expect(result.exit_code).to.equal(0)
-        expect(result.output).to.equal("")
+        assert result.exit_code == 0
+        assert result.output == ""
 
     @flaky(max_runs=2)
     @vcr.use_cassette
@@ -85,7 +84,7 @@ class TestSimpleflowCommand(VCRIntegrationTest):
             f'standalone --workflow-id {self.workflow_id} --input {{"args":[0]}} --nb-workers 1 '
             "--nb-deciders 1 tests.integration.workflow.SleepWorkflow",
         )
-        expect(result.exit_code).to.equal(0)
+        assert result.exit_code == 0
         lines = result.output.split("\n")
         start_line = next(line for line in lines if line.startswith("test-simpleflow-workflow"))
         _, run_id = start_line.split(" ", 1)
@@ -96,8 +95,8 @@ class TestSimpleflowCommand(VCRIntegrationTest):
         result = self.invoke(
             f"activity.rerun --workflow-id {self.workflow_id} --run-id {run_id} --scheduled-id 5",
         )
-        expect(result.exit_code).to.equal(0)
-        expect(result.output).to.contain("will sleep 0s")
+        assert result.exit_code == 0
+        assert "will sleep 0s" in result.output
 
     @flaky(max_runs=2)
     @vcr.use_cassette
@@ -113,15 +112,15 @@ class TestSimpleflowCommand(VCRIntegrationTest):
                 == "tests.integration.workflow.get_uuid"
             )
         ]
-        expect(activities).should.have.length_of(2)
-        expect(activities[0]).should.be.different_of(activities[1])
+        assert len(activities) == 2
+        assert activities[0] != activities[1]
 
         failures = [
             e["scheduleActivityTaskFailedEventAttributes"]["cause"]
             for e in events
             if e["eventType"] == "ScheduleActivityTaskFailed"
         ]
-        expect(failures).should_not.contain("ACTIVITY_ID_ALREADY_IN_USE")
+        assert "ACTIVITY_ID_ALREADY_IN_USE" not in failures
 
 
 # TODO: simpleflow decider.start

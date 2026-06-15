@@ -4,8 +4,6 @@ import json
 import unittest
 from unittest.mock import patch
 
-from sure import expect
-
 from simpleflow.swf.helpers import swf_identity
 
 
@@ -20,14 +18,12 @@ class TestSwfHelpers(unittest.TestCase):
         mock_pid.return_value = 1234
         mock_process.return_value.exe.return_value = "/bin/python8"
 
-        expect(json.loads(swf_identity())).to.equal(
-            {
-                "hostname": "foo.example.com",
-                "user": "root",
-                "pid": 1234,
-                "exe": "/bin/python8",
-            }
-        )
+        assert json.loads(swf_identity()) == {
+            "hostname": "foo.example.com",
+            "user": "root",
+            "pid": 1234,
+            "exe": "/bin/python8",
+        }
 
     def test_swf_identity_with_extra_environment(self, mock_process, mock_pid, mock_user, mock_host):
         """
@@ -44,8 +40,8 @@ class TestSwfHelpers(unittest.TestCase):
         ):
             identity = json.loads(swf_identity())
 
-        expect(identity["hostname"]).to.equal("bar.example.com")
-        expect(identity).to.have.key("version").being.equal("1.2.3")
+        assert identity["hostname"] == "bar.example.com"
+        assert identity["version"] == "1.2.3"
 
     def test_swf_identity_with_invalid_extra_environment(self, mock_process, mock_pid, mock_user, mock_host):
         """
@@ -59,8 +55,8 @@ class TestSwfHelpers(unittest.TestCase):
         with patch.dict("os.environ", {"SIMPLEFLOW_IDENTITY": "not a json string"}):
             identity = json.loads(swf_identity())
 
-        expect(identity["hostname"]).to.equal("foo.example.com")
-        expect(identity).to_not.have.key("version")
+        assert identity["hostname"] == "foo.example.com"
+        assert "version" not in identity
 
     def test_swf_identity_with_null_values_in_environment(self, mock_process, mock_pid, mock_user, mock_host):
         """
@@ -75,6 +71,6 @@ class TestSwfHelpers(unittest.TestCase):
             identity = json.loads(swf_identity())
 
         # key removed
-        expect(identity).to_not.have.key("user")
+        assert "user" not in identity
         # key ignored
-        expect(identity).to_not.have.key("foo")
+        assert "foo" not in identity
