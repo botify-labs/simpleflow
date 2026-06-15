@@ -8,12 +8,8 @@ description = "Python library for dataflow programming with Amazon SWF"
 readme = "README.md"
 requires-python = ">=3.7"
 license = "MIT"
-authors = [
-    { name = "Greg Leclercq" },
-]
-maintainers = [
-    { "email" = "tech@botify.com" },
-]
+authors = [{ name = "Greg Leclercq" }]
+maintainers = [{ "email" = "tech@botify.com" }]
 keywords = ["simpleflow", "amazon swf", "simple workflow"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -68,8 +64,7 @@ extend-select = [
     "RUF", # ruff
 ]
 allowed-confusables = ["‘", "’"]
-extend-ignore = [
-]
+extend-ignore = []
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
@@ -80,7 +75,32 @@ exclude_dirs = ["/tests", "/examples", "/venv", "/build"]
 skips = ["B404"]
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --ignore=setup.py --ignore=tasks.py --ignore=docs/ --ignore=build/ --ignore=examples/"
+addopts = "-vv -rfE --no-success-flaky-report --doctest-modules --ignore=setup.py --ignore=tasks.py --ignore=docs/ --ignore=build/ --ignore=examples/"
+env = [
+    "PYTHONDONTWRITEBYTECODE=1",
+    # The AWS_DEFAULT_REGION parameter determines the region used for SWF.
+    # Leaving it to a value different than "us-east-1" would break moto,
+    # because moto.swf only mocks calls to us-east-1 region for now.
+    "AWS_DEFAULT_REGION=us-east-1",
+    # Disable AWS credentials.
+    # NB: we set them to wrong values so boto believes they're here, so it
+    # issues integration requests later caught by VCR. For more information
+    # see tests/integration/README.md
+    "AWS_ACCESS_KEY_ID=1234",
+    "AWS_SECRET_ACCESS_KEY=1234",
+    # Enable various test optimizations
+    "SIMPLEFLOW_ENV=test",
+    "SIMPLEFLOW_CLEANUP_PROCESSES=yes",
+    # Simple variable to control the number of connection retries
+    "SWF_CONNECTION_RETRIES=1",
+    # Don't run real SWF requests if a cassette doesn't match
+    # See tests/integration/README.md for instructions about cassettes updating
+    "SIMPLEFLOW_VCR_RECORD_MODE=none",
+    # Disable jumbo fields
+    "SIMPLEFLOW_JUMBO_FIELDS_BUCKET=",
+    # Prevent CI from overriding boto configuration
+    "BOTO_CONFIG=/dev/null",
+]
 
 [tool.hatch.version]
 path = "simpleflow/__init__.py"
@@ -102,7 +122,7 @@ dev = [
     "pytest",
     "pytest-xdist>=3.2.0",
     "ruff",
-    "setuptools<72", # See https://github.com/pypa/setuptools/issues/4519
+    "setuptools<72",                                     # See https://github.com/pypa/setuptools/issues/4519
     "sphinx",
     "sphinx_rtd_theme",
     "sure",
