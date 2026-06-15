@@ -1,6 +1,10 @@
 Changelog
 =========
 
+> [!NOTE]
+> Starting with 0.36.0, changelog is posted as [GitHub
+> Releases](https://github.com/botify-labs/simpleflow/releases)
+
 0.35.0
 ------
 - Add workflow_task_list parameter to WorkflowTask (#455)
