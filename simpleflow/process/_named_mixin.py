@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import os
 
 from setproctitle import setproctitle
 
@@ -61,6 +62,11 @@ class NamedMixin:
         self.set_process_name()
 
     def set_process_name(self):
+        # setproctitle segfaults when called in a forked child process on macOS
+        # (see https://github.com/dvarrazzo/py-setproctitle/issues/165). Allow
+        # disabling it so the test suite doesn't crash spawned workers/deciders.
+        if os.environ.get("SIMPLEFLOW_DISABLE_SETPROCTITLE"):
+            return
         klass = self.__class__.__name__
         properties = []
         for prop in getattr(self, "_named_mixin_properties", []):

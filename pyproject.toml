@@ -103,6 +103,8 @@ env = [
     "SIMPLEFLOW_VCR_RECORD_MODE=none",
     # Disable jumbo fields
     "SIMPLEFLOW_JUMBO_FIELDS_BUCKET=",
+    # setproctitle segfaults in forked children on macOS (py-setproctitle#165)
+    "SIMPLEFLOW_DISABLE_SETPROCTITLE=1",
     # Prevent CI from overriding boto configuration
     "BOTO_CONFIG=/dev/null",
 ]
