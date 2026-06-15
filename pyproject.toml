@@ -109,6 +109,7 @@ dev = [
     "typing-extensions",
     "vcrpy",
     "twine",
+    "pytest-env>=1.0.1",
 ]
 
 doc = [
