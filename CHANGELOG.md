@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.35.0
+------
+- Add workflow_task_list parameter to WorkflowTask (#455)
+
 0.34.3
 ------
 
