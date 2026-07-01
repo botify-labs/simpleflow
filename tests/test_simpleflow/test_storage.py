@@ -97,8 +97,9 @@ class TestGroup(unittest.TestCase):
             raise ClientError({"Error": {"Code": "AccessDenied"}}, "op")
 
         s3 = boto3.client("s3")
-        with patch.object(s3, "get_bucket_location", _access_denied), patch.object(
-            storage, "get_client", return_value=s3
+        with (
+            patch.object(s3, "get_bucket_location", _access_denied),
+            patch.object(storage, "get_client", return_value=s3),
         ):
             with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
                 self.assertEqual(

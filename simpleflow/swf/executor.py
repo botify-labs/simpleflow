@@ -6,7 +6,8 @@ import inspect
 import json
 import re
 import traceback
-from typing import TYPE_CHECKING, Any, Callable, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import multiprocess
 

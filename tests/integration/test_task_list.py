@@ -5,7 +5,6 @@ import signal
 import time
 
 import multiprocess
-from sure import expect
 
 from simpleflow.command import start_workflow
 from simpleflow.swf import helpers
@@ -72,8 +71,8 @@ class TestTaskLists(VCRIntegrationTest):
             if ex.status == ex.STATUS_CLOSED:
                 break
 
-        expect(ex.status).to.equal(ex.STATUS_CLOSED)
-        expect(ex.close_status).to.equal(ex.CLOSE_STATUS_COMPLETED)
+        assert ex.status == ex.STATUS_CLOSED
+        assert ex.close_status == ex.CLOSE_STATUS_COMPLETED
         os.kill(worker_proc.pid, signal.SIGTERM)
         worker_proc.join()
         os.kill(decider_proc.pid, signal.SIGTERM)

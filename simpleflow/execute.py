@@ -155,9 +155,10 @@ def python(
                     tmp_dir = env.get(envname)
                     if tmp_dir:
                         break
-            with tempfile.TemporaryFile(dir=tmp_dir) as result_fd, tempfile.TemporaryFile(
-                dir=tmp_dir, buffering=0
-            ) as error_fd:  # TODO when Python 3.7 is dropped: encoding="utf-8", errors="replace"
+            with (
+                tempfile.TemporaryFile(dir=tmp_dir) as result_fd,
+                tempfile.TemporaryFile(dir=tmp_dir, buffering=0) as error_fd,
+            ):
                 dup_result_fd = os.dup(result_fd.fileno())  # remove FD_CLOEXEC
                 dup_error_fd = os.dup(error_fd.fileno())  # remove FD_CLOEXEC
                 arguments_json = format_arguments_json(*args, **kwargs)

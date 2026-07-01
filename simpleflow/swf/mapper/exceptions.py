@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from functools import partial, wraps
-from typing import Any, Callable, Pattern
+from re import Pattern
+from typing import Any
 
 from botocore.exceptions import ClientError
 

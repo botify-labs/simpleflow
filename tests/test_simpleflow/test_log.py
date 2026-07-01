@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+import re
 import unittest
-
-from sure import expect
 
 from simpleflow.log import SimpleflowFormatter
 
@@ -24,4 +23,4 @@ class TestLog(unittest.TestCase):
         formatter = SimpleflowFormatter()
         record = FakeRecord("Foo %s", [])
 
-        expect(formatter.format(record)).to.match(r"Foo %s$")
+        assert re.search(r"Foo %s$", formatter.format(record))

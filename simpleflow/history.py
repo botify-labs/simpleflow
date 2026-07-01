@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Callable, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ClassVar
 
 import simpleflow.swf.mapper.models.history
 from simpleflow import logger

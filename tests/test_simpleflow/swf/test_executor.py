@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import re
 import unittest
 from unittest import mock
-
-from sure import expect
 
 from simpleflow import activity, format, futures
 from simpleflow.swf.executor import Executor
@@ -47,25 +46,25 @@ class TestSimpleflowSwfExecutor(MockSWFTestCase):
         self.start_workflow_execution()
         decisions = self.build_decisions(ExampleWorkflow).decisions
 
-        expect(decisions).to.have.length_of(5)
+        assert len(decisions) == 5
 
         def get_task_priority(decision):
             return decision["scheduleActivityTaskDecisionAttributes"].get("taskPriority")
 
         # default priority for the whole workflow
-        expect(get_task_priority(decisions[0])).to.equal("12")
+        assert get_task_priority(decisions[0]) == "12"
 
         # priority passed explicitly
-        expect(get_task_priority(decisions[1])).to.equal("5")
+        assert get_task_priority(decisions[1]) == "5"
 
         # priority == None
-        expect(get_task_priority(decisions[2])).to.be.none
+        assert get_task_priority(decisions[2]) is None
 
         # priority set at decorator level
-        expect(get_task_priority(decisions[3])).to.equal("32")
+        assert get_task_priority(decisions[3]) == "32"
 
         # priority set at decorator level but overridden in self.submit()
-        expect(get_task_priority(decisions[4])).to.equal("30")
+        assert get_task_priority(decisions[4]) == "30"
 
 
 class TestCaseNotNeedingDomain(unittest.TestCase):
@@ -83,53 +82,47 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
 
         details = executor.get_event_details("signal", "a_signal")
         del details["timestamp"]
-        expect(details).to.equal(
-            {
-                "type": "signal",
-                "state": "signaled",
-                "name": "a_signal",
-                "input": signal_input,
-                "event_id": 4,
-                "external_initiated_event_id": 0,
-                "external_run_id": None,
-                "external_workflow_id": None,
-            }
-        )
+        assert details == {
+            "type": "signal",
+            "state": "signaled",
+            "name": "a_signal",
+            "input": signal_input,
+            "event_id": 4,
+            "external_initiated_event_id": 0,
+            "external_run_id": None,
+            "external_workflow_id": None,
+        }
 
         details = executor.get_event_details("signal", "another_signal")
-        expect(details).to.be.none
+        assert details is None
 
         details = executor.get_event_details("marker", "a_marker")
         del details["timestamp"]
-        expect(details).to.equal(
-            {
-                "type": "marker",
-                "state": "recorded",
-                "name": "a_marker",
-                "details": marker_details,
-                "event_id": 5,
-            }
-        )
+        assert details == {
+            "type": "marker",
+            "state": "recorded",
+            "name": "a_marker",
+            "details": marker_details,
+            "event_id": 5,
+        }
         details = executor.get_event_details("marker", "another_marker")
-        expect(details).to.be.none
+        assert details is None
 
         details = executor.get_event_details("timer", "a_timer")
         del details["started_event_timestamp"]
         del details["fired_event_timestamp"]
-        expect(details).to.equal(
-            {
-                "type": "timer",
-                "state": "fired",
-                "id": "a_timer",
-                "decision_task_completed_event_id": 2,
-                "start_to_fire_timeout": 1,
-                "started_event_id": 6,
-                "fired_event_id": 7,
-                "control": None,
-            }
-        )
+        assert details == {
+            "type": "timer",
+            "state": "fired",
+            "id": "a_timer",
+            "decision_task_completed_event_id": 2,
+            "start_to_fire_timeout": 1,
+            "started_event_id": 6,
+            "fired_event_id": 7,
+            "control": None,
+        }
         details = executor.get_event_details("timer", "another_timer")
-        expect(details).to.be.none
+        assert details is None
 
 
 @activity.with_attributes(raises_on_failure=True)
@@ -174,7 +167,7 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         assert activity_result_evt["eventType"] == "ActivityTaskCompleted"
         result = activity_result_evt["activityTaskCompletedEventAttributes"]["result"]
 
-        expect(result).to.match(r"^simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90002$")
+        assert re.search(r"^simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ 90002$", result)
 
     @mock.patch.dict("os.environ", {"SIMPLEFLOW_JUMBO_FIELDS_BUCKET": "jumbo-bucket"})
     def test_jumbo_fields_in_task_failed_is_decoded(self):
@@ -200,11 +193,11 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         activity_result_evt = events[-2]
         assert activity_result_evt["eventType"] == "ActivityTaskFailed"
         attrs = activity_result_evt["activityTaskFailedEventAttributes"]
-        expect(attrs["reason"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ \d{4,}")
-        expect(attrs["details"]).to.match(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ \d{4,}")
+        assert re.search(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ \d{4,}", attrs["reason"])
+        assert re.search(r"simpleflow\+s3://jumbo-bucket/[a-z0-9-]+ \d{4,}", attrs["details"])
         details = format.decode(attrs["details"])
-        expect(details["error"]).to.equal("ValueError")
-        expect(len(details["message"])).to.be.greater_than(9 * 10_000)
+        assert details["error"] == "ValueError"
+        assert len(details["message"]) > 9 * 10_000
 
         # decide again (should lead to workflow failure)
         result = self.build_decisions(ExampleJumboWorkflow)
@@ -220,11 +213,12 @@ class TestSimpleflowSwfExecutorWithJumboFields(MockSWFTestCase):
         attrs = event["workflowExecutionFailedEventAttributes"]
 
         details = format.decode(attrs["details"], use_proxy=False)
-        expect(details).to.be.a("dict")
-        expect(details["message"]).to.match(r"^Number: 012345.*")
+        assert isinstance(details, dict)
+        assert re.search(r"^Number: 012345.*", details["message"])
 
         reason = format.decode(attrs["reason"], use_proxy=False)
-        expect(reason).to.match(
+        assert re.search(
             r"^Workflow execution error in activity-tests.test_simpleflow.swf."
-            r'test_executor.print_me_n_times: "ValueError: Number: 012345679\d+"$'
+            r'test_executor.print_me_n_times: "ValueError: Number: 012345679\d+"$',
+            reason,
         )

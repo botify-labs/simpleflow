@@ -10,7 +10,6 @@ from flaky import flaky
 from psutil import Process
 from pytest import mark
 from setproctitle import setproctitle
-from sure import expect
 
 from simpleflow.process import Supervisor, reset_signal_handlers
 from tests.utils import IntegrationTestCase
@@ -121,7 +120,7 @@ class TestSupervisor(IntegrationTestCase):
         # we need to wait a little here so the workers start
         self.wait(0.5)
         old_workers = workers()
-        expect(len(old_workers)).to.equal(1)
+        assert len(old_workers) == 1
 
         # now kill the worker
         old_workers[0].pid
@@ -130,8 +129,8 @@ class TestSupervisor(IntegrationTestCase):
 
         # ... and check that the process has been replaced
         new_workers = workers()
-        expect(len(new_workers)).to.equal(1)
-        expect(new_workers[0].pid).to.not_be.equal(old_workers[0].pid)
+        assert len(new_workers) == 1
+        assert new_workers[0].pid != old_workers[0].pid
 
     # NB: not in the Supervisor class but we want to benefit from the tearDown()
     @mark.skip("flaky test based on time.sleep")
@@ -149,7 +148,7 @@ class TestSupervisor(IntegrationTestCase):
         self.wait(0.5)
         os.kill(p.pid, signal.SIGTERM)
         p.join()
-        expect(p.exitcode).to.equal(0)
+        assert p.exitcode == 0
 
         # check it fails with the decorator (meaning that SIGTERM is not ignored
         # anymore)
@@ -159,4 +158,4 @@ class TestSupervisor(IntegrationTestCase):
         self.wait(0.5)
         os.kill(p.pid, signal.SIGTERM)
         p.join()
-        expect(p.exitcode).to.equal(-15)
+        assert p.exitcode == -15

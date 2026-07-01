@@ -7,7 +7,6 @@ import time
 import multiprocess
 from psutil import Process
 from pytest import mark
-from sure import expect
 
 from simpleflow.swf.mapper.models.domain import Domain
 from simpleflow.swf.process.poller import Poller
@@ -50,4 +49,4 @@ class TestSupervisor(IntegrationTestCase):
         # now test that we're still in the second sleep, and that we're not
         # in "zombie" mode yet (which would be the case if SIGTERM had its
         # default effect)
-        expect(Process(process.pid).status()).to.contain("sleeping")
+        assert "sleeping" in Process(process.pid).status()

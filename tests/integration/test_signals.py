@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 
-from sure import expect
-
 from tests.integration import VCRIntegrationTest, vcr
 
 
@@ -11,8 +9,8 @@ class TestSignals(VCRIntegrationTest):
     @vcr.use_cassette
     def test_unrequested_signal(self):
         events = self.run_standalone("tests.integration.workflow.SignaledWorkflow")
-        expect(events[-1]["eventType"]).should.be.equal("WorkflowExecutionCompleted")
-        expect(events[-1]["workflowExecutionCompletedEventAttributes"]["result"]).should.be.equal('"signal sent!"')
+        assert events[-1]["eventType"] == "WorkflowExecutionCompleted"
+        assert events[-1]["workflowExecutionCompletedEventAttributes"]["result"] == '"signal sent!"'
         n = 0
         for e in events:
             if e["eventType"] == "WorkflowExecutionSignaled":
@@ -27,8 +25,8 @@ class TestSignals(VCRIntegrationTest):
                         "signalName": "unexpected",
                     },
                 }
-                expect(e).should.be.equal(expected)
-        expect(n).should.be.equal(1)
+                assert e == expected
+        assert n == 1
 
     @vcr.use_cassette
     def test_wait_signal(self):
@@ -36,26 +34,26 @@ class TestSignals(VCRIntegrationTest):
         Check that wait_signal fills the execution context.
         """
         events = self.run_standalone("tests.integration.workflow.WorkflowWithWaitSignal")
-        expect(events[-1]["eventType"]).should.be.equal("WorkflowExecutionCompleted")  # OK end
+        assert events[-1]["eventType"] == "WorkflowExecutionCompleted"  # OK end
         events = {e["eventId"]: e for e in events}  # simpler access
 
         # The DecisionTaskCompleted event following wait_signal should contain the right execution context
-        expect(events[4]["eventType"]).should.be.equal("DecisionTaskCompleted")
-        expect(events[4]["decisionTaskCompletedEventAttributes"]).should.contain("executionContext")
+        assert events[4]["eventType"] == "DecisionTaskCompleted"
+        assert "executionContext" in events[4]["decisionTaskCompletedEventAttributes"]
         execution_context = json.loads(events[4]["decisionTaskCompletedEventAttributes"]["executionContext"])
-        expect(execution_context).should.be.equal({"waiting_signals": ["signal 2", "signal"]})
+        assert execution_context == {"waiting_signals": ["signal 2", "signal"]}
 
-        expect(events[14]["eventType"]).should.be.equal("DecisionTaskCompleted")
-        expect(events[14]["decisionTaskCompletedEventAttributes"]).should.contain("executionContext")
+        assert events[14]["eventType"] == "DecisionTaskCompleted"
+        assert "executionContext" in events[14]["decisionTaskCompletedEventAttributes"]
         execution_context = json.loads(events[14]["decisionTaskCompletedEventAttributes"]["executionContext"])
-        expect(execution_context).should.be.equal({"waiting_signals": ["signal 2"]})
+        assert execution_context == {"waiting_signals": ["signal 2"]}
 
         # The DecisionTaskCompleted event following the signals should have an empty context
-        expect(events[22]["eventType"]).should.be.equal("DecisionTaskCompleted")
-        expect(events[22]["decisionTaskCompletedEventAttributes"]).should.contain("executionContext")
+        assert events[22]["eventType"] == "DecisionTaskCompleted"
+        assert "executionContext" in events[22]["decisionTaskCompletedEventAttributes"]
         execution_context = events[22]["decisionTaskCompletedEventAttributes"]["executionContext"]
-        expect(execution_context).should.be.empty
+        assert not execution_context
 
         # The next DecisionTaskCompleted event should have no context
-        expect(events[24]["eventType"]).should.be.equal("DecisionTaskCompleted")
-        expect(events[24]["decisionTaskCompletedEventAttributes"]).should_not.contain("executionContext")
+        assert events[24]["eventType"] == "DecisionTaskCompleted"
+        assert "executionContext" not in events[24]["decisionTaskCompletedEventAttributes"]
