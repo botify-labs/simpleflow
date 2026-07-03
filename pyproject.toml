@@ -127,7 +127,6 @@ dev = [
     "pytest",
     "pytest-xdist>=3.2.0",
     "ruff",
-    "setuptools<72",                                     # See https://github.com/pypa/setuptools/issues/4519
     "sphinx",
     "sphinx_rtd_theme",
     "typing-extensions",
