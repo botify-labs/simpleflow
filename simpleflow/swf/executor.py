@@ -1260,7 +1260,9 @@ class Executor(executor.Executor):
 
     def list_markers(self, all=False):
         if all:
-            return [Marker(m["name"], format.decode(m["details"])) for ml in self._history.markers.values() for m in ml]
+            return [
+                Marker(m["name"], format.decode(m.get("details"))) for ml in self._history.markers.values() for m in ml
+            ]
         rc = []
         for ml in self._history.markers.values():
             m = ml[-1]

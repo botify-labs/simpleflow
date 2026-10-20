@@ -57,6 +57,15 @@ class Step(SubmittableContainer):
         if workflow is None:
             raise ValueError("Executor has no associated workflow")
 
+        steps_in_decider = getattr(workflow, "steps_in_decider", False)
+
+        def mark_step_done_in_decider(marker_done):
+            # The "completed" marker is recorded in the same decision as the S3 push:
+            # once it is in the history, the step is not pushed again on replays.
+            if not any(m.name == "log.step" and m.details == marker_done for m in workflow.list_markers(all=True)):
+                workflow._mark_step_done_in_decider(self.step_name)
+            return workflow.record_marker("log.step", marker_done)
+
         def fn_steps_done(steps_done):
             marker = {
                 "step": self.step_name,
@@ -81,14 +90,19 @@ class Step(SubmittableContainer):
                 chain += (
                     workflow.record_marker("log.step", marker),
                     self.activities,
-                    (
-                        activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
-                        workflow.get_step_bucket(),
-                        workflow.get_step_path_prefix(),
-                        self.step_name,
-                    ),
-                    workflow.record_marker("log.step", marker_done),
                 )
+                if steps_in_decider:
+                    chain.append(FuncGroup(mark_step_done_in_decider, marker_done))
+                else:
+                    chain += (
+                        (
+                            activity.Activity(MarkStepDoneTask, **workflow._get_step_activity_params()),
+                            workflow.get_step_bucket(),
+                            workflow.get_step_path_prefix(),
+                            self.step_name,
+                        ),
+                        workflow.record_marker("log.step", marker_done),
+                    )
             else:
                 marker["status"] = "skipped"
                 if step_is_skipped_by_force(self.step_name, skipped_steps):
@@ -108,6 +122,8 @@ class Step(SubmittableContainer):
             chain.bubbles_exception_on_failure = self.bubbles_exception_on_failure
             return chain
 
+        if steps_in_decider:
+            return workflow.submit(fn_steps_done(workflow._get_steps_done_in_decider()))
         return workflow.submit(
             Chain(
                 workflow.get_steps_done_activity(),

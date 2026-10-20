@@ -11,7 +11,7 @@ from simpleflow.activity import with_attributes
 from simpleflow.canvas import Chain
 from simpleflow.constants import HOUR, MINUTE
 from simpleflow.local import Executor
-from simpleflow.step.constants import UNKNOWN_CONTEXT
+from simpleflow.step.constants import STEPS_DONE_MARKER_PREFIX, UNKNOWN_CONTEXT
 from simpleflow.step.submittable import Step
 from simpleflow.step.tasks import GetStepsDoneTask, MarkStepDoneTask
 from simpleflow.step.utils import (
@@ -300,3 +300,118 @@ class StepTestCase(unittest.TestCase, TestWorkflowMixin):
 
         self.assertFalse(activities.activities[0].activity.raises_on_failure)
         self.assertFalse(activities.activities[1].activity.raises_on_failure)
+
+
+class MyDeciderWorkflow(MyWorkflow):
+    steps_in_decider = True
+
+
+class StepInDeciderTestCase(unittest.TestCase, TestWorkflowMixin):
+    WORKFLOW = MyDeciderWorkflow
+
+    def create_bucket(self):
+        self.client = boto3.client("s3", region_name="us-east-1")
+        self.client.create_bucket(Bucket=BUCKET)
+
+    def record_markers(self, decisions):
+        """
+        Add the RecordMarker decisions to the history.
+        """
+        for decision in decisions:
+            if decision["decisionType"] == "RecordMarker":
+                attributes = decision["recordMarkerDecisionAttributes"]
+                self.history.add_marker(attributes["markerName"], json.loads(attributes["details"]))
+
+    def decision_types(self, decisions):
+        return [d["decisionType"] for d in decisions]
+
+    def marker_details(self, decision):
+        assert decision["decisionType"] == "RecordMarker"
+        return json.loads(decision["recordMarkerDecisionAttributes"]["details"])
+
+    @mock_s3
+    @mock_swf
+    def test_first_run(self):
+        self.create_bucket()
+
+        self.build_history({"args": [2]})
+        decisions = self.replay()
+
+        # No GetStepsDoneTask: S3 is listed by the decider and the listing is memoized
+        self.assertEqual(self.decision_types(decisions), ["RecordMarker", "RecordMarker", "StartTimer"])
+        self.assertTrue(
+            decisions[0]["recordMarkerDecisionAttributes"]["markerName"].startswith(STEPS_DONE_MARKER_PREFIX + ".")
+        )
+        self.assertEqual(
+            self.marker_details(decisions[0]),
+            {"bucket": BUCKET, "path": "default/steps/", "steps_done": []},
+        )
+        self.assertEqual(
+            self.marker_details(decisions[1]),
+            {"step": "my_step", "status": "scheduled", "forced": False, "reasons": []},
+        )
+        self.record_markers(decisions)
+
+        # The step is now done on S3 (e.g. by another execution): replays must ignore it
+        storage.push_content(BUCKET, "default/steps/my_step", "data")
+        decisions = self.replay()
+        self.check_task_scheduled_decision(decisions[0], MyTask)
+
+        # Once the activities are done, the decider marks the step done: no MarkStepDoneTask
+        self.add_activity_task_from_decision(decisions[0], task.Activity(MyTask), result=4)
+        decisions = self.replay()
+        self.assertEqual(self.decision_types(decisions), ["RecordMarker", "StartTimer"])
+        self.assertEqual(
+            self.marker_details(decisions[0]),
+            {"step": "my_step", "status": "completed", "forced": False, "reasons": []},
+        )
+        self.assertEqual(storage.pull_content(BUCKET, "default/steps/my_step"), json.dumps(UNKNOWN_CONTEXT))
+        self.assertEqual(self.executor._workflow.get_forced_steps(), ["my_step_2"])
+
+        # The "completed" marker is recorded: the step isn't pushed again
+        self.record_markers(decisions)
+        self.client.delete_object(Bucket=BUCKET, Key="default/steps/my_step")
+        decisions = self.replay()
+        self.assertEqual(self.decision_types(decisions), ["CompleteWorkflowExecution"])
+        self.assertEqual(storage.list_keys(BUCKET, "default/steps/"), [])
+
+    @mock_s3
+    @mock_swf
+    def test_already_done(self):
+        self.create_bucket()
+        storage.push_content(BUCKET, "default/steps/my_step", "data")
+
+        self.build_history({"args": [2]})
+        decisions = self.replay()
+
+        self.assertEqual(self.decision_types(decisions), ["RecordMarker", "RecordMarker", "StartTimer"])
+        self.assertEqual(self.marker_details(decisions[0])["steps_done"], ["my_step"])
+        self.assertEqual(
+            self.marker_details(decisions[1]),
+            {"step": "my_step", "status": "skipped", "forced": False, "reasons": ["Step was already played"]},
+        )
+
+        # The step was removed from S3: replays still use the memoized listing
+        self.record_markers(decisions)
+        self.client.delete_object(Bucket=BUCKET, Key="default/steps/my_step")
+        decisions = self.replay()
+        self.assertEqual(self.decision_types(decisions), ["CompleteWorkflowExecution"])
+
+    @mock_s3
+    def test_local_executor(self):
+        self.create_bucket()
+
+        executor = Executor(MyDeciderWorkflow)
+        executor.run({"args": [2]})
+        self.assertEqual(
+            [m.details["status"] for m in executor.list_markers(all=True) if m.name == "log.step"],
+            ["scheduled", "completed"],
+        )
+        self.assertEqual(GetStepsDoneTask(BUCKET, "local/steps/").execute(), ["my_step"])
+
+        executor = Executor(MyDeciderWorkflow)
+        executor.run({"args": [2]})
+        self.assertEqual(
+            [m.details["status"] for m in executor.list_markers(all=True) if m.name == "log.step"],
+            ["skipped"],
+        )
