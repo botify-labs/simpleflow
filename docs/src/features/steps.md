@@ -89,6 +89,30 @@ The chain is then submitted to the workflow.
 
 Done steps are tracked by S3 objects. We only list them, their content is not used.
 
+### Steps in the Decider
+
+By default, the steps done are listed by a `GetStepsDoneTask` activity and each
+executed step is marked done by a `MarkStepDoneTask` activity. Setting
+`steps_in_decider = True` on the workflow does both from the decider instead,
+without any activity:
+
+```python
+class AWorkflow(Workflow, WorkflowStepMixin):
+    steps_in_decider = True
+```
+
+* The S3 listing is done once per execution, when the first step is reached, and
+  recorded in a `step.steps_done.<hash>` marker. The next replays read it back from
+  the history, so a step marked done later in the execution doesn't change the
+  decisions already taken.
+* Once the step's activities are done, the decider pushes the step file to S3 and
+  records the "completed" marker in the same decision; this marker prevents pushing
+  the file again on the next replays.
+
+The decider needs read and write access to the steps bucket. S3 errors are retried
+a few times; past that, as for any decider exception, the workflow fails.
+The listing must fit in a marker (32 kB).
+
 ## Customization
 
 The `WorkflowStepMixin` class supports several customizations; see for instance `examples.step.CustomizedStepWorkflow`.
@@ -97,4 +121,4 @@ The `WorkflowStepMixin` class supports several customizations; see for instance 
   Default: `{SIMPLEFLOW_S3_HOST}/{STEP_BUCKET}`
 * `get_step_path_prefix()`: return the steps path prefix. Default: `{workflow_id}/steps`
 * `get_step_activity_params()`: return supplemental activity parameters for `GetStepsDoneTask` and `MarkStepDoneTask`.
-  A typical use is forcing a separate task list.
+  A typical use is forcing a separate task list. Unused with `steps_in_decider`.

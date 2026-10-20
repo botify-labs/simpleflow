@@ -25,3 +25,7 @@ STEP_ACTIVITY_PARAMS_DEFAULT: dict[str, Any] = {
 }
 
 UNKNOWN_CONTEXT = {"run_id": "unknown", "workflow_id": "unknown", "version": "unknown"}
+
+# Prefix of the marker memoizing, in the workflow history, the steps done at the
+# beginning of an execution (only used with ``WorkflowStepMixin.steps_in_decider``).
+STEPS_DONE_MARKER_PREFIX = "step.steps_done"
