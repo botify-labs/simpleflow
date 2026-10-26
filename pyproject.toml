@@ -35,7 +35,6 @@ dependencies = [
     "attrs",
     "boto3>=1.28.20",
     "dill>=0.3.6",
-    "diskcache>=4.1.0",
     "Jinja2",
     "markupsafe",
     "multiprocess>=0.70.14",
@@ -47,6 +46,10 @@ dependencies = [
     "psutil",
     "pytz",
 ]
+
+[project.optional-dependencies]
+# Jumbo fields disk cache, only used when SIMPLEFLOW_ENABLE_DISK_CACHE is set.
+diskcache = ["diskcache>=4.1.0"]
 
 [project.urls]
 documentation = "https://botify-labs.github.io/simpleflow"

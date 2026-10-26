@@ -1903,7 +1903,6 @@ dependencies = [
     { name = "boto3" },
     { name = "click" },
     { name = "dill" },
-    { name = "diskcache" },
     { name = "jinja2" },
     { name = "lazy-object-proxy" },
     { name = "lockfile" },
@@ -1913,6 +1912,11 @@ dependencies = [
     { name = "pytz" },
     { name = "setproctitle" },
     { name = "tabulate" },
+]
+
+[package.optional-dependencies]
+diskcache = [
+    { name = "diskcache" },
 ]
 
 [package.dev-dependencies]
@@ -1952,7 +1956,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.28.20" },
     { name = "click" },
     { name = "dill", specifier = ">=0.3.6" },
-    { name = "diskcache", specifier = ">=4.1.0" },
+    { name = "diskcache", marker = "extra == 'diskcache'", specifier = ">=4.1.0" },
     { name = "jinja2" },
     { name = "lazy-object-proxy" },
     { name = "lockfile", specifier = ">=0.9.1" },
@@ -1963,6 +1967,7 @@ requires-dist = [
     { name = "setproctitle" },
     { name = "tabulate", specifier = ">=0.8.2,<1.0.0" },
 ]
+provides-extras = ["diskcache"]
 
 [package.metadata.requires-dev]
 dev = [

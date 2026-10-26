@@ -28,7 +28,8 @@ For now jumbo fields are limited to 5MB in size.
 
 Simpleflow will optionally perform disk caching for this feature to avoid
 issuing too many queries to S3. The disk cache is enabled if you set the
-`SIMPLEFLOW_ENABLE_DISK_CACHE` environment variable. The resulting disk
+`SIMPLEFLOW_ENABLE_DISK_CACHE` environment variable and install the
+`diskcache` extra (`pip install simpleflow[diskcache]`). The resulting disk
 cache will be limited to 1GB, with an LRU eviction strategy. It uses
 Sqlite3 under the hood, and it’s powered by the
 [DiskCache library](http://www.grantjenks.com/docs/diskcache/).
