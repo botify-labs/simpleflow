@@ -89,7 +89,7 @@ def _get_cached(path: str) -> str | None:
             # useful. The performance hit should be minimal. To be improved later.
             # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
             # see DiskCache docs.
-            from diskcache import Cache  # optional extra: simpleflow[diskcache]
+            from diskcache import Cache  # optional extra: simpleflow[diskcache], see https://osv.dev/vulnerability/CVE-2025-69872
 
             cache = Cache(constants.CACHE_DIR)
             # generate a dedicated cache key because this cache may be shared with other
@@ -114,7 +114,7 @@ def _set_cached(path: str, content: str) -> None:
     # 2/ disk cache
     if SIMPLEFLOW_ENABLE_DISK_CACHE:
         try:
-            from diskcache import Cache  # optional extra: simpleflow[diskcache]
+            from diskcache import Cache  # optional extra: simpleflow[diskcache], see https://osv.dev/vulnerability/CVE-2025-69872
 
             cache = Cache(constants.CACHE_DIR)
             cache_key = "jumbo_fields/" + path.split("/")[-1]
