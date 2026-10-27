@@ -144,6 +144,7 @@ class TestFormat(unittest.TestCase):
             mock.patch.object(format, "SIMPLEFLOW_ENABLE_DISK_CACHE", True),
             mock.patch.dict(sys.modules, {"diskcache": None}),
             self.assertLogs(format.logger, level="WARNING") as logs,
+            self.assertWarns(DeprecationWarning),
         ):
             format._set_cached("dir/written", "content")
             self.assertIsNone(format._get_cached("dir/not-in-memory"))

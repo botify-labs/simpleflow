@@ -48,8 +48,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Jumbo fields disk cache, only used when SIMPLEFLOW_ENABLE_DISK_CACHE is set. Optional because
-# diskcache unpickles cache entries (https://osv.dev/vulnerability/CVE-2025-69872): install it only if you need the cache.
+# Jumbo fields disk cache, only used when SIMPLEFLOW_ENABLE_DISK_CACHE is set (deprecated).
+# Optional because diskcache unpickles cache entries: https://osv.dev/vulnerability/CVE-2025-69872
 diskcache = ["diskcache>=4.1.0"]
 
 [project.urls]
