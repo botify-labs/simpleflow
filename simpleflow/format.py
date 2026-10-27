@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import os
+import warnings
 from sqlite3 import OperationalError
 from typing import Any, cast
 from uuid import uuid4
 
 import lazy_object_proxy
-from diskcache import Cache
 
 from simpleflow import constants, logger, storage
 from simpleflow.settings import SIMPLEFLOW_ENABLE_DISK_CACHE
@@ -78,6 +78,17 @@ def encode(message: str | None, max_length: int, allow_jumbo_fields: bool = True
     return message
 
 
+DISK_CACHE_DEPRECATION = (
+    "SIMPLEFLOW_ENABLE_DISK_CACHE is deprecated and will be removed: its only backend, diskcache, "
+    "unpickles cache entries (https://osv.dev/vulnerability/CVE-2025-69872), so anyone who can write to the cache "
+    "directory can run code in the process that reads it."
+)
+
+
+def _warn_disk_cache_deprecated() -> None:
+    warnings.warn(DISK_CACHE_DEPRECATION, DeprecationWarning, stacklevel=3)
+
+
 def _get_cached(path: str) -> str | None:
     # 1/ memory cache
     if path in JUMBO_FIELDS_MEMORY_CACHE:
@@ -85,11 +96,15 @@ def _get_cached(path: str) -> str | None:
 
     # 2/ disk cache
     if SIMPLEFLOW_ENABLE_DISK_CACHE:
+        _warn_disk_cache_deprecated()
         try:
             # NB: this cache may also be triggered on activity workers, where it's not that
             # useful. The performance hit should be minimal. To be improved later.
             # NB2: cache has to be lazily instantiated here, cache objects do not survive forks,
             # see DiskCache docs.
+            # Optional extra: simpleflow[diskcache]. Deprecated, see _warn_disk_cache_deprecated.
+            from diskcache import Cache
+
             cache = Cache(constants.CACHE_DIR)
             # generate a dedicated cache key because this cache may be shared with other
             # features of simpleflow at some point
@@ -97,6 +112,8 @@ def _get_cached(path: str) -> str | None:
             if cache_key in cache:
                 logger.debug(f"diskcache: getting key={cache_key} from cache_dir={constants.CACHE_DIR}")
                 return cache[cache_key]
+        except ImportError:
+            logger.warning("diskcache: not installed (pip install simpleflow[diskcache]), skipping cache usage")
         except OperationalError:
             logger.warning("diskcache: got an OperationalError, skipping cache usage")
 
@@ -110,11 +127,17 @@ def _set_cached(path: str, content: str) -> None:
 
     # 2/ disk cache
     if SIMPLEFLOW_ENABLE_DISK_CACHE:
+        _warn_disk_cache_deprecated()
         try:
+            # Optional extra: simpleflow[diskcache]. Deprecated, see _warn_disk_cache_deprecated.
+            from diskcache import Cache
+
             cache = Cache(constants.CACHE_DIR)
             cache_key = "jumbo_fields/" + path.split("/")[-1]
             logger.debug(f"diskcache: setting key={cache_key} on cache_dir={constants.CACHE_DIR}")
             cache.set(cache_key, content, expire=3 * constants.HOUR)
+        except ImportError:
+            logger.warning("diskcache: not installed (pip install simpleflow[diskcache]), skipping cache write")
         except OperationalError:
             logger.warning("diskcache: got an OperationalError on write, skipping cache write")
 

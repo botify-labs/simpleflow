@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import os
 import random
+import sys
 import unittest
 from typing import Any, cast
+from unittest import mock
 
 import boto3
 from moto import mock_s3
@@ -135,3 +137,15 @@ class TestFormat(unittest.TestCase):
 
         for case in cases:
             self.assertEqual(case[1], format.decode(case[0], parse_json=False))
+
+    def test_disk_cache_without_diskcache_installed(self):
+        # sys.modules[name] = None makes `import name` raise ImportError
+        with (
+            mock.patch.object(format, "SIMPLEFLOW_ENABLE_DISK_CACHE", True),
+            mock.patch.dict(sys.modules, {"diskcache": None}),
+            self.assertLogs(format.logger, level="WARNING") as logs,
+            self.assertWarns(DeprecationWarning),
+        ):
+            format._set_cached("dir/written", "content")
+            self.assertIsNone(format._get_cached("dir/not-in-memory"))
+        self.assertEqual(len(logs.records), 2)
