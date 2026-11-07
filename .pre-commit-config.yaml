@@ -14,7 +14,7 @@ repos:
           - --maxkb=1024
   - repo: https://github.com/astral-sh/uv-pre-commit
     # uv version.
-    rev: 0.9.10
+    rev: 0.13.6
     hooks:
       # Keep uv.lock up to date.
       - id: uv-lock

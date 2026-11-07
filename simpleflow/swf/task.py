@@ -10,10 +10,7 @@ from simpleflow.swf.utils import set_workflow_class_name
 from simpleflow.workflow import Workflow
 
 if typing.TYPE_CHECKING:
-    if hasattr(typing, "Self"):
-        Self = typing.Self
-    else:
-        from typing_extensions import Self
+    from typing import Self
 
     from simpleflow.activity import Activity
     from simpleflow.swf.executor import Executor
