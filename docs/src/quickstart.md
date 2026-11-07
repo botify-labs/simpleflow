@@ -11,13 +11,16 @@ import time
 
 from simpleflow import activity
 
+
 @activity.with_attributes(task_list="quickstart", version="example")
 def increment(x):
     return x + 1
 
+
 @activity.with_attributes(task_list="quickstart", version="example")
 def double(x):
     return x * 2
+
 
 @activity.with_attributes(task_list="quickstart", version="example")
 def delay(t, x):
@@ -29,26 +32,26 @@ And then define the workflow itself in a `example.py` file:
 
 ```python
 from simpleflow import (
-  Workflow,
-  futures,
+    Workflow,
+    futures,
 )
 
 from .basic import delay, double, increment
 
 
 class BasicWorkflow(Workflow):
-  name = "basic"
-  version = "example"
-  task_list = "example"
+    name = "basic"
+    version = "example"
+    task_list = "example"
 
-  def run(self, x, t=30):
-    y = self.submit(increment, x)
-    yy = self.submit(delay, t, y)
-    z = self.submit(double, y)
+    def run(self, x, t=30):
+        y = self.submit(increment, x)
+        yy = self.submit(delay, t, y)
+        z = self.submit(double, y)
 
-    print(f"({x} + 1) * 2 = {z.result}")
-    futures.wait(yy, z)
-    return z.result
+        print(f"({x} + 1) * 2 = {z.result}")
+        futures.wait(yy, z)
+        return z.result
 ```
 
 Now check that the workflow works locally with an integer "x" and a wait value "t":
