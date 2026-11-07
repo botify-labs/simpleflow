@@ -84,7 +84,7 @@ def get_name(func) -> str:
     prefix = func.__module__
 
     if not callable(func):
-        raise ValueError(f"{func} is not callable")
+        raise TypeError(f"{func} is not callable")
 
     if hasattr(func, "name"):
         name = func.name
@@ -93,7 +93,7 @@ def get_name(func) -> str:
     else:
         name = func.__class__.__name__
 
-    return ".".join([prefix, name])
+    return f"{prefix}.{name}"
 
 
 def wait_subprocess(process, timeout: int | None = None, command_info: str | list[str] | None = None) -> int:
@@ -177,7 +177,7 @@ def python(
                     arg_file = None
                     arg_fd = None
                 else:
-                    arg_file = tempfile.TemporaryFile(dir=tmp_dir)
+                    arg_file = tempfile.TemporaryFile(dir=tmp_dir)  # noqa: SIM115
                     arg_file.write(arguments_json.encode())
                     arg_file.flush()
                     arg_file.seek(0)
@@ -379,8 +379,8 @@ def main():
             content = arguments_json_file.read()
     try:
         arguments = format.decode(content)
-    except Exception:
-        raise ValueError(f"cannot load arguments from {content}")
+    except Exception as err:
+        raise ValueError(f"cannot load arguments from {content}") from err
     if cmd_arguments.logger_name:
         logger = logging.getLogger(cmd_arguments.logger_name)
     else:
@@ -403,7 +403,7 @@ def main():
             if context is not None:
                 callable_.context = context
             result = callable_(*args, **kwargs)
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001
         logger.error(f"Exception: {err}")
         exc_type, exc_value, exc_traceback = sys.exc_info()
         tb = traceback.format_tb(exc_traceback)

@@ -2,14 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING
 
 from simpleflow import storage
 
 from .constants import UNKNOWN_CONTEXT
-
-if TYPE_CHECKING:
-    pass
 
 
 class GetStepsDoneTask:

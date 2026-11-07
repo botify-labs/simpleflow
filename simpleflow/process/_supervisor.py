@@ -44,7 +44,6 @@ def _void_handle_sigchld(signum, frame):
         following execution of that signal's catching routine.
 
     """
-    pass
 
 
 class Supervisor(NamedMixin):
@@ -155,7 +154,7 @@ class Supervisor(NamedMixin):
 
         # protection against double use of ".start()"
         if len(self._processes) != 0:
-            raise Exception("Child processes map is not empty, already called .start()?")
+            raise RuntimeError("Child processes map is not empty, already called .start()?")
 
         # wait for all processes to finish
         while True:

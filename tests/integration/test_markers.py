@@ -7,7 +7,7 @@ class TestMarkers(VCRIntegrationTest):
     @vcr.use_cassette
     def test_without_replays(self):
         events = self.run_standalone("tests.integration.workflow.MarkerWorkflow", False)
-        marker_recorded = list(e for e in events if e["eventType"] == "MarkerRecorded")
+        marker_recorded = [e for e in events if e["eventType"] == "MarkerRecorded"]
         assert len(marker_recorded) == 3  # 3 markers
         marker_details = [e["markerRecordedEventAttributes"].get("details") for e in marker_recorded]
         assert marker_details == [None, '"some details"', '"2nd marker\'s details"']
@@ -19,7 +19,7 @@ class TestMarkers(VCRIntegrationTest):
     @vcr.use_cassette
     def test_with_replays(self):
         events = self.run_standalone("tests.integration.workflow.MarkerWorkflow", True)
-        marker_recorded = list(e for e in events if e["eventType"] == "MarkerRecorded")
+        marker_recorded = [e for e in events if e["eventType"] == "MarkerRecorded"]
         assert len(marker_recorded) == 3  # 3 markers
         marker_details = [e["markerRecordedEventAttributes"].get("details") for e in marker_recorded]
         assert marker_details == [None, '"some details"', '"2nd marker\'s details"']

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import contextlib
 import time
 from copy import deepcopy
 from enum import Enum
@@ -349,10 +350,8 @@ class TaskFailureContext:
                     if "message" in details:
                         self.task_message = details["message"]
                     if "error_type" in details:
-                        try:
+                        with contextlib.suppress(Exception):
                             self.task_error_type = import_from_module(details["error_type"])
-                        except Exception:  # nosec
-                            pass
         else:
             self.reason = str(exception)
 

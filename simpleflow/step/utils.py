@@ -52,9 +52,9 @@ def step_is_forced(step_name: str, force_steps: Sequence[str], force: bool) -> b
 
 def _get_step_reasons(step_name: str, step_reasons: dict[str, Sequence[str]]) -> list[str]:
     reasons: list[str] = []
-    for step, step_reasons in step_reasons.items():
+    for step, reasons_for_step in step_reasons.items():
         if step == "*" or step == step_name or step_name.startswith(step + "."):
-            reasons += step_reasons
+            reasons += reasons_for_step
     return reasons
 
 

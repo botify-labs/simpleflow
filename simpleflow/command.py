@@ -63,7 +63,7 @@ class RunIdParamType(click.ParamType):
 RUN_ID = RunIdParamType()
 
 
-CONTEXT_SETTINGS = dict(help_option_names=["--help", "-h"])
+CONTEXT_SETTINGS = {"help_option_names": ["--help", "-h"]}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -520,7 +520,7 @@ def filter_workflows(
             kwargs["start_oldest_date"] = started_since
 
     if close_status and status != simpleflow.swf.mapper.models.workflow.WorkflowExecution.STATUS_CLOSED:
-        raise Exception("Closed status not supported for non-closed workflows.")
+        raise ValueError("Closed status not supported for non-closed workflows.")
     elif close_status:
         kwargs["close_status"] = close_status.upper()
 
@@ -954,7 +954,7 @@ def info(sections):
     def section(title):
         print(log.colorize("BLUE", f"# {title}"))
         yield
-        print("")
+        print()
 
     if "versions" in sections:
         with section("Versions"):

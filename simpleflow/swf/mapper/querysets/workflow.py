@@ -481,7 +481,6 @@ class WorkflowExecutionQuerySet(BaseWorkflowQuerySet):
         )
 
     def get(self, workflow_id, run_id, *args, **kwargs):
-        """ """
         try:
             response = self.describe_workflow_execution(self.domain.name, run_id, workflow_id)
         except ClientError as e:

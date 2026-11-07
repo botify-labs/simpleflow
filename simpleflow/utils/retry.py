@@ -9,7 +9,7 @@ from simpleflow import logger
 
 def _to_tuple(exceptions):
     if not isinstance(exceptions, Sequence):
-        return tuple([exceptions])
+        return (exceptions,)
     elif not isinstance(exceptions, tuple):
         return tuple(exceptions)
     return exceptions
@@ -23,6 +23,9 @@ def constant(value):
     return call
 
 
+DEFAULT_DELAY = constant(1)
+
+
 def exponential(value):
     """
     Set retry time exponentially; per the "+ 1," begin at a minimum of one second.
@@ -34,7 +37,7 @@ def exponential(value):
 
 def with_delay(
     nb_times=1,
-    delay=constant(1),
+    delay=DEFAULT_DELAY,
     on_exceptions=Exception,
     except_on=None,
     log_with=None,

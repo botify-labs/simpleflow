@@ -51,7 +51,6 @@ class Event:
         timestamp: float | datetime,
         raw_data: dict | None,
     ):
-        """ """
         self._id = id
         self._state = state
         self._timestamp = timestamp
