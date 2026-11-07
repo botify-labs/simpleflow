@@ -42,9 +42,6 @@ def wait(*fs):
     Raises a ``exceptions.ExecutionBlocked`` otherwise.
 
     """
-    if any(future.state == PENDING for future in fs):
-        raise exceptions.ExecutionBlocked()
-
     return [future.result for future in fs]
 
 
