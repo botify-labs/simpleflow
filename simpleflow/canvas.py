@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from simpleflow.exceptions import AggregateException
 from simpleflow.utils import issubclass_
 
@@ -9,9 +7,6 @@ from . import futures
 from .activity import Activity
 from .base import Submittable, SubmittableContainer
 from .task import ActivityTask, WorkflowTask
-
-if TYPE_CHECKING:
-    pass
 
 
 class FuncGroup(SubmittableContainer):

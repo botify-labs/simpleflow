@@ -116,7 +116,7 @@ class Poller(simpleflow.swf.mapper.actors.Actor, NamedMixin):
                 except_on=simpleflow.swf.mapper.exceptions.DoesNotExistError,
             )(self.complete)  # Exponential backoff on errors.
             complete(token, response)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             # This is embarrassing because the decider cannot notify SWF of the
             # task completion. As it will not try again, the task will
             # timeout (start_to_complete).

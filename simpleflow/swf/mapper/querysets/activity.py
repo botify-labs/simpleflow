@@ -187,12 +187,12 @@ class ActivityTypeQuerySet(BaseQuerySet):
             return self.get(
                 name,
                 version,
+                *args,
                 task_list=task_list,
                 task_heartbeat_timeout=task_heartbeat_timeout,
                 task_schedule_to_close_timeout=task_schedule_to_close_timeout,
                 task_schedule_to_start_timeout=task_schedule_to_start_timeout,
                 task_start_to_close_timeout=task_start_to_close_timeout,
-                *args,
                 **kwargs,
             )
         except DoesNotExistError:

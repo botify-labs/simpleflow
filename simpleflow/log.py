@@ -87,11 +87,10 @@ class SimpleflowFormatter(logging.Formatter):
         s = "{isodate} {coloredlevel} [process={processName}, pid={process}]: {message}".format(**record.__dict__)
 
         # C&P from logging.Formatter#format
-        if record.exc_info:
-            # Cache the traceback text to avoid converting it multiple times
-            # (it's constant anyway)
-            if not record.exc_text:
-                record.exc_text = self.formatException(record.exc_info)
+        # Cache the traceback text to avoid converting it multiple times
+        # (it's constant anyway)
+        if record.exc_info and not record.exc_text:
+            record.exc_text = self.formatException(record.exc_info)
         if record.exc_text:
             if s[-1:] != "\n":
                 s = s + "\n"

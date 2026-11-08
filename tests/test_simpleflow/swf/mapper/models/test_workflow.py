@@ -107,19 +107,18 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
 
     @mock_swf
     def test_workflow_type_exists_with_whatever_error(self):
-        with patch.object(self.wt, "describe_workflow_type") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with patch.object(self.wt, "describe_workflow_type") as mock, self.assertRaises(ResponseError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_workflow_type",
-                )
-                _ = self.wt.exists
+                    "message": "Foo bar",
+                },
+                "describe_workflow_type",
+            )
+            _ = self.wt.exists
 
     def test_is_synced_with_unsynced_workflow_type(self):
         pass
@@ -183,64 +182,60 @@ class TestWorkflowType(unittest.TestCase, CustomAssertions):
             self.assertLength(diffs, 0)
 
     def test_save_already_existing_type(self):
-        with patch.object(self.wt, "register_workflow_type") as mock:
-            with self.assertRaises(AlreadyExistsError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "WorkflowType=[name=TestType, version=1.0]",
-                            "Code": "TypeAlreadyExistsFault",
-                        },
-                        "message": "WorkflowType=[name=TestType, version=1.0]",
+        with patch.object(self.wt, "register_workflow_type") as mock, self.assertRaises(AlreadyExistsError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "WorkflowType=[name=TestType, version=1.0]",
+                        "Code": "TypeAlreadyExistsFault",
                     },
-                    "register_workflow_type",
-                )
-                self.wt.save()
+                    "message": "WorkflowType=[name=TestType, version=1.0]",
+                },
+                "register_workflow_type",
+            )
+            self.wt.save()
 
     def test_save_with_response_error(self):
-        with patch.object(self.wt, "register_workflow_type") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "...",
-                            "Code": "UnknownResourceFault",
-                        },
-                        "message": "...",
+        with patch.object(self.wt, "register_workflow_type") as mock, self.assertRaises(DoesNotExistError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "...",
+                        "Code": "UnknownResourceFault",
                     },
-                    "register_workflow_type",
-                )
-                self.wt.save()
+                    "message": "...",
+                },
+                "register_workflow_type",
+            )
+            self.wt.save()
 
     def test_delete_non_existent_type(self):
-        with patch.object(self.wt, "deprecate_workflow_type") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
-                            "Code": "UnknownResourceFault",
-                        },
-                        "message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+        with patch.object(self.wt, "deprecate_workflow_type") as mock, self.assertRaises(DoesNotExistError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+                        "Code": "UnknownResourceFault",
                     },
-                    "deprecate_workflow_type",
-                )
-                self.wt.delete()
+                    "message": "Unknown type: WorkflowType=[name=TestType, version=1.0]",
+                },
+                "deprecate_workflow_type",
+            )
+            self.wt.delete()
 
     def test_delete_deprecated_type(self):
-        with patch.object(self.wt, "deprecate_workflow_type") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "...",
-                            "Code": "TypeDeprecatedFault",
-                        },
-                        "message": "...",
+        with patch.object(self.wt, "deprecate_workflow_type") as mock, self.assertRaises(DoesNotExistError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "...",
+                        "Code": "TypeDeprecatedFault",
                     },
-                    "deprecate_workflow_type",
-                )
-                self.wt.delete()
+                    "message": "...",
+                },
+                "deprecate_workflow_type",
+            )
+            self.wt.delete()
 
 
 class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
@@ -322,19 +317,18 @@ class TestWorkflowExecution(unittest.TestCase, CustomAssertions):
     # TODO: fix test when no network (probably hits real SWF endpoints)
     @unittest.skip("Skip it in case there's no network connection.")
     def test_workflow_execution_exists_with_whatever_error(self):
-        with patch.object(self.we, "describe_workflow_execution") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with patch.object(self.we, "describe_workflow_execution") as mock, self.assertRaises(ResponseError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_workflow_execution",
-                )
-                _ = self.domain.exists
+                    "message": "Foo bar",
+                },
+                "describe_workflow_execution",
+            )
+            _ = self.domain.exists
 
     def test_is_synced_with_unsynced_workflow_execution(self):
         pass

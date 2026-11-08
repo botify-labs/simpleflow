@@ -71,34 +71,35 @@ class TestWorkflowTypeQuerySet(unittest.TestCase):
             self.assertIsInstance(wt, WorkflowType)
 
     def test_get_non_existent_workflow_type(self):
-        with patch.object(self.wtq, "describe_workflow_type") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with patch.object(self.wtq, "describe_workflow_type") as mock, self.assertRaises(ResponseError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_workflow_type",
-                )
-                self.wtq.get("NonExistentWorkflowType", "0.1")
+                    "message": "Foo bar",
+                },
+                "describe_workflow_type",
+            )
+            self.wtq.get("NonExistentWorkflowType", "0.1")
 
     def test_get_whatever_failing_workflow_type(self):
-        with patch.object(ConnectedSWFObject, "describe_workflow_type") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with (
+            patch.object(ConnectedSWFObject, "describe_workflow_type") as mock,
+            self.assertRaises(ResponseError),
+        ):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_workflow_type",
-                )
-                self.wtq.get("NonExistentWorkflowType", "0.1")
+                    "message": "Foo bar",
+                },
+                "describe_workflow_type",
+            )
+            self.wtq.get("NonExistentWorkflowType", "0.1")
 
     def test_get_or_create_existing_workflow_type(self):
         with patch.object(self.wtq, "describe_workflow_type", mock_describe_workflow_type):
@@ -265,34 +266,38 @@ class TestWorkflowExecutionQuerySet(unittest.TestCase):
             self.assertIsInstance(we, WorkflowExecution)
 
     def test_get_non_existent_workflow_execution(self):
-        with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
-                            "Code": "UnknownResourceFault",
-                        },
-                        "message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
+        with (
+            patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock,
+            self.assertRaises(DoesNotExistError),
+        ):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
+                        "Code": "UnknownResourceFault",
                     },
-                    "describe_workflow_execution",
-                )
-                self.weq.get("wf-id", "run-id")
+                    "message": "Unknown execution: WorkflowExecution=[workflowId=wf-id, runId=run-id]",
+                },
+                "describe_workflow_execution",
+            )
+            self.weq.get("wf-id", "run-id")
 
     def test_get_invalid_workflow_execution(self):
-        with patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with (
+            patch.object(ConnectedSWFObject, "describe_workflow_execution") as mock,
+            self.assertRaises(ResponseError),
+        ):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_workflow_execution",
-                )
-                self.weq.get("mocked-workflow-id", "mocked-run-id")
+                    "message": "Foo bar",
+                },
+                "describe_workflow_execution",
+            )
+            self.weq.get("mocked-workflow-id", "mocked-run-id")
 
     def test_filter_without_close_time_filter(self):
         self.weq._list_items = Mock(return_value=[])

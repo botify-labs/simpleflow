@@ -53,7 +53,7 @@ def _some_str(value: Any) -> str:
     """
     try:
         return str(value)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return f"<unprintable {type(value).__name__} object>"
 
 

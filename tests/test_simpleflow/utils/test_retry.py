@@ -97,8 +97,7 @@ class TestRetry(unittest.TestCase):
         callable = DummyCallableRaises(ValueError("test"))
         max_count = 2
         func = with_delay(nb_times=max_count, delay=exponential, on_exceptions=[KeyError, ValueError])(callable)
-        with self.assertRaises(ValueError):
-            with mock.patch("random.random", lambda: 0.01):
-                func()
+        with self.assertRaises(ValueError), mock.patch("random.random", lambda: 0.01):
+            func()
 
         self.assertEqual(callable.count, max_count)

@@ -86,36 +86,34 @@ class TestActivityTypeQuerySet(unittest.TestCase):
 
     def test_get_with_failing_activity_type(self):
         """Asserts get method over a failing activity type raises"""
-        with patch.object(self.atq, "describe_activity_type") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with patch.object(self.atq, "describe_activity_type") as mock, self.assertRaises(ResponseError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_activity_type",
-                )
+                    "message": "Foo bar",
+                },
+                "describe_activity_type",
+            )
 
-                self.atq.get("mocked-failing-activity-type", "0.1")
+            self.atq.get("mocked-failing-activity-type", "0.1")
 
     def test_get_with_non_existent_name(self):
         """Asserts get method with non existent activity type name provided raises"""
-        with patch.object(self.atq, "describe_activity_type") as mock:
-            with self.assertRaises(DoesNotExistError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Unknown type: ActivityType=[name=blah, version=test]",
-                            "Code": "UnknownResourceFault",
-                        },
-                        "message": "Unknown type: ActivityType=[name=blah, version=test]",
+        with patch.object(self.atq, "describe_activity_type") as mock, self.assertRaises(DoesNotExistError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Unknown type: ActivityType=[name=blah, version=test]",
+                        "Code": "UnknownResourceFault",
                     },
-                    "describe_activity_type",
-                )
-                self.atq.get("blah", "test")
+                    "message": "Unknown type: ActivityType=[name=blah, version=test]",
+                },
+                "describe_activity_type",
+            )
+            self.atq.get("blah", "test")
 
     def test_create(self):
         with patch.object(ConnectedSWFObject, "register_activity_type"):

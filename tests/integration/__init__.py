@@ -99,7 +99,7 @@ class VCRIntegrationTest(IntegrationTestCase):
         return self.runner.invoke(simpleflow.command.cli, arguments, catch_exceptions=catch_exceptions)
 
     def run_standalone(self, workflow_name, *args, **kwargs):
-        input = json_dumps(dict(args=args, kwargs=kwargs))
+        input = json_dumps({"args": args, "kwargs": kwargs})
         result = self.invoke(
             [
                 "standalone",

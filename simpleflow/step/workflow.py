@@ -29,7 +29,7 @@ class WorkflowStepMixin(metaclass=abc.ABCMeta):
         """
         Return the S3 bucket where to store the steps files.
         """
-        return "/".join((settings.SIMPLEFLOW_S3_HOST, settings.STEP_BUCKET))
+        return f"{settings.SIMPLEFLOW_S3_HOST}/{settings.STEP_BUCKET}"
 
     def get_step_path_prefix(self) -> str:
         """

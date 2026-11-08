@@ -62,9 +62,7 @@ class Workflow(Submittable):
         """
         # If the activity is a child workflow, call directly
         # the executor
-        if issubclass_(submittable, Workflow):
-            return self._executor.submit(submittable, *args, **kwargs)
-        elif isinstance(submittable, (Activity, Workflow)):
+        if issubclass_(submittable, Workflow) or isinstance(submittable, (Activity, Workflow)):
             return self._executor.submit(submittable, *args, **kwargs)
         elif isinstance(submittable, (task.Task, WaitForSignal)):
             return self._executor.submit(submittable)
@@ -121,7 +119,6 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        pass
 
     def after_replay(self, history):
         """
@@ -131,7 +128,6 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        pass
 
     def after_closed(self, history):
         """
@@ -141,7 +137,6 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        pass
 
     @deprecated
     def before_run(self, history):
@@ -165,7 +160,6 @@ class Workflow(Submittable):
         :param details:
         :type details: Optional[str]
         """
-        pass
 
     def on_completed(self, history):
         """
@@ -174,7 +168,6 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        pass
 
     def on_canceled(self, history):
         """
@@ -183,7 +176,6 @@ class Workflow(Submittable):
         :param history:
         :type history: simpleflow.history.History
         """
-        pass
 
     def get_run_context(self):
         """
@@ -259,7 +251,7 @@ class Workflow(Submittable):
         return True
 
     def continue_as_new(self, *args, **kwargs):
-        return self.executor.continue_as_new(workflow=type(self), *args, **kwargs)
+        return self.executor.continue_as_new(*args, workflow=type(self), **kwargs)
 
     def on_task_failure(
         self,
@@ -270,4 +262,4 @@ class Workflow(Submittable):
         :param failure_context:
         :return:
         """
-        pass  # no specific error handling
+        # no specific error handling

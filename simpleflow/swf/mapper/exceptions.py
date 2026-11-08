@@ -232,7 +232,7 @@ def generate_resource_not_found_message(error: Exception) -> str:
 
 
 def raises(
-    exception: type[Exception] | type[SWFError],
+    exception: type[Exception | SWFError],
     when: Callable[[Exception, tuple, dict], bool],
     extract: Callable[[Any], str] = str,
 ):
@@ -303,7 +303,7 @@ def catch(
         return decorated
 
     if not isinstance(exceptions, Sequence):
-        exceptions = tuple([exceptions])
+        exceptions = (exceptions,)
     elif not isinstance(exceptions, tuple):
         exceptions = tuple(exceptions)
 

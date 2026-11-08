@@ -113,13 +113,11 @@ class Executor(metaclass=abc.ABCMeta):
         :type  details: str.
 
         """
-        pass
 
     def on_completed(self):
         """
         Method called when the workflow completes.
         """
-        pass
 
     def fail(self, reason, details=None):
         """
@@ -131,7 +129,6 @@ class Executor(metaclass=abc.ABCMeta):
         :type  details: str.
 
         """
-        pass
 
     def before_replay(self):
         pass

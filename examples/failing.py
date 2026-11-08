@@ -31,7 +31,7 @@ def timeout_no_raise():
 
 
 def colorize(color: str, message: str) -> str:
-    return "".join([color, message, END])
+    return f"{color}{message}{END}"
 
 
 class FailingWorkflow(Workflow):

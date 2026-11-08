@@ -119,7 +119,7 @@ class ActivityPoller(Poller, simpleflow.swf.mapper.actors.ActivityWorker):
                 reason=str(reason) if reason else None,
                 details=str(details) if details else None,
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             logger.error(f"cannot fail task {task.activity_type.name}: {err}")
 
 
@@ -152,7 +152,7 @@ class ActivityWorker:
                 simpleflow_middlewares=middlewares,
                 **kwargs,
             ).execute()
-        except Exception:
+        except Exception:  # noqa: BLE001
             exc_type, exc_value, exc_tb = sys.exc_info()
             logger.exception(f"process error: {exc_value!s}")
             if isinstance(exc_value, ExecutionError) and len(exc_value.args):
@@ -175,7 +175,7 @@ class ActivityWorker:
         try:
             logger.info("completing activity id=%s", task.activity_id)
             poller.complete_with_retry(token, result)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             logger.exception("failed to complete activity id=%s", task.activity_id)
             reason = f"cannot complete task {task.activity_id}: {err.__class__.__name__} {err}"
             poller.fail_with_retry(token, task, reason)

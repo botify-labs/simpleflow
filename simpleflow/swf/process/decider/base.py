@@ -141,7 +141,7 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         self,
         token: str,
         decisions: list | None = None,
-        execution_context: Any | None | DecisionsAndContext = None,
+        execution_context: Any | DecisionsAndContext | None = None,
     ) -> None:
         """
         DubiousImpl: ~same as simpleflow.swf.mapper.actors.Decider.complete although execution_context is never set...
@@ -227,7 +227,7 @@ class DeciderWorker:
             self._workflow_executors[workflow_name] = workflow_executor
         try:
             decisions = workflow_executor.replay(decision_response)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             import traceback
 
             details = traceback.format_exc()
@@ -250,7 +250,7 @@ def process_decision(poller: DeciderPoller, decision_response: Response) -> None
     try:
         logger.info(f"completing decision for {workflow_str}")
         poller.complete_with_retry(decision_response.token, decisions)
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001
         logger.error(f"cannot complete decision for {workflow_str}: {err}")
 
 
