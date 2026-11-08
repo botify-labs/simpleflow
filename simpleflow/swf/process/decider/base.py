@@ -141,7 +141,7 @@ class DeciderPoller(Poller, simpleflow.swf.mapper.actors.Decider):
         self,
         token: str,
         decisions: list | None = None,
-        execution_context: Any | None | DecisionsAndContext = None,
+        execution_context: Any | DecisionsAndContext | None = None,
     ) -> None:
         """
         DubiousImpl: ~same as simpleflow.swf.mapper.actors.Decider.complete although execution_context is never set...

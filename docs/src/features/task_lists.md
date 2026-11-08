@@ -59,8 +59,7 @@ class MyWorkflow(Workflow):
     def get_task_list(cls, task_list, *args, **kwargs):
         return task_list
 
-    def run(self, x, task_list, *args, **kwargs):
-        ...
+    def run(self, x, task_list, *args, **kwargs): ...
 ```
 
 In this example, `task_list` is a mandatory workflow argument; a more realistic
@@ -79,8 +78,7 @@ from simpleflow import Workflow
 from simpleflow.task import WorkflowTask
 
 
-class MyChildWorkflow(Workflow):
-    ...
+class MyChildWorkflow(Workflow): ...
 
 
 class MyWorkflow(Workflow):
