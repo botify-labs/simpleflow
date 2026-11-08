@@ -36,19 +36,18 @@ class TestDomainQuerySet(unittest.TestCase):
             self.assertEqual(domain.status, self.domain.status)
 
     def test_get_raising_domain(self):
-        with patch.object(ConnectedSWFObject, "describe_domain") as mock:
-            with self.assertRaises(ResponseError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {
-                            "Message": "Foo bar",
-                            "Code": "WhateverError",
-                        },
-                        "message": "Foo bar",
+        with patch.object(ConnectedSWFObject, "describe_domain") as mock, self.assertRaises(ResponseError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {
+                        "Message": "Foo bar",
+                        "Code": "WhateverError",
                     },
-                    "describe_domain",
-                )
-                self.qs.get("whatever")
+                    "message": "Foo bar",
+                },
+                "describe_domain",
+            )
+            self.qs.get("whatever")
 
     def test_get_or_create_existing_domain(self):
         with patch.object(ConnectedSWFObject, "describe_domain", mock_describe_domain):

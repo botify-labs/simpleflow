@@ -1566,7 +1566,7 @@ def test_task_naming():
         # class-based task, non idempotent
         "activity-tests.data.activities.Tetra-1",
     ]
-    for i in range(0, len(expected)):
+    for i in range(len(expected)):
         decision = decisions[i]["scheduleActivityTaskDecisionAttributes"]
         assert decision["activityId"] == expected[i]
 
@@ -1594,17 +1594,17 @@ def test_run_context():
         )
     )
     context = executor.get_run_context()
-    expected = dict(
-        name="the_workflow_name",
-        version="the_workflow_version",
-        domain_name=DOMAIN.name,
-        workflow_id="a_workflow_id",
-        run_id="a_run_id",
-        tag_list=[],
-        continued_execution_run_id=None,
-        parent_workflow_id=None,
-        parent_run_id=None,
-    )
+    expected = {
+        "name": "the_workflow_name",
+        "version": "the_workflow_version",
+        "domain_name": DOMAIN.name,
+        "workflow_id": "a_workflow_id",
+        "run_id": "a_run_id",
+        "tag_list": [],
+        "continued_execution_run_id": None,
+        "parent_workflow_id": None,
+        "parent_run_id": None,
+    }
     assert expected == context
 
 

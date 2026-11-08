@@ -29,9 +29,8 @@ class TestGroup(unittest.TestCase):
 
     def setUp(self):
         self.tmp_filename = tempfile.mktemp()
-        f = open(self.tmp_filename, "w")
-        f.write("42")
-        f.close()
+        with open(self.tmp_filename, "w") as f:
+            f.write("42")
 
     def tearDown(self):
         os.remove(self.tmp_filename)
@@ -64,8 +63,8 @@ class TestGroup(unittest.TestCase):
 
         dest_tmp_filename = tempfile.mktemp()
         storage.pull(self.bucket, "mykey.txt", dest_tmp_filename)
-        f = open(dest_tmp_filename)
-        assert f.readline() == "42"
+        with open(dest_tmp_filename) as f:
+            assert f.readline() == "42"
 
     @mock_s3
     def test_pull_content(self):
@@ -100,12 +99,12 @@ class TestGroup(unittest.TestCase):
         with (
             patch.object(s3, "get_bucket_location", _access_denied),
             patch.object(storage, "get_client", return_value=s3),
+            patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default,
         ):
-            with patch("simpleflow.settings.SIMPLEFLOW_S3_HOST") as default:
-                self.assertEqual(
-                    storage.sanitize_bucket_and_host(self.bucket),
-                    (self.bucket, default),
-                )
+            self.assertEqual(
+                storage.sanitize_bucket_and_host(self.bucket),
+                (self.bucket, default),
+            )
 
         # bucket where we provided a host/bucket: return bucket+host
         self.assertEqual(

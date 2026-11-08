@@ -132,10 +132,7 @@ class History:
         """
         completion_states = {"completed", "failed", "canceled", "terminated"}
 
-        if isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states:
-            return True
-
-        return False
+        return bool(isinstance(self.last, WorkflowExecutionEvent) and self.last.state in completion_states)
 
     def filter(self, **kwargs) -> list[Event]:
         """Filters the history based on kwargs events attributes

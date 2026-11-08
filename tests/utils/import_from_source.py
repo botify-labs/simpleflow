@@ -165,11 +165,6 @@ def add_module_organization_tests(
     for module_name in module_names:
         params.extend(list(_recurse_modules(module_name, ignore_tests=True, packages_only=False)))
 
-    setattr(
-        sys.modules[test_module],
-        "test_imports_from_source",
-        pytest.mark.parametrize(
-            "module",
-            params,
-        )(_test_imports_from_source),
+    sys.modules[test_module].test_imports_from_source = pytest.mark.parametrize("module", params)(
+        _test_imports_from_source
     )

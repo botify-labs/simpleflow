@@ -9,7 +9,7 @@ import psutil
 import pytest
 from multiprocess import Lock, Process, Value
 
-import simpleflow.swf.process.worker.base as base
+from simpleflow.swf.process.worker import base
 
 
 def noop_target(handler):

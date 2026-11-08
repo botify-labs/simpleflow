@@ -29,7 +29,7 @@ def load_workflow_executor(
     workflow = import_from_module(workflow_name)
 
     if not isinstance(domain, simpleflow.swf.mapper.models.Domain):
-        raise ValueError(f"domain is a {type(domain).__name__}, not a Domain")
+        raise TypeError(f"domain is a {type(domain).__name__}, not a Domain")
 
     return Executor(
         domain,

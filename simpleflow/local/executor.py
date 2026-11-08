@@ -99,7 +99,7 @@ class Executor(executor.Executor):
             func = getattr(task, "activity", None)
         elif isinstance(func, Activity):
             kwargs["simpleflow_middlewares"] = self.middlewares
-            task = ActivityTask(func, context=context, *args, **kwargs)
+            task = ActivityTask(func, *args, context=context, **kwargs)
         elif issubclass(func, Workflow):
             task = WorkflowTask(self, func, *args, **kwargs)
         else:
@@ -113,7 +113,7 @@ class Executor(executor.Executor):
             if hasattr(task, "post_execute"):
                 task.post_execute()
             state = "completed"
-        except Exception:
+        except Exception:  # noqa: BLE001
             exc_type, exc_value, exc_tb = sys.exc_info()
             tb = traceback.format_exception(exc_value, value=exc_value, tb=exc_tb)
             task_failed = exceptions.TaskFailed(

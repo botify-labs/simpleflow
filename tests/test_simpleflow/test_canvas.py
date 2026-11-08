@@ -110,9 +110,7 @@ class TestGroup(unittest.TestCase):
             def run(self, str1, *args, **kwargs):
                 return {"str1": str1, "kwargs": kwargs}
 
-        future = Group(ChildWorkflowTask(ChildWorkflowGroupWithWorkflow, str1="str1", **{"hello": "world"})).submit(
-            executor
-        )
+        future = Group(ChildWorkflowTask(ChildWorkflowGroupWithWorkflow, str1="str1", hello="world")).submit(executor)
         self.assertTrue(future.finished)
         self.assertEqual(future.result, [{"str1": "str1", "kwargs": {"hello": "world"}}])
 
@@ -267,7 +265,7 @@ class TestFuncGroup(unittest.TestCase):
     def test_previous_value_with_func(self):
         def custom_func(previous_value):
             group = Group()
-            for i in range(0, previous_value):
+            for i in range(previous_value):
                 group.append(to_int, i * 2)
             return group
 
@@ -282,7 +280,7 @@ class TestFuncGroup(unittest.TestCase):
     def test_raises_on_failure(self):
         def custom_func():
             group = Group()
-            for i in range(0, 2):
+            for i in range(2):
                 group.append(zero_division)
             return group
 
@@ -294,7 +292,7 @@ class TestFuncGroup(unittest.TestCase):
 
         def custom_func():
             group = Group()
-            for i in range(0, 2):
+            for i in range(2):
                 group.append(zero_division)
             return group
 

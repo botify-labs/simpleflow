@@ -78,12 +78,12 @@ class EventFactory:
         # response field is non-capitalized...
         event_attributes_key = decapitalize(event_name) + "EventAttributes"
 
-        cls = EventFactory.events[event_type]["event"]
+        event_cls = EventFactory.events[event_type]["event"]
         # ⚠️ changing class attributes: don't use them in instances!
-        cls._name = event_name
-        cls._attributes_key = event_attributes_key
+        event_cls._name = event_name
+        event_cls._attributes_key = event_attributes_key
 
-        instance = cls(
+        instance = event_cls(
             id=event_id,
             state=event_state,
             timestamp=event_timestamp,

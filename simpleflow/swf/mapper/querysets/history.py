@@ -38,8 +38,7 @@ class HistoryQuerySet(BaseQuerySet):
         """
         max_results = max_results or page_size
 
-        if max_results < page_size:
-            page_size = max_results
+        page_size = min(page_size, max_results)
 
         response = self.get_workflow_execution_history(
             self.domain.name,

@@ -136,7 +136,7 @@ class Activity:
         else:
             name = callable.__class__.__name__
 
-        return ".".join([prefix, name])
+        return f"{prefix}.{name}"
 
     def __repr__(self):
         return f"Activity(name={self.name}, version={self.version}, task_list={self.task_list})"

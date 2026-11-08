@@ -107,7 +107,7 @@ def run_fake_task_worker(domain, task_list, former_event):
             },
         )
     else:
-        raise Exception(f"Wrong event type {former_event['type']}")
+        raise ValueError(f"Wrong event type {former_event['type']}")
 
     worker_proc.start()
 
@@ -497,10 +497,13 @@ class Executor(executor.Executor):
         event = history.timers.get(a_task.id)
         if not event:
             return None
-        if isinstance(a_task, CancelTimerTask):
-            if "canceled_event_id" not in event and "cancel_failed_event_id" not in event:
-                # Timer not yet cancelled: no future returned
-                return None
+        if (
+            isinstance(a_task, CancelTimerTask)
+            and "canceled_event_id" not in event
+            and "cancel_failed_event_id" not in event
+        ):
+            # Timer not yet cancelled: no future returned
+            return None
         return event
 
     TASK_TYPE_TO_EVENT_FINDER: ClassVar[dict[type, callable]] = {
@@ -820,9 +823,8 @@ class Executor(executor.Executor):
                     future, a_task = future_and_more
                 else:
                     future = future_and_more
-            if event["type"] == "activity":
-                if future and future.state in (futures.PENDING, futures.RUNNING):
-                    self._open_activity_count += 1
+            if event["type"] == "activity" and future and future.state in (futures.PENDING, futures.RUNNING):
+                self._open_activity_count += 1
 
         if not future:
             self.schedule_task(a_task, task_list=self.task_list)
@@ -1023,7 +1025,7 @@ class Executor(executor.Executor):
                 self.decref_workflow()
             return DecisionsAndContext([decision])
 
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             reason = f"Cannot replay the workflow: {err.__class__.__name__}({err})"
 
             tb = traceback.format_exc()
@@ -1198,10 +1200,10 @@ class Executor(executor.Executor):
         extra_input = {"__propagate": propagate if isinstance(propagate, bool) else str(propagate)}
         return SignalTask(
             name,
+            *args,
             workflow_id=workflow_id if workflow_id else self._workflow_id,
             run_id=run_id if workflow_id else self._run_id,
             extra_input=extra_input,
-            *args,
             **kwargs,
         )
 
@@ -1322,4 +1324,4 @@ class Executor(executor.Executor):
         return [decision]
 
     def continue_as_new(self, workflow: type[Workflow], *args, **kwargs):
-        return ContinueAsNewWorkflowTask(executor=self, workflow=workflow, *args, **kwargs)
+        return ContinueAsNewWorkflowTask(*args, executor=self, workflow=workflow, **kwargs)

@@ -158,7 +158,7 @@ class ExecutionError(Exception):
 
 
 class ExecutionTimeoutError(Exception):
-    def __init__(self, command: str, timeout_value: int | float | None):
+    def __init__(self, command: str, timeout_value: float | None):
         self.timeout_command = command
         self.timeout_value = timeout_value
 

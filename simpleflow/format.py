@@ -25,8 +25,7 @@ def _jumbo_fields_bucket() -> str | None:
     if not bucket:
         return None
     # trim trailing / if there, would provoke double slashes down the road
-    if bucket.endswith("/"):
-        bucket = bucket[:-1]
+    bucket = bucket.removesuffix("/")
     return bucket
 
 

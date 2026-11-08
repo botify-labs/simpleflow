@@ -108,16 +108,15 @@ class TestDomain(unittest.TestCase):
             self.domain.save()
 
     def test_domain_save_already_existing_domain(self):
-        with patch.object(self.domain, "register_domain") as mock:
-            with self.assertRaises(AlreadyExistsError):
-                mock.side_effect = ClientError(
-                    {
-                        "Error": {"Message": "testdomain", "Code": "DomainAlreadyExistsFault"},
-                        "message": "testdomain",
-                    },
-                    "register_domain",
-                )
-                self.domain.save()
+        with patch.object(self.domain, "register_domain") as mock, self.assertRaises(AlreadyExistsError):
+            mock.side_effect = ClientError(
+                {
+                    "Error": {"Message": "testdomain", "Code": "DomainAlreadyExistsFault"},
+                    "message": "testdomain",
+                },
+                "register_domain",
+            )
+            self.domain.save()
 
     @mock_swf
     def test_domain_delete_existing_domain(self):

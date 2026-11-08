@@ -22,13 +22,11 @@ def ls_nokwargs(*args):
     Only accepts a variable number of positional arguments.
 
     """
-    pass
 
 
 def test_execute_program_no_kwargs():
-    with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError):
-            ls_nokwargs(hide=f.name)
+    with tempfile.NamedTemporaryFile() as f, pytest.raises(TypeError):
+        ls_nokwargs(hide=f.name)
 
 
 @execute.program(path="ls")
@@ -37,13 +35,11 @@ def ls_noargs(**kwargs):
     Only accepts a variable number of keyword arguments.
 
     """
-    pass
 
 
 def test_execute_program_no_args():
-    with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError):
-            ls_noargs(f.name)
+    with tempfile.NamedTemporaryFile() as f, pytest.raises(TypeError):
+        ls_noargs(f.name)
 
 
 @execute.program(path="ls")
@@ -52,9 +48,8 @@ def ls_restrict_named_arguments(*, hide=execute.RequiredArgument):
 
 
 def test_execute_program_restrict_named_arguments():
-    with tempfile.NamedTemporaryFile() as f:
-        with pytest.raises(TypeError):
-            ls_restrict_named_arguments(f.name)
+    with tempfile.NamedTemporaryFile() as f, pytest.raises(TypeError):
+        ls_restrict_named_arguments(f.name)
 
 
 @execute.program(path="ls")

@@ -202,7 +202,7 @@ def swf_identity():
     if "SIMPLEFLOW_IDENTITY" in os.environ:
         try:
             extra_keys = json.loads(os.environ["SIMPLEFLOW_IDENTITY"])
-        except Exception:
+        except ValueError:
             extra_keys = {}
         for key, value in extra_keys.items():
             identity[key] = value
