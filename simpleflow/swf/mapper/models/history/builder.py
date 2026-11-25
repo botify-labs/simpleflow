@@ -752,6 +752,40 @@ class History(simpleflow.swf.mapper.models.History):
         )
         return self
 
+    def add_timer_start_failed(self, timer_id, cause, decision_id=0):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "StartTimerFailed",
+                    "startTimerFailedEventAttributes": {
+                        "timerId": timer_id,
+                        "cause": cause,
+                        "decisionTaskCompletedEventId": decision_id,
+                    },
+                }
+            )
+        )
+        return self
+
+    def add_timer_cancel_failed(self, timer_id, cause, decision_id=0):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "CancelTimerFailed",
+                    "cancelTimerFailedEventAttributes": {
+                        "timerId": timer_id,
+                        "cause": cause,
+                        "decisionTaskCompletedEventId": decision_id,
+                    },
+                }
+            )
+        )
+        return self
+
     def add_timer_canceled(self, timer_id, started_timer_id=0):
         self.events.append(
             EventFactory(
