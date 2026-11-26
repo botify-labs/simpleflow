@@ -125,7 +125,6 @@ exclude = ["*~"]
 [dependency-groups]
 dev = [
     "boto3-stubs[s3,swf]",
-    "cffi==v1.17.0rc1; python_full_version=='3.13.0b4'", # via cryptography via moto, secretstorage
     "flaky",
     "hatch",
     "invoke",
