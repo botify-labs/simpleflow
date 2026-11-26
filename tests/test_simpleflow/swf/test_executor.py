@@ -4,7 +4,7 @@ import re
 import unittest
 from unittest import mock
 
-from simpleflow import activity, format, futures
+from simpleflow import activity, exceptions, format, futures
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
@@ -67,7 +67,52 @@ class TestSimpleflowSwfExecutor(MockSWFTestCase):
         assert get_task_priority(decisions[4]) == "30"
 
 
+class StartTimerWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(self.start_timer("a_timer", 10))
+
+
+class CancelTimerWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(self.cancel_timer("a_timer"))
+
+
 class TestCaseNotNeedingDomain(unittest.TestCase):
+    def test_a_refused_timer_start_replays_as_a_failed_future(self):
+        history = builder.History(StartTimerWorkflow, input={})
+        history.add_timer_start_failed("a_timer", "TIMER_CREATION_RATE_EXCEEDED", decision_id=2)
+
+        StartTimerWorkflow.future = None
+        executor = Executor(DOMAIN, StartTimerWorkflow)
+        executor.replay(Response(history=history, execution=None))
+
+        future = StartTimerWorkflow.future
+        assert future is not None
+        assert future.finished
+        assert isinstance(future.exception, exceptions.TaskFailed)
+        assert future.exception.name == "a_timer"
+        assert future.exception.reason == "TIMER_CREATION_RATE_EXCEEDED"
+
+    def test_a_failed_timer_cancel_replays_as_a_failed_future(self):
+        history = builder.History(CancelTimerWorkflow, input={})
+        history.add_timer_started("a_timer", 10, decision_id=2)
+        history.add_timer_cancel_failed("a_timer", "TIMER_ID_UNKNOWN", decision_id=5)
+
+        CancelTimerWorkflow.future = None
+        executor = Executor(DOMAIN, CancelTimerWorkflow)
+        executor.replay(Response(history=history, execution=None))
+
+        future = CancelTimerWorkflow.future
+        assert future is not None
+        assert future.finished
+        assert isinstance(future.exception, exceptions.TaskFailed)
+        assert future.exception.name == "a_timer"
+        assert future.exception.reason == "TIMER_ID_UNKNOWN"
+
     def test_get_event_details(self):
         history = builder.History(ExampleWorkflow, input={})
         signal_input = {"x": 42, "foo": "bar", "__propagate": False}

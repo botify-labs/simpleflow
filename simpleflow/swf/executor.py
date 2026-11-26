@@ -439,7 +439,7 @@ class Executor(executor.Executor):
         elif state in ("start_failed", "cancel_failed"):
             future.set_exception(
                 exceptions.TaskFailed(
-                    name=event["timer_id"],
+                    name=event["id"],
                     reason=event["cause"],
                 )
             )
