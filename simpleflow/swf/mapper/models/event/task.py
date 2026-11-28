@@ -58,7 +58,8 @@ class ActivityTaskEventDict(TypedDict):
     result: Any
     reason: str | None
     details: str | None
-    cancelled_timestamp: datetime
+    canceled_id: int
+    canceled_timestamp: datetime
 
 
 class CompiledActivityTaskEvent(CompiledEvent):

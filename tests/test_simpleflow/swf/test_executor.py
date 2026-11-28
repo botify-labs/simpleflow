@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from simpleflow import activity, exceptions, format, futures
+from simpleflow.history import History
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
@@ -564,6 +565,66 @@ class TestRefusedMarkerReplay(unittest.TestCase):
         (decision,) = self.replay(history)[0]
 
         assert decision["recordMarkerDecisionAttributes"]["markerName"] == "a_marker"
+
+
+class OneActivityWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(increment, 1)
+        futures.wait(type(self).future)
+
+
+class TestCanceledReplay(unittest.TestCase):
+    ACTIVITY_ID = "activity-tests.data.activities.increment-1"
+
+    def test_a_canceled_activity_cancels_its_future(self):
+        for started in (True, False):
+            with self.subTest(started=started):
+                history = builder.History(OneActivityWorkflow, input={})
+                history.add_decision_task_completed()
+                history.add_activity_task(
+                    increment,
+                    decision_id=history.last_id,
+                    last_state="started" if started else "scheduled",
+                    activity_id=self.ACTIVITY_ID,
+                )
+                scheduled_id = history.last_id - 1 if started else history.last_id
+                started_id = history.last_id if started else None
+                history.add_activity_task_cancel_requested(self.ACTIVITY_ID)
+                history.add_activity_task_canceled(
+                    scheduled_id, started=started_id, cancel_requested=history.last_id, details="given up"
+                )
+                canceled_id = history.last_id
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                OneActivityWorkflow.future = None
+                executor = Executor(DOMAIN, OneActivityWorkflow)
+                decisions = executor.replay(Response(history=history, execution=None)).decisions
+
+                assert OneActivityWorkflow.future.cancelled
+                assert [d["decisionType"] for d in decisions] == ["CompleteWorkflowExecution"]
+                details = executor._history.activities[self.ACTIVITY_ID]
+                assert details["state"] == "canceled"
+                assert details["canceled_id"] == canceled_id
+                assert details["canceled_timestamp"] == history.events[-3].timestamp
+                assert details["details"] == "given up"
+                assert details["name"] == "tests.data.activities.increment"
+
+    def test_a_canceled_workflow_execution_is_parsed(self):
+        swf_history = builder.History(OneActivityWorkflow, input={})
+        swf_history.add_decision_task_completed()
+        swf_history.add_workflow_execution_canceled(decision_id=swf_history.last_id, details="given up")
+        history = History(swf_history)
+
+        history.parse()
+
+        assert history.workflow["state"] == "canceled"
+        assert history.workflow["canceled_id"] == swf_history.last_id
+        assert history.workflow["canceled_timestamp"] == swf_history.events[-1].timestamp
+        assert history.workflow["decision_task_completed_event_id"] == swf_history.last_id - 1
+        assert history.workflow["details"] == "given up"
 
 
 @activity.with_attributes(raises_on_failure=True)
