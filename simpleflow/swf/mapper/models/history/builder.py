@@ -333,6 +333,44 @@ class History(simpleflow.swf.mapper.models.History):
             )
         )
 
+    def add_activity_task_cancel_requested(self, activity_id, decision_id=0):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "ActivityTaskCancelRequested",
+                    "activityTaskCancelRequestedEventAttributes": {
+                        "activityId": activity_id,
+                        "decisionTaskCompletedEventId": decision_id,
+                    },
+                }
+            )
+        )
+
+        return self
+
+    def add_activity_task_canceled(self, scheduled, started=None, cancel_requested=None, details=None):
+        d = {"scheduledEventId": scheduled}
+        if started is not None:
+            d["startedEventId"] = started
+        if cancel_requested is not None:
+            d["latestCancelRequestedEventId"] = cancel_requested
+        if details is not None:
+            d["details"] = details
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "ActivityTaskCanceled",
+                    "activityTaskCanceledEventAttributes": d,
+                }
+            )
+        )
+
+        return self
+
     def add_activity_task(
         self,
         activity,
@@ -681,6 +719,23 @@ class History(simpleflow.swf.mapper.models.History):
 
         return self
 
+    def add_workflow_execution_canceled(self, decision_id=0, details=None):
+        d = {"decisionTaskCompletedEventId": decision_id}
+        if details is not None:
+            d["details"] = details
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "WorkflowExecutionCanceled",
+                    "workflowExecutionCanceledEventAttributes": d,
+                }
+            )
+        )
+
+        return self
+
     def add_signal(self, name, input=None, external_event_id=0):
         self.events.append(
             EventFactory(
@@ -770,6 +825,24 @@ class History(simpleflow.swf.mapper.models.History):
                     "eventType": "MarkerRecorded",
                     "markerRecordedEventAttributes": {
                         "details": json_dumps(details) if details is not None else "{}",
+                        "markerName": name,
+                    },
+                }
+            )
+        )
+
+        return self
+
+    def add_marker_record_failed(self, name, cause="OPERATION_NOT_PERMITTED", decision_id=0):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "RecordMarkerFailed",
+                    "recordMarkerFailedEventAttributes": {
+                        "cause": cause,
+                        "decisionTaskCompletedEventId": decision_id,
                         "markerName": name,
                     },
                 }

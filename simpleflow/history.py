@@ -254,13 +254,14 @@ class History:
                 activity["retry"] = 0
             else:
                 activity["retry"] += 1
-        elif event.state == "cancelled":
+        elif event.state == "canceled":
             activity = get_activity()
             activity.update(
                 {
                     "state": event.state,
                     "details": getattr(event, "details", ""),
-                    "cancelled_timestamp": event.timestamp,
+                    "canceled_id": event.id,
+                    "canceled_timestamp": event.timestamp,
                 }
             )
         elif event.state == "cancel_requested":
@@ -486,7 +487,7 @@ class History:
                     "result": getattr(event, "result", None),
                 }
             )
-        elif event.state == "cancelled":
+        elif event.state == "canceled":
             self._workflow.update(
                 {
                     "state": event.state,

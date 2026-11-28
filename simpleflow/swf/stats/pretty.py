@@ -96,6 +96,11 @@ def get_timestamps(task: dict[str, Any]) -> tuple:
     return last_state, timestamp, scheduled_timestamp
 
 
+def get_name(task: dict[str, Any]) -> str | None:
+    # A refused schedule only has its activity_type, a cancel request only the activity id.
+    return task.get("name") or task.get("activity_type", {}).get("name") or task.get("id")
+
+
 def info(workflow_execution: WorkflowExecution) -> tuple[Sequence, Sequence]:
     history = History(workflow_execution.history())
     history.parse()
@@ -105,7 +110,7 @@ def info(workflow_execution: WorkflowExecution) -> tuple[Sequence, Sequence]:
         first_timestamp = first_event[first_event["state"] + "_timestamp"]
         last_event = history.tasks[-1]
         last_timestamp = last_event.get("timestamp") or last_event[last_event["state"] + "_timestamp"]
-        workflow_input = first_event["input"]
+        workflow_input = first_event.get("input")
     else:
         first_event = history.events[0]
         first_timestamp = first_event.timestamp
@@ -189,7 +194,7 @@ def status(workflow_execution, nb_tasks=None) -> tuple[Sequence, Sequence]:
     history.parse()
 
     header = ["Tasks", "Last State", "Last State Time", "Scheduled Time"]
-    rows = [(task["name"], *get_timestamps(task)) for task in history.tasks[::-1]]
+    rows = [(get_name(task), *get_timestamps(task)) for task in history.tasks[::-1]]
     if nb_tasks:
         rows = rows[:nb_tasks]
 
@@ -299,15 +304,16 @@ def get_task(
     if details:
         header.append("details")
     state = task["state"]
+    activity_type = task.get("activity_type", {})
     rows = [
         [
             task["type"],
-            task["id"],
-            task["name"],
-            task["version"],
+            task.get("id", task_id),
+            task.get("name") or activity_type.get("name"),
+            task.get("version") or activity_type.get("version"),
             state,
             task[state + "_timestamp"],
-            task["input"],
+            task.get("input"),
             task.get("result"),  # Absent for failed tasks
             task.get("reason"),
         ]

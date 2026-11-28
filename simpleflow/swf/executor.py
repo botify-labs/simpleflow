@@ -371,7 +371,7 @@ class Executor(executor.Executor):
         state = event["state"]
         if state == "recorded":
             future.set_finished(event["details"])
-        elif state == "failed":
+        elif state == "record_failed":
             future.set_exception(
                 exceptions.TaskFailed(
                     name=event["name"],
@@ -476,10 +476,13 @@ class Executor(executor.Executor):
         """
         Get the event corresponding to a signal, if any.
         """
-        # FIXME could look directly in signaled_workflows?
-        event = history.signals.get(a_task.name)
+        # history.signals holds the signals this workflow received: they only answer for a signal sent to itself.
+        to_self = a_task.workflow_id is None or (
+            a_task.workflow_id == self._workflow_id and a_task.run_id in (None, self._run_id)
+        )
+        event = history.signals.get(a_task.name) if to_self else None
         if not event:
-            if a_task.workflow_id is None:  # Broadcast, should be in signals
+            if a_task.workflow_id is None:
                 return None
             signaled_workflows = history.signaled_workflows.get(a_task.name, [])
             for w in signaled_workflows:
@@ -515,8 +518,12 @@ class Executor(executor.Executor):
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
-        marker_list = [m for m in marker_list if m["state"] == "recorded" and m["details"] == json_details]
-        return marker_list[-1] if marker_list else None
+        recorded = [m for m in marker_list if m["state"] == "recorded" and m["details"] == json_details]
+        if recorded:
+            return recorded[-1]
+        # RecordMarkerFailed carries no details: a refusal stands for every marker of that name.
+        refused = [m for m in marker_list if m["state"] == "record_failed"]
+        return refused[-1] if refused else None
 
     def find_timer_event(self, a_task: TimerTask | CancelTimerTask, history: History) -> dict[str, Any] | None:
         """

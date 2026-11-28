@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from simpleflow import activity, exceptions, format, futures
+from simpleflow.history import History
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
@@ -302,6 +303,15 @@ class SendSignalWorkflow(BaseTestWorkflow):
         futures.wait(type(self).future)
 
 
+class SignalItselfWorkflow(BaseTestWorkflow):
+    future = None
+    target = None
+
+    def run(self):
+        type(self).future = self.submit(self.signal("a_signal", **(type(self).target or {})))
+        futures.wait(type(self).future)
+
+
 class PropagateSignalsWorkflow(BaseTestWorkflow):
     def run(self):
         pass
@@ -385,6 +395,61 @@ class TestSentSignalReplay(unittest.TestCase):
         assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["workflowId"] == "target-wf"
         assert not future.done
 
+    def test_a_directed_signal_is_sent_despite_a_received_signal_of_the_same_name(self):
+        history = builder.History(SendSignalWorkflow, input={})
+        history.add_signal("a_signal", {"args": [], "kwargs": {}})
+
+        _, decisions, future = self.replay(history)
+
+        (decision,) = signal_decisions(decisions)
+        assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["workflowId"] == "target-wf"
+        assert not future.done
+
+    def test_a_delivered_directed_signal_is_not_sent_again_after_a_received_signal_of_the_same_name(self):
+        history, initiated_id = self.history_with_a_sent_signal()
+        history.add_external_workflow_signaled(initiated_id, "target-wf", "target-run")
+        history.add_signal("a_signal", {"args": [], "kwargs": {}})
+
+        _, decisions, future = self.replay(history)
+
+        assert signal_decisions(decisions) == []
+        assert future.finished
+        assert future.exception is None
+
+    def replay_signal_to_itself(self, target, own_run_id="own-run", received=True):
+        history = builder.History(SignalItselfWorkflow, input={})
+        if received:
+            history.add_signal("a_signal", {"args": [], "kwargs": {}})
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        SignalItselfWorkflow.future = None
+        SignalItselfWorkflow.target = target
+        executor = Executor(DOMAIN, SignalItselfWorkflow)
+        executor._run_context = {"workflow_id": "own-wf", "run_id": own_run_id}
+        decisions = executor.replay(Response(history=history, execution=None)).decisions
+        return signal_decisions(decisions), SignalItselfWorkflow.future
+
+    def test_a_signal_to_itself_is_found_in_the_received_signals(self):
+        for target in (None, {"workflow_id": "own-wf"}, {"workflow_id": "own-wf", "run_id": "own-run"}):
+            with self.subTest(target=target):
+                decisions, future = self.replay_signal_to_itself(target)
+
+                assert decisions == []
+                assert future.finished
+
+    def test_a_signal_to_itself_not_yet_received_is_sent(self):
+        (decision,) = self.replay_signal_to_itself(None, received=False)[0]
+
+        attributes = decision["signalExternalWorkflowExecutionDecisionAttributes"]
+        assert (attributes["workflowId"], attributes["runId"]) == ("own-wf", "own-run")
+
+    def test_a_signal_to_another_run_of_its_workflow_id_is_a_directed_signal(self):
+        decisions, future = self.replay_signal_to_itself({"workflow_id": "own-wf", "run_id": "previous-run"})
+
+        (decision,) = decisions
+        assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["runId"] == "previous-run"
+        assert not future.done
+
     def history_with_a_propagated_signal_in_flight(self):
         history = builder.History(PropagateSignalsWorkflow, input={})
         history.add_child_workflow(PropagateSignalsWorkflow, last_state="started", workflow_id="child-wf")
@@ -433,6 +498,133 @@ class TestSentSignalReplay(unittest.TestCase):
                 history.add_decision_task_started()
 
                 assert self.replay_propagation(history) == ([decision] if sent_again else [])
+
+
+class RecordMarkerWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(self.record_marker("a_marker", "some details"))
+        futures.wait(type(self).future)
+
+
+class TestRefusedMarkerReplay(unittest.TestCase):
+    def history_with_a_refused_marker(self):
+        history = builder.History(RecordMarkerWorkflow, input={})
+        (decision,) = self.replay(history)[0]
+        assert decision["recordMarkerDecisionAttributes"]["markerName"] == "a_marker"
+        history.add_decision_task_completed()
+        history.add_marker_record_failed("a_marker", decision_id=history.last_id)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        return history
+
+    @staticmethod
+    def replay(history):
+        RecordMarkerWorkflow.future = None
+        decisions = replay_decisions(RecordMarkerWorkflow, history)
+        return [d for d in decisions if d["decisionType"] == "RecordMarker"], RecordMarkerWorkflow.future
+
+    def test_a_refused_marker_is_not_recorded_again_and_fails_its_future(self):
+        history = self.history_with_a_refused_marker()
+
+        decisions, future = self.replay(history)
+
+        assert decisions == []
+        assert future.finished
+        assert isinstance(future.exception, exceptions.TaskFailed)
+        assert future.exception.name == "a_marker"
+        assert future.exception.reason == "OPERATION_NOT_PERMITTED"
+
+    def test_a_recorded_marker_wins_over_a_refusal_whatever_their_order(self):
+        for recorded_first in (True, False):
+            with self.subTest(recorded_first=recorded_first):
+                history = builder.History(RecordMarkerWorkflow, input={})
+                history.add_decision_task_completed()
+                if recorded_first:
+                    history.add_marker("a_marker", "some details")
+                history.add_marker_record_failed("a_marker", decision_id=history.last_id)
+                if not recorded_first:
+                    history.add_marker("a_marker", "some details")
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                decisions, future = self.replay(history)
+
+                assert decisions == []
+                assert future.finished
+                assert future.exception is None
+
+    def test_a_refusal_does_not_stand_for_another_marker_name(self):
+        history = builder.History(RecordMarkerWorkflow, input={})
+        history.add_decision_task_completed()
+        history.add_marker_record_failed("another_marker", decision_id=history.last_id)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+
+        (decision,) = self.replay(history)[0]
+
+        assert decision["recordMarkerDecisionAttributes"]["markerName"] == "a_marker"
+
+
+class OneActivityWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(increment, 1)
+        futures.wait(type(self).future)
+
+
+class TestCanceledReplay(unittest.TestCase):
+    ACTIVITY_ID = "activity-tests.data.activities.increment-1"
+
+    def test_a_canceled_activity_cancels_its_future(self):
+        for started in (True, False):
+            with self.subTest(started=started):
+                history = builder.History(OneActivityWorkflow, input={})
+                history.add_decision_task_completed()
+                history.add_activity_task(
+                    increment,
+                    decision_id=history.last_id,
+                    last_state="started" if started else "scheduled",
+                    activity_id=self.ACTIVITY_ID,
+                )
+                scheduled_id = history.last_id - 1 if started else history.last_id
+                started_id = history.last_id if started else None
+                history.add_activity_task_cancel_requested(self.ACTIVITY_ID)
+                history.add_activity_task_canceled(
+                    scheduled_id, started=started_id, cancel_requested=history.last_id, details="given up"
+                )
+                canceled_id = history.last_id
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                OneActivityWorkflow.future = None
+                executor = Executor(DOMAIN, OneActivityWorkflow)
+                decisions = executor.replay(Response(history=history, execution=None)).decisions
+
+                assert OneActivityWorkflow.future.cancelled
+                assert [d["decisionType"] for d in decisions] == ["CompleteWorkflowExecution"]
+                details = executor._history.activities[self.ACTIVITY_ID]
+                assert details["state"] == "canceled"
+                assert details["canceled_id"] == canceled_id
+                assert details["canceled_timestamp"] == history.events[-3].timestamp
+                assert details["details"] == "given up"
+                assert details["name"] == "tests.data.activities.increment"
+
+    def test_a_canceled_workflow_execution_is_parsed(self):
+        swf_history = builder.History(OneActivityWorkflow, input={})
+        swf_history.add_decision_task_completed()
+        swf_history.add_workflow_execution_canceled(decision_id=swf_history.last_id, details="given up")
+        history = History(swf_history)
+
+        history.parse()
+
+        assert history.workflow["state"] == "canceled"
+        assert history.workflow["canceled_id"] == swf_history.last_id
+        assert history.workflow["canceled_timestamp"] == swf_history.events[-1].timestamp
+        assert history.workflow["decision_task_completed_event_id"] == swf_history.last_id - 1
+        assert history.workflow["details"] == "given up"
 
 
 @activity.with_attributes(raises_on_failure=True)
