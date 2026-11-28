@@ -14,7 +14,7 @@ from simpleflow.history import History
 from simpleflow.utils import import_from_module
 
 from . import futures, logger
-from .activity import Activity
+from .activity import Activity, TaskActivity
 
 if TYPE_CHECKING:
     from typing import Any
@@ -137,8 +137,11 @@ class ActivityTask(Task):
 
     def propagate_attribute(self, attr, val):
         """
-        Propagate to the activity.
+        Propagate to this task's own view of the activity: the Activity itself
+        is shared by every task built from it.
         """
+        if getattr(self, "_own_activity", None) is not self.activity:
+            self.activity = self._own_activity = TaskActivity(self.activity)
         setattr(self.activity, attr, val)
 
 
@@ -194,8 +197,18 @@ class WorkflowTask(Task):
 
     def propagate_attribute(self, attr: str, val: Any) -> None:
         """
-        Propagate to the workflow.
+        Propagate to a subclass owned by this task: the workflow class itself
+        is shared by every task built from it. The subclass keeps the class's
+        module and name, so the child workflow type is unchanged.
         """
+        if getattr(self, "_own_workflow", None) is not self.workflow:
+            shared = self.workflow
+            namespace = {
+                "__module__": shared.__module__,
+                "__qualname__": shared.__qualname__,
+                "__doc__": shared.__doc__,
+            }
+            self.workflow = self._own_workflow = type(shared)(shared.__name__, (shared,), namespace)
         setattr(self.workflow, attr, val)
 
 

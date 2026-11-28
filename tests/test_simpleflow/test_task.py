@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from simpleflow import Workflow, activity, registry, task
+from simpleflow import Workflow, activity, canvas, registry, task
 
 
 @activity.with_attributes(task_list="test")
@@ -66,3 +66,56 @@ def test_child_workflow_task_forwards_explicit_task_list():
     assert wf_task._task_list == "my_list"
     assert wf_task.args == [1]
     assert wf_task.kwargs == {"foo": "bar"}
+
+
+@activity.with_attributes(task_list="test", raises_on_failure=True)
+def shared(x):
+    return x
+
+
+class SharedChildWorkflow(Workflow):
+    name = "shared_child_workflow"
+
+
+def test_group_attributes_land_on_the_task_not_the_activity():
+    a_task = task.ActivityTask(shared, 1)
+    canvas.Group(a_task, raises_on_failure=False)
+    a_task.propagate_attribute("group_tag", "a")
+    assert a_task.activity.raises_on_failure is False
+    assert a_task.activity.group_tag == "a"
+    assert a_task.activity.name == shared.name
+    assert shared.raises_on_failure is True
+    assert not hasattr(shared, "group_tag")
+    assert a_task.activity.shared is shared
+
+
+def test_tasks_of_one_activity_keep_their_own_attributes():
+    optional, mandatory = task.ActivityTask(shared, 1), task.ActivityTask(shared, 2)
+    optional.propagate_attribute("raises_on_failure", False)
+    mandatory.propagate_attribute("raises_on_failure", True)
+    assert optional.activity.raises_on_failure is False
+    assert mandatory.activity.raises_on_failure is True
+
+
+def test_a_later_change_to_the_activity_reaches_the_task():
+    a_task = task.ActivityTask(shared, 1)
+    a_task.propagate_attribute("raises_on_failure", False)
+    shared.meta = {"binaries": {"tool": "v2"}}
+    try:
+        assert a_task.activity.meta == {"binaries": {"tool": "v2"}}
+    finally:
+        shared.meta = {}
+
+
+def test_group_attributes_land_on_the_child_workflow_task_not_the_class():
+    child = task.ChildWorkflowTask(SharedChildWorkflow)
+    canvas.Group(child, raises_on_failure=False)
+    assert child.workflow.raises_on_failure is False
+    assert SharedChildWorkflow.raises_on_failure is True
+    assert issubclass(child.workflow, SharedChildWorkflow)
+    assert (child.workflow.__module__, child.workflow.__name__, child.workflow.__qualname__) == (
+        SharedChildWorkflow.__module__,
+        SharedChildWorkflow.__name__,
+        SharedChildWorkflow.__qualname__,
+    )
+    assert child.name == "workflow-shared_child_workflow"
