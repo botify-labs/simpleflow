@@ -140,6 +140,8 @@ def find_activity(history, scheduled_id=None, activity_id=None, input=None):
     """
     found_activity = None
     for params in history.activities.values():
+        if "scheduled_id" not in params:  # never scheduled: refused, or only a cancel request
+            continue
         if params["scheduled_id"] == scheduled_id:
             found_activity = params
         if params["id"] == activity_id:
