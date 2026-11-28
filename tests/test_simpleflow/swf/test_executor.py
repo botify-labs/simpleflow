@@ -113,6 +113,60 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         assert future.exception.name == "a_timer"
         assert future.exception.reason == "TIMER_ID_UNKNOWN"
 
+    def test_a_timer_cancel_refused_after_the_fire_keeps_the_timer_fired(self):
+        history = builder.History(CancelTimerWorkflow, input={})
+        history.add_timer_started("a_timer", 10, decision_id=2)
+        history.add_timer_fired("a_timer")
+        history.add_decision_task()
+        history.add_timer_cancel_failed("a_timer", "TIMER_ID_UNKNOWN", decision_id=history.last_id)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+
+        for workflow in (StartTimerWorkflow, CancelTimerWorkflow):
+            with self.subTest(workflow=workflow.__name__):
+                workflow.future = None
+                executor = Executor(DOMAIN, workflow)
+                decisions = executor.replay(Response(history=history, execution=None)).decisions
+
+                assert [d["decisionType"] for d in decisions] == ["CompleteWorkflowExecution"]
+                future = workflow.future
+                assert future.finished
+                assert future.exception is None
+                timer = executor.get_event_details("timer", "a_timer")
+                assert timer["state"] == "fired"
+                assert timer["cancel_failed_cause"] == "TIMER_ID_UNKNOWN"
+                assert "cause" not in timer
+
+    def test_a_second_timer_cancel_refused_keeps_the_timer_canceled(self):
+        history = builder.History(StartTimerWorkflow, input={})
+        history.add_timer_started("a_timer", 10, decision_id=2)
+        history.add_decision_task()
+        history.add_timer_canceled("a_timer", decision_id=history.last_id)
+        history.add_timer_cancel_failed("a_timer", "TIMER_ID_UNKNOWN", decision_id=history.last_id - 1)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+
+        StartTimerWorkflow.future = None
+        executor = Executor(DOMAIN, StartTimerWorkflow)
+        executor.replay(Response(history=history, execution=None))
+
+        assert StartTimerWorkflow.future.cancelled
+        assert executor.get_event_details("timer", "a_timer")["state"] == "canceled"
+
+    def test_a_timer_cancel_refused_after_a_refused_start_keeps_the_start_failure(self):
+        history = builder.History(StartTimerWorkflow, input={})
+        history.add_timer_start_failed("a_timer", "OPEN_TIMERS_LIMIT_EXCEEDED", decision_id=2)
+        history.add_decision_task()
+        history.add_timer_cancel_failed("a_timer", "TIMER_ID_UNKNOWN", decision_id=history.last_id)
+
+        executor = Executor(DOMAIN, StartTimerWorkflow)
+        executor.replay(Response(history=history, execution=None))
+
+        timer = executor.get_event_details("timer", "a_timer")
+        assert timer["state"] == "start_failed"
+        assert timer["cause"] == "OPEN_TIMERS_LIMIT_EXCEEDED"
+        assert timer["cancel_failed_cause"] == "TIMER_ID_UNKNOWN"
+
     def test_get_event_details(self):
         history = builder.History(ExampleWorkflow, input={})
         signal_input = {"x": 42, "foo": "bar", "__propagate": False}
@@ -168,6 +222,147 @@ class TestCaseNotNeedingDomain(unittest.TestCase):
         }
         details = executor.get_event_details("timer", "another_timer")
         assert details is None
+
+
+class SendSignalWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(self.signal("a_signal", workflow_id="target-wf", run_id="target-run"))
+        futures.wait(type(self).future)
+
+
+class PropagateSignalsWorkflow(BaseTestWorkflow):
+    def run(self):
+        pass
+
+
+def signal_decisions(decisions):
+    return [d for d in decisions if d["decisionType"] == "SignalExternalWorkflowExecution"]
+
+
+class TestSentSignalReplay(unittest.TestCase):
+    def history_with_a_sent_signal(self):
+        history = builder.History(SendSignalWorkflow, input={})
+        executor = Executor(DOMAIN, SendSignalWorkflow)
+        (decision,) = signal_decisions(executor.replay(Response(history=history, execution=None)).decisions)
+        attributes = decision["signalExternalWorkflowExecutionDecisionAttributes"]
+        history.add_decision_task_completed()
+        history.add_signal_execution_initiated(
+            attributes["workflowId"],
+            attributes["signalName"],
+            input=format.decode(attributes["input"]),
+            run_id=attributes["runId"],
+            decision_id=history.last_id,
+        )
+        return history, history.last_id
+
+    def replay(self, history):
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        SendSignalWorkflow.future = None
+        executor = Executor(DOMAIN, SendSignalWorkflow)
+        decisions = executor.replay(Response(history=history, execution=None)).decisions
+        return executor, decisions, SendSignalWorkflow.future
+
+    def test_a_signal_in_flight_is_not_sent_again(self):
+        history, _ = self.history_with_a_sent_signal()
+
+        executor, decisions, future = self.replay(history)
+
+        assert [w["state"] for w in executor._history.external_workflows_signaling.values()] == [
+            "signal_execution_initiated"
+        ]
+        assert signal_decisions(decisions) == []
+        assert not future.done
+
+    def test_a_refused_signal_is_not_sent_again_and_fails_its_future(self):
+        history, initiated_id = self.history_with_a_sent_signal()
+        history.add_signal_execution_failed(
+            initiated_id, "target-wf", "UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION", run_id="target-run"
+        )
+
+        executor, decisions, future = self.replay(history)
+
+        assert [w["state"] for w in executor._history.external_workflows_signaling.values()] == [
+            "signal_execution_failed"
+        ]
+        assert signal_decisions(decisions) == []
+        assert future.finished
+        assert isinstance(future.exception, exceptions.TaskFailed)
+        assert future.exception.name == "a_signal"
+        assert future.exception.reason == "UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION"
+
+    def test_a_delivered_signal_finishes_its_future(self):
+        history, initiated_id = self.history_with_a_sent_signal()
+        history.add_external_workflow_signaled(initiated_id, "target-wf", "target-run")
+
+        _, decisions, future = self.replay(history)
+
+        assert signal_decisions(decisions) == []
+        assert future.finished
+        assert future.exception is None
+
+    def test_a_rate_limited_signal_is_sent_again(self):
+        history, initiated_id = self.history_with_a_sent_signal()
+        history.add_signal_execution_failed(
+            initiated_id, "target-wf", "SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_RATE_EXCEEDED", run_id="target-run"
+        )
+
+        _, decisions, future = self.replay(history)
+
+        (decision,) = signal_decisions(decisions)
+        assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["workflowId"] == "target-wf"
+        assert not future.done
+
+    def history_with_a_propagated_signal_in_flight(self):
+        history = builder.History(PropagateSignalsWorkflow, input={})
+        history.add_child_workflow(PropagateSignalsWorkflow, last_state="started", workflow_id="child-wf")
+        child_run_id = history.events[-1].workflow_execution["runId"]
+        history.add_signal("a_signal", {"args": [], "kwargs": {}, "__propagate": True})
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+
+        (decision,) = self.replay_propagation(history)
+        attributes = decision["signalExternalWorkflowExecutionDecisionAttributes"]
+        assert (attributes["workflowId"], attributes["runId"]) == ("child-wf", child_run_id)
+
+        history.add_decision_task_completed()
+        history.add_signal_execution_initiated(
+            "child-wf",
+            "a_signal",
+            input=format.decode(attributes["input"]),
+            run_id=child_run_id,
+            decision_id=history.last_id,
+        )
+        initiated_id = history.last_id
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        return history, initiated_id, child_run_id, decision
+
+    @staticmethod
+    def replay_propagation(history):
+        executor = Executor(DOMAIN, PropagateSignalsWorkflow)
+        return signal_decisions(executor.replay(Response(history=history, execution=None)).decisions)
+
+    def test_a_propagated_signal_in_flight_is_not_sent_again(self):
+        history, _, _, _ = self.history_with_a_propagated_signal_in_flight()
+
+        assert self.replay_propagation(history) == []
+
+    def test_a_refused_propagated_signal_is_sent_again_only_if_rate_limited(self):
+        for cause, sent_again in (
+            ("UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION", False),
+            ("SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_RATE_EXCEEDED", True),
+        ):
+            with self.subTest(cause=cause):
+                history, initiated_id, child_run_id, decision = self.history_with_a_propagated_signal_in_flight()
+                history.add_decision_task_completed()
+                history.add_signal_execution_failed(initiated_id, "child-wf", cause, run_id=child_run_id)
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                assert self.replay_propagation(history) == ([decision] if sent_again else [])
 
 
 @activity.with_attributes(raises_on_failure=True)

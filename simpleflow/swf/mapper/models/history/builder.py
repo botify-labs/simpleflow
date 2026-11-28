@@ -699,6 +699,68 @@ class History(simpleflow.swf.mapper.models.History):
 
         return self
 
+    def add_signal_execution_initiated(
+        self, workflow_id, signal_name, input=None, run_id=None, control=None, decision_id=0
+    ):
+        d = {
+            "decisionTaskCompletedEventId": decision_id,
+            "input": json_dumps(input) if input is not None else "{}",
+            "signalName": signal_name,
+            "workflowId": workflow_id,
+        }
+        if run_id is not None:
+            d["runId"] = run_id
+        if control is not None:
+            d["control"] = json_dumps(control)
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "SignalExternalWorkflowExecutionInitiated",
+                    "signalExternalWorkflowExecutionInitiatedEventAttributes": d,
+                }
+            )
+        )
+        return self
+
+    def add_external_workflow_signaled(self, initiated_id, workflow_id, run_id):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "ExternalWorkflowExecutionSignaled",
+                    "externalWorkflowExecutionSignaledEventAttributes": {
+                        "initiatedEventId": initiated_id,
+                        "workflowExecution": {"workflowId": workflow_id, "runId": run_id},
+                    },
+                }
+            )
+        )
+        return self
+
+    def add_signal_execution_failed(self, initiated_id, workflow_id, cause, run_id=None, decision_id=0):
+        d = {
+            "cause": cause,
+            "decisionTaskCompletedEventId": decision_id,
+            "initiatedEventId": initiated_id,
+            "workflowId": workflow_id,
+        }
+        if run_id is not None:
+            d["runId"] = run_id
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "SignalExternalWorkflowExecutionFailed",
+                    "signalExternalWorkflowExecutionFailedEventAttributes": d,
+                }
+            )
+        )
+        return self
+
     def add_marker(self, name, details=None):
         self.events.append(
             EventFactory(
@@ -786,7 +848,7 @@ class History(simpleflow.swf.mapper.models.History):
         )
         return self
 
-    def add_timer_canceled(self, timer_id, started_timer_id=0):
+    def add_timer_canceled(self, timer_id, started_timer_id=0, decision_id=0):
         self.events.append(
             EventFactory(
                 {
@@ -796,6 +858,7 @@ class History(simpleflow.swf.mapper.models.History):
                     "timerCanceledEventAttributes": {
                         "timerId": timer_id,
                         "startedEventId": started_timer_id,
+                        "decisionTaskCompletedEventId": decision_id,
                     },
                 }
             )

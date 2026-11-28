@@ -412,7 +412,7 @@ class Executor(executor.Executor):
         elif state == "signal_execution_failed":
             future.set_exception(
                 exceptions.TaskFailed(
-                    name=event["name"],
+                    name=event["signal_name"],
                     reason=event["cause"],
                 )
             )
@@ -436,11 +436,18 @@ class Executor(executor.Executor):
             future.set_finished(None)
         elif state == "canceled":
             future.set_cancelled()
-        elif state in ("start_failed", "cancel_failed"):
+        elif state == "start_failed":
             future.set_exception(
                 exceptions.TaskFailed(
                     name=event["id"],
                     reason=event["cause"],
+                )
+            )
+        elif state == "cancel_failed":
+            future.set_exception(
+                exceptions.TaskFailed(
+                    name=event["id"],
+                    reason=event["cancel_failed_cause"],
                 )
             )
 
@@ -477,7 +484,26 @@ class Executor(executor.Executor):
                 if w["workflow_id"] == a_task.workflow_id and (a_task.run_id is None or w["run_id"] == a_task.run_id):
                     event = w
                     break
+            else:
+                # Not delivered: the latest send still in flight or refused, if any
+                for w in history.external_workflows_signaling.values():
+                    if (
+                        w["signal_name"] == a_task.name
+                        and w["id"] == a_task.workflow_id
+                        and (a_task.run_id is None or w["run_id"] == a_task.run_id)
+                    ):
+                        event = w
+                if event and self.is_transient_signal_failure(event):
+                    return None
         return event
+
+    TRANSIENT_SIGNAL_FAILED_CAUSES: ClassVar[frozenset[str]] = frozenset(
+        {"SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_RATE_EXCEEDED"}
+    )
+
+    @classmethod
+    def is_transient_signal_failure(cls, event: dict[str, Any]) -> bool:
+        return event["state"] == "signal_execution_failed" and event["cause"] in cls.TRANSIENT_SIGNAL_FAILED_CAUSES
 
     def find_marker_event(self, a_task: MarkerTask, history: History) -> dict[str, Any] | None:
         """
@@ -1214,7 +1240,7 @@ class Executor(executor.Executor):
     def propagate_signals(self):
         """
         Send every signals we got to our parent and children.
-        Don't send to workflows present in history.signaled_workflows.
+        Don't send to workflows this one already signaled, is signaling or was refused.
         """
         history = self._history
         if not history.signals:
@@ -1248,7 +1274,11 @@ class Executor(executor.Executor):
             args = input.get("args", ())
             kwargs = input.get("kwargs", {})
             sender = (signal["external_workflow_id"], signal["external_run_id"])
-            signaled_workflows_ids = {(w["workflow_id"], w["run_id"]) for w in history.signaled_workflows[name]}
+            signaled_workflows_ids = {
+                (w["id"], w["run_id"])
+                for w in history.external_workflows_signaling.values()
+                if w["signal_name"] == name and not self.is_transient_signal_failure(w)
+            }
             not_signaled_workflows_ids = list(known_workflows_ids - signaled_workflows_ids - {sender})
             extra_input = {"__propagate": propagate}
             for workflow_id, run_id in not_signaled_workflows_ids:

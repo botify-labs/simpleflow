@@ -758,10 +758,12 @@ class History:
                     "cancel_decision_task_completed_event_id": event.decision_task_completed_event_id,
                 }
                 self._timers[event.timer_id] = timer
+            # A cancel that lost the race (TIMER_ID_UNKNOWN) must not hide a fire, cancel or start failure.
+            if timer.get("state", "started") == "started":
+                timer["state"] = event.state
             timer.update(
                 {
-                    "state": event.state,
-                    "cause": event.cause,
+                    "cancel_failed_cause": event.cause,
                     "cancel_failed_event_id": event.id,
                     "cancel_failed_event_timestamp": event.timestamp,
                 }
