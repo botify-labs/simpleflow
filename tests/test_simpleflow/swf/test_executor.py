@@ -5,11 +5,13 @@ import unittest
 from unittest import mock
 
 from simpleflow import activity, exceptions, format, futures
+from simpleflow.canvas import Group
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
+from simpleflow.task import ActivityTask, ChildWorkflowTask
 from tests.data.activities import increment, raise_on_failure
-from tests.data.constants import DOMAIN
+from tests.data.constants import DEFAULT_VERSION, DOMAIN
 from tests.data.workflows import BaseTestWorkflow
 from tests.utils import MockSWFTestCase
 
@@ -433,6 +435,74 @@ class TestSentSignalReplay(unittest.TestCase):
                 history.add_decision_task_started()
 
                 assert self.replay_propagation(history) == ([decision] if sent_again else [])
+
+
+@activity.with_attributes(version=DEFAULT_VERSION, raises_on_failure=True)
+def mandatory_step(x):
+    return x
+
+
+class MandatoryChildWorkflow(BaseTestWorkflow):
+    name = "mandatory_child_workflow"
+
+    def run(self):
+        pass
+
+
+class OptionalUsesWorkflow(BaseTestWorkflow):
+    def run(self):
+        group = Group(
+            ActivityTask(mandatory_step, 1),
+            ChildWorkflowTask(MandatoryChildWorkflow),
+            raises_on_failure=False,
+        )
+        futures.wait(self.submit(group))
+
+
+class MandatoryStepWorkflow(BaseTestWorkflow):
+    def run(self):
+        futures.wait(self.submit(mandatory_step, 2))
+
+
+class MandatoryChildUseWorkflow(BaseTestWorkflow):
+    def run(self):
+        futures.wait(self.submit(MandatoryChildWorkflow))
+
+
+def replay_after_a_failure(workflow):
+    history = builder.History(workflow, input={})
+    (decision,) = replay_decisions(workflow, history)
+    history.add_decision_task_completed()
+    if decision["decisionType"] == "ScheduleActivityTask":
+        attributes = decision["scheduleActivityTaskDecisionAttributes"]
+        history.add_activity_task(
+            mandatory_step, decision_id=history.last_id, last_state="failed", activity_id=attributes["activityId"]
+        )
+    else:
+        attributes = decision["startChildWorkflowExecutionDecisionAttributes"]
+        history.add_child_workflow(MandatoryChildWorkflow, last_state="failed", workflow_id=attributes["workflowId"])
+    history.add_decision_task_scheduled()
+    history.add_decision_task_started()
+    (closing,) = replay_decisions(workflow, history)
+    return closing["decisionType"]
+
+
+class TestFailureSemanticsStayOnTheTask(unittest.TestCase):
+    def test_a_mandatory_activity_failure_fails_the_workflow(self):
+        assert replay_after_a_failure(MandatoryStepWorkflow) == "FailWorkflowExecution"
+
+    def test_an_optional_use_elsewhere_leaves_the_activity_mandatory(self):
+        replay_decisions(OptionalUsesWorkflow, builder.History(OptionalUsesWorkflow, input={}))
+        assert mandatory_step.raises_on_failure is True
+        assert replay_after_a_failure(MandatoryStepWorkflow) == "FailWorkflowExecution"
+
+    def test_a_mandatory_child_workflow_failure_fails_the_workflow(self):
+        assert replay_after_a_failure(MandatoryChildUseWorkflow) == "FailWorkflowExecution"
+
+    def test_an_optional_use_elsewhere_leaves_the_child_workflow_mandatory(self):
+        replay_decisions(OptionalUsesWorkflow, builder.History(OptionalUsesWorkflow, input={}))
+        assert MandatoryChildWorkflow.raises_on_failure is True
+        assert replay_after_a_failure(MandatoryChildUseWorkflow) == "FailWorkflowExecution"
 
 
 @activity.with_attributes(raises_on_failure=True)

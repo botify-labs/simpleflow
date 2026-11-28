@@ -143,3 +143,23 @@ class Activity:
 
     def propagate_attribute(self, attr, val):
         setattr(self, attr, val)
+
+
+class TaskActivity(Activity):
+    """
+    One task's attributes over a shared Activity: attributes the task did not
+    set read through to `shared`.
+    """
+
+    def __init__(self, shared: Activity) -> None:
+        self.shared = shared
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            shared = vars(self)["shared"]
+        except KeyError:
+            raise AttributeError(name) from None
+        return getattr(shared, name)
+
+    def __repr__(self):
+        return f"TaskActivity({self.shared!r})"
