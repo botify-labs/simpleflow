@@ -476,10 +476,13 @@ class Executor(executor.Executor):
         """
         Get the event corresponding to a signal, if any.
         """
-        # FIXME could look directly in signaled_workflows?
-        event = history.signals.get(a_task.name)
+        # history.signals holds the signals this workflow received: they only answer for a signal sent to itself.
+        to_self = a_task.workflow_id is None or (
+            a_task.workflow_id == self._workflow_id and a_task.run_id in (None, self._run_id)
+        )
+        event = history.signals.get(a_task.name) if to_self else None
         if not event:
-            if a_task.workflow_id is None:  # Broadcast, should be in signals
+            if a_task.workflow_id is None:
                 return None
             signaled_workflows = history.signaled_workflows.get(a_task.name, [])
             for w in signaled_workflows:

@@ -302,6 +302,15 @@ class SendSignalWorkflow(BaseTestWorkflow):
         futures.wait(type(self).future)
 
 
+class SignalItselfWorkflow(BaseTestWorkflow):
+    future = None
+    target = None
+
+    def run(self):
+        type(self).future = self.submit(self.signal("a_signal", **(type(self).target or {})))
+        futures.wait(type(self).future)
+
+
 class PropagateSignalsWorkflow(BaseTestWorkflow):
     def run(self):
         pass
@@ -383,6 +392,61 @@ class TestSentSignalReplay(unittest.TestCase):
 
         (decision,) = signal_decisions(decisions)
         assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["workflowId"] == "target-wf"
+        assert not future.done
+
+    def test_a_directed_signal_is_sent_despite_a_received_signal_of_the_same_name(self):
+        history = builder.History(SendSignalWorkflow, input={})
+        history.add_signal("a_signal", {"args": [], "kwargs": {}})
+
+        _, decisions, future = self.replay(history)
+
+        (decision,) = signal_decisions(decisions)
+        assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["workflowId"] == "target-wf"
+        assert not future.done
+
+    def test_a_delivered_directed_signal_is_not_sent_again_after_a_received_signal_of_the_same_name(self):
+        history, initiated_id = self.history_with_a_sent_signal()
+        history.add_external_workflow_signaled(initiated_id, "target-wf", "target-run")
+        history.add_signal("a_signal", {"args": [], "kwargs": {}})
+
+        _, decisions, future = self.replay(history)
+
+        assert signal_decisions(decisions) == []
+        assert future.finished
+        assert future.exception is None
+
+    def replay_signal_to_itself(self, target, own_run_id="own-run", received=True):
+        history = builder.History(SignalItselfWorkflow, input={})
+        if received:
+            history.add_signal("a_signal", {"args": [], "kwargs": {}})
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        SignalItselfWorkflow.future = None
+        SignalItselfWorkflow.target = target
+        executor = Executor(DOMAIN, SignalItselfWorkflow)
+        executor._run_context = {"workflow_id": "own-wf", "run_id": own_run_id}
+        decisions = executor.replay(Response(history=history, execution=None)).decisions
+        return signal_decisions(decisions), SignalItselfWorkflow.future
+
+    def test_a_signal_to_itself_is_found_in_the_received_signals(self):
+        for target in (None, {"workflow_id": "own-wf"}, {"workflow_id": "own-wf", "run_id": "own-run"}):
+            with self.subTest(target=target):
+                decisions, future = self.replay_signal_to_itself(target)
+
+                assert decisions == []
+                assert future.finished
+
+    def test_a_signal_to_itself_not_yet_received_is_sent(self):
+        (decision,) = self.replay_signal_to_itself(None, received=False)[0]
+
+        attributes = decision["signalExternalWorkflowExecutionDecisionAttributes"]
+        assert (attributes["workflowId"], attributes["runId"]) == ("own-wf", "own-run")
+
+    def test_a_signal_to_another_run_of_its_workflow_id_is_a_directed_signal(self):
+        decisions, future = self.replay_signal_to_itself({"workflow_id": "own-wf", "run_id": "previous-run"})
+
+        (decision,) = decisions
+        assert decision["signalExternalWorkflowExecutionDecisionAttributes"]["runId"] == "previous-run"
         assert not future.done
 
     def history_with_a_propagated_signal_in_flight(self):
