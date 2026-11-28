@@ -371,7 +371,7 @@ class Executor(executor.Executor):
         state = event["state"]
         if state == "recorded":
             future.set_finished(event["details"])
-        elif state == "failed":
+        elif state == "record_failed":
             future.set_exception(
                 exceptions.TaskFailed(
                     name=event["name"],
@@ -518,8 +518,12 @@ class Executor(executor.Executor):
         marker_list = history.markers.get(a_task.name)
         if not marker_list:
             return None
-        marker_list = [m for m in marker_list if m["state"] == "recorded" and m["details"] == json_details]
-        return marker_list[-1] if marker_list else None
+        recorded = [m for m in marker_list if m["state"] == "recorded" and m["details"] == json_details]
+        if recorded:
+            return recorded[-1]
+        # RecordMarkerFailed carries no details: a refusal stands for every marker of that name.
+        refused = [m for m in marker_list if m["state"] == "record_failed"]
+        return refused[-1] if refused else None
 
     def find_timer_event(self, a_task: TimerTask | CancelTimerTask, history: History) -> dict[str, Any] | None:
         """

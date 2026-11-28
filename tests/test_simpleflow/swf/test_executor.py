@@ -499,6 +499,73 @@ class TestSentSignalReplay(unittest.TestCase):
                 assert self.replay_propagation(history) == ([decision] if sent_again else [])
 
 
+class RecordMarkerWorkflow(BaseTestWorkflow):
+    future = None
+
+    def run(self):
+        type(self).future = self.submit(self.record_marker("a_marker", "some details"))
+        futures.wait(type(self).future)
+
+
+class TestRefusedMarkerReplay(unittest.TestCase):
+    def history_with_a_refused_marker(self):
+        history = builder.History(RecordMarkerWorkflow, input={})
+        (decision,) = self.replay(history)[0]
+        assert decision["recordMarkerDecisionAttributes"]["markerName"] == "a_marker"
+        history.add_decision_task_completed()
+        history.add_marker_record_failed("a_marker", decision_id=history.last_id)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+        return history
+
+    @staticmethod
+    def replay(history):
+        RecordMarkerWorkflow.future = None
+        decisions = replay_decisions(RecordMarkerWorkflow, history)
+        return [d for d in decisions if d["decisionType"] == "RecordMarker"], RecordMarkerWorkflow.future
+
+    def test_a_refused_marker_is_not_recorded_again_and_fails_its_future(self):
+        history = self.history_with_a_refused_marker()
+
+        decisions, future = self.replay(history)
+
+        assert decisions == []
+        assert future.finished
+        assert isinstance(future.exception, exceptions.TaskFailed)
+        assert future.exception.name == "a_marker"
+        assert future.exception.reason == "OPERATION_NOT_PERMITTED"
+
+    def test_a_recorded_marker_wins_over_a_refusal_whatever_their_order(self):
+        for recorded_first in (True, False):
+            with self.subTest(recorded_first=recorded_first):
+                history = builder.History(RecordMarkerWorkflow, input={})
+                history.add_decision_task_completed()
+                if recorded_first:
+                    history.add_marker("a_marker", "some details")
+                history.add_marker_record_failed("a_marker", decision_id=history.last_id)
+                if not recorded_first:
+                    history.add_marker("a_marker", "some details")
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                decisions, future = self.replay(history)
+
+                assert decisions == []
+                assert future.finished
+                assert future.exception is None
+
+    def test_a_refusal_does_not_stand_for_another_marker_name(self):
+        history = builder.History(RecordMarkerWorkflow, input={})
+        history.add_decision_task_completed()
+        history.add_marker_record_failed("another_marker", decision_id=history.last_id)
+        history.add_decision_task_scheduled()
+        history.add_decision_task_started()
+
+        (decision,) = self.replay(history)[0]
+
+        assert decision["recordMarkerDecisionAttributes"]["markerName"] == "a_marker"
+
+
 @activity.with_attributes(raises_on_failure=True)
 def print_me_n_times(s, n, raises=False):
     if raises:

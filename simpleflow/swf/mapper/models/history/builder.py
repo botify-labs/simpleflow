@@ -778,6 +778,24 @@ class History(simpleflow.swf.mapper.models.History):
 
         return self
 
+    def add_marker_record_failed(self, name, cause="OPERATION_NOT_PERMITTED", decision_id=0):
+        self.events.append(
+            EventFactory(
+                {
+                    "eventId": self.next_id,
+                    "eventTimestamp": new_timestamp_string(),
+                    "eventType": "RecordMarkerFailed",
+                    "recordMarkerFailedEventAttributes": {
+                        "cause": cause,
+                        "decisionTaskCompletedEventId": decision_id,
+                        "markerName": name,
+                    },
+                }
+            )
+        )
+
+        return self
+
     def add_timer_started(self, timer_id, timeout, control=None, decision_id=0):
         d = {
             "decisionTaskCompletedEventId": decision_id,
