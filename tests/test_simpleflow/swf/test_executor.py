@@ -8,7 +8,7 @@ from simpleflow import activity, exceptions, format, futures
 from simpleflow.swf.executor import Executor
 from simpleflow.swf.mapper.models.history import builder
 from simpleflow.swf.mapper.responses import Response
-from tests.data.activities import increment
+from tests.data.activities import increment, raise_on_failure
 from tests.data.constants import DOMAIN
 from tests.data.workflows import BaseTestWorkflow
 from tests.utils import MockSWFTestCase
@@ -81,7 +81,77 @@ class CancelTimerWorkflow(BaseTestWorkflow):
         type(self).future = self.submit(self.cancel_timer("a_timer"))
 
 
+class RetryLaterWorkflow(BaseTestWorkflow):
+    def run(self):
+        futures.wait(self.submit(raise_on_failure))
+
+    def on_task_failure(self, failure_context):
+        return failure_context.decide_retry(retry_wait_timeout=30)
+
+
+def replay_decisions(workflow, history):
+    return Executor(DOMAIN, workflow).replay(Response(history=history, execution=None)).decisions
+
+
+RETRIED_ACTIVITY_ID = "activity-tests.data.activities.raise_on_failure-1"
+
+
+def history_with_a_refused_retry_timer(cause, earlier_retries):
+    history = builder.History(RetryLaterWorkflow, input={})
+    history.add_decision_task_completed()
+    for attempt in range(earlier_retries + 1):
+        history.add_activity_task(
+            raise_on_failure, decision_id=history.last_id, last_state="failed", activity_id=RETRIED_ACTIVITY_ID
+        )
+        history.add_decision_task()
+        (retry_timer,) = replay_decisions(RetryLaterWorkflow, history)
+        assert retry_timer["decisionType"] == "StartTimer"
+        timer_id = retry_timer["startTimerDecisionAttributes"]["timerId"]
+        if attempt < earlier_retries:
+            history.add_timer_started(timer_id, 30, decision_id=history.last_id)
+            history.add_timer_fired(timer_id)
+            history.add_decision_task()
+    history.add_timer_start_failed(timer_id, cause, decision_id=history.last_id)
+    history.add_decision_task_scheduled()
+    history.add_decision_task_started()
+    return history, retry_timer
+
+
 class TestCaseNotNeedingDomain(unittest.TestCase):
+    def test_a_retry_timer_refused_for_rate_is_started_again(self):
+        for earlier_retries in (0, 1):
+            with self.subTest(earlier_retries=earlier_retries):
+                history, retry_timer = history_with_a_refused_retry_timer(
+                    "TIMER_CREATION_RATE_EXCEEDED", earlier_retries
+                )
+
+                assert replay_decisions(RetryLaterWorkflow, history) == [retry_timer]
+
+                timer_id = retry_timer["startTimerDecisionAttributes"]["timerId"]
+                history.add_decision_task_completed()
+                history.add_timer_started(timer_id, 30, decision_id=history.last_id)
+                history.add_timer_fired(timer_id)
+                history.add_decision_task_scheduled()
+                history.add_decision_task_started()
+
+                (decision,) = replay_decisions(RetryLaterWorkflow, history)
+                assert decision["decisionType"] == "ScheduleActivityTask"
+                assert decision["scheduleActivityTaskDecisionAttributes"]["activityId"] == RETRIED_ACTIVITY_ID
+
+    def test_a_retry_timer_refused_for_good_fails_the_task(self):
+        for earlier_retries in (0, 1):
+            with self.subTest(earlier_retries=earlier_retries):
+                history, _ = history_with_a_refused_retry_timer("OPERATION_NOT_PERMITTED", earlier_retries)
+
+                (decision,) = replay_decisions(RetryLaterWorkflow, history)
+
+                assert decision["decisionType"] == "FailWorkflowExecution"
+                reason = decision["failWorkflowExecutionDecisionAttributes"]["reason"]
+                assert reason == (
+                    "Workflow execution error in activity-tests.data.activities.raise_on_failure:"
+                    ' "OPERATION_NOT_PERMITTED"'
+                )
+
     def test_a_refused_timer_start_replays_as_a_failed_future(self):
         history = builder.History(StartTimerWorkflow, input={})
         history.add_timer_start_failed("a_timer", "TIMER_CREATION_RATE_EXCEEDED", decision_id=2)

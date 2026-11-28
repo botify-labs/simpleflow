@@ -45,6 +45,8 @@ __all__ = ["Executor"]
 
 NOTSET = object()
 
+TRANSIENT_START_TIMER_FAILED_CAUSES = frozenset({"TIMER_CREATION_RATE_EXCEEDED", "OPEN_TIMERS_LIMIT_EXCEEDED"})
+
 
 # if "poll_for_activity_task" doesn't contain a "taskToken"
 # key, then retry; it happens (not often) that the decider
@@ -594,23 +596,27 @@ class Executor(executor.Executor):
         exception_class: type[Exception],
     ) -> futures.Future | tuple[futures.Future | None, ActivityTask | WorkflowTask | TimerTask] | None:
         timer = self.find_timer_associated_with(event, swf_task)
+        if timer and timer["state"] == "start_failed" and timer["cause"] in TRANSIENT_START_TIMER_FAILED_CAUSES:
+            logger.info(f"handle_failure: retry timer {timer['id']} refused ({timer['cause']}), starting it again")
+            timer = None
         if timer:
-            if isinstance(timer["control"], str):  # FIXME unconditional?
-                control = format.decode(timer["control"])
-            else:
-                control = timer["control"]
-            if not isinstance(control, dict):
-                control = {}
             if timer["state"] == "started":
                 logger.debug(f'handle_failure: timer {timer["id"]} started, "pending" future')
                 return futures.Future(), swf_task  # mark as pending
             elif timer["state"] in ("fired", "canceled"):
                 logger.debug(f"handle_failure: timer {timer['id']} fired or canceled, retrying")
+                control = timer["control"]
+                if isinstance(control, str):
+                    control = format.decode(control)
+                if not isinstance(control, dict):
+                    control = {}
                 swf_task.args = control.get("args", ())
                 swf_task.kwargs = control.get("kwargs", {})
                 return None, swf_task
             elif timer["state"] == "start_failed":
-                raise exceptions.TaskFailed("timer", timer["id"], timer["cause"])
+                if swf_task.payload.raises_on_failure:
+                    raise exception_class(swf_task, exceptions.TaskFailed(timer["id"], timer["cause"]))
+                return future, swf_task
             else:  # TODO: handle
                 logger.warning(f'Unexpected timer state for timer "{timer["id"]}": {timer["state"]}')
 

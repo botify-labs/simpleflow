@@ -728,13 +728,13 @@ class History:
                 timer = {
                     "type": "timer",
                     "id": event.timer_id,
-                    "decision_task_completed_event_id": event.decision_task_completed_event_id,
                 }
                 self._timers[event.timer_id] = timer
             timer.update(
                 {
                     "state": event.state,
                     "cause": event.cause,
+                    "decision_task_completed_event_id": event.decision_task_completed_event_id,
                     "start_failed_event_id": event.id,
                     "start_failed_event_timestamp": event.timestamp,
                 }
